@@ -477,6 +477,216 @@
         </div>
       </header>
 
+      <!-- Add this right after the <header> section -->
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        "
+      >
+        <h2>Daily Progress</h2>
+        <button
+          id="addDayBtn"
+          style="
+            padding: 8px 16px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+          "
+        >
+          + Add New Day
+        </button>
+
+        <!-- Add this after the <header> section -->
+        <div
+          id="authSection"
+          style="
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--table-header-bg);
+            border-radius: 6px;
+            display: none;
+          "
+        >
+          <div id="loginForm">
+            <h3 style="margin-bottom: 15px; color: var(--accent-color)">
+              Login to Save Your Progress
+            </h3>
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <input
+                type="text"
+                id="usernameInput"
+                placeholder="Username"
+                style="
+                  padding: 8px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  background: var(--bg-color);
+                  color: var(--text-color);
+                  min-width: 150px;
+                "
+              />
+              <input
+                type="password"
+                id="passwordInput"
+                placeholder="Password"
+                style="
+                  padding: 8px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  background: var(--bg-color);
+                  color: var(--text-color);
+                  min-width: 150px;
+                "
+              />
+              <button
+                id="loginBtn"
+                style="
+                  padding: 8px 16px;
+                  background: var(--accent-color);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Login
+              </button>
+              <button
+                id="showRegisterBtn"
+                style="
+                  padding: 8px 16px;
+                  background: transparent;
+                  color: var(--text-color);
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Register
+              </button>
+            </div>
+          </div>
+
+          <div id="registerForm" style="display: none">
+            <h3 style="margin-bottom: 15px; color: var(--accent-color)">
+              Create Account
+            </h3>
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <input
+                type="text"
+                id="regUsernameInput"
+                placeholder="Username"
+                style="
+                  padding: 8px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  background: var(--bg-color);
+                  color: var(--text-color);
+                  min-width: 150px;
+                "
+              />
+              <input
+                type="password"
+                id="regPasswordInput"
+                placeholder="Password"
+                style="
+                  padding: 8px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  background: var(--bg-color);
+                  color: var(--text-color);
+                  min-width: 150px;
+                "
+              />
+              <input
+                type="password"
+                id="regConfirmPasswordInput"
+                placeholder="Confirm Password"
+                style="
+                  padding: 8px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  background: var(--bg-color);
+                  color: var(--text-color);
+                  min-width: 150px;
+                "
+              />
+              <button
+                id="registerBtn"
+                style="
+                  padding: 8px 16px;
+                  background: var(--accent-color);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Register
+              </button>
+              <button
+                id="showLoginBtn"
+                style="
+                  padding: 8px 16px;
+                  background: transparent;
+                  color: var(--text-color);
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Back to Login
+              </button>
+            </div>
+          </div>
+
+          <div id="userInfo" style="display: none">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span>Logged in as: <strong id="currentUsername"></strong></span>
+              <button
+                id="logoutBtn"
+                style="
+                  padding: 6px 12px;
+                  background: transparent;
+                  color: var(--text-color);
+                  border: 1px solid var(--border-color);
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <table>
         <thead>
           <tr>
@@ -546,8 +756,9 @@
       ];
 
       // MongoDB configuration
-      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+      const API_BASE_URL = "http://localhost:3000/api";
       let userId = "default-user";
+      let authToken = null;
 
       // DOM elements
       const tableBody = document.getElementById("tableBody");
@@ -561,14 +772,219 @@
       const syncButton = document.getElementById("syncButton");
       const syncStatus = document.getElementById("syncStatus");
 
+      // Auth DOM elements
+      const authSection = document.getElementById("authSection");
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const userInfo = document.getElementById("userInfo");
+      const usernameInput = document.getElementById("usernameInput");
+      const passwordInput = document.getElementById("passwordInput");
+      const loginBtn = document.getElementById("loginBtn");
+      const showRegisterBtn = document.getElementById("showRegisterBtn");
+      const regUsernameInput = document.getElementById("regUsernameInput");
+      const regPasswordInput = document.getElementById("regPasswordInput");
+      const regConfirmPasswordInput = document.getElementById(
+        "regConfirmPasswordInput"
+      );
+      const registerBtn = document.getElementById("registerBtn");
+      const showLoginBtn = document.getElementById("showLoginBtn");
+      const currentUsername = document.getElementById("currentUsername");
+      const logoutBtn = document.getElementById("logoutBtn");
+
       // Current editing question info
       let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
 
       // Initialize the app
       async function initApp() {
+        await checkAutoLogin();
+        setupAuthEventListeners();
         await loadData();
         renderTable();
         setupEventListeners();
+      }
+
+      // Check if user is auto-logged in
+      async function checkAutoLogin() {
+        const savedToken = localStorage.getItem("authToken");
+        const savedUserId = localStorage.getItem("userId");
+
+        if (savedToken && savedUserId) {
+          try {
+            // Verify token is still valid
+            const response = await fetch(`${API_BASE_URL}/verify-token`, {
+              headers: {
+                Authorization: `Bearer ${savedToken}`,
+              },
+            });
+
+            if (response.ok) {
+              authToken = savedToken;
+              userId = savedUserId;
+              showUserInfo();
+              return true;
+            } else {
+              // Token invalid, clear saved credentials
+              localStorage.removeItem("authToken");
+              localStorage.removeItem("userId");
+              showLoginForm();
+            }
+          } catch (error) {
+            console.log("Auto-login check failed:", error);
+            showLoginForm();
+          }
+        } else {
+          showLoginForm();
+        }
+        return false;
+      }
+
+      // Show login form
+      function showLoginForm() {
+        authSection.style.display = "block";
+        loginForm.style.display = "block";
+        registerForm.style.display = "none";
+        userInfo.style.display = "none";
+        // Show table but disable interactions
+        document.querySelector("table").style.opacity = "0.6";
+        document.querySelector("table").style.pointerEvents = "none";
+      }
+
+      // Show user info when logged in
+      function showUserInfo() {
+        authSection.style.display = "block";
+        loginForm.style.display = "none";
+        registerForm.style.display = "none";
+        userInfo.style.display = "block";
+        currentUsername.textContent = userId;
+        // Enable table interactions
+        document.querySelector("table").style.opacity = "1";
+        document.querySelector("table").style.pointerEvents = "auto";
+      }
+
+      // Setup authentication event listeners
+      function setupAuthEventListeners() {
+        loginBtn.addEventListener("click", handleLogin);
+        showRegisterBtn.addEventListener("click", () => {
+          loginForm.style.display = "none";
+          registerForm.style.display = "block";
+        });
+        registerBtn.addEventListener("click", handleRegister);
+        showLoginBtn.addEventListener("click", () => {
+          registerForm.style.display = "none";
+          loginForm.style.display = "block";
+        });
+        logoutBtn.addEventListener("click", handleLogout);
+
+        // Enter key support
+        passwordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleLogin();
+        });
+        regPasswordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleRegister();
+        });
+        regConfirmPasswordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleRegister();
+        });
+      }
+
+      // Handle user login
+      async function handleLogin() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!username || !password) {
+          alert("Please enter both username and password");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            authToken = result.token;
+            userId = username;
+
+            // Save for auto-login
+            localStorage.setItem("authToken", authToken);
+            localStorage.setItem("userId", userId);
+
+            showUserInfo();
+            await loadData(); // Reload data for the logged-in user
+            renderTable();
+          } else {
+            alert(result.error || "Login failed");
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          alert("Login failed. Please try again.");
+        }
+      }
+
+      // Handle user registration
+      async function handleRegister() {
+        const username = regUsernameInput.value.trim();
+        const password = regPasswordInput.value.trim();
+        const confirmPassword = regConfirmPasswordInput.value.trim();
+
+        if (!username || !password) {
+          alert("Please enter both username and password");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          alert("Passwords do not match");
+          return;
+        }
+
+        if (password.length < 4) {
+          alert("Password must be at least 4 characters long");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            alert("Registration successful! Please login.");
+            regUsernameInput.value = "";
+            regPasswordInput.value = "";
+            regConfirmPasswordInput.value = "";
+            registerForm.style.display = "none";
+            loginForm.style.display = "block";
+          } else {
+            alert(result.error || "Registration failed");
+          }
+        } catch (error) {
+          console.error("Registration error:", error);
+          alert("Registration failed. Please try again.");
+        }
+      }
+
+      // Handle user logout
+      function handleLogout() {
+        authToken = null;
+        userId = "default-user";
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userId");
+        showLoginForm();
+        initializeDefaultData(); // Reset to default data for anonymous user
+        renderTable();
       }
 
       // Load data from localStorage and MongoDB
@@ -577,7 +993,6 @@
         const savedData = localStorage.getItem("dsaChecklistData");
         if (savedData) {
           appData = JSON.parse(savedData);
-
           // Ensure linksArray exists for all days (migration for existing data)
           appData.forEach((dayData) => {
             if (!dayData.linksArray) {
@@ -596,33 +1011,46 @@
               }
             }
           });
-
-          // Try to sync with MongoDB in the background
-          setTimeout(() => {
-            syncWithMongoDB();
-          }, 1000);
+          // Try to sync with MongoDB in the background if logged in
+          if (authToken) {
+            setTimeout(() => {
+              syncWithMongoDB();
+            }, 1000);
+          }
         } else {
-          // If no localStorage data, try to load from MongoDB
-          try {
-            const response = await fetch(
-              `${API_BASE_URL}/data?userId=${userId}`
-            );
-            const result = await response.json();
-
-            if (result.success) {
-              appData = result.data;
-              // Save to localStorage for offline use
-              localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-              updateSyncStatus("synced", "Data loaded from cloud");
-            } else {
-              throw new Error(result.error);
+          // If no localStorage data, try to load from MongoDB if logged in
+          if (authToken) {
+            try {
+              const response = await fetch(
+                `${API_BASE_URL}/data?userId=${userId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${authToken}`,
+                  },
+                }
+              );
+              const result = await response.json();
+              if (result.success) {
+                appData = result.data;
+                // Save to localStorage for offline use
+                localStorage.setItem(
+                  "dsaChecklistData",
+                  JSON.stringify(appData)
+                );
+                updateSyncStatus("synced", "Data loaded from cloud");
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              console.log(
+                "Failed to load from MongoDB, using default data:",
+                error
+              );
+              // Initialize with default data for 100 days
+              initializeDefaultData();
             }
-          } catch (error) {
-            console.log(
-              "Failed to load from MongoDB, using default data:",
-              error
-            );
-            // Initialize with default data for 100 days
+          } else {
+            // Not logged in, use default data
             initializeDefaultData();
           }
         }
@@ -652,26 +1080,27 @@
         // Save to localStorage (existing logic)
         localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
 
-        // Also save to MongoDB
-        await saveToMongoDB();
+        // Also save to MongoDB if logged in
+        if (authToken) {
+          await saveToMongoDB();
+        }
       }
 
       // Save data to MongoDB
       async function saveToMongoDB() {
         try {
           updateSyncStatus("syncing", "Syncing...");
-
           const response = await fetch(`${API_BASE_URL}/data`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify({
               userId: userId,
               data: appData,
             }),
           });
-
           const result = await response.json();
           if (result.success) {
             updateSyncStatus("synced", "Data synced with cloud");
@@ -681,7 +1110,6 @@
         } catch (error) {
           console.log("Failed to save to MongoDB:", error);
           updateSyncStatus("error", "Failed to sync with cloud");
-
           // Retry after 5 seconds
           setTimeout(() => {
             saveToMongoDB();
@@ -692,13 +1120,18 @@
       // Sync with MongoDB (for conflict resolution)
       async function syncWithMongoDB() {
         try {
-          const response = await fetch(`${API_BASE_URL}/data?userId=${userId}`);
+          const response = await fetch(
+            `${API_BASE_URL}/data?userId=${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            }
+          );
           const result = await response.json();
-
           if (result.success) {
             const cloudData = result.data;
             const localData = appData;
-
             // Simple conflict resolution: use the most recently updated data
             // For now, we'll keep local changes and push to cloud
             await saveToMongoDB();
@@ -713,10 +1146,8 @@
       function updateSyncStatus(status, message) {
         const syncDot = syncStatus.querySelector(".sync-dot");
         const statusText = syncStatus.querySelector("span");
-
         // Remove all status classes
         syncDot.classList.remove("synced", "syncing", "error", "offline");
-
         switch (status) {
           case "synced":
             syncDot.classList.add("synced");
@@ -740,7 +1171,6 @@
       // Render table function (unchanged from your original code)
       function renderTable() {
         tableBody.innerHTML = "";
-
         appData.forEach((dayData, index) => {
           const row = document.createElement("tr");
 
@@ -750,10 +1180,9 @@
           dayCell.textContent = dayData.day;
           row.appendChild(dayCell);
 
-          // Questions column
+          // Questions column - MODIFIED to include delete buttons
           const questionsCell = document.createElement("td");
           questionsCell.className = "questions-cell";
-
           dayData.questions.forEach((question, qIndex) => {
             const questionItem = document.createElement("div");
             questionItem.className = "question-item";
@@ -790,6 +1219,7 @@
               }
             });
 
+            // Edit link button
             const editLinkBtn = document.createElement("button");
             editLinkBtn.textContent = "🔗";
             editLinkBtn.style.background = "none";
@@ -802,7 +1232,22 @@
               openLinkModal(index, qIndex);
             });
 
+            // DELETE QUESTION BUTTON - NEW FEATURE
+            const deleteQuestionBtn = document.createElement("button");
+            deleteQuestionBtn.textContent = "🗑️";
+            deleteQuestionBtn.style.background = "none";
+            deleteQuestionBtn.style.border = "none";
+            deleteQuestionBtn.style.cursor = "pointer";
+            deleteQuestionBtn.style.marginLeft = "4px";
+            deleteQuestionBtn.style.opacity = "0.7";
+            deleteQuestionBtn.title = "Delete question";
+            deleteQuestionBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              deleteQuestion(index, qIndex);
+            });
+
             questionText.appendChild(editLinkBtn);
+            questionText.appendChild(deleteQuestionBtn); // Add delete button
             questionContent.appendChild(questionText);
 
             if (question.link) {
@@ -825,7 +1270,6 @@
           addQuestionBtn.addEventListener("click", () => {
             addNewQuestion(index);
           });
-
           questionsCell.appendChild(addQuestionBtn);
           row.appendChild(questionsCell);
 
@@ -838,7 +1282,6 @@
           // Tags column
           const tagsCell = document.createElement("td");
           tagsCell.className = "tags-cell";
-
           dayData.tags.forEach((tag, tagIndex) => {
             const tagElement = document.createElement("span");
             tagElement.className = "tag";
@@ -857,7 +1300,6 @@
               addTagInput.value = "";
             }
           });
-
           tagsCell.appendChild(addTagInput);
           row.appendChild(tagsCell);
 
@@ -877,14 +1319,12 @@
           linkInput.style.border = "1px solid var(--border-color)";
           linkInput.style.borderRadius = "4px";
           linkInput.style.color = "var(--text-color)";
-
           linkInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter" && linkInput.value.trim() !== "") {
               addNewLink(index, linkInput.value.trim());
               linkInput.value = "";
             }
           });
-
           linksCell.appendChild(linkInput);
 
           // Create tags container
@@ -931,14 +1371,11 @@
               tagElement.style.textDecoration = "none";
               tagElement.style.cursor = "pointer";
               tagElement.style.transition = "opacity 0.2s";
-
               tagElement.textContent = link.text;
               tagElement.title = link.url;
-
               tagElement.addEventListener("mouseenter", () => {
                 tagElement.style.opacity = "0.8";
               });
-
               tagElement.addEventListener("mouseleave", () => {
                 tagElement.style.opacity = "1";
               });
@@ -954,13 +1391,11 @@
                 e.stopPropagation();
                 removeLink(index, linkIndex);
               });
-
               tagElement.appendChild(removeBtn);
               linkTag.appendChild(tagElement);
               tagsContainer.appendChild(linkTag);
             });
           }
-
           linksCell.appendChild(tagsContainer);
           row.appendChild(linksCell);
 
@@ -968,6 +1403,42 @@
         });
       }
 
+      // NEW FUNCTION: Delete a question
+      function deleteQuestion(dayIndex, questionIndex) {
+        if (confirm("Are you sure you want to delete this question?")) {
+          appData[dayIndex].questions.splice(questionIndex, 1);
+          saveData();
+          renderTable();
+        }
+      }
+
+      // NEW FUNCTION: Add a new day
+      function addNewDay() {
+        const newDayNumber =
+          appData.length > 0
+            ? Math.max(...appData.map((day) => day.day)) + 1
+            : 1;
+
+        const newDay = {
+          day: newDayNumber,
+          questions: [],
+          tags: [],
+          links: "",
+          linksArray: [],
+        };
+
+        appData.push(newDay);
+        saveData();
+        renderTable();
+
+        // Scroll to the new day
+        setTimeout(() => {
+          const rows = tableBody.querySelectorAll("tr");
+          if (rows.length > 0) {
+            rows[rows.length - 1].scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
       // Toggle question completion status
       function toggleQuestionCompletion(dayIndex, questionIndex) {
         appData[dayIndex].questions[questionIndex].completed =
@@ -1263,6 +1734,12 @@
           await saveToMongoDB();
         });
 
+        // NEW: Add Day button
+        const addDayBtn = document.getElementById("addDayBtn");
+        if (addDayBtn) {
+          addDayBtn.addEventListener("click", addNewDay);
+        }
+
         // Tag removal (delegated event listener)
         tableBody.addEventListener("click", (e) => {
           if (e.target.classList.contains("tag-remove")) {
@@ -1293,10 +1770,8 @@
           }
         });
       }
-
       // Initialize the app when DOM is loaded
       document.addEventListener("DOMContentLoaded", initApp);
     </script>
   </body>
 </html>
-
