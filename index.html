@@ -546,8 +546,14 @@
       ];
 
       // MongoDB configuration
-      const API_BASE_URL = "http://localhost:3000/api";
+      const API_BASE_URL =
+        window.location.port === "5500" ? "http://localhost:3000/api" : "/api";
+
       let userId = "default-user";
+
+      // Debug logging
+      console.log("API Base URL:", API_BASE_URL);
+      console.log("Current origin:", window.location.origin);
 
       // DOM elements
       const tableBody = document.getElementById("tableBody");
