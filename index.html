@@ -739,386 +739,312 @@
       </div>
     </div>
 
-    <script>
-      // Initialize app data
-      let appData = [];
-      const TOTAL_DAYS = 1;
-      const DEFAULT_QUESTIONS = [
-        { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
-        {
-          text: "Reverse a Linked List",
-          link: "https://leetcode.com/problems/reverse-linked-list/",
-        },
-        {
-          text: "Binary Search",
-          link: "https://leetcode.com/problems/binary-search/",
-        },
-      ];
+   <script>
+  // Initialize app data
+  let appData = [];
+  const TOTAL_DAYS = 1;
+  const DEFAULT_QUESTIONS = [
+    { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
+    {
+      text: "Reverse a Linked List",
+      link: "https://leetcode.com/problems/reverse-linked-list/",
+    },
+    {
+      text: "Binary Search",
+      link: "https://leetcode.com/problems/binary-search/",
+    },
+  ];
 
-      // MongoDB configuration
-      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
-      let userId = "default-user";
-      let authToken = null;
+  // MongoDB configuration
+  const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+  let userId = "default-user";
+  let authToken = null;
+  
+  // Sync state management
+  let currentVersion = 1;
+  let lastUpdated = new Date().toISOString();
+  let isSyncing = false;
+  let pendingChanges = false;
 
-      // DOM elements
-      const tableBody = document.getElementById("tableBody");
-      const themeToggle = document.getElementById("themeToggle");
-      const linkModal = document.getElementById("linkModal");
-      const closeModal = document.getElementById("closeModal");
-      const cancelModal = document.getElementById("cancelModal");
-      const saveLink = document.getElementById("saveLink");
-      const questionTextInput = document.getElementById("questionTextInput");
-      const questionLinkInput = document.getElementById("questionLinkInput");
-      const syncButton = document.getElementById("syncButton");
-      const syncStatus = document.getElementById("syncStatus");
+  // DOM elements
+  const tableBody = document.getElementById("tableBody");
+  const themeToggle = document.getElementById("themeToggle");
+  const linkModal = document.getElementById("linkModal");
+  const closeModal = document.getElementById("closeModal");
+  const cancelModal = document.getElementById("cancelModal");
+  const saveLink = document.getElementById("saveLink");
+  const questionTextInput = document.getElementById("questionTextInput");
+  const questionLinkInput = document.getElementById("questionLinkInput");
+  const syncButton = document.getElementById("syncButton");
+  const syncStatus = document.getElementById("syncStatus");
 
-      // Auth DOM elements
-      const authSection = document.getElementById("authSection");
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      const userInfo = document.getElementById("userInfo");
-      const usernameInput = document.getElementById("usernameInput");
-      const passwordInput = document.getElementById("passwordInput");
-      const loginBtn = document.getElementById("loginBtn");
-      const showRegisterBtn = document.getElementById("showRegisterBtn");
-      const regUsernameInput = document.getElementById("regUsernameInput");
-      const regPasswordInput = document.getElementById("regPasswordInput");
-      const regConfirmPasswordInput = document.getElementById(
-        "regConfirmPasswordInput"
-      );
-      const registerBtn = document.getElementById("registerBtn");
-      const showLoginBtn = document.getElementById("showLoginBtn");
-      const currentUsername = document.getElementById("currentUsername");
-      const logoutBtn = document.getElementById("logoutBtn");
+  // Auth DOM elements
+  const authSection = document.getElementById("authSection");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const userInfo = document.getElementById("userInfo");
+  const usernameInput = document.getElementById("usernameInput");
+  const passwordInput = document.getElementById("passwordInput");
+  const loginBtn = document.getElementById("loginBtn");
+  const showRegisterBtn = document.getElementById("showRegisterBtn");
+  const regUsernameInput = document.getElementById("regUsernameInput");
+  const regPasswordInput = document.getElementById("regPasswordInput");
+  const regConfirmPasswordInput = document.getElementById(
+    "regConfirmPasswordInput"
+  );
+  const registerBtn = document.getElementById("registerBtn");
+  const showLoginBtn = document.getElementById("showLoginBtn");
+  const currentUsername = document.getElementById("currentUsername");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-      // Current editing question info
-      let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+  // Current editing question info
+  let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
 
-      // Initialize the app
-      async function initApp() {
-        await checkAutoLogin();
-        setupAuthEventListeners();
-        await loadData();
-        renderTable();
-        setupEventListeners();
+  // Initialize the app
+  async function initApp() {
+    await checkAutoLogin();
+    setupAuthEventListeners();
+    await loadData();
+    renderTable();
+    setupEventListeners();
+    
+    // Start periodic sync
+    setInterval(() => {
+      if (authToken && !isSyncing) {
+        syncWithMongoDB();
       }
+    }, 30000); // Sync every 30 seconds
+  }
 
-      // Check if user is auto-logged in
-      async function checkAutoLogin() {
-        const savedToken = localStorage.getItem("authToken");
-        const savedUserId = localStorage.getItem("userId");
+  // Check if user is auto-logged in
+  async function checkAutoLogin() {
+    const savedToken = localStorage.getItem("authToken");
+    const savedUserId = localStorage.getItem("userId");
 
-        if (savedToken && savedUserId) {
-          try {
-            // Verify token is still valid
-            const response = await fetch(`${API_BASE_URL}/verify-token`, {
-              headers: {
-                Authorization: `Bearer ${savedToken}`,
-              },
-            });
+    if (savedToken && savedUserId) {
+      try {
+        // Verify token is still valid
+        const response = await fetch(`${API_BASE_URL}/verify-token`, {
+          headers: {
+            Authorization: `Bearer ${savedToken}`,
+          },
+        });
 
-            if (response.ok) {
-              authToken = savedToken;
-              userId = savedUserId;
-              showUserInfo();
-              return true;
-            } else {
-              // Token invalid, clear saved credentials
-              localStorage.removeItem("authToken");
-              localStorage.removeItem("userId");
-              showLoginForm();
-            }
-          } catch (error) {
-            console.log("Auto-login check failed:", error);
-            showLoginForm();
-          }
+        if (response.ok) {
+          authToken = savedToken;
+          userId = savedUserId;
+          showUserInfo();
+          return true;
         } else {
+          // Token invalid, clear saved credentials
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("appVersion");
+          localStorage.removeItem("lastUpdated");
           showLoginForm();
         }
-        return false;
-      }
-
-      // Show login form
-      function showLoginForm() {
-        authSection.style.display = "block";
-        loginForm.style.display = "block";
-        registerForm.style.display = "none";
-        userInfo.style.display = "none";
-        // Show table but disable interactions
-        document.querySelector("table").style.opacity = "0.6";
-        document.querySelector("table").style.pointerEvents = "none";
-      }
-
-      // Show user info when logged in
-      function showUserInfo() {
-        authSection.style.display = "block";
-        loginForm.style.display = "none";
-        registerForm.style.display = "none";
-        userInfo.style.display = "block";
-        currentUsername.textContent = userId;
-        // Enable table interactions
-        document.querySelector("table").style.opacity = "1";
-        document.querySelector("table").style.pointerEvents = "auto";
-      }
-
-      // Setup authentication event listeners
-      function setupAuthEventListeners() {
-        loginBtn.addEventListener("click", handleLogin);
-        showRegisterBtn.addEventListener("click", () => {
-          loginForm.style.display = "none";
-          registerForm.style.display = "block";
-        });
-        registerBtn.addEventListener("click", handleRegister);
-        showLoginBtn.addEventListener("click", () => {
-          registerForm.style.display = "none";
-          loginForm.style.display = "block";
-        });
-        logoutBtn.addEventListener("click", handleLogout);
-
-        // Enter key support
-        passwordInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") handleLogin();
-        });
-        regPasswordInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") handleRegister();
-        });
-        regConfirmPasswordInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") handleRegister();
-        });
-      }
-
-      // Handle user login
-      async function handleLogin() {
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value.trim();
-
-        if (!username || !password) {
-          alert("Please enter both username and password");
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API_BASE_URL}/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username, password }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            authToken = result.token;
-            userId = username;
-
-            // Save for auto-login
-            localStorage.setItem("authToken", authToken);
-            localStorage.setItem("userId", userId);
-
-            showUserInfo();
-            await loadData(); // Reload data for the logged-in user
-            renderTable();
-          } else {
-            alert(result.error || "Login failed");
-          }
-        } catch (error) {
-          console.error("Login error:", error);
-          alert("Login failed. Please try again.");
-        }
-      }
-
-      // Handle user registration
-      async function handleRegister() {
-        const username = regUsernameInput.value.trim();
-        const password = regPasswordInput.value.trim();
-        const confirmPassword = regConfirmPasswordInput.value.trim();
-
-        if (!username || !password) {
-          alert("Please enter both username and password");
-          return;
-        }
-
-        if (password !== confirmPassword) {
-          alert("Passwords do not match");
-          return;
-        }
-
-        if (password.length < 4) {
-          alert("Password must be at least 4 characters long");
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API_BASE_URL}/register`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username, password }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            alert("Registration successful! Please login.");
-            regUsernameInput.value = "";
-            regPasswordInput.value = "";
-            regConfirmPasswordInput.value = "";
-            registerForm.style.display = "none";
-            loginForm.style.display = "block";
-          } else {
-            alert(result.error || "Registration failed");
-          }
-        } catch (error) {
-          console.error("Registration error:", error);
-          alert("Registration failed. Please try again.");
-        }
-      }
-
-      // Handle user logout
-      function handleLogout() {
-        authToken = null;
-        userId = "default-user";
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userId");
+      } catch (error) {
+        console.log("Auto-login check failed:", error);
         showLoginForm();
-        initializeDefaultData(); // Reset to default data for anonymous user
+      }
+    } else {
+      showLoginForm();
+    }
+    return false;
+  }
+
+  // Show login form
+  function showLoginForm() {
+    authSection.style.display = "block";
+    loginForm.style.display = "block";
+    registerForm.style.display = "none";
+    userInfo.style.display = "none";
+    // Show table but disable interactions
+    document.querySelector("table").style.opacity = "0.6";
+    document.querySelector("table").style.pointerEvents = "none";
+  }
+
+  // Show user info when logged in
+  function showUserInfo() {
+    authSection.style.display = "block";
+    loginForm.style.display = "none";
+    registerForm.style.display = "none";
+    userInfo.style.display = "block";
+    currentUsername.textContent = userId;
+    // Enable table interactions
+    document.querySelector("table").style.opacity = "1";
+    document.querySelector("table").style.pointerEvents = "auto";
+  }
+
+  // Setup authentication event listeners
+  function setupAuthEventListeners() {
+    loginBtn.addEventListener("click", handleLogin);
+    showRegisterBtn.addEventListener("click", () => {
+      loginForm.style.display = "none";
+      registerForm.style.display = "block";
+    });
+    registerBtn.addEventListener("click", handleRegister);
+    showLoginBtn.addEventListener("click", () => {
+      registerForm.style.display = "none";
+      loginForm.style.display = "block";
+    });
+    logoutBtn.addEventListener("click", handleLogout);
+
+    // Enter key support
+    passwordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleLogin();
+    });
+    regPasswordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleRegister();
+    });
+    regConfirmPasswordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleRegister();
+    });
+  }
+
+  // Handle user login
+  async function handleLogin() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+      alert("Please enter both username and password");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        authToken = result.token;
+        userId = username;
+
+        // Save for auto-login
+        localStorage.setItem("authToken", authToken);
+        localStorage.setItem("userId", userId);
+
+        showUserInfo();
+        await loadData(); // Reload data for the logged-in user
         renderTable();
+      } else {
+        alert(result.error || "Login failed");
       }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Login failed. Please try again.");
+    }
+  }
 
-      // Load data from localStorage and MongoDB
-      async function loadData() {
-        // First try to load from localStorage (existing logic)
-        const savedData = localStorage.getItem("dsaChecklistData");
-        if (savedData) {
-          appData = JSON.parse(savedData);
-          // Ensure linksArray exists for all days (migration for existing data)
-          appData.forEach((dayData) => {
-            if (!dayData.linksArray) {
-              dayData.linksArray = [];
-              // Migrate existing links text to linksArray if it exists
-              if (dayData.links && dayData.links.trim() !== "") {
-                const links = dayData.links
-                  .split("\n")
-                  .filter((link) => link.trim() !== "");
-                links.forEach((link) => {
-                  dayData.linksArray.push({
-                    url: link.trim(),
-                    text: extractDisplayText(link.trim()),
-                  });
-                });
-              }
-            }
-          });
-          // Try to sync with MongoDB in the background if logged in
-          if (authToken) {
-            setTimeout(() => {
-              syncWithMongoDB();
-            }, 1000);
+  // Handle user registration
+  async function handleRegister() {
+    const username = regUsernameInput.value.trim();
+    const password = regPasswordInput.value.trim();
+    const confirmPassword = regConfirmPasswordInput.value.trim();
+
+    if (!username || !password) {
+      alert("Please enter both username and password");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 4) {
+      alert("Password must be at least 4 characters long");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Registration successful! Please login.");
+        regUsernameInput.value = "";
+        regPasswordInput.value = "";
+        regConfirmPasswordInput.value = "";
+        registerForm.style.display = "none";
+        loginForm.style.display = "block";
+      } else {
+        alert(result.error || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Registration failed. Please try again.");
+    }
+  }
+
+  // Handle user logout
+  function handleLogout() {
+    authToken = null;
+    userId = "default-user";
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("appVersion");
+    localStorage.removeItem("lastUpdated");
+    showLoginForm();
+    initializeDefaultData(); // Reset to default data for anonymous user
+    renderTable();
+  }
+
+  // Load data from localStorage and MongoDB
+  async function loadData() {
+    // Load sync state from localStorage
+    const savedVersion = localStorage.getItem("appVersion");
+    const savedLastUpdated = localStorage.getItem("lastUpdated");
+    
+    if (savedVersion) currentVersion = parseInt(savedVersion);
+    if (savedLastUpdated) lastUpdated = savedLastUpdated;
+
+    // First try to load from localStorage (existing logic)
+    const savedData = localStorage.getItem("dsaChecklistData");
+    if (savedData) {
+      appData = JSON.parse(savedData);
+      // Ensure linksArray exists for all days (migration for existing data)
+      appData.forEach((dayData) => {
+        if (!dayData.linksArray) {
+          dayData.linksArray = [];
+          // Migrate existing links text to linksArray if it exists
+          if (dayData.links && dayData.links.trim() !== "") {
+            const links = dayData.links
+              .split("\n")
+              .filter((link) => link.trim() !== "");
+            links.forEach((link) => {
+              dayData.linksArray.push({
+                url: link.trim(),
+                text: extractDisplayText(link.trim()),
+              });
+            });
           }
-        } else {
-          // If no localStorage data, try to load from MongoDB if logged in
-          if (authToken) {
-            try {
-              const response = await fetch(
-                `${API_BASE_URL}/data?userId=${userId}`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${authToken}`,
-                  },
-                }
-              );
-              const result = await response.json();
-              if (result.success) {
-                appData = result.data;
-                // Save to localStorage for offline use
-                localStorage.setItem(
-                  "dsaChecklistData",
-                  JSON.stringify(appData)
-                );
-                updateSyncStatus("synced", "Data loaded from cloud");
-              } else {
-                throw new Error(result.error);
-              }
-            } catch (error) {
-              console.log(
-                "Failed to load from MongoDB, using default data:",
-                error
-              );
-              // Initialize with default data for 100 days
-              initializeDefaultData();
-            }
-          } else {
-            // Not logged in, use default data
-            initializeDefaultData();
-          }
         }
+      });
+      
+      // Try to sync with MongoDB in the background if logged in
+      if (authToken) {
+        setTimeout(() => {
+          syncWithMongoDB();
+        }, 1000);
       }
-
-      // Initialize default data
-      function initializeDefaultData() {
-        appData = [];
-        for (let day = 1; day <= TOTAL_DAYS; day++) {
-          appData.push({
-            day: day,
-            questions: DEFAULT_QUESTIONS.map((q) => ({
-              text: q.text,
-              link: q.link,
-              completed: false,
-            })),
-            tags: [],
-            links: "",
-            linksArray: [],
-          });
-        }
-        saveData();
-      }
-
-      // Save data to both localStorage and MongoDB
-      async function saveData() {
-        // Save to localStorage (existing logic)
-        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-
-        // Also save to MongoDB if logged in
-        if (authToken) {
-          await saveToMongoDB();
-        }
-      }
-
-      // Save data to MongoDB
-      async function saveToMongoDB() {
-        try {
-          updateSyncStatus("syncing", "Syncing...");
-          const response = await fetch(`${API_BASE_URL}/data`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({
-              userId: userId,
-              data: appData,
-            }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            updateSyncStatus("synced", "Data synced with cloud");
-          } else {
-            throw new Error(result.error);
-          }
-        } catch (error) {
-          console.log("Failed to save to MongoDB:", error);
-          updateSyncStatus("error", "Failed to sync with cloud");
-          // Retry after 5 seconds
-          setTimeout(() => {
-            saveToMongoDB();
-          }, 5000);
-        }
-      }
-
-      // Sync with MongoDB (for conflict resolution)
-      async function syncWithMongoDB() {
+    } else {
+      // If no localStorage data, try to load from MongoDB if logged in
+      if (authToken) {
         try {
           const response = await fetch(
             `${API_BASE_URL}/data?userId=${userId}`,
@@ -1130,650 +1056,922 @@
           );
           const result = await response.json();
           if (result.success) {
-            const cloudData = result.data;
-            const localData = appData;
-            // Simple conflict resolution: use the most recently updated data
-            // For now, we'll keep local changes and push to cloud
-            await saveToMongoDB();
+            appData = result.data;
+            currentVersion = result.version || 1;
+            lastUpdated = result.lastUpdated || new Date().toISOString();
+            
+            // Save to localStorage for offline use
+            localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+            localStorage.setItem("appVersion", currentVersion.toString());
+            localStorage.setItem("lastUpdated", lastUpdated);
+            
+            updateSyncStatus("synced", "Data loaded from cloud");
+          } else {
+            throw new Error(result.error);
           }
         } catch (error) {
-          console.log("Sync with MongoDB failed:", error);
-          updateSyncStatus("offline", "Working offline");
+          console.log("Failed to load from MongoDB, using default data:", error);
+          // Initialize with default data for 100 days
+          initializeDefaultData();
         }
+      } else {
+        // Not logged in, use default data
+        initializeDefaultData();
       }
+    }
+  }
 
-      // Update sync status indicator
-      function updateSyncStatus(status, message) {
-        const syncDot = syncStatus.querySelector(".sync-dot");
-        const statusText = syncStatus.querySelector("span");
-        // Remove all status classes
-        syncDot.classList.remove("synced", "syncing", "error", "offline");
-        switch (status) {
-          case "synced":
-            syncDot.classList.add("synced");
-            statusText.textContent = message || "Synced";
-            break;
-          case "syncing":
-            syncDot.classList.add("syncing");
-            statusText.textContent = message || "Syncing...";
-            break;
-          case "error":
-            syncDot.classList.add("error");
-            statusText.textContent = message || "Sync failed";
-            break;
-          case "offline":
-            syncDot.classList.add("offline");
-            statusText.textContent = message || "Offline";
-            break;
-        }
-      }
-
-      // Render table function (unchanged from your original code)
-      function renderTable() {
-        tableBody.innerHTML = "";
-        appData.forEach((dayData, index) => {
-          const row = document.createElement("tr");
-
-          // Day column
-          const dayCell = document.createElement("td");
-          dayCell.className = "day-cell";
-          dayCell.textContent = dayData.day;
-          row.appendChild(dayCell);
-
-          // Questions column - MODIFIED to include delete buttons
-          const questionsCell = document.createElement("td");
-          questionsCell.className = "questions-cell";
-          dayData.questions.forEach((question, qIndex) => {
-            const questionItem = document.createElement("div");
-            questionItem.className = "question-item";
-
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.className = "question-checkbox";
-            checkbox.checked = question.completed;
-            checkbox.addEventListener("change", () => {
-              toggleQuestionCompletion(index, qIndex);
-            });
-
-            const questionContent = document.createElement("div");
-            questionContent.className = "question-content";
-
-            const questionText = document.createElement("span");
-            questionText.className = "question-text";
-
-            if (question.link) {
-              const questionLink = document.createElement("a");
-              questionLink.href = question.link;
-              questionLink.target = "_blank";
-              questionLink.rel = "noopener noreferrer";
-              questionLink.textContent = question.text;
-              questionLink.className = "question-link";
-              questionText.appendChild(questionLink);
-            } else {
-              questionText.textContent = question.text;
-            }
-
-            questionText.addEventListener("click", (e) => {
-              if (!e.target.classList.contains("question-link")) {
-                editQuestionText(index, qIndex, questionText);
-              }
-            });
-
-            // Edit link button
-            const editLinkBtn = document.createElement("button");
-            editLinkBtn.textContent = "🔗";
-            editLinkBtn.style.background = "none";
-            editLinkBtn.style.border = "none";
-            editLinkBtn.style.cursor = "pointer";
-            editLinkBtn.style.marginLeft = "8px";
-            editLinkBtn.style.opacity = "0.7";
-            editLinkBtn.title = "Edit link";
-            editLinkBtn.addEventListener("click", () => {
-              openLinkModal(index, qIndex);
-            });
-
-            // DELETE QUESTION BUTTON - NEW FEATURE
-            const deleteQuestionBtn = document.createElement("button");
-            deleteQuestionBtn.textContent = "🗑️";
-            deleteQuestionBtn.style.background = "none";
-            deleteQuestionBtn.style.border = "none";
-            deleteQuestionBtn.style.cursor = "pointer";
-            deleteQuestionBtn.style.marginLeft = "4px";
-            deleteQuestionBtn.style.opacity = "0.7";
-            deleteQuestionBtn.title = "Delete question";
-            deleteQuestionBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              deleteQuestion(index, qIndex);
-            });
-
-            questionText.appendChild(editLinkBtn);
-            questionText.appendChild(deleteQuestionBtn); // Add delete button
-            questionContent.appendChild(questionText);
-
-            if (question.link) {
-              const linkDisplay = document.createElement("div");
-              linkDisplay.style.fontSize = "0.8rem";
-              linkDisplay.style.opacity = "0.7";
-              linkDisplay.style.marginTop = "2px";
-              linkDisplay.textContent = question.link;
-              questionContent.appendChild(linkDisplay);
-            }
-
-            questionItem.appendChild(checkbox);
-            questionItem.appendChild(questionContent);
-            questionsCell.appendChild(questionItem);
-          });
-
-          const addQuestionBtn = document.createElement("button");
-          addQuestionBtn.className = "add-question-btn";
-          addQuestionBtn.textContent = "+ Add Question";
-          addQuestionBtn.addEventListener("click", () => {
-            addNewQuestion(index);
-          });
-          questionsCell.appendChild(addQuestionBtn);
-          row.appendChild(questionsCell);
-
-          // Status column
-          const statusCell = document.createElement("td");
-          statusCell.className = "status-cell";
-          statusCell.textContent = getStatusEmoji(dayData.questions);
-          row.appendChild(statusCell);
-
-          // Tags column
-          const tagsCell = document.createElement("td");
-          tagsCell.className = "tags-cell";
-          dayData.tags.forEach((tag, tagIndex) => {
-            const tagElement = document.createElement("span");
-            tagElement.className = "tag";
-            tagElement.style.backgroundColor = tag.color;
-            tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
-            tagsCell.appendChild(tagElement);
-          });
-
-          const addTagInput = document.createElement("input");
-          addTagInput.type = "text";
-          addTagInput.className = "add-tag-input";
-          addTagInput.placeholder = "Add tag...";
-          addTagInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && addTagInput.value.trim() !== "") {
-              addNewTag(index, addTagInput.value.trim());
-              addTagInput.value = "";
-            }
-          });
-          tagsCell.appendChild(addTagInput);
-          row.appendChild(tagsCell);
-
-          // Links column
-          const linksCell = document.createElement("td");
-          linksCell.className = "links-cell";
-
-          // Create input for adding new links
-          const linkInput = document.createElement("input");
-          linkInput.type = "text";
-          linkInput.className = "add-link-input";
-          linkInput.placeholder = "Enter URL and press Enter to add...";
-          linkInput.style.width = "100%";
-          linkInput.style.marginBottom = "8px";
-          linkInput.style.padding = "6px 8px";
-          linkInput.style.background = "var(--bg-color)";
-          linkInput.style.border = "1px solid var(--border-color)";
-          linkInput.style.borderRadius = "4px";
-          linkInput.style.color = "var(--text-color)";
-          linkInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && linkInput.value.trim() !== "") {
-              addNewLink(index, linkInput.value.trim());
-              linkInput.value = "";
-            }
-          });
-          linksCell.appendChild(linkInput);
-
-          // Create tags container
-          const tagsContainer = document.createElement("div");
-          tagsContainer.className = "link-tags-container";
-
-          // Initialize linksArray if it doesn't exist (for backward compatibility)
-          if (!dayData.linksArray) {
-            dayData.linksArray = [];
-            // Migrate existing links text to linksArray
-            if (dayData.links && dayData.links.trim() !== "") {
-              const links = dayData.links
-                .split("\n")
-                .filter((link) => link.trim() !== "");
-              links.forEach((link) => {
-                dayData.linksArray.push({
-                  url: link.trim(),
-                  text: extractDisplayText(link.trim()),
-                });
-              });
-            }
-          }
-
-          // Display existing links as tags
-          if (dayData.linksArray.length > 0) {
-            dayData.linksArray.forEach((link, linkIndex) => {
-              const linkTag = document.createElement("div");
-              linkTag.className = "link-tag-container";
-              linkTag.style.display = "inline-block";
-              linkTag.style.marginRight = "6px";
-              linkTag.style.marginBottom = "6px";
-
-              const tagElement = document.createElement("a");
-              tagElement.href = link.url;
-              tagElement.target = "_blank";
-              tagElement.rel = "noopener noreferrer";
-              tagElement.style.display = "inline-flex";
-              tagElement.style.alignItems = "center";
-              tagElement.style.backgroundColor = "var(--tag-bg)";
-              tagElement.style.color = "white";
-              tagElement.style.padding = "4px 8px";
-              tagElement.style.borderRadius = "12px";
-              tagElement.style.fontSize = "0.8rem";
-              tagElement.style.textDecoration = "none";
-              tagElement.style.cursor = "pointer";
-              tagElement.style.transition = "opacity 0.2s";
-              tagElement.textContent = link.text;
-              tagElement.title = link.url;
-              tagElement.addEventListener("mouseenter", () => {
-                tagElement.style.opacity = "0.8";
-              });
-              tagElement.addEventListener("mouseleave", () => {
-                tagElement.style.opacity = "1";
-              });
-
-              // Add remove button
-              const removeBtn = document.createElement("span");
-              removeBtn.innerHTML = " &times;";
-              removeBtn.style.cursor = "pointer";
-              removeBtn.style.marginLeft = "4px";
-              removeBtn.style.fontWeight = "bold";
-              removeBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                removeLink(index, linkIndex);
-              });
-              tagElement.appendChild(removeBtn);
-              linkTag.appendChild(tagElement);
-              tagsContainer.appendChild(linkTag);
-            });
-          }
-          linksCell.appendChild(tagsContainer);
-          row.appendChild(linksCell);
-
-          tableBody.appendChild(row);
-        });
-      }
-
-      // NEW FUNCTION: Delete a question
-      function deleteQuestion(dayIndex, questionIndex) {
-        if (confirm("Are you sure you want to delete this question?")) {
-          appData[dayIndex].questions.splice(questionIndex, 1);
-          saveData();
-          renderTable();
-        }
-      }
-
-      // NEW FUNCTION: Add a new day
-      function addNewDay() {
-        const newDayNumber =
-          appData.length > 0
-            ? Math.max(...appData.map((day) => day.day)) + 1
-            : 1;
-
-        const newDay = {
-          day: newDayNumber,
-          questions: [],
-          tags: [],
-          links: "",
-          linksArray: [],
-        };
-
-        appData.push(newDay);
-        saveData();
-        renderTable();
-
-        // Scroll to the new day
-        setTimeout(() => {
-          const rows = tableBody.querySelectorAll("tr");
-          if (rows.length > 0) {
-            rows[rows.length - 1].scrollIntoView({ behavior: "smooth" });
-          }
-        }, 100);
-      }
-      // Toggle question completion status
-      function toggleQuestionCompletion(dayIndex, questionIndex) {
-        appData[dayIndex].questions[questionIndex].completed =
-          !appData[dayIndex].questions[questionIndex].completed;
-        saveData();
-        updateStatusCell(dayIndex);
-      }
-
-      // Edit question text
-      function editQuestionText(dayIndex, questionIndex, element) {
-        const currentText = appData[dayIndex].questions[questionIndex].text;
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = currentText;
-        input.className = "question-text editing";
-
-        element.parentNode.replaceChild(input, element);
-        input.focus();
-
-        const saveEdit = () => {
-          const newText = input.value.trim();
-          if (newText !== "") {
-            appData[dayIndex].questions[questionIndex].text = newText;
-            saveData();
-
-            // Re-render the table to update the question display
-            renderTable();
-          } else {
-            // If empty, revert to original text
-            input.parentNode.replaceChild(element, input);
-          }
-        };
-
-        input.addEventListener("blur", saveEdit);
-        input.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") {
-            saveEdit();
-          }
-        });
-      }
-
-      // Add a new question to a day
-      function addNewQuestion(dayIndex) {
-        appData[dayIndex].questions.push({
-          text: "New Question",
-          link: "",
+  // Initialize default data
+  function initializeDefaultData() {
+    appData = [];
+    for (let day = 1; day <= TOTAL_DAYS; day++) {
+      appData.push({
+        day: day,
+        questions: DEFAULT_QUESTIONS.map((q) => ({
+          text: q.text,
+          link: q.link,
           completed: false,
-        });
-        saveData();
+        })),
+        tags: [],
+        links: "",
+        linksArray: [],
+      });
+    }
+    saveData();
+  }
+
+  // Save data to both localStorage and MongoDB
+  async function saveData() {
+    // Mark that we have pending changes
+    pendingChanges = true;
+    
+    // Save to localStorage (existing logic)
+    localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+    localStorage.setItem("appVersion", currentVersion.toString());
+    localStorage.setItem("lastUpdated", lastUpdated);
+
+    // Also save to MongoDB if logged in
+    if (authToken) {
+      await saveToMongoDB();
+    } else {
+      updateSyncStatus("offline", "Changes saved locally");
+    }
+  }
+
+  // Save data to MongoDB with conflict detection
+  async function saveToMongoDB() {
+    if (isSyncing) {
+      console.log("Already syncing, skipping...");
+      return;
+    }
+
+    isSyncing = true;
+    
+    try {
+      updateSyncStatus("syncing", "Syncing...");
+      
+      const response = await fetch(`${API_BASE_URL}/data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          userId: userId,
+          data: appData,
+          clientVersion: currentVersion,
+          lastUpdated: lastUpdated
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local version with server version
+        currentVersion = result.version;
+        lastUpdated = result.lastUpdated;
+        
+        // Save updated version info
+        localStorage.setItem("appVersion", currentVersion.toString());
+        localStorage.setItem("lastUpdated", lastUpdated);
+        
+        pendingChanges = false;
+        updateSyncStatus("synced", "Data synced with cloud");
+      } else if (result.error === "CONFLICT: Your local data is outdated") {
+        // Handle conflict - server data is newer
+        handleSyncConflict(result);
+      } else {
+        throw new Error(result.error || "Sync failed");
+      }
+    } catch (error) {
+      console.log("Failed to save to MongoDB:", error);
+      updateSyncStatus("error", "Failed to sync with cloud");
+      
+      // Retry after 5 seconds
+      setTimeout(() => {
+        if (authToken && pendingChanges) {
+          saveToMongoDB();
+        }
+      }, 5000);
+    } finally {
+      isSyncing = false;
+    }
+  }
+
+  // Handle sync conflict when server has newer data
+  function handleSyncConflict(conflictResult) {
+    updateSyncStatus("error", "Conflict detected");
+    
+    // Ask user what to do
+    const userChoice = confirm(
+      "Your local data is outdated. The server has newer changes. " +
+      "Would you like to load the server data? (Click OK to load server data, Cancel to keep local data)"
+    );
+    
+    if (userChoice) {
+      // User wants to use server data
+      appData = conflictResult.serverData;
+      currentVersion = conflictResult.serverVersion;
+      lastUpdated = conflictResult.serverLastUpdated;
+      
+      // Save to localStorage
+      localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+      localStorage.setItem("appVersion", currentVersion.toString());
+      localStorage.setItem("lastUpdated", lastUpdated);
+      
+      // Re-render table
+      renderTable();
+      updateSyncStatus("synced", "Loaded server data");
+    } else {
+      // User wants to keep local data - force push
+      forcePushToServer();
+    }
+  }
+
+  // Force push local data to server (overwrite server data)
+  async function forcePushToServer() {
+    try {
+      updateSyncStatus("syncing", "Force pushing changes...");
+      
+      // Increment version to indicate this is a forced update
+      currentVersion = (currentVersion || 1) + 1000; // Large increment to ensure it's seen as newer
+      lastUpdated = new Date().toISOString();
+      
+      const response = await fetch(`${API_BASE_URL}/data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          userId: userId,
+          data: appData,
+          clientVersion: currentVersion,
+          lastUpdated: lastUpdated
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        currentVersion = result.version;
+        lastUpdated = result.lastUpdated;
+        
+        localStorage.setItem("appVersion", currentVersion.toString());
+        localStorage.setItem("lastUpdated", lastUpdated);
+        
+        pendingChanges = false;
+        updateSyncStatus("synced", "Changes force pushed to cloud");
+      } else {
+        throw new Error(result.error || "Force push failed");
+      }
+    } catch (error) {
+      console.log("Force push failed:", error);
+      updateSyncStatus("error", "Force push failed");
+    }
+  }
+
+  // Sync with MongoDB (for conflict resolution)
+  async function syncWithMongoDB() {
+    if (isSyncing || !authToken) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/data?userId=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const serverVersion = result.version || 1;
+        const serverLastUpdated = result.lastUpdated;
+        
+        // Check if server has newer data
+        if (serverVersion > currentVersion) {
+          console.log("Server has newer data, updating local copy");
+          appData = result.data;
+          currentVersion = serverVersion;
+          lastUpdated = serverLastUpdated;
+          
+          localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+          localStorage.setItem("appVersion", currentVersion.toString());
+          localStorage.setItem("lastUpdated", lastUpdated);
+          
+          renderTable();
+          updateSyncStatus("synced", "Data updated from cloud");
+        } else if (pendingChanges) {
+          // We have local changes that need to be pushed
+          await saveToMongoDB();
+        } else {
+          updateSyncStatus("synced", "Data is up to date");
+        }
+      }
+    } catch (error) {
+      console.log("Background sync failed:", error);
+      updateSyncStatus("offline", "Working offline");
+    }
+  }
+
+  // Force sync from server (manual sync button)
+  async function forceSyncFromServer() {
+    if (!authToken) return;
+
+    try {
+      updateSyncStatus("syncing", "Syncing from server...");
+      
+      const response = await fetch(`${API_BASE_URL}/force-sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ userId: userId }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        appData = result.data;
+        currentVersion = result.version || 1;
+        lastUpdated = result.lastUpdated || new Date().toISOString();
+        
+        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+        localStorage.setItem("appVersion", currentVersion.toString());
+        localStorage.setItem("lastUpdated", lastUpdated);
+        
         renderTable();
+        updateSyncStatus("synced", "Data synced from cloud");
+      } else {
+        throw new Error(result.error || "Sync failed");
       }
+    } catch (error) {
+      console.log("Force sync failed:", error);
+      updateSyncStatus("error", "Sync failed");
+    }
+  }
 
-      // Update status cell based on question completion
-      function updateStatusCell(dayIndex) {
-        const statusCell =
-          tableBody.children[dayIndex].querySelector(".status-cell");
-        statusCell.textContent = getStatusEmoji(appData[dayIndex].questions);
-      }
+  // Update sync status indicator
+  function updateSyncStatus(status, message) {
+    const syncDot = syncStatus.querySelector(".sync-dot");
+    const statusText = syncStatus.querySelector("span");
+    
+    // Remove all status classes
+    syncDot.classList.remove("synced", "syncing", "error", "offline");
+    
+    switch (status) {
+      case "synced":
+        syncDot.classList.add("synced");
+        statusText.textContent = message || "Synced";
+        break;
+      case "syncing":
+        syncDot.classList.add("syncing");
+        statusText.textContent = message || "Syncing...";
+        break;
+      case "error":
+        syncDot.classList.add("error");
+        statusText.textContent = message || "Sync failed";
+        break;
+      case "offline":
+        syncDot.classList.add("offline");
+        statusText.textContent = message || "Offline";
+        break;
+    }
+  }
 
-      // Get status emoji based on question completion
-      function getStatusEmoji(questions) {
-        if (questions.length === 0) return "😐";
-        const allCompleted = questions.every((q) => q.completed);
-        return allCompleted ? "😊" : "😞";
-      }
+  // Render table function
+  function renderTable() {
+    tableBody.innerHTML = "";
+    appData.forEach((dayData, index) => {
+      const row = document.createElement("tr");
 
-      // Add a new tag to a day
-      function addNewTag(dayIndex, tagText) {
-        // Check for duplicates
-        if (appData[dayIndex].tags.some((tag) => tag.text === tagText)) {
-          return;
+      // Day column
+      const dayCell = document.createElement("td");
+      dayCell.className = "day-cell";
+      dayCell.textContent = dayData.day;
+      row.appendChild(dayCell);
+
+      // Questions column - MODIFIED to include delete buttons
+      const questionsCell = document.createElement("td");
+      questionsCell.className = "questions-cell";
+      dayData.questions.forEach((question, qIndex) => {
+        const questionItem = document.createElement("div");
+        questionItem.className = "question-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "question-checkbox";
+        checkbox.checked = question.completed;
+        checkbox.addEventListener("change", () => {
+          toggleQuestionCompletion(index, qIndex);
+        });
+
+        const questionContent = document.createElement("div");
+        questionContent.className = "question-content";
+
+        const questionText = document.createElement("span");
+        questionText.className = "question-text";
+
+        if (question.link) {
+          const questionLink = document.createElement("a");
+          questionLink.href = question.link;
+          questionLink.target = "_blank";
+          questionLink.rel = "noopener noreferrer";
+          questionLink.textContent = question.text;
+          questionLink.className = "question-link";
+          questionText.appendChild(questionLink);
+        } else {
+          questionText.textContent = question.text;
         }
 
-        // Generate random color for tag
-        const colors = [
-          "#58A6FF",
-          "#3FB950",
-          "#D29922",
-          "#DB61A2",
-          "#8E6CDF",
-          "#F85149",
-          "#FF8C37",
-          "#1F6FEB",
-        ];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-        appData[dayIndex].tags.push({
-          text: tagText,
-          color: randomColor,
+        questionText.addEventListener("click", (e) => {
+          if (!e.target.classList.contains("question-link")) {
+            editQuestionText(index, qIndex, questionText);
+          }
         });
-        saveData();
-        renderTable();
-      }
 
-      // Update links for a day
-      function updateLinks(dayIndex, linksText) {
-        appData[dayIndex].links = linksText;
-        saveData();
-      }
+        // Edit link button
+        const editLinkBtn = document.createElement("button");
+        editLinkBtn.textContent = "🔗";
+        editLinkBtn.style.background = "none";
+        editLinkBtn.style.border = "none";
+        editLinkBtn.style.cursor = "pointer";
+        editLinkBtn.style.marginLeft = "8px";
+        editLinkBtn.style.opacity = "0.7";
+        editLinkBtn.title = "Edit link";
+        editLinkBtn.addEventListener("click", () => {
+          openLinkModal(index, qIndex);
+        });
 
-      // Add a new link tag when Enter is pressed
-      function addNewLink(dayIndex, linkText) {
-        if (!linkText.trim()) return;
+        // DELETE QUESTION BUTTON - NEW FEATURE
+        const deleteQuestionBtn = document.createElement("button");
+        deleteQuestionBtn.textContent = "🗑️";
+        deleteQuestionBtn.style.background = "none";
+        deleteQuestionBtn.style.border = "none";
+        deleteQuestionBtn.style.cursor = "pointer";
+        deleteQuestionBtn.style.marginLeft = "4px";
+        deleteQuestionBtn.style.opacity = "0.7";
+        deleteQuestionBtn.title = "Delete question";
+        deleteQuestionBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteQuestion(index, qIndex);
+        });
 
-        // Add to links array if it doesn't exist
-        if (!appData[dayIndex].linksArray) {
-          appData[dayIndex].linksArray = [];
+        questionText.appendChild(editLinkBtn);
+        questionText.appendChild(deleteQuestionBtn); // Add delete button
+        questionContent.appendChild(questionText);
+
+        if (question.link) {
+          const linkDisplay = document.createElement("div");
+          linkDisplay.style.fontSize = "0.8rem";
+          linkDisplay.style.opacity = "0.7";
+          linkDisplay.style.marginTop = "2px";
+          linkDisplay.textContent = question.link;
+          questionContent.appendChild(linkDisplay);
         }
 
-        // Check for duplicates
+        questionItem.appendChild(checkbox);
+        questionItem.appendChild(questionContent);
+        questionsCell.appendChild(questionItem);
+      });
+
+      const addQuestionBtn = document.createElement("button");
+      addQuestionBtn.className = "add-question-btn";
+      addQuestionBtn.textContent = "+ Add Question";
+      addQuestionBtn.addEventListener("click", () => {
+        addNewQuestion(index);
+      });
+      questionsCell.appendChild(addQuestionBtn);
+      row.appendChild(questionsCell);
+
+      // Status column
+      const statusCell = document.createElement("td");
+      statusCell.className = "status-cell";
+      statusCell.textContent = getStatusEmoji(dayData.questions);
+      row.appendChild(statusCell);
+
+      // Tags column
+      const tagsCell = document.createElement("td");
+      tagsCell.className = "tags-cell";
+      dayData.tags.forEach((tag, tagIndex) => {
+        const tagElement = document.createElement("span");
+        tagElement.className = "tag";
+        tagElement.style.backgroundColor = tag.color;
+        tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
+        tagsCell.appendChild(tagElement);
+      });
+
+      const addTagInput = document.createElement("input");
+      addTagInput.type = "text";
+      addTagInput.className = "add-tag-input";
+      addTagInput.placeholder = "Add tag...";
+      addTagInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && addTagInput.value.trim() !== "") {
+          addNewTag(index, addTagInput.value.trim());
+          addTagInput.value = "";
+        }
+      });
+      tagsCell.appendChild(addTagInput);
+      row.appendChild(tagsCell);
+
+      // Links column
+      const linksCell = document.createElement("td");
+      linksCell.className = "links-cell";
+
+      // Create input for adding new links
+      const linkInput = document.createElement("input");
+      linkInput.type = "text";
+      linkInput.className = "add-link-input";
+      linkInput.placeholder = "Enter URL and press Enter to add...";
+      linkInput.style.width = "100%";
+      linkInput.style.marginBottom = "8px";
+      linkInput.style.padding = "6px 8px";
+      linkInput.style.background = "var(--bg-color)";
+      linkInput.style.border = "1px solid var(--border-color)";
+      linkInput.style.borderRadius = "4px";
+      linkInput.style.color = "var(--text-color)";
+      linkInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && linkInput.value.trim() !== "") {
+          addNewLink(index, linkInput.value.trim());
+          linkInput.value = "";
+        }
+      });
+      linksCell.appendChild(linkInput);
+
+      // Create tags container
+      const tagsContainer = document.createElement("div");
+      tagsContainer.className = "link-tags-container";
+
+      // Initialize linksArray if it doesn't exist (for backward compatibility)
+      if (!dayData.linksArray) {
+        dayData.linksArray = [];
+        // Migrate existing links text to linksArray
+        if (dayData.links && dayData.links.trim() !== "") {
+          const links = dayData.links
+            .split("\n")
+            .filter((link) => link.trim() !== "");
+          links.forEach((link) => {
+            dayData.linksArray.push({
+              url: link.trim(),
+              text: extractDisplayText(link.trim()),
+            });
+          });
+        }
+      }
+
+      // Display existing links as tags
+      if (dayData.linksArray.length > 0) {
+        dayData.linksArray.forEach((link, linkIndex) => {
+          const linkTag = document.createElement("div");
+          linkTag.className = "link-tag-container";
+          linkTag.style.display = "inline-block";
+          linkTag.style.marginRight = "6px";
+          linkTag.style.marginBottom = "6px";
+
+          const tagElement = document.createElement("a");
+          tagElement.href = link.url;
+          tagElement.target = "_blank";
+          tagElement.rel = "noopener noreferrer";
+          tagElement.style.display = "inline-flex";
+          tagElement.style.alignItems = "center";
+          tagElement.style.backgroundColor = "var(--tag-bg)";
+          tagElement.style.color = "white";
+          tagElement.style.padding = "4px 8px";
+          tagElement.style.borderRadius = "12px";
+          tagElement.style.fontSize = "0.8rem";
+          tagElement.style.textDecoration = "none";
+          tagElement.style.cursor = "pointer";
+          tagElement.style.transition = "opacity 0.2s";
+          tagElement.textContent = link.text;
+          tagElement.title = link.url;
+          tagElement.addEventListener("mouseenter", () => {
+            tagElement.style.opacity = "0.8";
+          });
+          tagElement.addEventListener("mouseleave", () => {
+            tagElement.style.opacity = "1";
+          });
+
+          // Add remove button
+          const removeBtn = document.createElement("span");
+          removeBtn.innerHTML = " &times;";
+          removeBtn.style.cursor = "pointer";
+          removeBtn.style.marginLeft = "4px";
+          removeBtn.style.fontWeight = "bold";
+          removeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removeLink(index, linkIndex);
+          });
+          tagElement.appendChild(removeBtn);
+          linkTag.appendChild(tagElement);
+          tagsContainer.appendChild(linkTag);
+        });
+      }
+      linksCell.appendChild(tagsContainer);
+      row.appendChild(linksCell);
+
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Delete a question
+  function deleteQuestion(dayIndex, questionIndex) {
+    if (confirm("Are you sure you want to delete this question?")) {
+      appData[dayIndex].questions.splice(questionIndex, 1);
+      saveData();
+      renderTable();
+    }
+  }
+
+  // Add a new day
+  function addNewDay() {
+    const newDayNumber =
+      appData.length > 0
+        ? Math.max(...appData.map((day) => day.day)) + 1
+        : 1;
+
+    const newDay = {
+      day: newDayNumber,
+      questions: [],
+      tags: [],
+      links: "",
+      linksArray: [],
+    };
+
+    appData.push(newDay);
+    saveData();
+    renderTable();
+
+    // Scroll to the new day
+    setTimeout(() => {
+      const rows = tableBody.querySelectorAll("tr");
+      if (rows.length > 0) {
+        rows[rows.length - 1].scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  }
+
+  // Toggle question completion status
+  function toggleQuestionCompletion(dayIndex, questionIndex) {
+    appData[dayIndex].questions[questionIndex].completed =
+      !appData[dayIndex].questions[questionIndex].completed;
+    saveData();
+    updateStatusCell(dayIndex);
+  }
+
+  // Edit question text
+  function editQuestionText(dayIndex, questionIndex, element) {
+    const currentText = appData[dayIndex].questions[questionIndex].text;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = currentText;
+    input.className = "question-text editing";
+
+    element.parentNode.replaceChild(input, element);
+    input.focus();
+
+    const saveEdit = () => {
+      const newText = input.value.trim();
+      if (newText !== "") {
+        appData[dayIndex].questions[questionIndex].text = newText;
+        saveData();
+
+        // Re-render the table to update the question display
+        renderTable();
+      } else {
+        // If empty, revert to original text
+        input.parentNode.replaceChild(element, input);
+      }
+    };
+
+    input.addEventListener("blur", saveEdit);
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        saveEdit();
+      }
+    });
+  }
+
+  // Add a new question to a day
+  function addNewQuestion(dayIndex) {
+    appData[dayIndex].questions.push({
+      text: "New Question",
+      link: "",
+      completed: false,
+    });
+    saveData();
+    renderTable();
+  }
+
+  // Update status cell based on question completion
+  function updateStatusCell(dayIndex) {
+    const statusCell =
+      tableBody.children[dayIndex].querySelector(".status-cell");
+    statusCell.textContent = getStatusEmoji(appData[dayIndex].questions);
+  }
+
+  // Get status emoji based on question completion
+  function getStatusEmoji(questions) {
+    if (questions.length === 0) return "😐";
+    const allCompleted = questions.every((q) => q.completed);
+    return allCompleted ? "😊" : "😞";
+  }
+
+  // Add a new tag to a day
+  function addNewTag(dayIndex, tagText) {
+    // Check for duplicates
+    if (appData[dayIndex].tags.some((tag) => tag.text === tagText)) {
+      return;
+    }
+
+    // Generate random color for tag
+    const colors = [
+      "#58A6FF",
+      "#3FB950",
+      "#D29922",
+      "#DB61A2",
+      "#8E6CDF",
+      "#F85149",
+      "#FF8C37",
+      "#1F6FEB",
+    ];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    appData[dayIndex].tags.push({
+      text: tagText,
+      color: randomColor,
+    });
+    saveData();
+    renderTable();
+  }
+
+  // Update links for a day
+  function updateLinks(dayIndex, linksText) {
+    appData[dayIndex].links = linksText;
+    saveData();
+  }
+
+  // Add a new link tag when Enter is pressed
+  function addNewLink(dayIndex, linkText) {
+    if (!linkText.trim()) return;
+
+    // Add to links array if it doesn't exist
+    if (!appData[dayIndex].linksArray) {
+      appData[dayIndex].linksArray = [];
+    }
+
+    // Check for duplicates
+    if (
+      appData[dayIndex].linksArray.some(
+        (link) => link.url === linkText.trim()
+      )
+    ) {
+      return;
+    }
+
+    appData[dayIndex].linksArray.push({
+      url: linkText.trim(),
+      text: extractDisplayText(linkText.trim()),
+    });
+    saveData();
+    renderLinksCell(dayIndex);
+  }
+
+  // Remove a link tag
+  function removeLink(dayIndex, linkIndex) {
+    if (appData[dayIndex].linksArray) {
+      appData[dayIndex].linksArray.splice(linkIndex, 1);
+      saveData();
+      renderLinksCell(dayIndex);
+    }
+  }
+
+  // Extract display text from URL
+  function extractDisplayText(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace("www.", "");
+    } catch (e) {
+      return url.substring(0, 20) + (url.length > 20 ? "..." : "");
+    }
+  }
+
+  // Render links as clickable tags
+  function renderLinksCell(dayIndex) {
+    const rows = tableBody.querySelectorAll("tr");
+    if (rows[dayIndex]) {
+      const linksCell = rows[dayIndex].querySelector(".links-cell");
+      if (linksCell) {
+        // Clear existing content
+        linksCell.innerHTML = "";
+
+        // Create input for adding new links
+        const linkInput = document.createElement("input");
+        linkInput.type = "text";
+        linkInput.className = "add-link-input";
+        linkInput.placeholder = "Enter URL and press Enter to add...";
+        linkInput.style.width = "100%";
+        linkInput.style.marginBottom = "8px";
+        linkInput.style.padding = "6px 8px";
+        linkInput.style.background = "var(--bg-color)";
+        linkInput.style.border = "1px solid var(--border-color)";
+        linkInput.style.borderRadius = "4px";
+        linkInput.style.color = "var(--text-color)";
+
+        linkInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter" && linkInput.value.trim() !== "") {
+            addNewLink(dayIndex, linkInput.value.trim());
+            linkInput.value = "";
+          }
+        });
+
+        linksCell.appendChild(linkInput);
+
+        // Create tags container
+        const tagsContainer = document.createElement("div");
+        tagsContainer.className = "link-tags-container";
+
+        // Display existing links as tags
         if (
-          appData[dayIndex].linksArray.some(
-            (link) => link.url === linkText.trim()
-          )
+          appData[dayIndex].linksArray &&
+          appData[dayIndex].linksArray.length > 0
         ) {
-          return;
-        }
+          appData[dayIndex].linksArray.forEach((link, index) => {
+            const linkTag = document.createElement("div");
+            linkTag.className = "link-tag-container";
+            linkTag.style.display = "inline-block";
+            linkTag.style.marginRight = "6px";
+            linkTag.style.marginBottom = "6px";
 
-        appData[dayIndex].linksArray.push({
-          url: linkText.trim(),
-          text: extractDisplayText(linkText.trim()),
-        });
-        saveData();
-        renderLinksCell(dayIndex);
-      }
+            const tagElement = document.createElement("a");
+            tagElement.href = link.url;
+            tagElement.target = "_blank";
+            tagElement.rel = "noopener noreferrer";
+            tagElement.style.display = "inline-flex";
+            tagElement.style.alignItems = "center";
+            tagElement.style.backgroundColor = "var(--tag-bg)";
+            tagElement.style.color = "white";
+            tagElement.style.padding = "4px 8px";
+            tagElement.style.borderRadius = "12px";
+            tagElement.style.fontSize = "0.8rem";
+            tagElement.style.textDecoration = "none";
+            tagElement.style.cursor = "pointer";
+            tagElement.style.transition = "opacity 0.2s";
 
-      // Remove a link tag
-      function removeLink(dayIndex, linkIndex) {
-        if (appData[dayIndex].linksArray) {
-          appData[dayIndex].linksArray.splice(linkIndex, 1);
-          saveData();
-          renderLinksCell(dayIndex);
-        }
-      }
+            tagElement.textContent = link.text;
+            tagElement.title = link.url;
 
-      // Extract display text from URL
-      function extractDisplayText(url) {
-        try {
-          const urlObj = new URL(url);
-          return urlObj.hostname.replace("www.", "");
-        } catch (e) {
-          return url.substring(0, 20) + (url.length > 20 ? "..." : "");
-        }
-      }
-
-      // Render links as clickable tags
-      function renderLinksCell(dayIndex) {
-        const rows = tableBody.querySelectorAll("tr");
-        if (rows[dayIndex]) {
-          const linksCell = rows[dayIndex].querySelector(".links-cell");
-          if (linksCell) {
-            // Clear existing content
-            linksCell.innerHTML = "";
-
-            // Create input for adding new links
-            const linkInput = document.createElement("input");
-            linkInput.type = "text";
-            linkInput.className = "add-link-input";
-            linkInput.placeholder = "Enter URL and press Enter to add...";
-            linkInput.style.width = "100%";
-            linkInput.style.marginBottom = "8px";
-            linkInput.style.padding = "6px 8px";
-            linkInput.style.background = "var(--bg-color)";
-            linkInput.style.border = "1px solid var(--border-color)";
-            linkInput.style.borderRadius = "4px";
-            linkInput.style.color = "var(--text-color)";
-
-            linkInput.addEventListener("keypress", (e) => {
-              if (e.key === "Enter" && linkInput.value.trim() !== "") {
-                addNewLink(dayIndex, linkInput.value.trim());
-                linkInput.value = "";
-              }
+            tagElement.addEventListener("mouseenter", () => {
+              tagElement.style.opacity = "0.8";
             });
 
-            linksCell.appendChild(linkInput);
+            tagElement.addEventListener("mouseleave", () => {
+              tagElement.style.opacity = "1";
+            });
 
-            // Create tags container
-            const tagsContainer = document.createElement("div");
-            tagsContainer.className = "link-tags-container";
+            // Add remove button
+            const removeBtn = document.createElement("span");
+            removeBtn.innerHTML = " &times;";
+            removeBtn.style.cursor = "pointer";
+            removeBtn.style.marginLeft = "4px";
+            removeBtn.style.fontWeight = "bold";
+            removeBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              removeLink(dayIndex, index);
+            });
 
-            // Display existing links as tags
-            if (
-              appData[dayIndex].linksArray &&
-              appData[dayIndex].linksArray.length > 0
-            ) {
-              appData[dayIndex].linksArray.forEach((link, index) => {
-                const linkTag = document.createElement("div");
-                linkTag.className = "link-tag-container";
-                linkTag.style.display = "inline-block";
-                linkTag.style.marginRight = "6px";
-                linkTag.style.marginBottom = "6px";
-
-                const tagElement = document.createElement("a");
-                tagElement.href = link.url;
-                tagElement.target = "_blank";
-                tagElement.rel = "noopener noreferrer";
-                tagElement.style.display = "inline-flex";
-                tagElement.style.alignItems = "center";
-                tagElement.style.backgroundColor = "var(--tag-bg)";
-                tagElement.style.color = "white";
-                tagElement.style.padding = "4px 8px";
-                tagElement.style.borderRadius = "12px";
-                tagElement.style.fontSize = "0.8rem";
-                tagElement.style.textDecoration = "none";
-                tagElement.style.cursor = "pointer";
-                tagElement.style.transition = "opacity 0.2s";
-
-                tagElement.textContent = link.text;
-                tagElement.title = link.url;
-
-                tagElement.addEventListener("mouseenter", () => {
-                  tagElement.style.opacity = "0.8";
-                });
-
-                tagElement.addEventListener("mouseleave", () => {
-                  tagElement.style.opacity = "1";
-                });
-
-                // Add remove button
-                const removeBtn = document.createElement("span");
-                removeBtn.innerHTML = " &times;";
-                removeBtn.style.cursor = "pointer";
-                removeBtn.style.marginLeft = "4px";
-                removeBtn.style.fontWeight = "bold";
-                removeBtn.addEventListener("click", (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  removeLink(dayIndex, index);
-                });
-
-                tagElement.appendChild(removeBtn);
-                linkTag.appendChild(tagElement);
-                tagsContainer.appendChild(linkTag);
-              });
-            }
-
-            linksCell.appendChild(tagsContainer);
-          }
-        }
-      }
-
-      // Open modal to edit question link
-      function openLinkModal(dayIndex, questionIndex) {
-        currentEditingQuestion = { dayIndex, questionIndex };
-        const question = appData[dayIndex].questions[questionIndex];
-
-        questionTextInput.value = question.text;
-        questionLinkInput.value = question.link || "";
-
-        linkModal.style.display = "flex";
-        questionLinkInput.focus();
-      }
-
-      // Close the modal
-      function closeLinkModal() {
-        linkModal.style.display = "none";
-        currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
-      }
-
-      // Save the question link
-      function saveQuestionLink() {
-        const { dayIndex, questionIndex } = currentEditingQuestion;
-        if (dayIndex === -1 || questionIndex === -1) return;
-
-        const newText = questionTextInput.value.trim();
-        const newLink = questionLinkInput.value.trim();
-
-        if (newText !== "") {
-          appData[dayIndex].questions[questionIndex].text = newText;
-          appData[dayIndex].questions[questionIndex].link = newLink;
-          saveData();
-          renderTable();
+            tagElement.appendChild(removeBtn);
+            linkTag.appendChild(tagElement);
+            tagsContainer.appendChild(linkTag);
+          });
         }
 
+        linksCell.appendChild(tagsContainer);
+      }
+    }
+  }
+
+  // Open modal to edit question link
+  function openLinkModal(dayIndex, questionIndex) {
+    currentEditingQuestion = { dayIndex, questionIndex };
+    const question = appData[dayIndex].questions[questionIndex];
+
+    questionTextInput.value = question.text;
+    questionLinkInput.value = question.link || "";
+
+    linkModal.style.display = "flex";
+    questionLinkInput.focus();
+  }
+
+  // Close the modal
+  function closeLinkModal() {
+    linkModal.style.display = "none";
+    currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+  }
+
+  // Save the question link
+  function saveQuestionLink() {
+    const { dayIndex, questionIndex } = currentEditingQuestion;
+    if (dayIndex === -1 || questionIndex === -1) return;
+
+    const newText = questionTextInput.value.trim();
+    const newLink = questionLinkInput.value.trim();
+
+    if (newText !== "") {
+      appData[dayIndex].questions[questionIndex].text = newText;
+      appData[dayIndex].questions[questionIndex].link = newLink;
+      saveData();
+      renderTable();
+    }
+
+    closeLinkModal();
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Theme toggle
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("light-theme");
+      if (document.body.classList.contains("light-theme")) {
+        themeToggle.textContent = "Switch to Dark Theme";
+      } else {
+        themeToggle.textContent = "Switch to Light Theme";
+      }
+    });
+
+    // Sync button - updated to use force sync
+    syncButton.addEventListener("click", async () => {
+      if (authToken) {
+        await forceSyncFromServer();
+      } else {
+        updateSyncStatus("offline", "Login required to sync");
+      }
+    });
+
+    // NEW: Add Day button
+    const addDayBtn = document.getElementById("addDayBtn");
+    if (addDayBtn) {
+      addDayBtn.addEventListener("click", addNewDay);
+    }
+
+    // Tag removal (delegated event listener)
+    tableBody.addEventListener("click", (e) => {
+      if (e.target.classList.contains("tag-remove")) {
+        const dayIndex = parseInt(e.target.dataset.day);
+        const tagIndex = parseInt(e.target.dataset.tagIndex);
+        appData[dayIndex].tags.splice(tagIndex, 1);
+        saveData();
+        renderTable();
+      }
+    });
+
+    // Modal event listeners
+    closeModal.addEventListener("click", closeLinkModal);
+    cancelModal.addEventListener("click", closeLinkModal);
+    saveLink.addEventListener("click", saveQuestionLink);
+
+    // Close modal when clicking outside
+    linkModal.addEventListener("click", (e) => {
+      if (e.target === linkModal) {
         closeLinkModal();
       }
+    });
 
-      // Setup event listeners
-      function setupEventListeners() {
-        // Theme toggle
-        themeToggle.addEventListener("click", () => {
-          document.body.classList.toggle("light-theme");
-          if (document.body.classList.contains("light-theme")) {
-            themeToggle.textContent = "Switch to Dark Theme";
-          } else {
-            themeToggle.textContent = "Switch to Light Theme";
-          }
-        });
-
-        // Sync button
-        syncButton.addEventListener("click", async () => {
-          updateSyncStatus("syncing", "Syncing...");
-          await saveToMongoDB();
-        });
-
-        // NEW: Add Day button
-        const addDayBtn = document.getElementById("addDayBtn");
-        if (addDayBtn) {
-          addDayBtn.addEventListener("click", addNewDay);
-        }
-
-        // Tag removal (delegated event listener)
-        tableBody.addEventListener("click", (e) => {
-          if (e.target.classList.contains("tag-remove")) {
-            const dayIndex = parseInt(e.target.dataset.day);
-            const tagIndex = parseInt(e.target.dataset.tagIndex);
-            appData[dayIndex].tags.splice(tagIndex, 1);
-            saveData();
-            renderTable();
-          }
-        });
-
-        // Modal event listeners
-        closeModal.addEventListener("click", closeLinkModal);
-        cancelModal.addEventListener("click", closeLinkModal);
-        saveLink.addEventListener("click", saveQuestionLink);
-
-        // Close modal when clicking outside
-        linkModal.addEventListener("click", (e) => {
-          if (e.target === linkModal) {
-            closeLinkModal();
-          }
-        });
-
-        // Allow saving with Enter key
-        questionLinkInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") {
-            saveQuestionLink();
-          }
-        });
+    // Allow saving with Enter key
+    questionLinkInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        saveQuestionLink();
       }
-      // Initialize the app when DOM is loaded
-      document.addEventListener("DOMContentLoaded", initApp);
-    </script>
+    });
+  }
+
+  // Initialize the app when DOM is loaded
+  document.addEventListener("DOMContentLoaded", initApp);
+</script>
   </body>
 </html>
-
-

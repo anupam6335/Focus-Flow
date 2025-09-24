@@ -33,6 +33,7 @@ const checklistDataSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   data: { type: Array, required: true },
   lastUpdated: { type: Date, default: Date.now },
+  version: { type: Number, default: 1 }, // Add version for conflict resolution
 });
 
 const User = mongoose.model("User", userSchema);
@@ -113,6 +114,7 @@ app.post("/api/register", async (req, res) => {
     await ChecklistData.create({
       userId: username,
       data: defaultData,
+      version: 1,
     });
 
     res.json({ success: true, message: "User registered successfully" });
@@ -150,7 +152,7 @@ app.post("/api/login", async (req, res) => {
 
     // Generate token
     const token = jwt.sign({ username: user.username }, JWT_SECRET, {
-      expiresIn: "30d",
+      expiresIn: "230d",
     });
 
     res.json({
@@ -168,7 +170,7 @@ app.get("/api/verify-token", authenticateToken, (req, res) => {
   res.json({ success: true, user: req.user.username });
 });
 
-// Get user data (protected route)
+// Get user data (protected route) - UPDATED with version
 app.get("/api/data", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
@@ -176,20 +178,29 @@ app.get("/api/data", authenticateToken, async (req, res) => {
 
     if (!data) {
       const defaultData = generateDefaultData();
-      data = await ChecklistData.create({ userId, data: defaultData });
+      data = await ChecklistData.create({
+        userId,
+        data: defaultData,
+        version: 1,
+      });
     }
 
-    res.json({ success: true, data: data.data });
+    res.json({
+      success: true,
+      data: data.data,
+      version: data.version,
+      lastUpdated: data.lastUpdated,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Save user data (protected route)
+// Save user data (protected route) - UPDATED with conflict resolution
 app.post("/api/data", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
-    const { data } = req.body;
+    const { data, clientVersion, lastUpdated } = req.body;
 
     if (!data) {
       return res
@@ -197,13 +208,79 @@ app.post("/api/data", authenticateToken, async (req, res) => {
         .json({ success: false, error: "Data is required" });
     }
 
-    const updatedData = await ChecklistData.findOneAndUpdate(
-      { userId },
-      { data, lastUpdated: new Date() },
-      { upsert: true, new: true }
-    );
+    // Get current data from database
+    const currentData = await ChecklistData.findOne({ userId });
 
-    res.json({ success: true, data: updatedData.data });
+    if (!currentData) {
+      // Create new record if it doesn't exist
+      const newData = await ChecklistData.create({
+        userId,
+        data,
+        version: 1,
+        lastUpdated: new Date(),
+      });
+      return res.json({
+        success: true,
+        data: newData.data,
+        version: newData.version,
+        lastUpdated: newData.lastUpdated,
+      });
+    }
+
+    // Conflict resolution: Check if client has outdated data
+    if (clientVersion && lastUpdated) {
+      const clientLastUpdated = new Date(lastUpdated);
+      const serverLastUpdated = new Date(currentData.lastUpdated);
+
+      // If client data is older than server data, we have a conflict
+      if (clientLastUpdated < serverLastUpdated) {
+        // For now, we'll prioritize server data and return it to the client
+        // In a more advanced implementation, you could merge changes
+        return res.status(409).json({
+          success: false,
+          error: "CONFLICT: Your local data is outdated",
+          serverData: currentData.data,
+          serverVersion: currentData.version,
+          serverLastUpdated: currentData.lastUpdated,
+          message: "Please refresh to get the latest data",
+        });
+      }
+    }
+
+    // Update data if no conflict or client has newer data
+    currentData.data = data;
+    currentData.version = (currentData.version || 1) + 1;
+    currentData.lastUpdated = new Date();
+
+    await currentData.save();
+
+    res.json({
+      success: true,
+      data: currentData.data,
+      version: currentData.version,
+      lastUpdated: currentData.lastUpdated,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Force sync endpoint - gets latest data from server without conflict checks
+app.post("/api/force-sync", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+    const data = await ChecklistData.findOne({ userId });
+
+    if (!data) {
+      return res.status(404).json({ success: false, error: "Data not found" });
+    }
+
+    res.json({
+      success: true,
+      data: data.data,
+      version: data.version,
+      lastUpdated: data.lastUpdated,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
