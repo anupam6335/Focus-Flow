@@ -1,159 +1,40 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
-const path = require("path");
-
+const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - CORS and JSON first
-app.use(cors());
+// Basic middleware
 app.use(express.json());
+app.use(express.static(__dirname));
 
-// Debug middleware to log all requests
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
+// Test route - this should definitely work
+app.get('/health', (req, res) => {
+  console.log('Health check called');
+  res.json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
 });
 
-// MongoDB connection with error handling
-const connectDB = async () => {
-  try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI environment variable is not defined");
-    }
-
-    console.log("Attempting to connect to MongoDB...");
-    
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-
-    console.log("✅ MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
-    process.exit(1);
-  }
-};
-
-// Connect to database
-connectDB();
-
-// Data schema
-const checklistDataSchema = new mongoose.Schema({
-  userId: { type: String, required: true, default: "default-user" },
-  data: { type: Array, required: true },
-  lastUpdated: { type: Date, default: Date.now },
+// API test route
+app.get('/api/test', (req, res) => {
+  console.log('API test called');
+  res.json({ 
+    message: 'API is working!',
+    timestamp: new Date().toISOString()
+  });
 });
 
-const ChecklistData = mongoose.model("ChecklistData", checklistDataSchema);
-
-// Health check endpoint - TEST THIS FIRST
-app.get("/health", async (req, res) => {
-  try {
-    const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-    res.json({
-      status: "ok",
-      database: dbStatus,
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "development"
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// Catch-all for SPA
+app.get('*', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
 });
-
-// Simple test endpoint
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API test endpoint is working!", timestamp: new Date() });
-});
-
-// API Routes - MUST come before static files
-app.get("/api/data", async (req, res) => {
-  try {
-    console.log("GET /api/data called with query:", req.query);
-    
-    const { userId = "default-user" } = req.query;
-    let data = await ChecklistData.findOne({ userId });
-    
-    if (!data) {
-      console.log("No data found, creating default data for user:", userId);
-      const defaultData = generateDefaultData();
-      data = await ChecklistData.create({ userId, data: defaultData });
-    }
-    
-    res.json({ success: true, data: data.data });
-  } catch (error) {
-    console.error("Error in GET /api/data:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post("/api/data", async (req, res) => {
-  try {
-    console.log("POST /api/data called with body:", req.body);
-    
-    const { userId = "default-user", data } = req.body;
-    if (!data) {
-      return res.status(400).json({ success: false, error: "Data is required" });
-    }
-    
-    const updatedData = await ChecklistData.findOneAndUpdate(
-      { userId },
-      { data, lastUpdated: new Date() },
-      { upsert: true, new: true }
-    );
-    
-    res.json({ success: true, data: updatedData.data });
-  } catch (error) {
-    console.error("Error in POST /api/data:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Serve static files - AFTER API routes
-app.use(express.static(path.join(__dirname)));
-
-// Catch-all handler for SPA - must be LAST
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-function generateDefaultData() {
-  const TOTAL_DAYS = 100;
-  const DEFAULT_QUESTIONS = [
-    { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
-    {
-      text: "Reverse a Linked List",
-      link: "https://leetcode.com/problems/reverse-linked-list/",
-    },
-    {
-      text: "Binary Search",
-      link: "https://leetcode.com/problems/binary-search/",
-    },
-  ];
-
-  const appData = [];
-  for (let day = 1; day <= TOTAL_DAYS; day++) {
-    appData.push({
-      day: day,
-      questions: DEFAULT_QUESTIONS.map((q) => ({
-        text: q.text,
-        link: q.link,
-        completed: false,
-      })),
-      tags: [],
-      links: "",
-      linksArray: [],
-    });
-  }
-  return appData;
-}
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`📊 MongoDB URI: ${process.env.MONGODB_URI ? "Set" : "Not set"}`);
+  console.log('=== SERVER STARTED ===');
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Current directory: ${__dirname}`);
+  console.log('========================');
 });
