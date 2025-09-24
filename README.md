@@ -1,15 +1,17 @@
 # DSA Daily Checklist 🚀
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/yourusername/dsa-daily-checklist)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/yourusername/dsa-daily-checklist/releases)
+[![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/anupam6335/Daily-Tracker)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/anupam6335/Daily-Tracker/releases)
+[![Live Demo](https://img.shields.io/badge/demo-live%20project-brightgreen)](https://daily-tracker-upst.onrender.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Daily Habit Builder](https://img.shields.io/badge/purpose-daily%20habit%20improvement-orange)](https://github.com/yourusername/dsa-daily-checklist)
+[![Daily Habit Builder](https://img.shields.io/badge/purpose-daily%20habit%20improvement-orange)](https://github.com/anupam6335/Daily-Tracker)
 
-A modern, cloud-synced progress tracker for mastering Data Structures and Algorithms. **Built to help you build consistent daily coding habits** and level up your skills through regular practice.
+A modern, cloud-synced progress tracker for mastering Data Structures and Algorithms. **Built to help you build consistent daily coding habits** and level up your skills through regular practice. **Accessible worldwide via live deployment!**
 
-<img width="1624" height="719" alt="image" src="https://github.com/user-attachments/assets/473454ad-bd45-4d34-b763-d587965836e0" />
+🌐 **Live Demo: https://daily-tracker-upst.onrender.com/**
 
-PROD URL : https://daily-tracker-upst.onrender.com/
+<img width="1403" height="821" alt="image" src="https://github.com/user-attachments/assets/6c3233da-65ae-43ab-905a-bedabb696162" />
+
 
 ## ✨ Features
 
@@ -33,6 +35,19 @@ PROD URL : https://daily-tracker-upst.onrender.com/
 - **💪 Habit Formation** - Designed to build coding practice into your daily routine
 - **📱 Always Accessible** - Works on all devices for practice anywhere, anytime
 
+## 🚀 Instant Access
+
+### 🌐 Use the Live Application Now!
+**No installation required!** Start building your coding habit immediately:
+
+👉 **[https://daily-tracker-upst.onrender.com/](https://daily-tracker-upst.onrender.com/)**
+
+### Quick Start with Live Demo:
+1. **Visit:** https://daily-tracker-upst.onrender.com/
+2. **Create account** or login
+3. **Start tracking** your daily DSA practice
+4. **Access from any device** - always in sync!
+
 ## 🛠️ Tech Stack
 
 **Frontend:**
@@ -46,18 +61,18 @@ PROD URL : https://daily-tracker-upst.onrender.com/
 - JWT Authentication
 - bcryptjs Password Hashing
 
-## 🚀 Quick Start
+## 💻 Local Development
 
 ### Prerequisites
 - Node.js (v14 or higher)
 - MongoDB instance (local or Atlas)
 
-### Installation
+### Local Installation (Optional)
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/dsa-daily-checklist.git
-cd dsa-daily-checklist
+git clone https://github.com/anupam6335/Daily-Tracker.git
+cd Daily-Tracker
 ```
 
 2. **Install dependencies**
@@ -68,9 +83,6 @@ npm install
 3. **Configure environment variables**
 ```bash
 # Create .env file
-cp .env.example .env
-
-# Edit .env with your configuration
 MONGODB_URI=mongodb://localhost:27017/dsa-checklist
 PORT=3000
 JWT_SECRET=your-super-secret-jwt-key
@@ -86,7 +98,7 @@ npm run dev
 npm start
 ```
 
-5. **Access the application**
+5. **Access locally**
 ```
 http://localhost:3000
 ```
@@ -100,12 +112,12 @@ http://localhost:3000
 - Use the activity tracker to **maintain your streak**
 - **Don't break the chain** - the visual calendar motivates consistency
 
-### Getting Started
+### Getting Started with Live Demo
 
-1. **Create an account** to track your habit journey
-2. **Start with Day 1** - no need to overwhelm yourself
-3. **Focus on consistency** over quantity
-4. **Celebrate small wins** - each completed question builds your habit
+1. **Visit https://daily-tracker-upst.onrender.com/**
+2. **Create your account** (takes 30 seconds)
+3. **Start with Day 1** - no setup required
+4. **Practice daily** - your progress syncs automatically
 
 ### Basic Operations
 
@@ -122,37 +134,31 @@ http://localhost:3000
 - Gradually increase as the habit becomes automatic
 ```
 
-**Status indicators:**
-- 😊 = Daily habit completed!
-- 😞 = Time to get today's practice in
-- 😐 = New day, new opportunity to build your habit
-
-### Advanced Features
-
-**Tagging for habit categories:**
-```javascript
-// Tag days by focus area to track skill development
-- "Arrays", "Graphs", "Dynamic Programming"
-- See which areas you practice most consistently
-```
-
-**Resource tracking:**
-```javascript
-// Save helpful resources encountered during practice
-- Great for building a personal knowledge base
-- Track learning materials alongside practice
-```
-
 ## 🏗️ Project Structure
 
 ```
-dsa-daily-checklist/
+Daily-Tracker/
 ├── index.html              # Main application file
 ├── server.js               # Express server with API routes
 ├── package.json            # Dependencies and scripts
 ├── .env                    # Environment configuration
 └── README.md              # This file
 ```
+
+## 🌐 Deployment Information
+
+### Live Production Environment
+- **URL:** https://daily-tracker-upst.onrender.com/
+- **Platform:** Render.com
+- **Database:** MongoDB Atlas (cloud)
+- **Status:** 24/7 available worldwide
+- **SSL:** HTTPS secured
+
+### Features Available in Live Version:
+- ✅ **Global accessibility** - access from anywhere
+- ✅ **Auto-scaling** - handles multiple users
+- ✅ **Automatic deployments** - always up-to-date
+- ✅ **Production-ready** - optimized for performance
 
 ## 🌟 Habit Building Strategy
 
@@ -194,58 +200,26 @@ Mo Tu We Th Fr Sa Su
 - ▓ = Excellent day (2+ questions)  
 - **Don't break the chain!** - Visual motivation to keep your streak alive
 
-## 🚀 Deployment
+## 🚀 Quick Links
 
-### For Personal Habit Tracking
-```bash
-# Local deployment for daily use
-npm start
-```
-
-### For Team/Group Habit Building
-```bash
-# Deploy to share with study groups
-npm run build
-```
-
-## 🌱 Starting Your Habit Journey
-
-### Week 1: Foundation Building
-- **Goal**: Practice 15 minutes daily
-- **Focus**: Consistency over complexity
-- **Target**: 1 simple question per day
-
-### Week 2-4: Habit Formation  
-- **Goal**: Establish routine
-- **Focus**: Same time each day
-- **Target**: 1-2 questions daily
-
-### Month 2+: Skill Acceleration
-- **Goal**: Progressive difficulty
-- **Focus**: Building on established habit
-- **Target**: 2-3 questions with increasing complexity
+- **🌐 Live Application:** https://daily-tracker-upst.onrender.com/
+- **📚 Source Code:** https://github.com/anupam6335/Daily-Tracker
+- **🐛 Report Issues:** https://github.com/anupam6335/Daily-Tracker/issues
+- **💡 Feature Requests:** https://github.com/anupam6335/Daily-Tracker/issues
 
 ## 🐛 Troubleshooting
 
-### Common Habit Challenges
+### Live Demo Issues
 
-**"I don't have time today"**
-```javascript
-// Solution: The 5-minute rule
-commitToJustFiveMinutes(); // Often leads to full session
-```
+**If the live demo is slow to load:**
+- Render.com free tier may have cold starts
+- Wait 30-60 seconds for the first load
+- Subsequent loads will be faster
 
-**"The problem is too hard"**
-```javascript
-// Solution: Scale down
-chooseEasierQuestion(); // Maintain the habit, adjust difficulty
-```
-
-**"I forgot to practice"**
-```javascript
-// Solution: Use app reminders
-setDailyNotification(); // Leverage the tracking system
-```
+**Browser compatibility:**
+- Works on Chrome, Firefox, Safari, Edge
+- Mobile browsers fully supported
+- Requires JavaScript enabled
 
 ## 🤝 Join the Habit Community
 
@@ -268,12 +242,21 @@ Built with ❤️ to help developers build **consistent coding habits** that tra
 
 ---
 
-**Your Coding Habit Starts Today!** 🌟
+<div align="center">
+
+## 🎯 Ready to Start Your Habit?
+
+### 🌐 **Access the Live App Now:**
+# [https://daily-tracker-upst.onrender.com/](https://daily-tracker-upst.onrender.com/)
+
+**No installation required - start building your coding habit in 60 seconds!**
 
 *"We are what we repeatedly do. Excellence, then, is not an act, but a habit."* - Aristotle
-*"Don't break the chain of daily practice."* - Jerry Seinfeld's Productivity Secret
 
+</div>
 
 ---
 
 **📅 Tomorrow's Question Awaits!** What will you solve today to build your coding habit? 🚀
+
+---
