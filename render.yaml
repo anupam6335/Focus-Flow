@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: dsa-checklist-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb-uri
+          property: connectionString
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
