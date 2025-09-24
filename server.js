@@ -1,8 +1,8 @@
-// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path"); // Add this line
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,16 +11,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(
-  process.env.MONGODB_URI || "mongodb://localhost:27017/dsa-checklist",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+// Serve static files from the same directory
+app.use(express.static(path.join(__dirname)));
 
-// Data schema
+// MongoDB connection - important for Render
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// Your existing schema and routes remain the same
 const checklistDataSchema = new mongoose.Schema({
   userId: { type: String, required: true, default: "default-user" },
   data: { type: Array, required: true },
@@ -34,13 +34,10 @@ app.get("/api/data", async (req, res) => {
   try {
     const { userId = "default-user" } = req.query;
     let data = await ChecklistData.findOne({ userId });
-
     if (!data) {
-      // Return default data structure if no data exists
       const defaultData = generateDefaultData();
       data = await ChecklistData.create({ userId, data: defaultData });
     }
-
     res.json({ success: true, data: data.data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -50,26 +47,25 @@ app.get("/api/data", async (req, res) => {
 app.post("/api/data", async (req, res) => {
   try {
     const { userId = "default-user", data } = req.body;
-
     if (!data) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Data is required" });
+      return res.status(400).json({ success: false, error: "Data is required" });
     }
-
     const updatedData = await ChecklistData.findOneAndUpdate(
       { userId },
       { data, lastUpdated: new Date() },
       { upsert: true, new: true }
     );
-
     res.json({ success: true, data: updatedData.data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Generate default data structure
+// Serve index.html for root route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 function generateDefaultData() {
   const TOTAL_DAYS = 100;
   const DEFAULT_QUESTIONS = [
@@ -83,7 +79,7 @@ function generateDefaultData() {
       link: "https://leetcode.com/problems/binary-search/",
     },
   ];
-
+  
   const appData = [];
   for (let day = 1; day <= TOTAL_DAYS; day++) {
     appData.push({
@@ -98,11 +94,10 @@ function generateDefaultData() {
       linksArray: [],
     });
   }
-
   return appData;
 }
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Database connected on ${process.env.MONGODB_URI}`);
+  console.log(`DB connected ${process.env.MONGODB_URI}`)
 });
