@@ -546,14 +546,8 @@
       ];
 
       // MongoDB configuration
-      const API_BASE_URL =
-        window.location.port === "5500" ? "http://localhost:3000/api" : "/api";
-
+      const API_BASE_URL = "http://localhost:3000/api";
       let userId = "default-user";
-
-      // Debug logging
-      console.log("API Base URL:", API_BASE_URL);
-      console.log("Current origin:", window.location.origin);
 
       // DOM elements
       const tableBody = document.getElementById("tableBody");
@@ -569,9 +563,34 @@
 
       // Current editing question info
       let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
-
-      // Initialize the app
+// Add this function to debug API calls
+async function testApiConnection() {
+  try {
+    console.log('Testing API connection to:', API_BASE_URL);
+    
+    const response = await fetch(`${API_BASE_URL}/data?userId=default-user`);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('API response:', data);
+    return data;
+  } catch (error) {
+    console.error('API connection failed:', error);
+    return null;
+  }
+}
+   // Initialize the app
       async function initApp() {
+        // Test API first
+  const apiTest = await testApiConnection();
+  if (!apiTest) {
+    alert('API connection failed. Check console for details.');
+  }
         await loadData();
         renderTable();
         setupEventListeners();
