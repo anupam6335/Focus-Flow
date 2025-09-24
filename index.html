@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Checklist</title>
+    <style>
+      :root {
+        --bg-color: #0d1117;
+        --text-color: #c9d1d9;
+        --accent-color: #58a6ff;
+        --border-color: #30363d;
+        --table-header-bg: #161b22;
+        --row-alt-bg: #161b22;
+        --tag-bg: #58a6ff;
+        --success-color: #3fb950;
+        --warning-color: #d29922;
+        --danger-color: #231312;
+        --link-color: #58a6ff;
+      }
+
+      .light-theme {
+        --bg-color: #ffffff;
+        --text-color: #24292f;
+        --accent-color: #0969da;
+        --border-color: #d0d7de;
+        --table-header-bg: #f6f8fa;
+        --row-alt-bg: #f6f8fa;
+        --tag-bg: #0969da;
+        --success-color: #1a7f37;
+        --warning-color: #9a6700;
+        --danger-color: #cf222e;
+        --link-color: #0969da;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.5;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      h1 {
+        font-size: 2rem;
+        color: var(--accent-color);
+      }
+
+      .theme-toggle {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+      }
+
+      .theme-toggle:hover {
+        opacity: 0.9;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      thead {
+        background-color: var(--table-header-bg);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--accent-color);
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: var(--row-alt-bg);
+      }
+
+      .day-cell {
+        font-weight: 600;
+        width: 60px;
+        text-align: center;
+      }
+
+      .questions-cell {
+        min-width: 300px;
+      }
+
+      .question-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        position: relative;
+      }
+
+      .question-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .question-checkbox {
+        margin-right: 8px;
+        cursor: pointer;
+      }
+
+      .question-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .question-text {
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+      }
+
+      .question-text:hover {
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .question-text.editing {
+        background-color: rgba(88, 166, 255, 0.2);
+        outline: 1px solid var(--accent-color);
+      }
+
+      .question-link {
+        color: var(--link-color);
+        text-decoration: none;
+        margin-left: 8px;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+      }
+
+      .question-link:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
+
+      .question-link-input {
+        background: none;
+        border: 1px dashed var(--border-color);
+        color: var(--text-color);
+        padding: 4px 8px;
+        border-radius: 4px;
+        width: 100%;
+        margin-top: 4px;
+        font-size: 0.8rem;
+      }
+
+      .add-question-btn {
+        background: none;
+        border: 1px dashed var(--border-color);
+        color: var(--text-color);
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 8px;
+        width: 100%;
+        transition: background-color 0.2s;
+      }
+
+      .add-question-btn:hover {
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .status-cell {
+        text-align: center;
+        font-size: 1.5rem;
+        width: 80px;
+      }
+
+      .tags-cell {
+        min-width: 150px;
+      }
+
+      .tag {
+        display: inline-block;
+        background-color: var(--tag-bg);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-right: 6px;
+        margin-bottom: 6px;
+        position: relative;
+      }
+
+      .tag-remove {
+        margin-left: 4px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .add-tag-input {
+        background: none;
+        border: 1px dashed var(--border-color);
+        color: var(--text-color);
+        padding: 4px 8px;
+        border-radius: 4px;
+        width: 100px;
+        margin-top: 6px;
+      }
+
+      .links-cell {
+        min-width: 200px;
+      }
+
+      .links-textarea {
+        width: 100%;
+        min-height: 80px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 8px;
+        border-radius: 4px;
+        resize: vertical;
+        font-size: 0.9rem;
+      }
+
+      .links-textarea:focus {
+        outline: 1px solid var(--accent-color);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+        color: #8b949e;
+        font-size: 0.9rem;
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: var(--bg-color);
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        border: 1px solid var(--border-color);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .modal-title {
+        font-size: 1.2rem;
+        color: var(--accent-color);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .modal-body {
+        margin-bottom: 15px;
+      }
+
+      .modal-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 4px;
+      }
+
+      .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .modal-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .modal-btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .modal-btn-secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      /* Sync status styles */
+      #syncStatus {
+        margin-left: auto;
+        margin-right: 20px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+      }
+
+      .sync-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .sync-dot.synced {
+        background-color: var(--success-color);
+      }
+
+      .sync-dot.syncing {
+        background-color: var(--warning-color);
+      }
+
+      .sync-dot.error {
+        background-color: var(--danger-color);
+      }
+
+      .sync-dot.offline {
+        background-color: #8b949e;
+      }
+
+      .sync-button {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+        margin-left: 10px;
+      }
+
+      .sync-button:hover {
+        opacity: 0.9;
+      }
+
+      /* Responsive styles */
+      @media (max-width: 768px) {
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+
+        th,
+        td {
+          padding: 8px 10px;
+        }
+
+        .day-cell,
+        .status-cell {
+          width: auto;
+        }
+
+        header {
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        #syncStatus {
+          order: 3;
+          margin-left: 0;
+          margin-right: 0;
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .modal-content {
+          width: 95%;
+          padding: 15px;
+        }
+
+        #syncStatus {
+          margin-left: 0;
+          margin-right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>DSA Daily Checklist</h1>
+        <div id="syncStatus">
+          <div class="sync-dot synced"></div>
+          <span>Synced</span>
+        </div>
+        <div>
+          <button class="sync-button" id="syncButton">🔄 Sync Now</button>
+          <button class="theme-toggle" id="themeToggle">
+            Switch to Light Theme
+          </button>
+        </div>
+      </header>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="day-cell">Day</th>
+            <th class="questions-cell">Questions</th>
+            <th class="status-cell">Status</th>
+            <th class="tags-cell">Tags</th>
+            <th class="links-cell">Important Links</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rows will be generated by JavaScript -->
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <p>Your progress is automatically saved. Keep coding! 🚀</p>
+      </div>
+    </div>
+
+    <!-- Modal for editing question links -->
+    <div class="modal" id="linkModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Question Link</h3>
+          <button class="close-modal" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input
+            type="text"
+            id="questionTextInput"
+            class="modal-input"
+            placeholder="Question text"
+          />
+          <input
+            type="url"
+            id="questionLinkInput"
+            class="modal-input"
+            placeholder="https://example.com"
+          />
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-secondary" id="cancelModal">
+            Cancel
+          </button>
+          <button class="modal-btn modal-btn-primary" id="saveLink">
+            Save Link
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize app data
+      let appData = [];
+      const TOTAL_DAYS = 100;
+      const DEFAULT_QUESTIONS = [
+        { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
+        {
+          text: "Reverse a Linked List",
+          link: "https://leetcode.com/problems/reverse-linked-list/",
+        },
+        {
+          text: "Binary Search",
+          link: "https://leetcode.com/problems/binary-search/",
+        },
+      ];
+
+      // MongoDB configuration
+      const API_BASE_URL = "http://localhost:3000/api";
+      let userId = "default-user";
+
+      // DOM elements
+      const tableBody = document.getElementById("tableBody");
+      const themeToggle = document.getElementById("themeToggle");
+      const linkModal = document.getElementById("linkModal");
+      const closeModal = document.getElementById("closeModal");
+      const cancelModal = document.getElementById("cancelModal");
+      const saveLink = document.getElementById("saveLink");
+      const questionTextInput = document.getElementById("questionTextInput");
+      const questionLinkInput = document.getElementById("questionLinkInput");
+      const syncButton = document.getElementById("syncButton");
+      const syncStatus = document.getElementById("syncStatus");
+
+      // Current editing question info
+      let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+
+      // Initialize the app
+      async function initApp() {
+        await loadData();
+        renderTable();
+        setupEventListeners();
+      }
+
+      // Load data from localStorage and MongoDB
+      async function loadData() {
+        // First try to load from localStorage (existing logic)
+        const savedData = localStorage.getItem("dsaChecklistData");
+        if (savedData) {
+          appData = JSON.parse(savedData);
+
+          // Ensure linksArray exists for all days (migration for existing data)
+          appData.forEach((dayData) => {
+            if (!dayData.linksArray) {
+              dayData.linksArray = [];
+              // Migrate existing links text to linksArray if it exists
+              if (dayData.links && dayData.links.trim() !== "") {
+                const links = dayData.links
+                  .split("\n")
+                  .filter((link) => link.trim() !== "");
+                links.forEach((link) => {
+                  dayData.linksArray.push({
+                    url: link.trim(),
+                    text: extractDisplayText(link.trim()),
+                  });
+                });
+              }
+            }
+          });
+
+          // Try to sync with MongoDB in the background
+          setTimeout(() => {
+            syncWithMongoDB();
+          }, 1000);
+        } else {
+          // If no localStorage data, try to load from MongoDB
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/data?userId=${userId}`
+            );
+            const result = await response.json();
+
+            if (result.success) {
+              appData = result.data;
+              // Save to localStorage for offline use
+              localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+              updateSyncStatus("synced", "Data loaded from cloud");
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            console.log(
+              "Failed to load from MongoDB, using default data:",
+              error
+            );
+            // Initialize with default data for 100 days
+            initializeDefaultData();
+          }
+        }
+      }
+
+      // Initialize default data
+      function initializeDefaultData() {
+        appData = [];
+        for (let day = 1; day <= TOTAL_DAYS; day++) {
+          appData.push({
+            day: day,
+            questions: DEFAULT_QUESTIONS.map((q) => ({
+              text: q.text,
+              link: q.link,
+              completed: false,
+            })),
+            tags: [],
+            links: "",
+            linksArray: [],
+          });
+        }
+        saveData();
+      }
+
+      // Save data to both localStorage and MongoDB
+      async function saveData() {
+        // Save to localStorage (existing logic)
+        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+
+        // Also save to MongoDB
+        await saveToMongoDB();
+      }
+
+      // Save data to MongoDB
+      async function saveToMongoDB() {
+        try {
+          updateSyncStatus("syncing", "Syncing...");
+
+          const response = await fetch(`${API_BASE_URL}/data`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: userId,
+              data: appData,
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            updateSyncStatus("synced", "Data synced with cloud");
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          console.log("Failed to save to MongoDB:", error);
+          updateSyncStatus("error", "Failed to sync with cloud");
+
+          // Retry after 5 seconds
+          setTimeout(() => {
+            saveToMongoDB();
+          }, 5000);
+        }
+      }
+
+      // Sync with MongoDB (for conflict resolution)
+      async function syncWithMongoDB() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/data?userId=${userId}`);
+          const result = await response.json();
+
+          if (result.success) {
+            const cloudData = result.data;
+            const localData = appData;
+
+            // Simple conflict resolution: use the most recently updated data
+            // For now, we'll keep local changes and push to cloud
+            await saveToMongoDB();
+          }
+        } catch (error) {
+          console.log("Sync with MongoDB failed:", error);
+          updateSyncStatus("offline", "Working offline");
+        }
+      }
+
+      // Update sync status indicator
+      function updateSyncStatus(status, message) {
+        const syncDot = syncStatus.querySelector(".sync-dot");
+        const statusText = syncStatus.querySelector("span");
+
+        // Remove all status classes
+        syncDot.classList.remove("synced", "syncing", "error", "offline");
+
+        switch (status) {
+          case "synced":
+            syncDot.classList.add("synced");
+            statusText.textContent = message || "Synced";
+            break;
+          case "syncing":
+            syncDot.classList.add("syncing");
+            statusText.textContent = message || "Syncing...";
+            break;
+          case "error":
+            syncDot.classList.add("error");
+            statusText.textContent = message || "Sync failed";
+            break;
+          case "offline":
+            syncDot.classList.add("offline");
+            statusText.textContent = message || "Offline";
+            break;
+        }
+      }
+
+      // Render table function (unchanged from your original code)
+      function renderTable() {
+        tableBody.innerHTML = "";
+
+        appData.forEach((dayData, index) => {
+          const row = document.createElement("tr");
+
+          // Day column
+          const dayCell = document.createElement("td");
+          dayCell.className = "day-cell";
+          dayCell.textContent = dayData.day;
+          row.appendChild(dayCell);
+
+          // Questions column
+          const questionsCell = document.createElement("td");
+          questionsCell.className = "questions-cell";
+
+          dayData.questions.forEach((question, qIndex) => {
+            const questionItem = document.createElement("div");
+            questionItem.className = "question-item";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "question-checkbox";
+            checkbox.checked = question.completed;
+            checkbox.addEventListener("change", () => {
+              toggleQuestionCompletion(index, qIndex);
+            });
+
+            const questionContent = document.createElement("div");
+            questionContent.className = "question-content";
+
+            const questionText = document.createElement("span");
+            questionText.className = "question-text";
+
+            if (question.link) {
+              const questionLink = document.createElement("a");
+              questionLink.href = question.link;
+              questionLink.target = "_blank";
+              questionLink.rel = "noopener noreferrer";
+              questionLink.textContent = question.text;
+              questionLink.className = "question-link";
+              questionText.appendChild(questionLink);
+            } else {
+              questionText.textContent = question.text;
+            }
+
+            questionText.addEventListener("click", (e) => {
+              if (!e.target.classList.contains("question-link")) {
+                editQuestionText(index, qIndex, questionText);
+              }
+            });
+
+            const editLinkBtn = document.createElement("button");
+            editLinkBtn.textContent = "🔗";
+            editLinkBtn.style.background = "none";
+            editLinkBtn.style.border = "none";
+            editLinkBtn.style.cursor = "pointer";
+            editLinkBtn.style.marginLeft = "8px";
+            editLinkBtn.style.opacity = "0.7";
+            editLinkBtn.title = "Edit link";
+            editLinkBtn.addEventListener("click", () => {
+              openLinkModal(index, qIndex);
+            });
+
+            questionText.appendChild(editLinkBtn);
+            questionContent.appendChild(questionText);
+
+            if (question.link) {
+              const linkDisplay = document.createElement("div");
+              linkDisplay.style.fontSize = "0.8rem";
+              linkDisplay.style.opacity = "0.7";
+              linkDisplay.style.marginTop = "2px";
+              linkDisplay.textContent = question.link;
+              questionContent.appendChild(linkDisplay);
+            }
+
+            questionItem.appendChild(checkbox);
+            questionItem.appendChild(questionContent);
+            questionsCell.appendChild(questionItem);
+          });
+
+          const addQuestionBtn = document.createElement("button");
+          addQuestionBtn.className = "add-question-btn";
+          addQuestionBtn.textContent = "+ Add Question";
+          addQuestionBtn.addEventListener("click", () => {
+            addNewQuestion(index);
+          });
+
+          questionsCell.appendChild(addQuestionBtn);
+          row.appendChild(questionsCell);
+
+          // Status column
+          const statusCell = document.createElement("td");
+          statusCell.className = "status-cell";
+          statusCell.textContent = getStatusEmoji(dayData.questions);
+          row.appendChild(statusCell);
+
+          // Tags column
+          const tagsCell = document.createElement("td");
+          tagsCell.className = "tags-cell";
+
+          dayData.tags.forEach((tag, tagIndex) => {
+            const tagElement = document.createElement("span");
+            tagElement.className = "tag";
+            tagElement.style.backgroundColor = tag.color;
+            tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
+            tagsCell.appendChild(tagElement);
+          });
+
+          const addTagInput = document.createElement("input");
+          addTagInput.type = "text";
+          addTagInput.className = "add-tag-input";
+          addTagInput.placeholder = "Add tag...";
+          addTagInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && addTagInput.value.trim() !== "") {
+              addNewTag(index, addTagInput.value.trim());
+              addTagInput.value = "";
+            }
+          });
+
+          tagsCell.appendChild(addTagInput);
+          row.appendChild(tagsCell);
+
+          // Links column
+          const linksCell = document.createElement("td");
+          linksCell.className = "links-cell";
+
+          // Create input for adding new links
+          const linkInput = document.createElement("input");
+          linkInput.type = "text";
+          linkInput.className = "add-link-input";
+          linkInput.placeholder = "Enter URL and press Enter to add...";
+          linkInput.style.width = "100%";
+          linkInput.style.marginBottom = "8px";
+          linkInput.style.padding = "6px 8px";
+          linkInput.style.background = "var(--bg-color)";
+          linkInput.style.border = "1px solid var(--border-color)";
+          linkInput.style.borderRadius = "4px";
+          linkInput.style.color = "var(--text-color)";
+
+          linkInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && linkInput.value.trim() !== "") {
+              addNewLink(index, linkInput.value.trim());
+              linkInput.value = "";
+            }
+          });
+
+          linksCell.appendChild(linkInput);
+
+          // Create tags container
+          const tagsContainer = document.createElement("div");
+          tagsContainer.className = "link-tags-container";
+
+          // Initialize linksArray if it doesn't exist (for backward compatibility)
+          if (!dayData.linksArray) {
+            dayData.linksArray = [];
+            // Migrate existing links text to linksArray
+            if (dayData.links && dayData.links.trim() !== "") {
+              const links = dayData.links
+                .split("\n")
+                .filter((link) => link.trim() !== "");
+              links.forEach((link) => {
+                dayData.linksArray.push({
+                  url: link.trim(),
+                  text: extractDisplayText(link.trim()),
+                });
+              });
+            }
+          }
+
+          // Display existing links as tags
+          if (dayData.linksArray.length > 0) {
+            dayData.linksArray.forEach((link, linkIndex) => {
+              const linkTag = document.createElement("div");
+              linkTag.className = "link-tag-container";
+              linkTag.style.display = "inline-block";
+              linkTag.style.marginRight = "6px";
+              linkTag.style.marginBottom = "6px";
+
+              const tagElement = document.createElement("a");
+              tagElement.href = link.url;
+              tagElement.target = "_blank";
+              tagElement.rel = "noopener noreferrer";
+              tagElement.style.display = "inline-flex";
+              tagElement.style.alignItems = "center";
+              tagElement.style.backgroundColor = "var(--tag-bg)";
+              tagElement.style.color = "white";
+              tagElement.style.padding = "4px 8px";
+              tagElement.style.borderRadius = "12px";
+              tagElement.style.fontSize = "0.8rem";
+              tagElement.style.textDecoration = "none";
+              tagElement.style.cursor = "pointer";
+              tagElement.style.transition = "opacity 0.2s";
+
+              tagElement.textContent = link.text;
+              tagElement.title = link.url;
+
+              tagElement.addEventListener("mouseenter", () => {
+                tagElement.style.opacity = "0.8";
+              });
+
+              tagElement.addEventListener("mouseleave", () => {
+                tagElement.style.opacity = "1";
+              });
+
+              // Add remove button
+              const removeBtn = document.createElement("span");
+              removeBtn.innerHTML = " &times;";
+              removeBtn.style.cursor = "pointer";
+              removeBtn.style.marginLeft = "4px";
+              removeBtn.style.fontWeight = "bold";
+              removeBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeLink(index, linkIndex);
+              });
+
+              tagElement.appendChild(removeBtn);
+              linkTag.appendChild(tagElement);
+              tagsContainer.appendChild(linkTag);
+            });
+          }
+
+          linksCell.appendChild(tagsContainer);
+          row.appendChild(linksCell);
+
+          tableBody.appendChild(row);
+        });
+      }
+
+      // Toggle question completion status
+      function toggleQuestionCompletion(dayIndex, questionIndex) {
+        appData[dayIndex].questions[questionIndex].completed =
+          !appData[dayIndex].questions[questionIndex].completed;
+        saveData();
+        updateStatusCell(dayIndex);
+      }
+
+      // Edit question text
+      function editQuestionText(dayIndex, questionIndex, element) {
+        const currentText = appData[dayIndex].questions[questionIndex].text;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = currentText;
+        input.className = "question-text editing";
+
+        element.parentNode.replaceChild(input, element);
+        input.focus();
+
+        const saveEdit = () => {
+          const newText = input.value.trim();
+          if (newText !== "") {
+            appData[dayIndex].questions[questionIndex].text = newText;
+            saveData();
+
+            // Re-render the table to update the question display
+            renderTable();
+          } else {
+            // If empty, revert to original text
+            input.parentNode.replaceChild(element, input);
+          }
+        };
+
+        input.addEventListener("blur", saveEdit);
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            saveEdit();
+          }
+        });
+      }
+
+      // Add a new question to a day
+      function addNewQuestion(dayIndex) {
+        appData[dayIndex].questions.push({
+          text: "New Question",
+          link: "",
+          completed: false,
+        });
+        saveData();
+        renderTable();
+      }
+
+      // Update status cell based on question completion
+      function updateStatusCell(dayIndex) {
+        const statusCell =
+          tableBody.children[dayIndex].querySelector(".status-cell");
+        statusCell.textContent = getStatusEmoji(appData[dayIndex].questions);
+      }
+
+      // Get status emoji based on question completion
+      function getStatusEmoji(questions) {
+        if (questions.length === 0) return "😐";
+        const allCompleted = questions.every((q) => q.completed);
+        return allCompleted ? "😊" : "😞";
+      }
+
+      // Add a new tag to a day
+      function addNewTag(dayIndex, tagText) {
+        // Check for duplicates
+        if (appData[dayIndex].tags.some((tag) => tag.text === tagText)) {
+          return;
+        }
+
+        // Generate random color for tag
+        const colors = [
+          "#58A6FF",
+          "#3FB950",
+          "#D29922",
+          "#DB61A2",
+          "#8E6CDF",
+          "#F85149",
+          "#FF8C37",
+          "#1F6FEB",
+        ];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+        appData[dayIndex].tags.push({
+          text: tagText,
+          color: randomColor,
+        });
+        saveData();
+        renderTable();
+      }
+
+      // Update links for a day
+      function updateLinks(dayIndex, linksText) {
+        appData[dayIndex].links = linksText;
+        saveData();
+      }
+
+      // Add a new link tag when Enter is pressed
+      function addNewLink(dayIndex, linkText) {
+        if (!linkText.trim()) return;
+
+        // Add to links array if it doesn't exist
+        if (!appData[dayIndex].linksArray) {
+          appData[dayIndex].linksArray = [];
+        }
+
+        // Check for duplicates
+        if (
+          appData[dayIndex].linksArray.some(
+            (link) => link.url === linkText.trim()
+          )
+        ) {
+          return;
+        }
+
+        appData[dayIndex].linksArray.push({
+          url: linkText.trim(),
+          text: extractDisplayText(linkText.trim()),
+        });
+        saveData();
+        renderLinksCell(dayIndex);
+      }
+
+      // Remove a link tag
+      function removeLink(dayIndex, linkIndex) {
+        if (appData[dayIndex].linksArray) {
+          appData[dayIndex].linksArray.splice(linkIndex, 1);
+          saveData();
+          renderLinksCell(dayIndex);
+        }
+      }
+
+      // Extract display text from URL
+      function extractDisplayText(url) {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.hostname.replace("www.", "");
+        } catch (e) {
+          return url.substring(0, 20) + (url.length > 20 ? "..." : "");
+        }
+      }
+
+      // Render links as clickable tags
+      function renderLinksCell(dayIndex) {
+        const rows = tableBody.querySelectorAll("tr");
+        if (rows[dayIndex]) {
+          const linksCell = rows[dayIndex].querySelector(".links-cell");
+          if (linksCell) {
+            // Clear existing content
+            linksCell.innerHTML = "";
+
+            // Create input for adding new links
+            const linkInput = document.createElement("input");
+            linkInput.type = "text";
+            linkInput.className = "add-link-input";
+            linkInput.placeholder = "Enter URL and press Enter to add...";
+            linkInput.style.width = "100%";
+            linkInput.style.marginBottom = "8px";
+            linkInput.style.padding = "6px 8px";
+            linkInput.style.background = "var(--bg-color)";
+            linkInput.style.border = "1px solid var(--border-color)";
+            linkInput.style.borderRadius = "4px";
+            linkInput.style.color = "var(--text-color)";
+
+            linkInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter" && linkInput.value.trim() !== "") {
+                addNewLink(dayIndex, linkInput.value.trim());
+                linkInput.value = "";
+              }
+            });
+
+            linksCell.appendChild(linkInput);
+
+            // Create tags container
+            const tagsContainer = document.createElement("div");
+            tagsContainer.className = "link-tags-container";
+
+            // Display existing links as tags
+            if (
+              appData[dayIndex].linksArray &&
+              appData[dayIndex].linksArray.length > 0
+            ) {
+              appData[dayIndex].linksArray.forEach((link, index) => {
+                const linkTag = document.createElement("div");
+                linkTag.className = "link-tag-container";
+                linkTag.style.display = "inline-block";
+                linkTag.style.marginRight = "6px";
+                linkTag.style.marginBottom = "6px";
+
+                const tagElement = document.createElement("a");
+                tagElement.href = link.url;
+                tagElement.target = "_blank";
+                tagElement.rel = "noopener noreferrer";
+                tagElement.style.display = "inline-flex";
+                tagElement.style.alignItems = "center";
+                tagElement.style.backgroundColor = "var(--tag-bg)";
+                tagElement.style.color = "white";
+                tagElement.style.padding = "4px 8px";
+                tagElement.style.borderRadius = "12px";
+                tagElement.style.fontSize = "0.8rem";
+                tagElement.style.textDecoration = "none";
+                tagElement.style.cursor = "pointer";
+                tagElement.style.transition = "opacity 0.2s";
+
+                tagElement.textContent = link.text;
+                tagElement.title = link.url;
+
+                tagElement.addEventListener("mouseenter", () => {
+                  tagElement.style.opacity = "0.8";
+                });
+
+                tagElement.addEventListener("mouseleave", () => {
+                  tagElement.style.opacity = "1";
+                });
+
+                // Add remove button
+                const removeBtn = document.createElement("span");
+                removeBtn.innerHTML = " &times;";
+                removeBtn.style.cursor = "pointer";
+                removeBtn.style.marginLeft = "4px";
+                removeBtn.style.fontWeight = "bold";
+                removeBtn.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  removeLink(dayIndex, index);
+                });
+
+                tagElement.appendChild(removeBtn);
+                linkTag.appendChild(tagElement);
+                tagsContainer.appendChild(linkTag);
+              });
+            }
+
+            linksCell.appendChild(tagsContainer);
+          }
+        }
+      }
+
+      // Open modal to edit question link
+      function openLinkModal(dayIndex, questionIndex) {
+        currentEditingQuestion = { dayIndex, questionIndex };
+        const question = appData[dayIndex].questions[questionIndex];
+
+        questionTextInput.value = question.text;
+        questionLinkInput.value = question.link || "";
+
+        linkModal.style.display = "flex";
+        questionLinkInput.focus();
+      }
+
+      // Close the modal
+      function closeLinkModal() {
+        linkModal.style.display = "none";
+        currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+      }
+
+      // Save the question link
+      function saveQuestionLink() {
+        const { dayIndex, questionIndex } = currentEditingQuestion;
+        if (dayIndex === -1 || questionIndex === -1) return;
+
+        const newText = questionTextInput.value.trim();
+        const newLink = questionLinkInput.value.trim();
+
+        if (newText !== "") {
+          appData[dayIndex].questions[questionIndex].text = newText;
+          appData[dayIndex].questions[questionIndex].link = newLink;
+          saveData();
+          renderTable();
+        }
+
+        closeLinkModal();
+      }
+
+      // Setup event listeners
+      function setupEventListeners() {
+        // Theme toggle
+        themeToggle.addEventListener("click", () => {
+          document.body.classList.toggle("light-theme");
+          if (document.body.classList.contains("light-theme")) {
+            themeToggle.textContent = "Switch to Dark Theme";
+          } else {
+            themeToggle.textContent = "Switch to Light Theme";
+          }
+        });
+
+        // Sync button
+        syncButton.addEventListener("click", async () => {
+          updateSyncStatus("syncing", "Syncing...");
+          await saveToMongoDB();
+        });
+
+        // Tag removal (delegated event listener)
+        tableBody.addEventListener("click", (e) => {
+          if (e.target.classList.contains("tag-remove")) {
+            const dayIndex = parseInt(e.target.dataset.day);
+            const tagIndex = parseInt(e.target.dataset.tagIndex);
+            appData[dayIndex].tags.splice(tagIndex, 1);
+            saveData();
+            renderTable();
+          }
+        });
+
+        // Modal event listeners
+        closeModal.addEventListener("click", closeLinkModal);
+        cancelModal.addEventListener("click", closeLinkModal);
+        saveLink.addEventListener("click", saveQuestionLink);
+
+        // Close modal when clicking outside
+        linkModal.addEventListener("click", (e) => {
+          if (e.target === linkModal) {
+            closeLinkModal();
+          }
+        });
+
+        // Allow saving with Enter key
+        questionLinkInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            saveQuestionLink();
+          }
+        });
+      }
+
+      // Initialize the app when DOM is loaded
+      document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+  </body>
+</html>
