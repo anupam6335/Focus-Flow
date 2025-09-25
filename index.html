@@ -1641,7 +1641,7 @@
           if (authToken && !isSyncing) {
             syncWithMongoDB();
           }
-        }, 30000); // Sync every 30 seconds
+        }, 60000); // Sync every 60 seconds
       }
 
       // Check if user is auto-logged in - FIXED VERSION
@@ -1886,7 +1886,7 @@
       const toastManager = new ToastManager();
       const confirmDialog = new ConfirmDialog();
 
-      // Handle user login
+      // Handle user login - OPTIMIZED VERSION
       async function handleLogin() {
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
@@ -1896,11 +1896,14 @@
             "Please enter both username and password",
             "Login Required"
           );
-
           return;
         }
 
         try {
+          // Show loading state
+          loginBtn.textContent = "Logging in...";
+          loginBtn.disabled = true;
+
           const response = await fetch(`${API_BASE_URL}/login`, {
             method: "POST",
             headers: {
@@ -1921,10 +1924,14 @@
             localStorage.setItem("userId", userId);
 
             showUserInfo();
-            await loadData(); // Reload data for the logged-in user
-            renderTable();
 
+            // IMMEDIATELY load fresh data from server
+            await loadData(); // This now includes immediate sync
+            renderTable();
             renderActivityCalendar();
+
+            // Show immediate sync status
+            updateSyncStatus("synced", "Data loaded successfully");
           } else {
             toastManager.error(result.error || "Login failed", "Login Error");
           }
@@ -1934,6 +1941,10 @@
             "Login failed. Please try again.",
             "Network Error"
           );
+        } finally {
+          // Reset login button state
+          loginBtn.textContent = "Login";
+          loginBtn.disabled = false;
         }
       }
 
@@ -2029,7 +2040,7 @@
         renderTable();
       }
 
-      // Load data from localStorage and MongoDB
+      // Load data from localStorage and MongoDB - OPTIMIZED VERSION
       async function loadData() {
         // Load sync state from localStorage
         const savedVersion = localStorage.getItem("appVersion");
@@ -2061,11 +2072,9 @@
             }
           });
 
-          // Try to sync with MongoDB in the background if logged in
+          // IMMEDIATELY sync with MongoDB if logged in (removed the 1-second delay)
           if (authToken) {
-            setTimeout(() => {
-              syncWithMongoDB();
-            }, 1000);
+            await syncWithMongoDB(); // Changed from setTimeout to immediate await
           }
         } else {
           // If no localStorage data, try to load from MongoDB if logged in
@@ -2232,7 +2241,7 @@
             if (authToken && pendingChanges) {
               saveToMongoDB();
             }
-          }, 5000);
+          }, 5);
         } finally {
           isSyncing = false;
         }
@@ -2314,19 +2323,24 @@
         }
       }
 
-      // Sync with MongoDB (for conflict resolution)
+      // Sync with MongoDB (for conflict resolution) - OPTIMIZED VERSION
       async function syncWithMongoDB() {
         if (isSyncing || !authToken) return;
 
         try {
           const response = await fetch(
-            `${API_BASE_URL}/data?userId=${userId}`,
+            `${API_BASE_URL}/data?userId=${userId}&t=${Date.now()}`,
             {
+              // Added cache busting
               headers: {
                 Authorization: `Bearer ${authToken}`,
               },
             }
           );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
           const result = await response.json();
 
@@ -2336,7 +2350,9 @@
 
             // Check if server has newer data
             if (serverVersion > currentVersion) {
-              console.log("Server has newer data, updating local copy");
+              console.log(
+                "Server has newer data, updating local copy immediately"
+              );
               appData = result.data;
               currentVersion = serverVersion;
               lastUpdated = serverLastUpdated;
@@ -2347,6 +2363,12 @@
 
               renderTable();
               updateSyncStatus("synced", "Data updated from cloud");
+
+              // Show immediate feedback to user
+              toastManager.info(
+                "Data synchronized with cloud",
+                "Sync Complete"
+              );
             } else if (pendingChanges) {
               // We have local changes that need to be pushed
               await saveToMongoDB();
@@ -2357,6 +2379,14 @@
         } catch (error) {
           console.log("Background sync failed:", error);
           updateSyncStatus("offline", "Working offline");
+
+          // Don't show error toast for background sync failures to avoid annoying users
+          if (!error.message.includes("Failed to fetch")) {
+            toastManager.warning(
+              "Sync failed, using local data",
+              "Offline Mode"
+            );
+          }
         }
       }
 
