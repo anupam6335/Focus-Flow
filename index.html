@@ -1530,7 +1530,15 @@
 
       <div class="footer">
         <p>Your progress is automatically saved. Keep coding! 🚀</p>
-        <p>If you find this helpful, please give a ⭐ on <a href="https://github.com/anupam6335/Daily-Tracker" target="_blank" rel="noopener noreferrer">GitHub</a>!</p>
+        <p>
+          If you find this helpful, please give a ⭐ on
+          <a
+            href="https://github.com/anupam6335/Daily-Tracker"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GitHub</a
+          >!
+        </p>
       </div>
     </div>
 
@@ -2749,6 +2757,32 @@
         updateStatusCell(dayIndex);
       }
 
+      // Modify the toggleQuestionCompletion function to include celebration check
+      const originalToggleQuestionCompletion = toggleQuestionCompletion;
+      toggleQuestionCompletion = function (dayIndex, questionIndex) {
+        originalToggleQuestionCompletion(dayIndex, questionIndex);
+
+        // Check for celebration after toggling completion
+        checkAndCelebrateAchievements(dayIndex);
+      };
+
+      // Add celebration check when loading data to handle already completed questions
+      function checkExistingAchievements() {
+        appData.forEach((dayData, dayIndex) => {
+          const solvedCount = dayData.questions.filter(
+            (q) => q.completed
+          ).length;
+          if (solvedCount >= 5) {
+            changeStatusColorToDarkGreen(dayIndex);
+          }
+        });
+      }
+
+      // Call this function after loading data and rendering table
+      setTimeout(() => {
+        checkExistingAchievements();
+      }, 100);
+
       // Edit question text
       function editQuestionText(dayIndex, questionIndex, element) {
         const currentText = appData[dayIndex].questions[questionIndex].text;
@@ -3088,6 +3122,195 @@
         };
       }
 
+      // Add this function to handle the celebration logic
+      function checkAndCelebrateAchievements(dayIndex) {
+        const solvedCount = appData[dayIndex].questions.filter(
+          (q) => q.completed
+        ).length;
+
+        if (solvedCount == 5 || solvedCount == 10) {
+          // Change status color to darker green
+          changeStatusColorToDarkGreen(dayIndex);
+
+          // Show congratulatory popup
+          showCelebrationPopup(solvedCount);
+
+          // Trigger party popper animation
+          triggerPartyPopperAnimation();
+        }
+      }
+
+      // Function to change status color to darker green
+      function changeStatusColorToDarkGreen(dayIndex) {
+        const statusCell =
+          tableBody.children[dayIndex].querySelector(".status-cell");
+        if (statusCell) {
+          statusCell.style.color = "#216e39"; // Darker green color
+          statusCell.style.fontWeight = "bold";
+          statusCell.style.textShadow = "0 0 10px rgba(33, 110, 57, 0.5)";
+        }
+      }
+
+      // Function to show celebration popup
+      function showCelebrationPopup(solvedCount) {
+        // Create popup element
+        const popup = document.createElement("div");
+        popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #216e39, #3fb950);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        z-index: 10000;
+        text-align: center;
+        max-width: 400px;
+        animation: popupBounce 0.5s ease-out;
+    `;
+
+        popup.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
+        <h3 style="margin: 0 0 10px 0; font-size: 1.5rem;">Amazing Work!</h3>
+        <p style="margin: 0; font-size: 1.1rem;">You've solved ${solvedCount} problems today! Keep up the great progress! 🚀</p>
+        <button onclick="this.parentElement.remove()" style="
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        ">Continue Coding</button>
+    `;
+
+        // Add CSS animation
+        const style = document.createElement("style");
+        style.textContent = `
+        @keyframes popupBounce {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            70% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(popup);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          if (popup.parentElement) {
+            popup.remove();
+          }
+        }, 5000);
+      }
+
+      // Function to trigger party popper animation
+      function triggerPartyPopperAnimation() {
+        // Create confetti elements
+        for (let i = 0; i < 100; i++) {
+          createConfetti();
+        }
+
+        // Add celebration sound (optional - silent unless user interacts first)
+        playCelebrationSound();
+      }
+
+      // Function to create individual confetti pieces
+      function createConfetti() {
+        const confetti = document.createElement("div");
+        const colors = [
+          "#216e39",
+          "#3fb950",
+          "#58a6ff",
+          "#db61a2",
+          "#f0883e",
+          "#f0d33c",
+        ];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        confetti.style.cssText = `
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: ${color};
+        top: -10px;
+        left: ${Math.random() * 100}vw;
+        border-radius: ${Math.random() > 0.5 ? "50%" : "0"};
+        pointer-events: none;
+        z-index: 9999;
+        animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
+    `;
+
+        // Add CSS animation for confetti
+        const style = document.createElement("style");
+        if (!document.querySelector("#confetti-animation")) {
+          style.id = "confetti-animation";
+          style.textContent = `
+            @keyframes confettiFall {
+                0% {
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(${
+                      360 + Math.random() * 360
+                    }deg);
+                    opacity: 0;
+                }
+            }
+        `;
+          document.head.appendChild(style);
+        }
+
+        document.body.appendChild(confetti);
+
+        // Remove confetti after animation
+        setTimeout(() => {
+          if (confetti.parentElement) {
+            confetti.remove();
+          }
+        }, 5000);
+      }
+
+      // Function to play celebration sound (user interaction required)
+      function playCelebrationSound() {
+        // Only play sound if user has interacted with the page
+        try {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+
+          // Create a simple celebration sound
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(
+            1760,
+            audioContext.currentTime + 0.1
+          );
+
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.3
+          );
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (error) {
+          // Silent fail if audio context is not supported or user hasn't interacted
+          console.log("Audio not available or user interaction required");
+        }
+      }
+
       function renderActivityCalendar() {
         const calendarContainer = document.getElementById("activityCalendar");
         if (!calendarContainer) return;
@@ -3174,4 +3397,3 @@
     </script>
   </body>
 </html>
-
