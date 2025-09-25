@@ -1634,6 +1634,8 @@
         renderTable();
         setupEventListeners();
 
+        initializeActivityTracker();
+
         // Start periodic sync
         setInterval(() => {
           if (authToken && !isSyncing) {
@@ -1642,7 +1644,7 @@
         }, 30000); // Sync every 30 seconds
       }
 
-      // Check if user is auto-logged in
+      // Check if user is auto-logged in - FIXED VERSION
       async function checkAutoLogin() {
         const savedToken = localStorage.getItem("authToken");
         const savedUserId = localStorage.getItem("userId");
@@ -1662,16 +1664,18 @@
               showUserInfo();
               return true;
             } else {
-              // Token invalid, clear saved credentials
+              // Token invalid, clear saved credentials BUT KEEP PROGRESS DATA
               localStorage.removeItem("authToken");
               localStorage.removeItem("userId");
               localStorage.removeItem("appVersion");
               localStorage.removeItem("lastUpdated");
               showLoginForm();
+              // Progress data remains in localStorage
             }
           } catch (error) {
             console.log("Auto-login check failed:", error);
             showLoginForm();
+            // Progress data remains in localStorage
           }
         } else {
           showLoginForm();
@@ -1919,6 +1923,8 @@
             showUserInfo();
             await loadData(); // Reload data for the logged-in user
             renderTable();
+
+            renderActivityCalendar();
           } else {
             toastManager.error(result.error || "Login failed", "Login Error");
           }
@@ -1996,16 +2002,30 @@
         }
       }
 
-      // Handle user logout
+      // Handle user logout - FIXED VERSION
       function handleLogout() {
+        // Save the current progress data BEFORE logging out
+        const currentProgress = JSON.parse(
+          localStorage.getItem("dsaChecklistData") || "[]"
+        );
+
         authToken = null;
         userId = "default-user";
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("appVersion");
         localStorage.removeItem("lastUpdated");
+
+        // RESTORE the progress data after clearing auth items
+        if (currentProgress && currentProgress.length > 0) {
+          localStorage.setItem(
+            "dsaChecklistData",
+            JSON.stringify(currentProgress)
+          );
+        }
+
         showLoginForm();
-        initializeDefaultData(); // Reset to default data for anonymous user
+        // Don't reset to default data - keep the existing progress
         renderTable();
       }
 
@@ -2092,8 +2112,18 @@
         }
       }
 
-      // Initialize default data
+      // Initialize default data - FIXED VERSION
       function initializeDefaultData() {
+        // Check if we already have data in localStorage
+        const savedData = localStorage.getItem("dsaChecklistData");
+        if (savedData) {
+          appData = JSON.parse(savedData);
+          // Ensure data structure is correct
+          ensureDataStructure();
+          return; // Use existing data instead of resetting
+        }
+
+        // Only create default data if none exists
         appData = [];
         for (let day = 1; day <= TOTAL_DAYS; day++) {
           appData.push({
@@ -2109,6 +2139,25 @@
           });
         }
         saveData();
+      }
+
+      // Helper function to ensure data structure is correct
+      function ensureDataStructure() {
+        appData.forEach((dayData) => {
+          // Ensure questions have completed property
+          if (dayData.questions) {
+            dayData.questions.forEach((question) => {
+              if (typeof question.completed === "undefined") {
+                question.completed = false;
+              }
+            });
+          }
+
+          // Ensure linksArray exists
+          if (!dayData.linksArray) {
+            dayData.linksArray = [];
+          }
+        });
       }
 
       // Save data to both localStorage and MongoDB
@@ -2610,6 +2659,9 @@
 
           tableBody.appendChild(row);
         });
+
+        // Always render activity tracker when table is rendered
+        renderActivityCalendar();
       }
 
       // Update the deleteQuestion function to ensure modal closes
@@ -2991,12 +3043,13 @@
           }
         });
       }
-      // Activity Tracker Functionality - Add to existing JavaScript
+
+      // Activity Tracker Functionality - FIXED VERSION
       function initializeActivityTracker() {
         renderActivityCalendar();
 
-        // Re-render calendar when data changes
-        const originalSaveData = window.saveData;
+        // Re-render calendar when data changes - FIXED to use the correct reference
+        const originalSaveData = saveData;
         window.saveData = function () {
           const result = originalSaveData.apply(this, arguments);
           renderActivityCalendar();
@@ -3075,13 +3128,18 @@
         });
       }
 
-      // Initialize activity tracker when DOM is loaded
+      // Initialize activity tracker and app when DOM is loaded - FIXED VERSION
       document.addEventListener("DOMContentLoaded", function () {
-        // Wait for the main app to initialize, then initialize activity tracker
-        setTimeout(initializeActivityTracker, 100);
+        // Initialize the main app
+        initApp();
+
+        // Ensure activity tracker renders after a short delay to catch any initial render
+        setTimeout(() => {
+          if (typeof renderActivityCalendar === "function") {
+            renderActivityCalendar();
+          }
+        }, 500);
       });
-      // Initialize the app when DOM is loaded
-      document.addEventListener("DOMContentLoaded", initApp);
     </script>
   </body>
 </html>
