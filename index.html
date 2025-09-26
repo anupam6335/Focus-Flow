@@ -1775,6 +1775,93 @@
           opacity: 1;
         }
       }
+
+      /* Disabled state styles */
+      .non-editable-day {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .non-editable-control {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      .editable-control {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      /* Tooltip styles */
+      .tooltip-container {
+        position: relative;
+        display: inline-block;
+      }
+
+      .tooltip-text {
+        visibility: hidden;
+        width: 200px;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1000;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.8rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .tooltip-container:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: var(--border-color) transparent transparent transparent;
+      }
+
+      /* Focus management for accessibility */
+      .non-editable-control:focus {
+        outline: none;
+        box-shadow: none;
+      }
+
+      /* Ensure links remain clickable in non-editable days */
+      .non-editable-day .question-link,
+      .non-editable-day .personal-info-link-url,
+      .non-editable-day .link-tag-container a {
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+      }
+
+      /* Screen reader only text */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     </style>
   </head>
   <body>
@@ -1824,7 +1911,7 @@
           <div class="metrics-grid">
             <div class="metric-card">
               <div class="metric-value" id="currentStreak">0</div>
-              <div class="metric-label">Current Streak</div>
+              <div class="metric-label">Current Streak 🔥</div>
               <div class="metric-subtitle">days in a row</div>
             </div>
             <div class="metric-card">
@@ -1848,7 +1935,7 @@
         <!-- GitHub-style Heatmap -->
         <div class="heatmap-container">
           <div class="heatmap-header">
-            <h3>Activity Heatmap</h3>
+            <h3>Consistency Map 📌</h3>
             <div class="heatmap-legend">
               <span>Less</span>
               <div class="legend-colors">
@@ -2006,6 +2093,8 @@
       // Initialize app data
       let appData = [];
       const TOTAL_DAYS = 1;
+      const APP_START_DATE = "2025-09-25"; // Your app's start date
+
       const DEFAULT_QUESTIONS = [
         { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
         {
@@ -2022,6 +2111,43 @@
       const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
       let userId = "default-user";
       let authToken = null;
+
+      // Add day number information to the header or somewhere visible
+      const header = document.querySelector("header h1");
+      if (header) {
+        const dayInfo = document.createElement("div");
+        dayInfo.style.fontSize = "0.8rem";
+        dayInfo.style.opacity = "0.7";
+        dayInfo.style.marginTop = "5px";
+        dayInfo.style.marginLeft = "10px";
+
+        // Format the date
+        const d = new Date();
+        const day = d.getDate();
+        const suffix =
+          day > 3 && day < 21
+            ? "th"
+            : ["th", "st", "nd", "rd"][day % 10] || "th";
+        const month = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sept",
+          "Oct",
+          "Nov",
+          "Dec",
+        ][d.getMonth()];
+        const formattedDate = `${day}${suffix} ${month}, ${d.getFullYear()}`;
+
+        dayInfo.textContent = formattedDate;
+
+        header.parentElement.insertBefore(dayInfo, header.nextSibling);
+      }
 
       // Sync state management
       let currentVersion = 1;
@@ -2078,7 +2204,50 @@
           if (authToken && !isSyncing) {
             syncWithMongoDB();
           }
-        }, 60000); // Sync every 60 seconds
+        }, 20000); // Sync every 20 seconds
+      }
+
+      // Helper function to determine if a day is editable (today only)
+      function isEditable(dayNumber) {
+        const startDate = new Date(APP_START_DATE);
+        const dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + (dayNumber - 1));
+
+        const today = new Date();
+
+        // Compare dates without time components
+        const isToday = dayDate.toDateString() === today.toDateString();
+
+        return isToday;
+      }
+
+      // Helper function to get the current day number
+      function getCurrentDayNumber() {
+        const startDate = new Date(APP_START_DATE);
+        const today = new Date();
+        const diffTime = today - startDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return Math.max(1, diffDays); // Ensure at least day 1
+      }
+
+      // Guard function to prevent API calls for non-editable days
+      function shouldAllowMutation(dayIndex) {
+        const dayNumber = appData[dayIndex]?.day;
+        if (!dayNumber) return false;
+
+        const editable = isEditable(dayNumber);
+
+        if (!editable) {
+          console.warn(
+            `Attempted to mutate non-editable day ${dayNumber}. Action blocked.`
+          );
+          toastManager.warning(
+            "Only today's items are editable.",
+            "Editing Restricted"
+          );
+        }
+
+        return editable;
       }
 
       // Check if user is auto-logged in - FIXED VERSION
@@ -2714,7 +2883,7 @@
 
       // Update the initializeEnhancedActivityTracker function
       function initializeEnhancedActivityTracker() {
-        console.log("Initializing enhanced activity tracker with auto-sync...");
+        // console.log("Initializing enhanced activity tracker with auto-sync...");
 
         // Initialize activity tracker data
         if (!window.activityTrackerData) {
@@ -2734,21 +2903,21 @@
 
         // Load existing data
         loadActivityTrackerData().then(() => {
-          console.log("Activity tracker data loaded with auto-sync enabled");
+          // console.log("Activity tracker data loaded with auto-sync enabled");
           renderEnhancedActivityTracker();
         });
 
-        // Periodic sync as backup (every 2 minutes)
+        // Periodic sync as backup (every 1 minutes)
         setInterval(() => {
           if (authToken && !isSyncing) {
             console.log("🕒 Periodic background sync...");
             saveActivityTrackerData();
           }
-        }, 120000); // 2 minutes
+        }, 60000); // 1 minutes
       }
       // Hook into all operations that should trigger activity tracker save - FIXED VERSION
       function hookIntoSaveOperations() {
-        console.log("🔗 Setting up automatic activity tracker sync...");
+        // console.log("🔗 Setting up automatic activity tracker sync...");
 
         // Store original functions
         const originalFunctions = {
@@ -2834,12 +3003,12 @@
           debouncedSync();
         };
 
-        console.log("✅ Automatic activity tracker sync enabled");
+        // console.log("✅ Automatic activity tracker sync enabled");
       }
 
       // This new function for direct event listening as backup
       function setupAutomaticSyncListeners() {
-        console.log("🎯 Setting up automatic sync listeners...");
+        // console.log("🎯 Setting up automatic sync listeners...");
 
         let syncDebounceTimer = null;
 
@@ -2895,7 +3064,7 @@
           }
         });
 
-        console.log("✅ Automatic sync listeners activated");
+        // console.log("✅ Automatic sync listeners activated");
       }
 
       // Load activity tracker data from MongoDB - FIXED VERSION
@@ -3056,8 +3225,6 @@
         // Calculate fresh analytics
         const analytics = calculateAnalytics();
 
-        console.log("Updating analytics dashboard:", analytics); // Debug log
-
         // Update the UI first
         document.getElementById("currentStreak").textContent =
           analytics.currentStreak;
@@ -3075,11 +3242,6 @@
           window.activityTrackerData.maxStreak = analytics.maxStreak;
           window.activityTrackerData.heatmapData = getActivityData();
           window.activityTrackerData.activityHistory = getActivityHistory();
-
-          console.log(
-            "Updated activityTrackerData:",
-            window.activityTrackerData
-          ); // Debug log
         }
 
         // Save to MongoDB if logged in - BUT don't call saveActivityTrackerData() here
@@ -3798,32 +3960,59 @@
         }
       }
 
-      // Render table function
+      // Modified renderTable function to apply editable states
       function renderTable() {
         tableBody.innerHTML = "";
+        const currentDay = getCurrentDayNumber();
+
         appData.forEach((dayData, index) => {
           const row = document.createElement("tr");
+          const isEditableDay = isEditable(dayData.day);
+
+          // Apply non-editable class to entire row if not today
+          if (!isEditableDay) {
+            row.classList.add("non-editable-day");
+          }
 
           // Day column
           const dayCell = document.createElement("td");
           dayCell.className = "day-cell";
           dayCell.textContent = dayData.day;
+
+          // Add screen reader information for non-editable days
+          if (!isEditableDay) {
+            const srText = document.createElement("span");
+            srText.className = "sr-only";
+            srText.textContent = " - Non-editable day";
+            dayCell.appendChild(srText);
+          }
+
           row.appendChild(dayCell);
 
-          // Questions column - MODIFIED to include delete buttons
+          // Questions column - MODIFIED with editable controls
           const questionsCell = document.createElement("td");
           questionsCell.className = "questions-cell";
+
           dayData.questions.forEach((question, qIndex) => {
             const questionItem = document.createElement("div");
             questionItem.className = "question-item";
 
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
-            checkbox.className = "question-checkbox";
+            checkbox.className = `question-checkbox ${
+              isEditableDay ? "editable-control" : "non-editable-control"
+            }`;
             checkbox.checked = question.completed;
-            checkbox.addEventListener("change", () => {
-              toggleQuestionCompletion(index, qIndex);
-            });
+            checkbox.disabled = !isEditableDay;
+            checkbox.setAttribute("aria-disabled", !isEditableDay);
+
+            if (isEditableDay) {
+              checkbox.addEventListener("change", () => {
+                toggleQuestionCompletion(index, qIndex);
+              });
+            } else {
+              checkbox.tabIndex = -1;
+            }
 
             const questionContent = document.createElement("div");
             questionContent.className = "question-content";
@@ -3843,41 +4032,91 @@
               questionText.textContent = question.text;
             }
 
-            questionText.addEventListener("click", (e) => {
-              if (!e.target.classList.contains("question-link")) {
-                editQuestionText(index, qIndex, questionText);
-              }
-            });
+            // Only make text editable for today
+            if (isEditableDay) {
+              questionText.addEventListener("click", (e) => {
+                if (!e.target.classList.contains("question-link")) {
+                  editQuestionText(index, qIndex, questionText);
+                }
+              });
+            }
 
-            // Edit link button
+            // Edit link button - only for editable days
             const editLinkBtn = document.createElement("button");
             editLinkBtn.textContent = "🔗";
             editLinkBtn.style.background = "none";
             editLinkBtn.style.border = "none";
-            editLinkBtn.style.cursor = "pointer";
+            editLinkBtn.style.cursor = isEditableDay
+              ? "pointer"
+              : "not-allowed";
             editLinkBtn.style.marginLeft = "8px";
-            editLinkBtn.style.opacity = "0.7";
-            editLinkBtn.title = "Edit link";
-            editLinkBtn.addEventListener("click", () => {
-              openLinkModal(index, qIndex);
-            });
+            editLinkBtn.style.opacity = isEditableDay ? "0.7" : "0.3";
+            editLinkBtn.title = isEditableDay
+              ? "Edit link"
+              : "Only today's items are editable";
+            editLinkBtn.disabled = !isEditableDay;
+            editLinkBtn.setAttribute("aria-disabled", !isEditableDay);
 
-            // DELETE QUESTION BUTTON - NEW FEATURE
+            if (isEditableDay) {
+              editLinkBtn.addEventListener("click", () => {
+                openLinkModal(index, qIndex);
+              });
+            } else {
+              editLinkBtn.tabIndex = -1;
+              // Add tooltip for non-editable days
+              const tooltipContainer = document.createElement("div");
+              tooltipContainer.className = "tooltip-container";
+              tooltipContainer.appendChild(editLinkBtn);
+
+              const tooltip = document.createElement("span");
+              tooltip.className = "tooltip-text";
+              tooltip.textContent = "Only today's items are editable.";
+              tooltipContainer.appendChild(tooltip);
+
+              questionText.appendChild(tooltipContainer);
+            }
+
+            // DELETE QUESTION BUTTON - only for editable days
             const deleteQuestionBtn = document.createElement("button");
             deleteQuestionBtn.textContent = "🗑️";
             deleteQuestionBtn.style.background = "none";
             deleteQuestionBtn.style.border = "none";
-            deleteQuestionBtn.style.cursor = "pointer";
+            deleteQuestionBtn.style.cursor = isEditableDay
+              ? "pointer"
+              : "not-allowed";
             deleteQuestionBtn.style.marginLeft = "4px";
-            deleteQuestionBtn.style.opacity = "0.7";
-            deleteQuestionBtn.title = "Delete question";
-            deleteQuestionBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              deleteQuestion(index, qIndex);
-            });
+            deleteQuestionBtn.style.opacity = isEditableDay ? "0.7" : "0.3";
+            deleteQuestionBtn.title = isEditableDay
+              ? "Delete question"
+              : "Only today's items are editable";
+            deleteQuestionBtn.disabled = !isEditableDay;
+            deleteQuestionBtn.setAttribute("aria-disabled", !isEditableDay);
 
-            questionText.appendChild(editLinkBtn);
-            questionText.appendChild(deleteQuestionBtn); // Add delete button
+            if (isEditableDay) {
+              deleteQuestionBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteQuestion(index, qIndex);
+              });
+            } else {
+              deleteQuestionBtn.tabIndex = -1;
+              // Add tooltip for non-editable days
+              const tooltipContainer = document.createElement("div");
+              tooltipContainer.className = "tooltip-container";
+              tooltipContainer.appendChild(deleteQuestionBtn);
+
+              const tooltip = document.createElement("span");
+              tooltip.className = "tooltip-text";
+              tooltip.textContent = "Only today's items are editable.";
+              tooltipContainer.appendChild(tooltip);
+
+              questionText.appendChild(tooltipContainer);
+            }
+
+            if (isEditableDay) {
+              questionText.appendChild(editLinkBtn);
+              questionText.appendChild(deleteQuestionBtn);
+            }
+
             questionContent.appendChild(questionText);
 
             if (question.link) {
@@ -3894,13 +4133,38 @@
             questionsCell.appendChild(questionItem);
           });
 
+          // Add question button - only for editable days
           const addQuestionBtn = document.createElement("button");
-          addQuestionBtn.className = "add-question-btn";
+          addQuestionBtn.className = `add-question-btn ${
+            isEditableDay ? "editable-control" : "non-editable-control"
+          }`;
           addQuestionBtn.textContent = "+ Add Question";
-          addQuestionBtn.addEventListener("click", () => {
-            addNewQuestion(index);
-          });
-          questionsCell.appendChild(addQuestionBtn);
+          addQuestionBtn.disabled = !isEditableDay;
+          addQuestionBtn.setAttribute("aria-disabled", !isEditableDay);
+
+          if (isEditableDay) {
+            addQuestionBtn.addEventListener("click", () => {
+              addNewQuestion(index);
+            });
+          } else {
+            addQuestionBtn.tabIndex = -1;
+            // Add tooltip
+            const tooltipContainer = document.createElement("div");
+            tooltipContainer.className = "tooltip-container";
+            tooltipContainer.style.width = "100%";
+            tooltipContainer.appendChild(addQuestionBtn);
+
+            const tooltip = document.createElement("span");
+            tooltip.className = "tooltip-text";
+            tooltip.textContent = "Only today's items are editable.";
+            tooltipContainer.appendChild(tooltip);
+
+            questionsCell.appendChild(tooltipContainer);
+          }
+
+          questionsCell.appendChild(
+            isEditableDay ? addQuestionBtn : addQuestionBtn.parentElement
+          );
           row.appendChild(questionsCell);
 
           // Status column
@@ -3909,39 +4173,67 @@
           statusCell.textContent = getStatusEmoji(dayData.questions);
           row.appendChild(statusCell);
 
-          // Tags column
+          // Tags column - MODIFIED for editable state
           const tagsCell = document.createElement("td");
           tagsCell.className = "tags-cell";
+
           dayData.tags.forEach((tag, tagIndex) => {
             const tagElement = document.createElement("span");
             tagElement.className = "tag";
             tagElement.style.backgroundColor = tag.color;
-            tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
+
+            // Only show remove button for editable days
+            if (isEditableDay) {
+              tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
+            } else {
+              tagElement.textContent = tag.text;
+              tagElement.style.opacity = "0.7";
+            }
+
             tagsCell.appendChild(tagElement);
           });
 
+          // Tag input - only for editable days
           const addTagInput = document.createElement("input");
           addTagInput.type = "text";
-          addTagInput.className = "add-tag-input";
-          addTagInput.placeholder = "Add tag...";
-          addTagInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && addTagInput.value.trim() !== "") {
-              addNewTag(index, addTagInput.value.trim());
-              addTagInput.value = "";
-            }
-          });
+          addTagInput.className = `add-tag-input ${
+            isEditableDay ? "editable-control" : "non-editable-control"
+          }`;
+          addTagInput.placeholder = isEditableDay
+            ? "Add tag..."
+            : "Only today editable";
+          addTagInput.disabled = !isEditableDay;
+          addTagInput.setAttribute("aria-disabled", !isEditableDay);
+
+          if (isEditableDay) {
+            addTagInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter" && addTagInput.value.trim() !== "") {
+                addNewTag(index, addTagInput.value.trim());
+                addTagInput.value = "";
+              }
+            });
+          } else {
+            addTagInput.tabIndex = -1;
+          }
+
           tagsCell.appendChild(addTagInput);
           row.appendChild(tagsCell);
 
-          // Links column
+          // Links column - MODIFIED for editable state
           const linksCell = document.createElement("td");
           linksCell.className = "links-cell";
 
-          // Create input for adding new links
+          // Link input - only for editable days
           const linkInput = document.createElement("input");
           linkInput.type = "text";
-          linkInput.className = "add-link-input";
-          linkInput.placeholder = "Enter URL and press Enter to add...";
+          linkInput.className = `add-link-input ${
+            isEditableDay ? "editable-control" : "non-editable-control"
+          }`;
+          linkInput.placeholder = isEditableDay
+            ? "Enter URL and press Enter to add..."
+            : "Only today editable";
+          linkInput.disabled = !isEditableDay;
+          linkInput.setAttribute("aria-disabled", !isEditableDay);
           linkInput.style.width = "100%";
           linkInput.style.marginBottom = "8px";
           linkInput.style.padding = "6px 8px";
@@ -3949,22 +4241,27 @@
           linkInput.style.border = "1px solid var(--border-color)";
           linkInput.style.borderRadius = "4px";
           linkInput.style.color = "var(--text-color)";
-          linkInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && linkInput.value.trim() !== "") {
-              addNewLink(index, linkInput.value.trim());
-              linkInput.value = "";
-            }
-          });
+
+          if (isEditableDay) {
+            linkInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter" && linkInput.value.trim() !== "") {
+                addNewLink(index, linkInput.value.trim());
+                linkInput.value = "";
+              }
+            });
+          } else {
+            linkInput.tabIndex = -1;
+          }
+
           linksCell.appendChild(linkInput);
 
           // Create tags container
           const tagsContainer = document.createElement("div");
           tagsContainer.className = "link-tags-container";
 
-          // Initialize linksArray if it doesn't exist (for backward compatibility)
+          // Initialize linksArray if it doesn't exist
           if (!dayData.linksArray) {
             dayData.linksArray = [];
-            // Migrate existing links text to linksArray
             if (dayData.links && dayData.links.trim() !== "") {
               const links = dayData.links
                 .split("\n")
@@ -4010,18 +4307,21 @@
                 tagElement.style.opacity = "1";
               });
 
-              // Add remove button
-              const removeBtn = document.createElement("span");
-              removeBtn.innerHTML = " &times;";
-              removeBtn.style.cursor = "pointer";
-              removeBtn.style.marginLeft = "4px";
-              removeBtn.style.fontWeight = "bold";
-              removeBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                removeLink(index, linkIndex);
-              });
-              tagElement.appendChild(removeBtn);
+              // Add remove button only for editable days
+              if (isEditableDay) {
+                const removeBtn = document.createElement("span");
+                removeBtn.innerHTML = " &times;";
+                removeBtn.style.cursor = "pointer";
+                removeBtn.style.marginLeft = "4px";
+                removeBtn.style.fontWeight = "bold";
+                removeBtn.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  removeLink(index, linkIndex);
+                });
+                tagElement.appendChild(removeBtn);
+              }
+
               linkTag.appendChild(tagElement);
               tagsContainer.appendChild(linkTag);
             });
@@ -4033,13 +4333,17 @@
         });
 
         // Always render activity tracker when table is rendered
-        renderActivityCalendar();
+        renderEnhancedActivityTracker();
+
+        // Update add day button state
+        updateAddDayButton();
       }
 
       // Update the deleteQuestion function to ensure modal closes
       async function deleteQuestion(dayIndex, questionIndex) {
-        const questionText = appData[dayIndex].questions[questionIndex].text;
+        if (!shouldAllowMutation(dayIndex)) return;
 
+        const questionText = appData[dayIndex].questions[questionIndex].text;
         const confirmed = await confirmDialog.show(
           "Delete Question",
           `Are you sure you want to delete "${questionText}"? This action cannot be undone.`
@@ -4051,18 +4355,19 @@
           renderTable();
           toastManager.info("Question deleted successfully", "Deleted");
         }
-        // Modal automatically closes via the onConfirm method
       }
 
-      // Add a new day
+      // Update the add day button to only allow adding today or future days
       function addNewDay() {
-        const newDayNumber =
-          appData.length > 0
-            ? Math.max(...appData.map((day) => day.day)) + 1
-            : 1;
+        const currentDay = getCurrentDayNumber();
+        const maxDay =
+          appData.length > 0 ? Math.max(...appData.map((day) => day.day)) : 0;
+
+        // Only allow adding the next day (today or tomorrow)
+        const nextDay = Math.max(currentDay, maxDay + 1);
 
         const newDay = {
-          day: newDayNumber,
+          day: nextDay,
           questions: [],
           tags: [],
           links: "",
@@ -4082,8 +4387,61 @@
         }, 100);
       }
 
-      // Toggle question completion status
+      // Add this function to update the add day button state
+      function updateAddDayButton() {
+        const addDayBtn = document.getElementById("addDayBtn");
+        if (!addDayBtn) return;
+
+        const currentDay = getCurrentDayNumber();
+        const maxDay =
+          appData.length > 0 ? Math.max(...appData.map((day) => day.day)) : 0;
+
+        // Only enable if we're adding today or the next day
+        const canAddDay = maxDay <= currentDay;
+
+        if (!canAddDay) {
+          addDayBtn.disabled = true;
+          addDayBtn.classList.add("non-editable-control");
+          addDayBtn.title =
+            "You can only add today's or future days up to today";
+
+          // Add tooltip
+          if (!addDayBtn.querySelector(".tooltip-text")) {
+            const tooltipContainer = document.createElement("div");
+            tooltipContainer.className = "tooltip-container";
+            tooltipContainer.style.display = "inline";
+
+            const existingParent = addDayBtn.parentElement;
+            existingParent.insertBefore(tooltipContainer, addDayBtn);
+            tooltipContainer.appendChild(addDayBtn);
+
+            const tooltip = document.createElement("span");
+            tooltip.className = "tooltip-text";
+            tooltip.textContent = "You can only add days up to today";
+            tooltipContainer.appendChild(tooltip);
+          }
+        } else {
+          addDayBtn.disabled = false;
+          addDayBtn.classList.remove("non-editable-control");
+          addDayBtn.title = "Add new day";
+
+          // Remove tooltip if exists
+          const tooltipContainer = addDayBtn.parentElement;
+          if (
+            tooltipContainer &&
+            tooltipContainer.classList.contains("tooltip-container")
+          ) {
+            const parent = tooltipContainer.parentElement;
+            parent.insertBefore(addDayBtn, tooltipContainer);
+            parent.removeChild(tooltipContainer);
+          }
+        }
+      }
+
+      // Modify all mutation functions to include guards
       function toggleQuestionCompletion(dayIndex, questionIndex) {
+        if (!shouldAllowMutation(dayIndex)) return;
+
         appData[dayIndex].questions[questionIndex].completed =
           !appData[dayIndex].questions[questionIndex].completed;
         saveData();
@@ -4154,6 +4512,8 @@
 
       // Add a new question to a day
       function addNewQuestion(dayIndex) {
+        if (!shouldAllowMutation(dayIndex)) return;
+
         appData[dayIndex].questions.push({
           text: "New Question",
           link: "",
@@ -4179,12 +4539,13 @@
 
       // Add a new tag to a day
       function addNewTag(dayIndex, tagText) {
+        if (!shouldAllowMutation(dayIndex)) return;
+
         // Check for duplicates
         if (appData[dayIndex].tags.some((tag) => tag.text === tagText)) {
           return;
         }
 
-        // Generate random color for tag
         const colors = [
           "#58A6FF",
           "#3FB950",
@@ -4212,15 +4573,16 @@
       }
 
       // Add a new link tag when Enter is pressed
+
       function addNewLink(dayIndex, linkText) {
+        if (!shouldAllowMutation(dayIndex)) return;
+
         if (!linkText.trim()) return;
 
-        // Add to links array if it doesn't exist
         if (!appData[dayIndex].linksArray) {
           appData[dayIndex].linksArray = [];
         }
 
-        // Check for duplicates
         if (
           appData[dayIndex].linksArray.some(
             (link) => link.url === linkText.trim()
@@ -4239,6 +4601,8 @@
 
       // Remove a link tag
       function removeLink(dayIndex, linkIndex) {
+        if (!shouldAllowMutation(dayIndex)) return;
+
         if (appData[dayIndex].linksArray) {
           appData[dayIndex].linksArray.splice(linkIndex, 1);
           saveData();
@@ -4374,6 +4738,11 @@
         const { dayIndex, questionIndex } = currentEditingQuestion;
         if (dayIndex === -1 || questionIndex === -1) return;
 
+        if (!shouldAllowMutation(dayIndex)) {
+          closeLinkModal();
+          return;
+        }
+
         const newText = questionTextInput.value.trim();
         const newLink = questionLinkInput.value.trim();
 
@@ -4414,10 +4783,12 @@
           addDayBtn.addEventListener("click", addNewDay);
         }
 
-        // Tag removal (delegated event listener)
+        // Modify the tag removal event listener to include guard
         tableBody.addEventListener("click", (e) => {
           if (e.target.classList.contains("tag-remove")) {
             const dayIndex = parseInt(e.target.dataset.day);
+            if (!shouldAllowMutation(dayIndex)) return;
+
             const tagIndex = parseInt(e.target.dataset.tagIndex);
             appData[dayIndex].tags.splice(tagIndex, 1);
             saveData();
@@ -4722,22 +5093,6 @@
           year: "numeric",
         });
       }
-      // Enhanced debug function to check activity tracker data
-      function debugActivityTracker() {
-        console.log("=== ACTIVITY TRACKER DEBUG ===");
-        console.log("App Data length:", appData.length);
-        console.log("Current Analytics:", calculateAnalytics());
-        console.log("Activity Data:", getActivityData());
-        console.log("Activity Tracker Data:", window.activityTrackerData);
-        console.log("Auth Token:", authToken ? "Present" : "Missing");
-        console.log("User ID:", userId);
-        console.log("=== END DEBUG ===");
-      }
-
-      // Call this to see what's happening
-      setTimeout(debugActivityTracker, 3000);
-      // Call this temporarily to see what's happening
-      setTimeout(debugActivityTracker, 2000);
 
       // Set up direct event listeners as backup
       function setupDirectEventListeners() {
@@ -4788,7 +5143,7 @@
         setTimeout(() => {
           if (typeof initializeEnhancedActivityTracker === "function") {
             initializeEnhancedActivityTracker();
-            console.log("Enhanced activity tracker initialized");
+            // console.log("Enhanced activity tracker initialized");
           }
 
           // Check achievements after everything is loaded
