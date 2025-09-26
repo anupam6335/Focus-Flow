@@ -221,6 +221,7 @@
         padding: 4px 8px;
         border-radius: 12px;
         font-size: 0.8rem;
+        font-weight: 800;
         margin-right: 6px;
         margin-bottom: 6px;
         position: relative;
@@ -1383,6 +1384,397 @@
       .modal[style*="display: flex"] .modal-content {
         transform: translateY(0);
       }
+
+      /* Updated Activity Tracker Styles */
+      .activity-tracker-container {
+        background: var(--table-header-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+
+      .activity-tracker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .activity-tracker-header h2 {
+        color: var(--accent-color);
+        font-size: 1.5rem;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .activity-tracker-subtitle {
+        color: var(--text-color);
+        opacity: 0.7;
+        font-size: 0.9rem;
+      }
+
+      /* Analytics Dashboard */
+      .analytics-dashboard {
+        margin-bottom: 32px;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .metric-card {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        margin-bottom: 4px;
+      }
+
+      .metric-label {
+        font-size: 0.9rem;
+        color: var(--text-color);
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .metric-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        opacity: 0.7;
+      }
+
+      /* Heatmap Styles */
+      .heatmap-container {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .heatmap-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .heatmap-header h3 {
+        color: var(--text-color);
+        font-size: 1.1rem;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .heatmap-legend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--text-color);
+        opacity: 0.8;
+      }
+
+      .legend-colors {
+        display: flex;
+        gap: 2px;
+      }
+
+      .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+
+      .legend-color.level-0 {
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+      }
+      .legend-color.level-1 {
+        background-color: #9be9a8;
+      }
+      .legend-color.level-2 {
+        background-color: #40c463;
+      }
+      .legend-color.level-3 {
+        background-color: #30a14e;
+      }
+      .legend-color.level-4 {
+        background-color: #216e39;
+      }
+
+      .heatmap-content {
+        display: flex;
+        gap: 8px;
+      }
+
+      .months-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 24px;
+        width: 40px;
+        flex-shrink: 0;
+      }
+
+      .month-label {
+        font-size: 0.7rem;
+        color: var(--text-color);
+        opacity: 0.7;
+        height: 12px;
+        text-align: right;
+        padding-right: 8px;
+      }
+
+      .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(52, 12px);
+        grid-auto-rows: 12px;
+        gap: 3px;
+        flex: 1;
+      }
+
+      .heatmap-cell {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.1s ease;
+      }
+
+      .heatmap-cell:hover {
+        transform: scale(1.3);
+        z-index: 2;
+      }
+
+      .heatmap-cell.level-0 {
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+      }
+      .heatmap-cell.level-1 {
+        background-color: #9be9a8;
+      }
+      .heatmap-cell.level-2 {
+        background-color: #40c463;
+      }
+      .heatmap-cell.level-3 {
+        background-color: #30a14e;
+      }
+      .heatmap-cell.level-4 {
+        background-color: #216e39;
+      }
+
+      .heatmap-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .heatmap-cell:hover .heatmap-tooltip {
+        opacity: 1;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .activity-tracker-container {
+          padding: 16px;
+        }
+
+        .activity-tracker-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .metrics-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+
+        .metric-card {
+          padding: 16px;
+        }
+
+        .metric-value {
+          font-size: 1.5rem;
+        }
+
+        .heatmap-container {
+          padding: 16px;
+        }
+
+        .heatmap-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .heatmap-grid {
+          grid-template-columns: repeat(26, 10px);
+          gap: 2px;
+        }
+
+        .heatmap-cell {
+          width: 10px;
+          height: 10px;
+        }
+
+        .months-row {
+          width: 30px;
+          padding-top: 20px;
+        }
+
+        .month-label {
+          font-size: 0.6rem;
+          height: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .metrics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .heatmap-grid {
+          grid-template-columns: repeat(13, 8px);
+          gap: 1px;
+        }
+
+        .heatmap-cell {
+          width: 8px;
+          height: 8px;
+        }
+
+        .months-row {
+          width: 25px;
+          padding-top: 16px;
+        }
+
+        .month-label {
+          font-size: 0.5rem;
+          height: 8px;
+        }
+      }
+
+      /* Focus styles for accessibility */
+      .heatmap-cell:focus {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 1px;
+        z-index: 3;
+      }
+
+      /* Keyboard navigation support */
+      .heatmap-grid {
+        position: relative;
+      }
+
+      .heatmap-cell.focused {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 1px;
+        z-index: 3;
+      }
+
+      /* Enhanced sync status styles */
+      #syncStatus {
+        margin-left: auto;
+        margin-right: 20px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        background: rgba(88, 166, 255, 0.1);
+        border: 1px solid transparent;
+      }
+
+      #syncStatus.syncing {
+        background: rgba(210, 153, 34, 0.1);
+        border-color: rgba(210, 153, 34, 0.3);
+      }
+
+      #syncStatus.error {
+        background: rgba(248, 81, 73, 0.1);
+        border-color: rgba(248, 81, 73, 0.3);
+      }
+
+      #syncStatus.offline {
+        background: rgba(139, 148, 158, 0.1);
+        border-color: rgba(139, 148, 158, 0.3);
+      }
+
+      .sync-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+      }
+
+      .sync-dot.synced {
+        background-color: var(--success-color);
+        box-shadow: 0 0 8px var(--success-color);
+      }
+
+      .sync-dot.syncing {
+        background-color: var(--warning-color);
+        animation: pulse 1.5s infinite;
+      }
+
+      .sync-dot.error {
+        background-color: var(--danger-color);
+        box-shadow: 0 0 8px var(--danger-color);
+      }
+
+      .sync-dot.offline {
+        background-color: #8b949e;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1418,29 +1810,65 @@
           </div>
         </div>
       </div>
-      <!-- Add this right after the header section, before the daily-progress-container -->
+      <!-- Replace the existing activity-tracker-container with this updated version -->
       <div class="activity-tracker-container">
         <div class="activity-tracker-header">
-          <h2>Activity Tracker</h2>
+          <h2>Progress Analytics</h2>
           <span class="activity-tracker-subtitle"
             >Starting from 25-09-2025 (Day 1)</span
           >
         </div>
-        <div class="activity-calendar" id="activityCalendar">
-          <!-- Calendar will be generated by JavaScript -->
+
+        <!-- Analytics Dashboard -->
+        <div class="analytics-dashboard">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value" id="currentStreak">0</div>
+              <div class="metric-label">Current Streak</div>
+              <div class="metric-subtitle">days in a row</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="totalSolved">0</div>
+              <div class="metric-label">Total Solved</div>
+              <div class="metric-subtitle">problems</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="averageDaily">0.0</div>
+              <div class="metric-label">Daily Average</div>
+              <div class="metric-subtitle">problems/day</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="maxStreak">0</div>
+              <div class="metric-label">Max Streak</div>
+              <div class="metric-subtitle">best record</div>
+            </div>
+          </div>
         </div>
-        <div class="activity-legend">
-          <div class="legend-item">
-            <div class="legend-color blank"></div>
-            <span>0 questions</span>
+
+        <!-- GitHub-style Heatmap -->
+        <div class="heatmap-container">
+          <div class="heatmap-header">
+            <h3>Activity Heatmap</h3>
+            <div class="heatmap-legend">
+              <span>Less</span>
+              <div class="legend-colors">
+                <div class="legend-color level-0"></div>
+                <div class="legend-color level-1"></div>
+                <div class="legend-color level-2"></div>
+                <div class="legend-color level-3"></div>
+                <div class="legend-color level-4"></div>
+              </div>
+              <span>More</span>
+            </div>
           </div>
-          <div class="legend-item">
-            <div class="legend-color green"></div>
-            <span>1 question</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color dark-green"></div>
-            <span>2+ questions</span>
+
+          <div class="heatmap-content">
+            <div class="months-row">
+              <!-- Month labels will be generated by JavaScript -->
+            </div>
+            <div class="heatmap-grid" id="heatmapGrid">
+              <!-- Heatmap cells will be generated by JavaScript -->
+            </div>
           </div>
         </div>
       </div>
@@ -1923,6 +2351,7 @@
 
           const result = await response.json();
 
+          // Inside handleLogin function, after successful login:
           if (result.success) {
             toastManager.success("Login successful!", "Welcome Back");
             authToken = result.token;
@@ -1934,10 +2363,11 @@
 
             showUserInfo();
 
-            // IMMEDIATELY load fresh data from server
-            await loadData(); // This now includes immediate sync
+            // Load both main data and activity tracker data
+            await Promise.all([loadData(), loadActivityTrackerData()]);
+
             renderTable();
-            renderActivityCalendar();
+            renderEnhancedActivityTracker();
 
             // Show immediate sync status
             updateSyncStatus("synced", "Data loaded successfully");
@@ -2029,6 +2459,9 @@
           localStorage.getItem("dsaChecklistData") || "[]"
         );
 
+        // Save activity tracker data locally
+        const currentActivityData = window.activityTrackerData;
+
         authToken = null;
         userId = "default-user";
         localStorage.removeItem("authToken");
@@ -2044,9 +2477,12 @@
           );
         }
 
+        // Preserve activity data locally
+        window.activityTrackerData = currentActivityData;
+
         showLoginForm();
-        // Don't reset to default data - keep the existing progress
         renderTable();
+        renderEnhancedActivityTracker();
       }
 
       // Load data from localStorage and MongoDB - OPTIMIZED VERSION
@@ -2178,22 +2614,42 @@
         });
       }
 
-      // Save data to both localStorage and MongoDB
+      // Save data to both localStorage and MongoDB - FIXED VERSION
       async function saveData() {
+        console.log("💾 saveData() called");
+
         // Mark that we have pending changes
         pendingChanges = true;
 
-        // Save to localStorage (existing logic)
-        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-        localStorage.setItem("appVersion", currentVersion.toString());
-        localStorage.setItem("lastUpdated", lastUpdated);
+        try {
+          // Save to localStorage (existing logic)
+          localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+          localStorage.setItem("appVersion", currentVersion.toString());
+          localStorage.setItem("lastUpdated", lastUpdated);
 
-        // Also save to MongoDB if logged in
-        if (authToken) {
-          await saveToMongoDB();
-        } else {
-          updateSyncStatus("offline", "Changes saved locally");
+          console.log("💾 Local storage updated");
+
+          // Also save to MongoDB if logged in
+          if (authToken) {
+            console.log("💾 Saving main data to MongoDB...");
+            await saveToMongoDB();
+            console.log("💾 Main data saved to MongoDB");
+
+            // Now save activity tracker data
+            console.log("💾 Now saving activity tracker data...");
+            // await saveActivityTrackerData();
+          } else {
+            console.log("💾 User not logged in, only saving locally");
+            updateSyncStatus("offline", "Changes saved locally");
+          }
+        } catch (error) {
+          console.error("💾 Error in saveData:", error);
         }
+
+        // Always update the activity tracker display
+        renderEnhancedActivityTracker();
+
+        console.log("💾 saveData() completed");
       }
 
       // Save data to MongoDB with conflict detection
@@ -2256,14 +2712,691 @@
         }
       }
 
-      // Handle sync conflict when server has newer data
+      // Update the initializeEnhancedActivityTracker function
+      function initializeEnhancedActivityTracker() {
+        console.log("Initializing enhanced activity tracker with auto-sync...");
+
+        // Initialize activity tracker data
+        if (!window.activityTrackerData) {
+          window.activityTrackerData = {
+            currentStreak: 0,
+            totalSolved: 0,
+            averageDaily: 0,
+            maxStreak: 0,
+            heatmapData: {},
+            activityHistory: [],
+          };
+        }
+
+        // Set up automatic syncing
+        hookIntoSaveOperations();
+        setupAutomaticSyncListeners();
+
+        // Load existing data
+        loadActivityTrackerData().then(() => {
+          console.log("Activity tracker data loaded with auto-sync enabled");
+          renderEnhancedActivityTracker();
+        });
+
+        // Periodic sync as backup (every 2 minutes)
+        setInterval(() => {
+          if (authToken && !isSyncing) {
+            console.log("🕒 Periodic background sync...");
+            saveActivityTrackerData();
+          }
+        }, 120000); // 2 minutes
+      }
+      // Hook into all operations that should trigger activity tracker save - FIXED VERSION
+      function hookIntoSaveOperations() {
+        console.log("🔗 Setting up automatic activity tracker sync...");
+
+        // Store original functions
+        const originalFunctions = {
+          toggleQuestionCompletion: window.toggleQuestionCompletion,
+          addNewQuestion: window.addNewQuestion,
+          deleteQuestion: window.deleteQuestion,
+          addNewDay: window.addNewDay,
+          addNewTag: window.addNewTag,
+          addNewLink: window.addNewLink,
+          removeLink: window.removeLink,
+          saveQuestionLink: window.saveQuestionLink,
+          saveData: window.saveData,
+        };
+
+        // Debounce function to prevent too many sync requests
+        let syncTimeout = null;
+        function debouncedSync() {
+          if (syncTimeout) clearTimeout(syncTimeout);
+          syncTimeout = setTimeout(() => {
+            if (authToken) {
+              console.log("🔄 Auto-saving activity tracker data...");
+              saveActivityTrackerData();
+            }
+          }, 1000); // 1 second debounce
+        }
+
+        // Override toggleQuestionCompletion
+        window.toggleQuestionCompletion = function (dayIndex, questionIndex) {
+          const result = originalFunctions.toggleQuestionCompletion(
+            dayIndex,
+            questionIndex
+          );
+          debouncedSync();
+          return result;
+        };
+
+        // Override addNewQuestion
+        window.addNewQuestion = function (dayIndex) {
+          originalFunctions.addNewQuestion(dayIndex);
+          debouncedSync();
+        };
+
+        // Override deleteQuestion
+        window.deleteQuestion = async function (dayIndex, questionIndex) {
+          await originalFunctions.deleteQuestion(dayIndex, questionIndex);
+          debouncedSync();
+        };
+
+        // Override addNewDay
+        window.addNewDay = function () {
+          originalFunctions.addNewDay();
+          debouncedSync();
+        };
+
+        // Override addNewTag
+        window.addNewTag = function (dayIndex, tagText) {
+          originalFunctions.addNewTag(dayIndex, tagText);
+          debouncedSync();
+        };
+
+        // Override addNewLink
+        window.addNewLink = function (dayIndex, linkText) {
+          originalFunctions.addNewLink(dayIndex, linkText);
+          debouncedSync();
+        };
+
+        // Override removeLink
+        window.removeLink = function (dayIndex, linkIndex) {
+          originalFunctions.removeLink(dayIndex, linkIndex);
+          debouncedSync();
+        };
+
+        // Override saveQuestionLink
+        window.saveQuestionLink = function () {
+          originalFunctions.saveQuestionLink();
+          debouncedSync();
+        };
+
+        // Override saveData to include activity tracker save
+        const originalSaveData = window.saveData;
+        window.saveData = async function () {
+          await originalSaveData();
+          debouncedSync();
+        };
+
+        console.log("✅ Automatic activity tracker sync enabled");
+      }
+
+      // This new function for direct event listening as backup
+      function setupAutomaticSyncListeners() {
+        console.log("🎯 Setting up automatic sync listeners...");
+
+        let syncDebounceTimer = null;
+
+        function triggerAutoSync() {
+          if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+          syncDebounceTimer = setTimeout(() => {
+            if (authToken && !isSyncing) {
+              console.log("🔄 Auto-sync triggered by user action");
+              saveActivityTrackerData();
+            }
+          }, 800); // 800ms debounce
+        }
+
+        // Listen for all user interactions that modify data
+        document.addEventListener("change", function (e) {
+          if (
+            e.target.classList.contains("question-checkbox") ||
+            e.target.classList.contains("add-tag-input") ||
+            e.target.classList.contains("add-link-input")
+          ) {
+            triggerAutoSync();
+          }
+        });
+
+        document.addEventListener("click", function (e) {
+          if (
+            e.target.classList.contains("add-question-btn") ||
+            e.target.classList.contains("tag-remove") ||
+            e.target.classList.contains("personal-info-remove-btn") ||
+            e.target.closest(".question-item")
+          ) {
+            triggerAutoSync();
+          }
+        });
+
+        document.addEventListener("input", function (e) {
+          if (
+            e.target.classList.contains("question-text") ||
+            e.target.classList.contains("links-textarea")
+          ) {
+            triggerAutoSync();
+          }
+        });
+
+        // Keyboard events for tag/link input
+        document.addEventListener("keypress", function (e) {
+          if (
+            e.key === "Enter" &&
+            (e.target.classList.contains("add-tag-input") ||
+              e.target.classList.contains("add-link-input"))
+          ) {
+            triggerAutoSync();
+          }
+        });
+
+        console.log("✅ Automatic sync listeners activated");
+      }
+
+      // Load activity tracker data from MongoDB - FIXED VERSION
+      async function loadActivityTrackerData() {
+        if (!authToken) {
+          // Initialize with local data if not logged in
+          window.activityTrackerData = {
+            currentStreak: 0,
+            totalSolved: 0,
+            averageDaily: 0,
+            maxStreak: 0,
+            heatmapData: getActivityData(), // Calculate from current appData
+            activityHistory: getActivityHistory(),
+          };
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success && result.activityData) {
+            // Merge with current activity data
+            window.activityTrackerData = {
+              ...window.activityTrackerData,
+              ...result.activityData,
+            };
+          } else {
+            // Initialize with calculated data if no server data
+            window.activityTrackerData = {
+              currentStreak: 0,
+              totalSolved: 0,
+              averageDaily: 0,
+              maxStreak: 0,
+              heatmapData: getActivityData(),
+              activityHistory: getActivityHistory(),
+            };
+          }
+        } catch (error) {
+          console.log(
+            "Failed to load activity tracker data from MongoDB:",
+            error
+          );
+          // Initialize with calculated data on error
+          window.activityTrackerData = {
+            currentStreak: 0,
+            totalSolved: 0,
+            averageDaily: 0,
+            maxStreak: 0,
+            heatmapData: getActivityData(),
+            activityHistory: getActivityHistory(),
+          };
+        }
+      }
+
+      // Save activity tracker data to MongoDB - FIXED VERSION
+      // Enhanced saveActivityTrackerData function with better error handling
+      async function saveActivityTrackerData() {
+        if (!authToken) {
+          console.log("🔐 Not logged in, skipping activity tracker save");
+          return;
+        }
+
+        if (isSyncing) {
+          console.log("⏳ Sync already in progress, skipping...");
+          return;
+        }
+
+        isSyncing = true;
+
+        try {
+          console.log("💾 Starting automatic activity tracker save...");
+
+          // Calculate fresh data
+          const analytics = calculateAnalytics();
+          const heatmapData = getActivityData();
+          const activityHistory = getActivityHistory();
+
+          const trackerData = {
+            currentStreak: analytics.currentStreak,
+            totalSolved: analytics.totalSolved,
+            averageDaily: analytics.averageDaily,
+            maxStreak: analytics.maxStreak,
+            heatmapData: heatmapData,
+            activityHistory: activityHistory,
+          };
+
+          console.log("💾 Activity data to save:", trackerData);
+
+          const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              activityData: trackerData,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log("✅ Activity tracker data saved automatically");
+            // Update local copy
+            window.activityTrackerData = trackerData;
+            // Update sync status briefly
+            updateSyncStatus("synced", "Auto-saved");
+            setTimeout(() => updateSyncStatus("synced", "Synced"), 2000);
+          } else {
+            console.error("❌ Auto-save failed:", result.error);
+            updateSyncStatus("error", "Auto-save failed");
+          }
+        } catch (error) {
+          console.error("❌ Auto-save error:", error);
+          updateSyncStatus("offline", "Working offline");
+        } finally {
+          isSyncing = false;
+        }
+      }
+
+      // Get activity history for MongoDB storage
+      function getActivityHistory() {
+        const activityHistory = [];
+        const startDate = new Date("2025-09-25");
+
+        appData.forEach((dayData) => {
+          const solvedCount = dayData.questions.filter(
+            (q) => q.completed
+          ).length;
+          if (solvedCount > 0) {
+            const dayDate = new Date(startDate);
+            dayDate.setDate(startDate.getDate() + (dayData.day - 1));
+
+            activityHistory.push({
+              date: dayDate.toISOString(),
+              day: dayData.day,
+              solvedCount: solvedCount,
+              totalQuestions: dayData.questions.length,
+            });
+          }
+        });
+
+        return activityHistory;
+      }
+
+      function renderEnhancedActivityTracker() {
+        updateAnalyticsDashboard();
+        renderHeatmap();
+      }
+
+      function updateAnalyticsDashboard() {
+        // Calculate fresh analytics
+        const analytics = calculateAnalytics();
+
+        console.log("Updating analytics dashboard:", analytics); // Debug log
+
+        // Update the UI first
+        document.getElementById("currentStreak").textContent =
+          analytics.currentStreak;
+        document.getElementById("totalSolved").textContent =
+          analytics.totalSolved;
+        document.getElementById("averageDaily").textContent =
+          analytics.averageDaily.toFixed(1);
+        document.getElementById("maxStreak").textContent = analytics.maxStreak;
+
+        // Update the stored data with fresh calculations
+        if (window.activityTrackerData) {
+          window.activityTrackerData.currentStreak = analytics.currentStreak;
+          window.activityTrackerData.totalSolved = analytics.totalSolved;
+          window.activityTrackerData.averageDaily = analytics.averageDaily;
+          window.activityTrackerData.maxStreak = analytics.maxStreak;
+          window.activityTrackerData.heatmapData = getActivityData();
+          window.activityTrackerData.activityHistory = getActivityHistory();
+
+          console.log(
+            "Updated activityTrackerData:",
+            window.activityTrackerData
+          ); // Debug log
+        }
+
+        // Save to MongoDB if logged in - BUT don't call saveActivityTrackerData() here
+        // It will be called by the saveData() function
+      }
+
+      function calculateAnalytics() {
+        const startDate = new Date("2025-09-25");
+        const today = new Date();
+        const activityData = getActivityData();
+
+        // Calculate streaks
+        let currentStreak = 0;
+        let maxStreak = 0;
+        let tempStreak = 0;
+        let totalSolved = 0;
+        let activeDays = 0;
+
+        const lastActiveDay = { date: null, count: 0 };
+
+        // Process each day from start to today
+        let currentDate = new Date(startDate);
+        while (currentDate <= today) {
+          const dateKey = formatDateKey(currentDate);
+          const dayActivity = activityData[dateKey] || 0;
+
+          if (dayActivity > 0) {
+            totalSolved += dayActivity;
+            activeDays++;
+
+            // Update streaks
+            if (
+              lastActiveDay.date &&
+              isConsecutiveDay(lastActiveDay.date, currentDate)
+            ) {
+              tempStreak++;
+              currentStreak = Math.max(currentStreak, tempStreak);
+            } else {
+              tempStreak = 1;
+              currentStreak = Math.max(currentStreak, 1);
+            }
+
+            lastActiveDay.date = new Date(currentDate);
+            lastActiveDay.count = dayActivity;
+          } else {
+            maxStreak = Math.max(maxStreak, tempStreak);
+            tempStreak = 0;
+          }
+
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        maxStreak = Math.max(maxStreak, tempStreak);
+
+        // Check if today is active for current streak
+        const todayKey = formatDateKey(today);
+        if (
+          activityData[todayKey] > 0 &&
+          lastActiveDay.date &&
+          isConsecutiveDay(lastActiveDay.date, today)
+        ) {
+          currentStreak = Math.max(currentStreak, tempStreak);
+        }
+
+        // Calculate average
+        const daysSinceStart =
+          Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        const averageDaily =
+          daysSinceStart > 0 ? totalSolved / daysSinceStart : 0;
+
+        return {
+          currentStreak,
+          totalSolved,
+          averageDaily,
+          maxStreak,
+          activeDays,
+          totalDays: daysSinceStart,
+        };
+      }
+
+      function getActivityData() {
+        const activityData = {};
+        const startDate = new Date("2025-09-25");
+
+        appData.forEach((dayData) => {
+          const solvedCount = dayData.questions.filter(
+            (q) => q.completed
+          ).length;
+          if (solvedCount > 0) {
+            const dayDate = new Date(startDate);
+            dayDate.setDate(startDate.getDate() + (dayData.day - 1));
+            const dateKey = formatDateKey(dayDate);
+            activityData[dateKey] = solvedCount;
+          }
+        });
+
+        return activityData;
+      }
+
+      function formatDateKey(date) {
+        return date.toISOString().split("T")[0];
+      }
+
+      function isConsecutiveDay(date1, date2) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        const diffDays = Math.round(Math.abs((date2 - date1) / oneDay));
+        return diffDays === 1;
+      }
+
+      function renderHeatmap() {
+        const heatmapGrid = document.getElementById("heatmapGrid");
+        const monthsRow = document.querySelector(".months-row");
+
+        if (!heatmapGrid) return;
+
+        heatmapGrid.innerHTML = "";
+        monthsRow.innerHTML = "";
+
+        const startDate = new Date("2025-09-25");
+        const today = new Date();
+
+        // ALWAYS use current activity data, not stored data
+        const activityData = getActivityData();
+
+        // Rest of the function remains the same...
+        // Generate month labels
+        const monthLabels = generateMonthLabels(startDate, today);
+        monthLabels.forEach((month) => {
+          const monthLabel = document.createElement("div");
+          monthLabel.className = "month-label";
+          monthLabel.textContent = month;
+          monthsRow.appendChild(monthLabel);
+        });
+
+        // Generate heatmap cells (52 weeks)
+        let currentDate = new Date(startDate);
+        const cells = [];
+
+        for (let week = 0; week < 52; week++) {
+          for (let day = 0; day < 7; day++) {
+            const dateKey = formatDateKey(currentDate);
+            const activityCount = activityData[dateKey] || 0;
+            const activityLevel = getActivityLevel(activityCount);
+
+            const cell = document.createElement("div");
+            cell.className = `heatmap-cell level-${activityLevel}`;
+            cell.setAttribute("tabindex", "0");
+            cell.setAttribute("role", "button");
+            cell.setAttribute(
+              "aria-label",
+              `Date: ${formatDisplayDate(
+                currentDate
+              )}, Problems solved: ${activityCount}`
+            );
+
+            // Tooltip
+            const tooltip = document.createElement("div");
+            tooltip.className = "heatmap-tooltip";
+            tooltip.textContent = `${formatDisplayDate(
+              currentDate
+            )}: ${activityCount} problem${
+              activityCount !== 1 ? "s" : ""
+            } solved`;
+            cell.appendChild(tooltip);
+
+            // Keyboard navigation
+            cell.addEventListener("keydown", (e) => {
+              handleHeatmapKeyboardNav(e, cells, week * 7 + day);
+            });
+
+            cell.addEventListener("focus", () => {
+              cell.classList.add("focused");
+            });
+
+            cell.addEventListener("blur", () => {
+              cell.classList.remove("focused");
+            });
+
+            cells.push(cell);
+            currentDate.setDate(currentDate.getDate() + 1);
+
+            // Stop if we reach today
+            if (currentDate > today) break;
+          }
+          if (currentDate > today) break;
+        }
+
+        // cells to grid
+        cells.forEach((cell) => {
+          heatmapGrid.appendChild(cell);
+        });
+      }
+
+      function generateMonthLabels(startDate, endDate) {
+        const labels = [];
+        const currentDate = new Date(startDate);
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+
+        while (currentDate <= endDate) {
+          // Only show label if it's the first week of the month or if it's the start date
+          if (
+            currentDate.getDate() <= 7 ||
+            currentDate.getTime() === startDate.getTime()
+          ) {
+            labels.push(months[currentDate.getMonth()]);
+          } else {
+            labels.push("");
+          }
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+
+        return labels.slice(0, 52); // Ensure we don't exceed 52 weeks
+      }
+
+      function getActivityLevel(count) {
+        if (count === 0) return 0;
+        if (count === 1) return 1;
+        if (count === 2) return 2;
+        if (count === 3) return 3;
+        return 4; // 4+ problems
+      }
+
+      function formatDisplayDate(date) {
+        return date.toLocaleDateString("en-US", {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      function handleHeatmapKeyboardNav(event, cells, currentIndex) {
+        const key = event.key;
+        let newIndex = currentIndex;
+
+        switch (key) {
+          case "ArrowLeft":
+            newIndex = Math.max(0, currentIndex - 1);
+            break;
+          case "ArrowRight":
+            newIndex = Math.min(cells.length - 1, currentIndex + 1);
+            break;
+          case "ArrowUp":
+            newIndex = Math.max(0, currentIndex - 7);
+            break;
+          case "ArrowDown":
+            newIndex = Math.min(cells.length - 1, currentIndex + 7);
+            break;
+          case "Home":
+            newIndex = 0;
+            break;
+          case "End":
+            newIndex = cells.length - 1;
+            break;
+          default:
+            return; // Do nothing for other keys
+        }
+
+        if (newIndex !== currentIndex) {
+          event.preventDefault();
+          cells[newIndex].focus();
+        }
+      }
+
+      if (typeof renderActivityCalendar !== "undefined") {
+        delete window.renderActivityCalendar;
+      }
+      if (typeof initializeActivityTracker !== "undefined") {
+        delete window.initializeActivityTracker;
+      }
+      // Handle sync conflict when server has newer data - IMPROVED VERSION
       async function handleSyncConflict(conflictResult) {
+        console.log("🔄 Handling sync conflict...");
+
+        // Check if this is a minor conflict that can be auto-merged
+        if (!conflictResult.requiresUserResolution) {
+          // Auto-merge case - just accept server data with notification
+          appData = conflictResult.serverData;
+          currentVersion = conflictResult.serverVersion;
+          lastUpdated = conflictResult.serverLastUpdated;
+
+          localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+          localStorage.setItem("appVersion", currentVersion.toString());
+          localStorage.setItem("lastUpdated", lastUpdated);
+
+          renderTable();
+          updateSyncStatus("synced", "Auto-synced with server");
+
+          // Show gentle notification instead of confirmation dialog
+          toastManager.info(
+            "Your data was automatically synced with the cloud",
+            "Auto-Sync Complete",
+            3000
+          );
+          return;
+        }
+
+        // Only show confirmation for significant conflicts
         updateSyncStatus("error", "Conflict detected");
 
         const userChoice = await confirmDialog.show(
           "Sync Conflict Detected",
-          "Your local data is outdated. The server has newer changes. " +
-            "Would you like to load the server data?"
+          "Significant changes were detected between your local data and the server. " +
+            "Would you like to load the server data? Choosing 'Cancel' will keep your local changes."
         );
 
         if (userChoice) {
@@ -2283,12 +3416,212 @@
             "Sync Complete"
           );
         } else {
-          // User wants to keep local data - force push
-          forcePushToServer();
+          // User wants to keep local data - force push with retry logic
+          await forcePushToServer();
         }
-        // Modal automatically closes via the onConfirm method
       }
 
+      // Improved sync function with debouncing and smarter conflict detection
+      let syncTimeout = null;
+      let lastSyncTime = 0;
+      const SYNC_DEBOUNCE_TIME = 2000; // 2 seconds
+
+      async function syncWithMongoDB() {
+        if (isSyncing || !authToken) return;
+
+        // Debounce sync requests
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_DEBOUNCE_TIME) {
+          if (syncTimeout) clearTimeout(syncTimeout);
+          syncTimeout = setTimeout(() => syncWithMongoDB(), SYNC_DEBOUNCE_TIME);
+          return;
+        }
+
+        lastSyncTime = now;
+        isSyncing = true;
+
+        try {
+          updateSyncStatus("syncing", "Syncing...");
+
+          const response = await fetch(
+            `${API_BASE_URL}/data?userId=${userId}&t=${Date.now()}`,
+            {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            const serverVersion = result.version || 1;
+            const serverLastUpdated = result.lastUpdated;
+
+            // SMARTER VERSION CHECK - only update if significantly different
+            const versionDiff = serverVersion - currentVersion;
+            const timeDiff =
+              new Date(serverLastUpdated) - new Date(lastUpdated);
+
+            // Only update if version is significantly newer (more than 1 version ahead)
+            // or if there's a substantial time difference (more than 5 seconds)
+            if (versionDiff > 1 || timeDiff > 5000) {
+              console.log(
+                `🔄 Updating from server. Version diff: ${versionDiff}, Time diff: ${timeDiff}ms`
+              );
+
+              appData = result.data;
+              currentVersion = serverVersion;
+              lastUpdated = serverLastUpdated;
+
+              localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
+              localStorage.setItem("appVersion", currentVersion.toString());
+              localStorage.setItem("lastUpdated", lastUpdated);
+
+              renderTable();
+              updateSyncStatus("synced", "Data updated from cloud");
+
+              // Only show notification for significant updates
+              if (versionDiff > 3 || timeDiff > 30000) {
+                toastManager.info(
+                  "Data synchronized with cloud",
+                  "Sync Complete"
+                );
+              }
+            } else if (pendingChanges) {
+              // We have local changes that need to be pushed
+              await saveToMongoDB();
+            } else {
+              updateSyncStatus("synced", "Data is up to date");
+            }
+          }
+        } catch (error) {
+          console.log("Background sync failed:", error);
+
+          // Don't show error for network issues during background sync
+          if (error.message.includes("Failed to fetch")) {
+            updateSyncStatus("offline", "Working offline");
+          } else {
+            updateSyncStatus("error", "Sync failed");
+            // Only show toast for non-network errors
+            toastManager.warning(
+              "Sync issue detected, using local data",
+              "Sync Warning"
+            );
+          }
+        } finally {
+          isSyncing = false;
+        }
+      }
+
+      // Improved save function with better change detection
+      async function saveData() {
+        console.log("💾 saveData() called");
+
+        // Better change detection - only mark as pending if there are actual changes
+        const previousData = JSON.parse(
+          localStorage.getItem("dsaChecklistData") || "[]"
+        );
+        const currentDataString = JSON.stringify(appData);
+
+        // Check if there are meaningful changes
+        if (JSON.stringify(previousData) === currentDataString) {
+          console.log("💾 No meaningful changes detected, skipping save");
+          return;
+        }
+
+        pendingChanges = true;
+
+        try {
+          // Save to localStorage
+          localStorage.setItem("dsaChecklistData", currentDataString);
+          localStorage.setItem("appVersion", currentVersion.toString());
+          localStorage.setItem("lastUpdated", lastUpdated);
+
+          console.log("💾 Local storage updated");
+
+          // Save to MongoDB if logged in (with improved error handling)
+          if (authToken) {
+            console.log("💾 Saving to MongoDB...");
+            await saveToMongoDB();
+          } else {
+            console.log("💾 User not logged in, only saving locally");
+            updateSyncStatus("offline", "Changes saved locally");
+          }
+        } catch (error) {
+          console.error("💾 Error in saveData:", error);
+        }
+
+        // Update activity tracker
+        renderEnhancedActivityTracker();
+      }
+
+      // Improved force push with better error handling
+      async function forcePushToServer() {
+        try {
+          updateSyncStatus("syncing", "Saving changes...");
+
+          // Increment version appropriately
+          currentVersion = (currentVersion || 1) + 1;
+          lastUpdated = new Date().toISOString();
+
+          const response = await fetch(`${API_BASE_URL}/data`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              userId: userId,
+              data: appData,
+              clientVersion: currentVersion,
+              lastUpdated: lastUpdated,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            currentVersion = result.version;
+            lastUpdated = result.lastUpdated;
+
+            localStorage.setItem("appVersion", currentVersion.toString());
+            localStorage.setItem("lastUpdated", lastUpdated);
+
+            pendingChanges = false;
+            updateSyncStatus("synced", "Changes saved to cloud");
+            toastManager.success("Changes saved successfully", "Saved");
+          } else {
+            throw new Error(result.error || "Save failed");
+          }
+        } catch (error) {
+          console.log("Force push failed:", error);
+          updateSyncStatus("error", "Save failed");
+
+          // Show appropriate error message
+          if (error.message.includes("CONFLICT")) {
+            toastManager.error(
+              "Could not save due to conflict. Please refresh and try again.",
+              "Save Failed"
+            );
+          } else {
+            toastManager.error(
+              "Failed to save changes. Please check your connection.",
+              "Save Error"
+            );
+          }
+
+          // Restore previous version on failure
+          const savedVersion = localStorage.getItem("appVersion");
+          const savedLastUpdated = localStorage.getItem("lastUpdated");
+          if (savedVersion) currentVersion = parseInt(savedVersion);
+          if (savedLastUpdated) lastUpdated = savedLastUpdated;
+        }
+      }
       // Force push local data to server (overwrite server data)
       async function forcePushToServer() {
         try {
@@ -2766,16 +4099,19 @@
         checkAndCelebrateAchievements(dayIndex);
       };
 
-      // Add celebration check when loading data to handle already completed questions
+      // Add celebration check when loading data to handle already completed questions - FIXED
       function checkExistingAchievements() {
-        appData.forEach((dayData, dayIndex) => {
-          const solvedCount = dayData.questions.filter(
-            (q) => q.completed
-          ).length;
-          if (solvedCount >= 5) {
-            changeStatusColorToDarkGreen(dayIndex);
-          }
-        });
+        // Wait for table to be fully rendered
+        setTimeout(() => {
+          appData.forEach((dayData, dayIndex) => {
+            const solvedCount = dayData.questions.filter(
+              (q) => q.completed
+            ).length;
+            if (solvedCount >= 5) {
+              changeStatusColorToDarkGreen(dayIndex);
+            }
+          });
+        }, 200);
       }
 
       // Call this function after loading data and rendering table
@@ -3122,7 +4458,7 @@
         };
       }
 
-      // Add this function to handle the celebration logic
+      // Handle the celebration logic
       function checkAndCelebrateAchievements(dayIndex) {
         const solvedCount = appData[dayIndex].questions.filter(
           (q) => q.completed
@@ -3140,15 +4476,20 @@
         }
       }
 
-      // Function to change status color to darker green
+      // Function to change status color to darker green - FIXED VERSION
       function changeStatusColorToDarkGreen(dayIndex) {
-        const statusCell =
-          tableBody.children[dayIndex].querySelector(".status-cell");
-        if (statusCell) {
-          statusCell.style.color = "#216e39"; // Darker green color
-          statusCell.style.fontWeight = "bold";
-          statusCell.style.textShadow = "0 0 10px rgba(33, 110, 57, 0.5)";
-        }
+        // Wait for table to be rendered
+        setTimeout(() => {
+          const rows = tableBody.querySelectorAll("tr");
+          if (rows[dayIndex]) {
+            const statusCell = rows[dayIndex].querySelector(".status-cell");
+            if (statusCell) {
+              statusCell.style.color = "#216e39"; // Darker green color
+              statusCell.style.fontWeight = "bold";
+              statusCell.style.textShadow = "0 0 10px rgba(33, 110, 57, 0.5)";
+            }
+          }
+        }, 100);
       }
 
       // Function to show celebration popup
@@ -3188,7 +4529,7 @@
         ">Continue Coding</button>
     `;
 
-        // Add CSS animation
+        //  CSS animation
         const style = document.createElement("style");
         style.textContent = `
         @keyframes popupBounce {
@@ -3216,7 +4557,7 @@
           createConfetti();
         }
 
-        // Add celebration sound (optional - silent unless user interacts first)
+        // celebration sound (optional - silent unless user interacts first)
         playCelebrationSound();
       }
 
@@ -3246,7 +4587,7 @@
         animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
     `;
 
-        // Add CSS animation for confetti
+        // CSS animation for confetti
         const style = document.createElement("style");
         if (!document.querySelector("#confetti-animation")) {
           style.id = "confetti-animation";
@@ -3341,7 +4682,7 @@
 
           dayElement.classList.add(activityClass);
 
-          // Add tooltip
+          //  tooltip
           const tooltip = document.createElement("div");
           tooltip.className = "activity-tooltip";
           const currentDate = new Date(startDate);
@@ -3381,12 +4722,78 @@
           year: "numeric",
         });
       }
+      // Enhanced debug function to check activity tracker data
+      function debugActivityTracker() {
+        console.log("=== ACTIVITY TRACKER DEBUG ===");
+        console.log("App Data length:", appData.length);
+        console.log("Current Analytics:", calculateAnalytics());
+        console.log("Activity Data:", getActivityData());
+        console.log("Activity Tracker Data:", window.activityTrackerData);
+        console.log("Auth Token:", authToken ? "Present" : "Missing");
+        console.log("User ID:", userId);
+        console.log("=== END DEBUG ===");
+      }
 
+      // Call this to see what's happening
+      setTimeout(debugActivityTracker, 3000);
+      // Call this temporarily to see what's happening
+      setTimeout(debugActivityTracker, 2000);
+
+      // Set up direct event listeners as backup
+      function setupDirectEventListeners() {
+        console.log("🎯 Setting up direct event listeners...");
+
+        // Listen for clicks on checkboxes
+        document.addEventListener("change", function (e) {
+          if (e.target.classList.contains("question-checkbox")) {
+            console.log("🎯 Checkbox change detected");
+            setTimeout(() => {
+              saveActivityTrackerData();
+            }, 1000);
+          }
+        });
+
+        // Listen for clicks on add question buttons
+        document.addEventListener("click", function (e) {
+          if (e.target.classList.contains("add-question-btn")) {
+            console.log("🎯 Add question button click detected");
+            setTimeout(() => {
+              saveActivityTrackerData();
+            }, 1000);
+          }
+        });
+
+        // Listen for Enter key in tag and link inputs
+        document.addEventListener("keypress", function (e) {
+          if (
+            e.key === "Enter" &&
+            (e.target.classList.contains("add-tag-input") ||
+              e.target.classList.contains("add-link-input"))
+          ) {
+            console.log("🎯 Tag/link input Enter key detected");
+            setTimeout(() => {
+              saveActivityTrackerData();
+            }, 1000);
+          }
+        });
+
+        console.log("✅ Direct event listeners set up");
+      }
       // Initialize activity tracker and app when DOM is loaded - FIXED VERSION
       document.addEventListener("DOMContentLoaded", function () {
         // Initialize the main app
         initApp();
 
+        // Initialize enhanced activity tracker after main app is loaded
+        setTimeout(() => {
+          if (typeof initializeEnhancedActivityTracker === "function") {
+            initializeEnhancedActivityTracker();
+            console.log("Enhanced activity tracker initialized");
+          }
+
+          // Check achievements after everything is loaded
+          checkExistingAchievements();
+        }, 1000); // Increased delay to ensure app data is loaded
         // Ensure activity tracker renders after a short delay to catch any initial render
         setTimeout(() => {
           if (typeof renderActivityCalendar === "function") {
