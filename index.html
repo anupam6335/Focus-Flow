@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="trackersheet.ico" />
-    <title>DSA Daily Checklist</title>
+    <link rel="icon" type="image/x-icon" href="Assets/FocusFlow.ico" />
+    <title>FocusFlow – Track Your Progress, Master Your Journey</title>
     <style>
       :root {
         --bg-color: #0d1117;
@@ -1862,12 +1862,36 @@
         white-space: nowrap;
         border: 0;
       }
+      /* Forgot Password Styles */
+      #resetCodeSection {
+        transition: all 0.3s ease;
+      }
+
+      .reset-code-message {
+        font-size: 0.9rem;
+        color: var(--text-color);
+        opacity: 0.8;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .demo-code {
+        background: rgba(88, 166, 255, 0.1);
+        border: 1px solid var(--accent-color);
+        border-radius: 4px;
+        padding: 8px;
+        margin: 10px 0;
+        text-align: center;
+        font-family: monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <header>
-        <h1>Daily Checklist</h1>
+        <h1>FocusFlow</h1>
         <div id="syncStatus">
           <div class="sync-dot synced"></div>
           <span>Synced</span>
@@ -1987,6 +2011,23 @@
                 Register
               </button>
             </div>
+
+            <div style="margin-top: 10px; text-align: center">
+              <button
+                id="showForgotPasswordBtn"
+                class="auth-btn"
+                style="
+                  background: none;
+                  border: none;
+                  color: var(--link-color);
+                  text-decoration: underline;
+                  cursor: pointer;
+                  font-size: 0.9rem;
+                "
+              >
+                Forgot username/password?
+              </button>
+            </div>
           </div>
 
           <div id="registerForm" class="auth-form" style="display: none">
@@ -2016,6 +2057,60 @@
               <button id="showLoginBtn" class="auth-btn secondary">
                 Back to Login
               </button>
+            </div>
+          </div>
+
+          <!-- Forgot Password Form -->
+          <div id="forgotPasswordForm" class="auth-form" style="display: none">
+            <h3 class="auth-title">Reset Password</h3>
+            <div class="auth-input-group">
+              <input
+                type="text"
+                id="forgotUsernameInput"
+                placeholder="Enter your username"
+                class="auth-input"
+              />
+              <button id="sendResetCodeBtn" class="auth-btn primary">
+                Send Reset Code
+              </button>
+              <button id="showLoginFromForgotBtn" class="auth-btn secondary">
+                Back to Login
+              </button>
+            </div>
+
+            <!-- Reset Code Section (initially hidden) -->
+            <div
+              id="resetCodeSection"
+              style="
+                display: none;
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid var(--border-color);
+              "
+            >
+              <div class="auth-input-group">
+                <input
+                  type="text"
+                  id="resetCodeInput"
+                  placeholder="Enter reset code"
+                  class="auth-input"
+                />
+                <input
+                  type="password"
+                  id="newPasswordInput"
+                  placeholder="New password"
+                  class="auth-input"
+                />
+                <input
+                  type="password"
+                  id="confirmNewPasswordInput"
+                  placeholder="Confirm new password"
+                  class="auth-input"
+                />
+                <button id="resetPasswordBtn" class="auth-btn primary">
+                  Reset Password
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2186,6 +2281,26 @@
       const currentUsername = document.getElementById("currentUsername");
       const logoutBtn = document.getElementById("logoutBtn");
 
+      // Forgot Password DOM elements
+      const forgotPasswordForm = document.getElementById("forgotPasswordForm");
+      const showForgotPasswordBtn = document.getElementById(
+        "showForgotPasswordBtn"
+      );
+      const showLoginFromForgotBtn = document.getElementById(
+        "showLoginFromForgotBtn"
+      );
+      const forgotUsernameInput = document.getElementById(
+        "forgotUsernameInput"
+      );
+      const sendResetCodeBtn = document.getElementById("sendResetCodeBtn");
+      const resetCodeSection = document.getElementById("resetCodeSection");
+      const resetCodeInput = document.getElementById("resetCodeInput");
+      const newPasswordInput = document.getElementById("newPasswordInput");
+      const confirmNewPasswordInput = document.getElementById(
+        "confirmNewPasswordInput"
+      );
+      const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+
       // Current editing question info
       let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
 
@@ -2289,15 +2404,23 @@
         return false;
       }
 
-      // Show login form
+      // Show login form - UPDATED to handle forgot password form
       function showLoginForm() {
         authSection.style.display = "block";
         loginForm.style.display = "block";
         registerForm.style.display = "none";
+        forgotPasswordForm.style.display = "none"; // Add this line
         userInfo.style.display = "none";
         // Show table but disable interactions
         document.querySelector("table").style.opacity = "0.6";
         document.querySelector("table").style.pointerEvents = "none";
+
+        // Clear any reset form state
+        resetCodeSection.style.display = "none";
+        forgotUsernameInput.value = "";
+        resetCodeInput.value = "";
+        newPasswordInput.value = "";
+        confirmNewPasswordInput.value = "";
       }
 
       // Show user info when logged in
@@ -2335,6 +2458,26 @@
         });
         regConfirmPasswordInput.addEventListener("keypress", (e) => {
           if (e.key === "Enter") handleRegister();
+        });
+
+        // Forgot password event listeners
+        showForgotPasswordBtn.addEventListener("click", showForgotPasswordForm);
+        showLoginFromForgotBtn.addEventListener("click", showLoginForm);
+        sendResetCodeBtn.addEventListener("click", handleSendResetCode);
+        resetPasswordBtn.addEventListener("click", handleResetPassword);
+
+        // Enter key support for forgot password
+        forgotUsernameInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleSendResetCode();
+        });
+        resetCodeInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleResetPassword();
+        });
+        newPasswordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleResetPassword();
+        });
+        confirmNewPasswordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleResetPassword();
         });
       }
 
@@ -2652,6 +2795,150 @@
         showLoginForm();
         renderTable();
         renderEnhancedActivityTracker();
+      }
+
+      // Show forgot password form
+      function showForgotPasswordForm() {
+        loginForm.style.display = "none";
+        registerForm.style.display = "none";
+        forgotPasswordForm.style.display = "block";
+        userInfo.style.display = "none";
+        resetCodeSection.style.display = "none";
+        forgotUsernameInput.value = "";
+        resetCodeInput.value = "";
+        newPasswordInput.value = "";
+        confirmNewPasswordInput.value = "";
+      }
+
+      // Handle send reset code
+      async function handleSendResetCode() {
+        const username = forgotUsernameInput.value.trim();
+
+        if (!username) {
+          toastManager.warning(
+            "Please enter your username",
+            "Username Required"
+          );
+          return;
+        }
+
+        try {
+          sendResetCodeBtn.textContent = "Sending...";
+          sendResetCodeBtn.disabled = true;
+
+          const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            toastManager.success(result.message, "Reset Code Sent", 5000);
+
+            // Show reset code section
+            resetCodeSection.style.display = "block";
+
+            // For demo purposes - show the code (remove this in production)
+            if (result.demoCode) {
+              toastManager.info(
+                `OTP reset code: ${result.demoCode}`,
+                "OTP",
+                10000
+              );
+            }
+          } else {
+            toastManager.error(result.error, "Error");
+          }
+        } catch (error) {
+          console.error("Send reset code error:", error);
+          toastManager.error(
+            "Failed to send reset code. Please try again.",
+            "Network Error"
+          );
+        } finally {
+          sendResetCodeBtn.textContent = "Send Reset Code";
+          sendResetCodeBtn.disabled = false;
+        }
+      }
+
+      // Handle reset password - FIXED VERSION
+      async function handleResetPassword() {
+        const username = forgotUsernameInput.value.trim();
+        const resetCode = resetCodeInput.value.trim();
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmNewPasswordInput.value.trim();
+
+        if (!username || !resetCode || !newPassword || !confirmPassword) {
+          toastManager.warning(
+            "Please fill in all fields",
+            "All Fields Required"
+          );
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          toastManager.error("Passwords do not match", "Password Mismatch");
+          return;
+        }
+
+        if (newPassword.length < 4) {
+          toastManager.warning(
+            "Password must be at least 4 characters long",
+            "Password Requirement"
+          );
+          return;
+        }
+
+        try {
+          resetPasswordBtn.textContent = "Resetting...";
+          resetPasswordBtn.disabled = true;
+
+          const response = await fetch(`${API_BASE_URL}/reset-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              resetCode,
+              newPassword,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            toastManager.success(
+              "Password reset successfully! Please login with your new password.",
+              "Password Reset"
+            );
+
+            // FIX: Automatically show login form and clear reset form
+            showLoginForm(); // This will hide the forgot password form
+
+            // Clear the reset form fields
+            forgotUsernameInput.value = "";
+            resetCodeInput.value = "";
+            newPasswordInput.value = "";
+            confirmNewPasswordInput.value = "";
+            resetCodeSection.style.display = "none";
+          } else {
+            toastManager.error(result.error, "Reset Failed");
+          }
+        } catch (error) {
+          console.error("Reset password error:", error);
+          toastManager.error(
+            "Failed to reset password. Please try again.",
+            "Network Error"
+          );
+        } finally {
+          resetPasswordBtn.textContent = "Reset Password";
+          resetPasswordBtn.disabled = false;
+        }
       }
 
       // Load data from localStorage and MongoDB - OPTIMIZED VERSION
