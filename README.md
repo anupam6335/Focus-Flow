@@ -1,65 +1,70 @@
-# DSA Daily Checklist 🚀
+# FocusFlow - Track Your Progress, Master Your Journey
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/anupam6335/Daily-Tracker)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/anupam6335/Daily-Tracker/releases)
-[![Live Demo](https://img.shields.io/badge/demo-live%20project-brightgreen)](https://daily-tracker-upst.onrender.com/)
+[![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/anupam6335/FocusFlow)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/anupam6335/FocusFlow/releases)
+[![Live Demo](https://img.shields.io/badge/demo-live%20project-brightgreen)](https://anupam6335.github.io/Focus-Flow/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Daily Habit Builder](https://img.shields.io/badge/purpose-daily%20habit%20improvement-orange)](https://github.com/anupam6335/Daily-Tracker)
+[![Daily Habit Builder](https://img.shields.io/badge/purpose-progress%20tracking%20%26%20habit%20building-orange)](https://github.com/anupam6335/FocusFlow)
 
-A modern, cloud-synced progress tracker for mastering Data Structures and Algorithms. **Built to help you build consistent daily coding habits** and level up your skills through regular practice. **Accessible worldwide via live deployment!**
+A modern, cloud-synced progress tracking application designed to help you build consistent daily habits and master your skills through regular practice. **Accessible worldwide via live deployment!**
 
-🌐 **Live Demo: https://daily-tracker-upst.onrender.com/**
-
-<img width="1403" height="821" alt="image" src="https://github.com/user-attachments/assets/6c3233da-65ae-43ab-905a-bedabb696162" />
+🌐 **Live Application: https://anupam6335.github.io/Focus-Flow/**
+[<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/c4338931-5193-409f-8912-94e4a74d0b75" />](preview)
 
 
 ## ✨ Features
 
-### 🎯 Core Functionality
-- **📅 Daily Progress Tracking** - Organize DSA questions by day with completion status
-- **✅ Smart Question Management** - Add, edit, delete questions with direct LeetCode links
+### 🎯 Core Progress Tracking
+- **📅 Daily Progress Management** - Organize tasks and questions by day with completion status
+- **✅ Smart Item Management** - Add, edit, delete items with direct external links
 - **🏷️ Tag System** - Categorize days with customizable colored tags
-- **🔗 Link Management** - Store important references as clickable tags
-- **📊 Progress Visualization** - GitHub-style activity calendar with heatmap
+- **🔗 Advanced Link Management** - Store and organize important references as clickable tags
+- **🎨 Theme Support** - Dark/light mode for comfortable usage
 
-### 🔐 Advanced Features
-- **☁️ Cloud Synchronization** - Automatic sync across devices with MongoDB
+### 🔐 Advanced Capabilities
+- **☁️ Cloud Synchronization** - Automatic sync across devices with MongoDB backend
 - **🔒 Secure Authentication** - JWT-based login/registration system
-- **⚡ Conflict Resolution** - Smart version control for data conflicts
+- **⚡ Intelligent Conflict Resolution** - Smart version control for data conflicts
 - **📱 Offline Support** - Full functionality without internet connection
-- **🎨 Theme Toggle** - Dark/light mode for comfortable coding sessions
+- **🔐 Password Recovery** - Secure reset password functionality
 
-### 🌟 Daily Habit Building
-- **📈 Streak Tracking** - Visual calendar motivates daily consistency
+### 📊 Progress Analytics & Visualization
+- **📈 Advanced Analytics Dashboard** - Track streaks, totals, averages, and records
+- **🔥 GitHub-style Heatmap** - Visual consistency map with activity levels
 - **🎯 Progress Momentum** - Watch your activity heatmap grow over time
-- **💪 Habit Formation** - Designed to build coding practice into your daily routine
+- **💪 Habit Formation Tools** - Designed to build consistent practice routines
+
+### 🚀 Daily Habit Building
 - **📱 Always Accessible** - Works on all devices for practice anywhere, anytime
+- **🎉 Achievement Celebrations** - Motivational rewards for milestones
+- **📊 Visual Progress** - Comprehensive analytics to track your journey
 
-## 🚀 Instant Access
+## 🏗️ Architecture
 
-### 🌐 Use the Live Application Now!
-**No installation required!** Start building your coding habit immediately:
+### Frontend (GitHub Pages)
+- **URL:** https://anupam6335.github.io/Focus-Flow/
+- **Hosting:** GitHub Pages
+- **Technology:** Vanilla JavaScript, HTML5, CSS3
+- **Features:** Progressive Web App, Responsive Design
 
-👉 **[https://daily-tracker-upst.onrender.com/](https://daily-tracker-upst.onrender.com/)**
+### Backend (Render)
+- **URL:** https://daily-tracker-upst.onrender.com/
+- **Hosting:** Render.com
+- **Technology:** Node.js, Express.js, MongoDB
+- **Features:** REST API, Authentication, Data Persistence
 
-### Quick Start with Live Demo:
-1. **Visit:** https://daily-tracker-upst.onrender.com/
+## 🚀 Quick Start
+
+### 🌐 Use the Live Application
+**No installation required!** Start tracking your progress immediately:
+
+👉 **[https://anupam6335.github.io/Focus-Flow/](https://anupam6335.github.io/Focus-Flow/)**
+
+### Quick Start Steps:
+1. **Visit:** https://anupam6335.github.io/Focus-Flow/
 2. **Create account** or login
-3. **Start tracking** your daily DSA practice
+3. **Start tracking** your daily progress
 4. **Access from any device** - always in sync!
-
-## 🛠️ Tech Stack
-
-**Frontend:**
-- HTML5, CSS3 with CSS Custom Properties
-- Vanilla JavaScript (ES6+)
-- Responsive Design (Mobile First)
-
-**Backend:**
-- Node.js + Express.js
-- MongoDB + Mongoose ODM
-- JWT Authentication
-- bcryptjs Password Hashing
 
 ## 💻 Local Development
 
@@ -67,29 +72,48 @@ A modern, cloud-synced progress tracker for mastering Data Structures and Algori
 - Node.js (v14 or higher)
 - MongoDB instance (local or Atlas)
 
-### Local Installation (Optional)
+### Frontend Development
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/anupam6335/Daily-Tracker.git
-cd Daily-Tracker
+git clone https://github.com/anupam6335/Focus-Flow.git
+cd Focus-Flow
 ```
 
+2. **Serve the application**
+```bash
+# Using Python (if available)
+python -m http.server 8000
+
+# Using Node.js http-server
+npx http-server
+
+# Using Live Server extension in VS Code
+```
+
+3. **Access locally**
+```
+http://localhost:8000
+```
+
+### Backend Development
+
+1. **Navigate to backend directory** (if separate)
 2. **Install dependencies**
 ```bash
 npm install
 ```
 
 3. **Configure environment variables**
-```bash
-# Create .env file
-MONGODB_URI=mongodb://localhost:27017/dsa-checklist
+Create a `.env` file:
+```env
+MONGODB_URI=mongodb://localhost:27017/focusflow
 PORT=3000
-JWT_SECRET=your-super-secret-jwt-key
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
 NODE_ENV=development
 ```
 
-4. **Start the application**
+4. **Start the backend server**
 ```bash
 # Development mode
 npm run dev
@@ -98,158 +122,188 @@ npm run dev
 npm start
 ```
 
-5. **Access locally**
+5. **Backend will run on**
 ```
 http://localhost:3000
 ```
 
+## 🔧 Configuration
+
+### CORS Setup
+The application is configured for cross-origin requests between GitHub Pages and Render:
+
+```javascript
+// Backend CORS configuration
+app.use(cors({
+    origin: [
+        'https://anupam6335.github.io',
+        'https://daily-tracker-upst.onrender.com',
+        'http://localhost:8000',
+        'http://localhost:3000'
+    ],
+    credentials: true
+}));
+```
+
+### API Configuration
+The frontend automatically connects to the backend API at:
+```
+https://daily-tracker-upst.onrender.com/api
+```
+
 ## 📖 Usage Guide
 
-### Building Daily Coding Habits
+### Getting Started
 
-**Start Small, Stay Consistent:**
-- Aim for **just 1 question per day** to build momentum
-- Use the activity tracker to **maintain your streak**
-- **Don't break the chain** - the visual calendar motivates consistency
-
-### Getting Started with Live Demo
-
-1. **Visit https://daily-tracker-upst.onrender.com/**
+1. **Visit the application** at https://anupam6335.github.io/Focus-Flow/
 2. **Create your account** (takes 30 seconds)
 3. **Start with Day 1** - no setup required
-4. **Practice daily** - your progress syncs automatically
+4. **Add items** to track your daily progress
+5. **Mark completions** - watch your streaks grow
+6. **Practice consistently** - your progress syncs automatically
 
 ### Basic Operations
 
-**Adding a new day:**
-```javascript
-// Click the "+ Add New Day" button when you're ready to progress
-// Perfect for building one day at a time
-```
+**Adding new items:**
+- Click the "+ Add Question" button in any editable day
+- Enter item text and optional links
+- Press Enter to save
 
-**Managing questions:**
-```javascript
-- Click checkbox to mark completion (habit achieved!)
-- Start with 1-2 questions daily to build consistency
-- Gradually increase as the habit becomes automatic
-```
+**Tracking progress:**
+- Click checkboxes to mark items as completed
+- Watch your status indicators update automatically
+- Celebrate achievements with visual rewards
+
+**Managing tags and links:**
+- Add colored tags for categorization
+- Store important links as clickable tags
+- Organize your resources efficiently
 
 ## 🏗️ Project Structure
 
+### Frontend (GitHub Pages)
 ```
-Daily-Tracker/
+Focus-Flow/
 ├── index.html              # Main application file
+├── focus-flow.ico          # Application icon
+├── assets/                 # Static assets (if any)
+└── README.md              # Documentation
+```
+
+### Backend (Render)
+```
+FocusFlow-Backend/
 ├── server.js               # Express server with API routes
 ├── package.json            # Dependencies and scripts
 ├── .env                    # Environment configuration
-└── README.md              # This file
+└── models/                 # Database models
+    ├── User.js
+    ├── ChecklistData.js
+    ├── ActivityTracker.js
+    └── PasswordReset.js
 ```
 
-## 🌐 Deployment Information
+## 🔄 Sync & Data Management
 
-### Live Production Environment
-- **URL:** https://daily-tracker-upst.onrender.com/
-- **Platform:** Render.com
-- **Database:** MongoDB Atlas (cloud)
-- **Status:** 24/7 available worldwide
-- **SSL:** HTTPS secured
+### Cross-Origin Data Flow
+- **Frontend** (GitHub Pages) ↔ **Backend** (Render.com)
+- **Secure API communication** via HTTPS
+- **JWT authentication** for secure data access
+- **Automatic synchronization** between sessions
 
-### Features Available in Live Version:
-- ✅ **Global accessibility** - access from anywhere
-- ✅ **Auto-scaling** - handles multiple users
-- ✅ **Automatic deployments** - always up-to-date
-- ✅ **Production-ready** - optimized for performance
+### Data Security
+- **Encrypted passwords** using bcryptjs
+- **JWT tokens** for secure authentication
+- **User isolation** - data separated by account
+- **Secure API** with proper validation
 
-## 🌟 Habit Building Strategy
+## 🎯 Analytics & Progress Tracking
 
-### The 1% Better Every Day Approach
+### Key Metrics
+- **Current Streak**: Consecutive days with activity
+- **Total Solved**: Cumulative items completed
+- **Daily Average**: Average items per day
+- **Max Streak**: Longest consecutive activity period
 
-This tool is designed around the principle of **consistent small improvements**:
+### Visualization Features
+- **Heatmap Calendar**: GitHub-style activity visualization
+- **Progress Indicators**: Visual status for each day
+- **Achievement Celebrations**: Motivational rewards for milestones
+- **Trend Analysis**: Long-term progress tracking
 
-```javascript
-// Instead of:
-practiceMarathon(); // Occasional intense sessions
+## 🚀 Deployment
 
-// Use this for:
-dailyConsistentPractice(); // Small, regular sessions that compound
-```
+### Frontend Deployment (GitHub Pages)
+1. Push changes to the `main` branch
+2. GitHub Pages automatically deploys from the root directory
+3. Application available at: https://anupam6335.github.io/Focus-Flow/
 
-### Benefits of Daily Practice
-
-- **🔥 Compound Growth**: Small daily efforts lead to massive long-term results
-- **🚀 Reduced Procrastination**: "Just one question" mindset lowers barriers
-- **📈 Skill Automation**: Coding thinking becomes second nature
-- **💪 Built Discipline**: Develops the muscle of consistent practice
-
-## 📊 Activity Tracker - Your Habit Scorecard
-
-The activity calendar is your **daily habit motivator**:
-
-```
-September 2025 - Your Coding Habit Tracker
-Mo Tu We Th Fr Sa Su
-────────────────────
- 1  2  3  4  5  6  7
- 8  9 10 11 12 13 14
-15 16 17 18 19 20 21
-22 23 24 ██ █▓ ▓▓ ▓▓  ← Your growing habit streak!
-29 30
-```
-
-- █ = Habit maintained (1 question)
-- ▓ = Excellent day (2+ questions)  
-- **Don't break the chain!** - Visual motivation to keep your streak alive
-
-## 🚀 Quick Links
-
-- **🌐 Live Application:** https://daily-tracker-upst.onrender.com/
-- **📚 Source Code:** https://github.com/anupam6335/Daily-Tracker
-- **🐛 Report Issues:** https://github.com/anupam6335/Daily-Tracker/issues
-- **💡 Feature Requests:** https://github.com/anupam6335/Daily-Tracker/issues
+### Backend Deployment (Render)
+1. Connect GitHub repository to Render
+2. Configure environment variables in Render dashboard
+3. Automatic deployments on git push
+4. API available at: https://daily-tracker-upst.onrender.com/
 
 ## 🐛 Troubleshooting
 
-### Live Demo Issues
+### Common Issues
 
-**If the live demo is slow to load:**
-- Render.com free tier may have cold starts
-- Wait 30-60 seconds for the first load
-- Subsequent loads will be faster
+**CORS Errors:**
+- Ensure backend CORS is properly configured
+- Check that frontend URL is in allowed origins
+- Verify API endpoints are accessible
 
-**Browser compatibility:**
-- Works on Chrome, Firefox, Safari, Edge
-- Mobile browsers fully supported
-- Requires JavaScript enabled
+**Sync Issues:**
+- Check internet connection
+- Verify login status
+- Use "Sync Now" button for manual sync
 
-## 🤝 Join the Habit Community
+**Performance:**
+- Clear browser cache if experiencing slowness
+- Ensure JavaScript is enabled
+- Use supported browsers (Chrome, Firefox, Safari, Edge)
 
-Share your progress and motivate others:
+### API Status
+- Backend Health Check: https://daily-tracker-upst.onrender.com/
+- API Base URL: https://daily-tracker-upst.onrender.com/api
 
-1. **Track your streak** in the activity calendar
-2. **Celebrate milestones** (7 days, 30 days, 100 days)
-3. **Share your heatmap** with coding communities
-4. **Inspire others** with your consistency journey
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🌟 Support
+
+- **Frontend Issues**: https://github.com/anupam6335/Focus-Flow/issues
+- **Backend Issues**: https://github.com/anupam6335/FocusFlow/issues
+- **Live Application**: https://anupam6335.github.io/Focus-Flow/
+
 ## 🙏 Acknowledgments
 
-Built with ❤️ to help developers build **consistent coding habits** that transform skills through daily practice.
+Built with ❤️ to help individuals build **consistent habits** that transform skills through daily practice.
 
-*Special thanks to James Clear's "Atomic Habits" for inspiring the habit-building approach integrated into this tool.*
+*Special thanks to the open-source community for inspiring the development approach and tools used in this project.*
 
 ---
 
 <div align="center">
 
-## 🎯 Ready to Start Your Habit?
+## 🎯 Ready to Start Your Journey?
 
 ### 🌐 **Access the Live App Now:**
-# [https://daily-tracker-upst.onrender.com/](https://daily-tracker-upst.onrender.com/)
+# [https://anupam6335.github.io/Focus-Flow/](https://anupam6335.github.io/Focus-Flow/)
 
-**No installation required - start building your coding habit in 60 seconds!**
+**No installation required - start building your productive habits today!**
 
 *"We are what we repeatedly do. Excellence, then, is not an act, but a habit."* - Aristotle
 
@@ -257,6 +311,4 @@ Built with ❤️ to help developers build **consistent coding habits** that tra
 
 ---
 
-**📅 Tomorrow's Question Awaits!** What will you solve today to build your coding habit? 🚀
-
----
+**📅 Your Progress Awaits!** What will you accomplish today to move closer to your goals? 🚀
