@@ -1980,7 +1980,7 @@
       ];
 
       // MongoDB configuration
-      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+      const API_BASE_URL = "http://localhost:3000/api";
       let userId = "default-user";
       let authToken = null;
 
@@ -3285,106 +3285,119 @@
         renderHeatmap();
       }
 
-      function updateAnalyticsDashboard() {
-        // Calculate fresh analytics
-        const analytics = calculateAnalytics();
+   function updateAnalyticsDashboard() {
+    // Calculate fresh analytics with the corrected logic
+    const analytics = calculateAnalytics();
 
-        // Update the UI first
-        document.getElementById("currentStreak").textContent =
-          analytics.currentStreak;
-        document.getElementById("totalSolved").textContent =
-          analytics.totalSolved;
-        document.getElementById("averageDaily").textContent =
-          analytics.averageDaily.toFixed(1);
-        document.getElementById("maxStreak").textContent = analytics.maxStreak;
+    // Update the UI
+    document.getElementById("currentStreak").textContent = analytics.currentStreak;
+    document.getElementById("totalSolved").textContent = analytics.totalSolved;
+    document.getElementById("averageDaily").textContent = analytics.averageDaily.toFixed(1);
+    document.getElementById("maxStreak").textContent = analytics.maxStreak;
 
-        // Update the stored data with fresh calculations
-        if (window.activityTrackerData) {
-          window.activityTrackerData.currentStreak = analytics.currentStreak;
-          window.activityTrackerData.totalSolved = analytics.totalSolved;
-          window.activityTrackerData.averageDaily = analytics.averageDaily;
-          window.activityTrackerData.maxStreak = analytics.maxStreak;
-          window.activityTrackerData.heatmapData = getActivityData();
-          window.activityTrackerData.activityHistory = getActivityHistory();
-        }
-
-        // Save to MongoDB if logged in - BUT don't call saveActivityTrackerData() here
-        // It will be called by the saveData() function
-      }
+    // Update the stored data with fresh calculations
+    if (window.activityTrackerData) {
+        window.activityTrackerData.currentStreak = analytics.currentStreak;
+        window.activityTrackerData.totalSolved = analytics.totalSolved;
+        window.activityTrackerData.averageDaily = analytics.averageDaily;
+        window.activityTrackerData.maxStreak = analytics.maxStreak;
+        window.activityTrackerData.heatmapData = getActivityData();
+        window.activityTrackerData.activityHistory = getActivityHistory();
+    }
+}
 
       function calculateAnalytics() {
-        const startDate = new Date("2025-09-25");
-        const today = new Date();
-        const activityData = getActivityData();
+    const startDate = new Date("2025-09-25");
+    const today = new Date();
+    const activityData = getActivityData();
 
-        // Calculate streaks
-        let currentStreak = 0;
-        let maxStreak = 0;
-        let tempStreak = 0;
-        let totalSolved = 0;
-        let activeDays = 0;
+    // Get all dates with activity and sort them
+    const activeDates = Object.keys(activityData)
+        .map(dateStr => new Date(dateStr))
+        .sort((a, b) => a - b); // Sort in ascending order
 
-        const lastActiveDay = { date: null, count: 0 };
+    // Calculate streaks
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let tempStreak = 0;
 
-        // Process each day from start to today
-        let currentDate = new Date(startDate);
-        while (currentDate <= today) {
-          const dateKey = formatDateKey(currentDate);
-          const dayActivity = activityData[dateKey] || 0;
-
-          if (dayActivity > 0) {
-            totalSolved += dayActivity;
-            activeDays++;
-
-            // Update streaks
-            if (
-              lastActiveDay.date &&
-              isConsecutiveDay(lastActiveDay.date, currentDate)
-            ) {
-              tempStreak++;
-              currentStreak = Math.max(currentStreak, tempStreak);
-            } else {
-              tempStreak = 1;
-              currentStreak = Math.max(currentStreak, 1);
-            }
-
-            lastActiveDay.date = new Date(currentDate);
-            lastActiveDay.count = dayActivity;
-          } else {
-            maxStreak = Math.max(maxStreak, tempStreak);
-            tempStreak = 0;
-          }
-
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        maxStreak = Math.max(maxStreak, tempStreak);
-
-        // Check if today is active for current streak
+    // Calculate current streak (ending at today)
+    if (activeDates.length > 0) {
+        // Start from the most recent date and move backwards
+        const sortedDates = [...activeDates].sort((a, b) => b - a); // Sort in descending order
+        
         const todayKey = formatDateKey(today);
-        if (
-          activityData[todayKey] > 0 &&
-          lastActiveDay.date &&
-          isConsecutiveDay(lastActiveDay.date, today)
-        ) {
-          currentStreak = Math.max(currentStreak, tempStreak);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = formatDateKey(yesterday);
+
+        // Check if we have activity today or yesterday to start the streak
+        if (activityData[todayKey] > 0) {
+            currentStreak = 1;
+            // Continue backwards from yesterday
+            let checkDate = new Date(yesterday);
+            while (true) {
+                const checkDateKey = formatDateKey(checkDate);
+                if (activityData[checkDateKey] > 0) {
+                    currentStreak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+        } else if (activityData[yesterdayKey] > 0) {
+            // If no activity today, but activity yesterday, check backwards from yesterday
+            currentStreak = 1;
+            let checkDate = new Date(yesterday);
+            checkDate.setDate(checkDate.getDate() - 1);
+            while (true) {
+                const checkDateKey = formatDateKey(checkDate);
+                if (activityData[checkDateKey] > 0) {
+                    currentStreak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
         }
+        // If no activity today or yesterday, current streak is 0
+    }
 
-        // Calculate average
-        const daysSinceStart =
-          Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-        const averageDaily =
-          daysSinceStart > 0 ? totalSolved / daysSinceStart : 0;
+    // Calculate max streak (longest consecutive period)
+    if (activeDates.length > 0) {
+        tempStreak = 1;
+        for (let i = 1; i < activeDates.length; i++) {
+            const prevDate = activeDates[i - 1];
+            const currDate = activeDates[i];
+            
+            // Check if consecutive
+            const expectedDate = new Date(prevDate);
+            expectedDate.setDate(expectedDate.getDate() + 1);
+            
+            if (formatDateKey(expectedDate) === formatDateKey(currDate)) {
+                tempStreak++;
+            } else {
+                maxStreak = Math.max(maxStreak, tempStreak);
+                tempStreak = 1;
+            }
+        }
+        maxStreak = Math.max(maxStreak, tempStreak);
+    }
 
-        return {
-          currentStreak,
-          totalSolved,
-          averageDaily,
-          maxStreak,
-          activeDays,
-          totalDays: daysSinceStart,
-        };
-      }
+    // Calculate totals
+    const totalSolved = Object.values(activityData).reduce((sum, count) => sum + count, 0);
+    const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    const averageDaily = daysSinceStart > 0 ? totalSolved / daysSinceStart : 0;
+
+    return {
+        currentStreak,
+        totalSolved,
+        averageDaily,
+        maxStreak,
+        activeDays: activeDates.length,
+        totalDays: daysSinceStart,
+    };
+}
 
       function getActivityData() {
         const activityData = {};
@@ -3409,11 +3422,11 @@
         return date.toISOString().split("T")[0];
       }
 
-      function isConsecutiveDay(date1, date2) {
-        const oneDay = 24 * 60 * 60 * 1000;
-        const diffDays = Math.round(Math.abs((date2 - date1) / oneDay));
-        return diffDays === 1;
-      }
+   function isConsecutiveDay(date1, date2) {
+    const oneDay = 24 * 60 * 60 * 1000;
+    const diffDays = Math.round(Math.abs((date2 - date1) / oneDay));
+    return diffDays === 1;
+}
 
       function renderHeatmap() {
         const heatmapGrid = document.getElementById("heatmapGrid");

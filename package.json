@@ -1,7 +1,7 @@
 {
-  "name": "Daily Tracker",
+  "name": "FocusFlow",
   "version": "1.0.0",
-  "description": "DSA Checklist App",
+  "description": "Track Your Progress, Master Your Journey",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
