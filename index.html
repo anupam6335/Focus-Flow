@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="Assets/FocusFlow.ico" />
+    <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
     <title>FocusFlow – Track Your Progress, Master Your Journey</title>
     <style>
       :root {
@@ -48,11 +48,32 @@
         line-height: 1.5;
         padding: 20px;
         transition: background-color 0.3s, color 0.3s;
+        overflow-x: hidden;
+      }
+
+      .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+      }
+
+      .left-column {
+        flex: 0 0 70%;
+        width: 70%;
+      }
+
+      .right-column {
+        flex: 0 0 30%;
+        width: 30%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
       }
 
       .container {
-        max-width: 1200px;
-        margin: 0 auto;
+        width: 100%;
       }
 
       header {
@@ -405,62 +426,6 @@
         opacity: 0.9;
       }
 
-      /* Responsive styles */
-      @media (max-width: 768px) {
-        table {
-          display: block;
-          overflow-x: auto;
-        }
-
-        th,
-        td {
-          padding: 8px 10px;
-        }
-
-        .day-cell,
-        .status-cell {
-          width: auto;
-        }
-
-        header {
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        #syncStatus {
-          order: 3;
-          margin-left: 0;
-          margin-right: 0;
-          width: 100%;
-          justify-content: center;
-        }
-      }
-
-      @media (max-width: 480px) {
-        body {
-          padding: 10px;
-        }
-
-        h1 {
-          font-size: 1.5rem;
-        }
-
-        header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 15px;
-        }
-
-        .modal-content {
-          width: 95%;
-          padding: 15px;
-        }
-
-        #syncStatus {
-          margin-left: 0;
-          margin-right: 0;
-        }
-      }
       /* Daily Progress Container - Responsive Styles */
       .daily-progress-container {
         margin-bottom: 20px;
@@ -571,821 +536,7 @@
         gap: 10px;
       }
 
-      /* Responsive adjustments for Daily Progress section */
-      @media (max-width: 768px) {
-        .daily-progress-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 10px;
-        }
-
-        .daily-progress-header h2 {
-          font-size: 1.3rem;
-        }
-
-        .add-day-btn {
-          align-self: stretch;
-          text-align: center;
-        }
-
-        .auth-input-group {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .auth-input {
-          min-width: 100%;
-          margin-bottom: 8px;
-        }
-
-        .auth-btn {
-          flex: 1;
-          min-width: auto;
-        }
-
-        .user-info-content {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 10px;
-        }
-
-        .user-info-content button {
-          align-self: stretch;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .daily-progress-header h2 {
-          font-size: 1.2rem;
-        }
-
-        .auth-section {
-          padding: 12px;
-        }
-
-        .auth-title {
-          font-size: 1rem;
-          margin-bottom: 12px;
-        }
-
-        .auth-input-group {
-          gap: 8px;
-        }
-
-        .auth-input {
-          padding: 6px 8px;
-          font-size: 0.9rem;
-        }
-
-        .auth-btn {
-          padding: 6px 12px;
-          font-size: 0.9rem;
-        }
-      }
-
-      @media (max-width: 360px) {
-        .daily-progress-header {
-          gap: 8px;
-        }
-
-        .daily-progress-header h2 {
-          font-size: 1.1rem;
-        }
-
-        .add-day-btn {
-          padding: 6px 12px;
-          font-size: 0.9rem;
-        }
-
-        .auth-section {
-          padding: 10px;
-        }
-      }
-
-      .activity-tracker-container {
-        background: var(--table-header-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 20px;
-        margin-bottom: 20px;
-        width: 100%;
-      }
-
-      .activity-tracker-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .activity-tracker-header h2 {
-        color: var(--accent-color);
-        font-size: 1.3rem;
-        margin: 0;
-      }
-
-      .activity-tracker-subtitle {
-        color: var(--text-color);
-        opacity: 0.7;
-        font-size: 0.9rem;
-      }
-
-      .activity-calendar {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
-        gap: 4px;
-        margin-bottom: 15px;
-        justify-items: center;
-      }
-
-      .activity-day {
-        width: 20px;
-        height: 20px;
-        border-radius: 3px;
-        border: 1px solid var(--border-color);
-        position: relative;
-        cursor: pointer;
-        transition: transform 0.2s ease;
-      }
-
-      .activity-day:hover {
-        transform: scale(1.2);
-        z-index: 1;
-      }
-
-      .activity-day.blank {
-        background-color: var(--bg-color);
-      }
-
-      .activity-day.green {
-        background-color: #40c463;
-      }
-
-      .activity-day.dark-green {
-        background-color: #216e39;
-      }
-
-      .activity-tooltip {
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--bg-color);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 8px;
-        font-size: 0.8rem;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        z-index: 10;
-      }
-
-      .activity-day:hover .activity-tooltip {
-        opacity: 1;
-      }
-
-      .activity-legend {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.8rem;
-        color: var(--text-color);
-        opacity: 0.8;
-      }
-
-      .legend-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-        border: 1px solid var(--border-color);
-      }
-
-      .legend-color.blank {
-        background-color: var(--bg-color);
-      }
-
-      .legend-color.green {
-        background-color: #40c463;
-      }
-
-      .legend-color.dark-green {
-        background-color: #216e39;
-      }
-
-      /* Responsive styles for activity tracker */
-      @media (max-width: 768px) {
-        .activity-tracker-container {
-          padding: 15px;
-        }
-
-        .activity-tracker-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 5px;
-        }
-
-        .activity-tracker-header h2 {
-          font-size: 1.2rem;
-        }
-
-        .activity-tracker-subtitle {
-          font-size: 0.8rem;
-        }
-
-        .activity-calendar {
-          grid-template-columns: repeat(auto-fit, minmax(16px, 1fr));
-          gap: 3px;
-        }
-
-        .activity-day {
-          width: 16px;
-          height: 16px;
-        }
-
-        .activity-legend {
-          gap: 15px;
-        }
-
-        .legend-item {
-          font-size: 0.7rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .activity-tracker-container {
-          padding: 12px;
-        }
-
-        .activity-calendar {
-          grid-template-columns: repeat(auto-fit, minmax(14px, 1fr));
-          gap: 2px;
-        }
-
-        .activity-day {
-          width: 14px;
-          height: 14px;
-        }
-
-        .activity-legend {
-          gap: 10px;
-        }
-      }
-
-      /* Personal Info Box Styles */
-      .personal-info-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        width: 300px;
-        background: var(--table-header-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 15px;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-      }
-
-      .personal-info-container.collapsed {
-        width: 50px;
-        height: 50px;
-        padding: 10px;
-        overflow: hidden;
-        cursor: pointer;
-      }
-
-      .personal-info-container.collapsed .personal-info-content {
-        display: none;
-      }
-
-      .personal-info-container.collapsed .personal-info-toggle::after {
-        content: "👤";
-        font-size: 24px;
-      }
-
-      .personal-info-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      }
-
-      .personal-info-title {
-        font-size: 1.1rem;
-        color: var(--accent-color);
-        font-weight: 600;
-      }
-
-      .personal-info-toggle {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        cursor: pointer;
-        padding: 5px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-      }
-
-      .personal-info-toggle:hover {
-        background-color: rgba(88, 166, 255, 0.1);
-      }
-
-      .personal-info-content {
-        max-height: 400px;
-        overflow-y: auto;
-      }
-
-      .personal-info-input-group {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 15px;
-      }
-
-      .personal-info-input {
-        flex: 1;
-        padding: 8px;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        background: var(--bg-color);
-        color: var(--text-color);
-        font-size: 0.9rem;
-      }
-
-      .personal-info-input:focus {
-        outline: 1px solid var(--accent-color);
-      }
-
-      .personal-info-add-btn {
-        padding: 8px 12px;
-        background: var(--accent-color);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: opacity 0.2s;
-      }
-
-      .personal-info-add-btn:hover {
-        opacity: 0.9;
-      }
-
-      .personal-info-links {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .personal-info-link-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px;
-        background: var(--bg-color);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        transition: background-color 0.2s;
-      }
-
-      .personal-info-link-item:hover {
-        background-color: rgba(88, 166, 255, 0.05);
-      }
-
-      .personal-info-link-content {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        min-width: 0;
-      }
-
-      .personal-info-link-icon {
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-      }
-
-      .personal-info-link-text {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 0.9rem;
-      }
-
-      .personal-info-link-url {
-        color: var(--link-color);
-        text-decoration: none;
-        font-size: 0.8rem;
-        opacity: 0.8;
-      }
-
-      .personal-info-link-url:hover {
-        opacity: 1;
-        text-decoration: underline;
-      }
-
-      .personal-info-remove-btn {
-        background: none;
-        border: none;
-        color: #f85149;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 3px;
-        font-size: 1.1rem;
-        transition: background-color 0.2s;
-      }
-
-      .personal-info-remove-btn:hover {
-        background-color: rgba(248, 81, 73, 0.1);
-      }
-
-      .personal-info-empty {
-        text-align: center;
-        color: var(--text-color);
-        opacity: 0.7;
-        font-style: italic;
-        padding: 20px;
-        font-size: 0.9rem;
-      }
-
-      /* Position variants */
-      .personal-info-container.left {
-        left: 20px;
-        right: auto;
-      }
-
-      .personal-info-container.right {
-        right: 20px;
-        left: auto;
-      }
-
-      .personal-info-container.top {
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        right: auto;
-        width: 90%;
-        max-width: 500px;
-      }
-
-      /* Responsive styles for personal info box */
-      @media (max-width: 768px) {
-        .personal-info-container {
-          position: relative;
-          top: auto;
-          right: auto;
-          left: auto;
-          width: 100%;
-          margin-bottom: 20px;
-        }
-
-        .personal-info-container.collapsed {
-          position: fixed;
-          top: 80px;
-          right: 20px;
-          width: 50px;
-          height: 50px;
-        }
-
-        .personal-info-container.top {
-          position: relative;
-          transform: none;
-          left: auto;
-          width: 100%;
-        }
-
-        .personal-info-container.left,
-        .personal-info-container.right {
-          position: relative;
-          left: auto;
-          right: auto;
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .personal-info-container.collapsed {
-          top: 70px;
-          right: 10px;
-          width: 40px;
-          height: 40px;
-        }
-
-        .personal-info-input-group {
-          flex-direction: column;
-        }
-
-        .personal-info-link-item {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .personal-info-remove-btn {
-          align-self: flex-end;
-        }
-      }
-
-      /* Toast Notification Styles */
-      .toast-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        max-width: 400px;
-      }
-
-      .toast {
-        background: var(--bg-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        transform: translateX(400px);
-        opacity: 0;
-        transition: all 0.3s ease-in-out;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .toast.show {
-        transform: translateX(0);
-        opacity: 1;
-      }
-
-      .toast.hide {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-
-      .toast-icon {
-        font-size: 1.2rem;
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-
-      .toast-content {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .toast-title {
-        font-weight: 600;
-        margin-bottom: 4px;
-        color: var(--text-color);
-        font-size: 0.95rem;
-      }
-
-      .toast-message {
-        color: var(--text-color);
-        opacity: 0.9;
-        font-size: 0.9rem;
-        line-height: 1.4;
-        word-wrap: break-word;
-      }
-
-      .toast-close {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        opacity: 0.7;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        font-size: 1.1rem;
-        flex-shrink: 0;
-        transition: opacity 0.2s;
-      }
-
-      .toast-close:hover {
-        opacity: 1;
-        background: rgba(255, 255, 255, 0.1);
-      }
-
-      .toast-progress {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 3px;
-        background: var(--accent-color);
-        width: 100%;
-        transform: scaleX(1);
-        transform-origin: left;
-        transition: transform 5s linear;
-      }
-
-      .toast-progress.hide {
-        transform: scaleX(0);
-      }
-
-      /* Toast Types */
-      .toast.success {
-        border-left: 4px solid var(--success-color);
-      }
-
-      .toast.success .toast-icon {
-        color: var(--success-color);
-      }
-
-      .toast.error {
-        border-left: 4px solid var(--danger-color);
-      }
-
-      .toast.error .toast-icon {
-        color: var(--danger-color);
-      }
-
-      .toast.warning {
-        border-left: 4px solid var(--warning-color);
-      }
-
-      .toast.warning .toast-icon {
-        color: var(--warning-color);
-      }
-
-      .toast.info {
-        border-left: 4px solid var(--accent-color);
-      }
-
-      .toast.info .toast-icon {
-        color: var(--accent-color);
-      }
-
-      /* Confirmation Dialog Styles */
-      .confirm-dialog {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        display: none;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .confirm-dialog.show {
-        display: flex;
-      }
-
-      .confirm-content {
-        background-color: var(--bg-color);
-        padding: 24px;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 400px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      }
-
-      .confirm-title {
-        font-size: 1.2rem;
-        color: var(--accent-color);
-        margin-bottom: 12px;
-        font-weight: 600;
-      }
-
-      .confirm-message {
-        color: var(--text-color);
-        margin-bottom: 20px;
-        line-height: 1.5;
-      }
-
-      .confirm-buttons {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-      }
-
-      .confirm-btn {
-        padding: 8px 20px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.2s;
-        min-width: 80px;
-      }
-
-      .confirm-btn.confirm {
-        background-color: var(--danger-color);
-        color: white;
-      }
-
-      .confirm-btn.confirm:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-      }
-
-      .confirm-btn.cancel {
-        background-color: transparent;
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-      }
-
-      .confirm-btn.cancel:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-        transform: translateY(-1px);
-      }
-
-      /* Responsive toast styles */
-      @media (max-width: 768px) {
-        .toast-container {
-          top: 10px;
-          right: 10px;
-          left: 10px;
-          max-width: none;
-        }
-
-        .toast {
-          padding: 14px;
-        }
-
-        .confirm-content {
-          margin: 20px;
-          padding: 20px;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .toast-container {
-          top: 5px;
-          right: 5px;
-          left: 5px;
-        }
-
-        .toast {
-          padding: 12px;
-        }
-
-        .confirm-buttons {
-          flex-direction: column;
-        }
-
-        .confirm-btn {
-          min-width: auto;
-          width: 100%;
-        }
-      }
-      /* Enhanced modal transitions */
-      .confirm-dialog {
-        transition: opacity 0.3s ease;
-        opacity: 0;
-      }
-
-      .confirm-dialog.show {
-        opacity: 1;
-      }
-
-      .confirm-content {
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
-      }
-
-      .confirm-dialog.show .confirm-content {
-        transform: scale(1);
-      }
-
-      /* Ensure link modal has proper transitions */
-      .modal {
-        transition: opacity 0.3s ease;
-        opacity: 0;
-      }
-
-      .modal[style*="display: flex"] {
-        opacity: 1;
-      }
-
-      .modal-content {
-        transform: translateY(-20px);
-        transition: transform 0.3s ease;
-      }
-
-      .modal[style*="display: flex"] .modal-content {
-        transform: translateY(0);
-      }
-
-      /* Updated Activity Tracker Styles */
+      /* Activity Tracker Styles */
       .activity-tracker-container {
         background: var(--table-header-bg);
         border: 1px solid var(--border-color);
@@ -1608,104 +759,369 @@
         opacity: 1;
       }
 
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .activity-tracker-container {
-          padding: 16px;
-        }
-
-        .activity-tracker-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .metrics-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-
-        .metric-card {
-          padding: 16px;
-        }
-
-        .metric-value {
-          font-size: 1.5rem;
-        }
-
-        .heatmap-container {
-          padding: 16px;
-        }
-
-        .heatmap-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .heatmap-grid {
-          grid-template-columns: repeat(26, 10px);
-          gap: 2px;
-        }
-
-        .heatmap-cell {
-          width: 10px;
-          height: 10px;
-        }
-
-        .months-row {
-          width: 30px;
-          padding-top: 20px;
-        }
-
-        .month-label {
-          font-size: 0.6rem;
-          height: 10px;
-        }
+      /* Personal Info Box Styles */
+      .personal-info-container {
+        background: var(--table-header-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        width: 100%;
       }
 
-      @media (max-width: 480px) {
-        .metrics-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .heatmap-grid {
-          grid-template-columns: repeat(13, 8px);
-          gap: 1px;
-        }
-
-        .heatmap-cell {
-          width: 8px;
-          height: 8px;
-        }
-
-        .months-row {
-          width: 25px;
-          padding-top: 16px;
-        }
-
-        .month-label {
-          font-size: 0.5rem;
-          height: 8px;
-        }
+      .personal-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
       }
 
-      /* Focus styles for accessibility */
-      .heatmap-cell:focus {
-        outline: 2px solid var(--accent-color);
-        outline-offset: 1px;
-        z-index: 3;
+      .personal-info-title {
+        font-size: 1.1rem;
+        color: var(--accent-color);
+        font-weight: 600;
       }
 
-      /* Keyboard navigation support */
-      .heatmap-grid {
+      .personal-info-toggle {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .personal-info-toggle:hover {
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .personal-info-content {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .personal-info-input-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+
+      .personal-info-input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--bg-color);
+        color: var(--text-color);
+        font-size: 0.9rem;
+      }
+
+      .personal-info-input:focus {
+        outline: 1px solid var(--accent-color);
+      }
+
+      .personal-info-add-btn {
+        padding: 8px 12px;
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
+      }
+
+      .personal-info-add-btn:hover {
+        opacity: 0.9;
+      }
+
+      .personal-info-links {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .personal-info-link-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .personal-info-link-item:hover {
+        background-color: rgba(88, 166, 255, 0.05);
+      }
+
+      .personal-info-link-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .personal-info-link-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      .personal-info-link-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.9rem;
+      }
+
+      .personal-info-link-url {
+        color: var(--link-color);
+        text-decoration: none;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      .personal-info-link-url:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
+
+      .personal-info-remove-btn {
+        background: none;
+        border: none;
+        color: #f85149;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 3px;
+        font-size: 1.1rem;
+        transition: background-color 0.2s;
+      }
+
+      .personal-info-remove-btn:hover {
+        background-color: rgba(248, 81, 73, 0.1);
+      }
+
+      .personal-info-empty {
+        text-align: center;
+        color: var(--text-color);
+        opacity: 0.7;
+        font-style: italic;
+        padding: 20px;
+        font-size: 0.9rem;
+      }
+
+      /* Toast Notification Styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+      }
+
+      .toast {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
         position: relative;
+        overflow: hidden;
       }
 
-      .heatmap-cell.focused {
-        outline: 2px solid var(--accent-color);
-        outline-offset: 1px;
-        z-index: 3;
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast.hide {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+
+      .toast-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .toast-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .toast-message {
+        color: var(--text-color);
+        opacity: 0.9;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        opacity: 0.7;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+
+      .toast-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent-color);
+        width: 100%;
+        transform: scaleX(1);
+        transform-origin: left;
+        transition: transform 5s linear;
+      }
+
+      .toast-progress.hide {
+        transform: scaleX(0);
+      }
+
+      /* Toast Types */
+      .toast.success {
+        border-left: 4px solid var(--success-color);
+      }
+
+      .toast.success .toast-icon {
+        color: var(--success-color);
+      }
+
+      .toast.error {
+        border-left: 4px solid var(--danger-color);
+      }
+
+      .toast.error .toast-icon {
+        color: var(--danger-color);
+      }
+
+      .toast.warning {
+        border-left: 4px solid var(--warning-color);
+      }
+
+      .toast.warning .toast-icon {
+        color: var(--warning-color);
+      }
+
+      .toast.info {
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .toast.info .toast-icon {
+        color: var(--accent-color);
+      }
+
+      /* Confirmation Dialog Styles */
+      .confirm-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .confirm-dialog.show {
+        display: flex;
+      }
+
+      .confirm-content {
+        background-color: var(--bg-color);
+        padding: 24px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+
+      .confirm-title {
+        font-size: 1.2rem;
+        color: var(--accent-color);
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .confirm-message {
+        color: var(--text-color);
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .confirm-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      .confirm-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+        min-width: 80px;
+      }
+
+      .confirm-btn.confirm {
+        background-color: var(--danger-color);
+        color: white;
+      }
+
+      .confirm-btn.confirm:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .confirm-btn.cancel {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      .confirm-btn.cancel:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        transform: translateY(-1px);
       }
 
       /* Enhanced sync status styles */
@@ -1862,6 +1278,7 @@
         white-space: nowrap;
         border: 0;
       }
+
       /* Forgot Password Styles */
       #resetCodeSection {
         transition: all 0.3s ease;
@@ -1886,269 +1303,629 @@
         font-size: 1.1rem;
         font-weight: bold;
       }
+
+      /* Enhanced modal transitions */
+      .confirm-dialog {
+        transition: opacity 0.3s ease;
+        opacity: 0;
+      }
+
+      .confirm-dialog.show {
+        opacity: 1;
+      }
+
+      .confirm-content {
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+
+      .confirm-dialog.show .confirm-content {
+        transform: scale(1);
+      }
+
+      /* Ensure link modal has proper transitions */
+      .modal {
+        transition: opacity 0.3s ease;
+        opacity: 0;
+      }
+
+      .modal[style*="display: flex"] {
+        opacity: 1;
+      }
+
+      .modal-content {
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+
+      .modal[style*="display: flex"] .modal-content {
+        transform: translateY(0);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .main-container {
+          flex-direction: column;
+        }
+        
+        .left-column,
+        .right-column {
+          flex: 1;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .main-container {
+          gap: 15px;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+
+        th,
+        td {
+          padding: 8px 10px;
+        }
+
+        .day-cell,
+        .status-cell {
+          width: auto;
+        }
+
+        header {
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        #syncStatus {
+          order: 3;
+          margin-left: 0;
+          margin-right: 0;
+          width: 100%;
+          justify-content: center;
+        }
+
+        .activity-tracker-container {
+          padding: 16px;
+        }
+
+        .activity-tracker-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .metrics-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+
+        .metric-card {
+          padding: 16px;
+        }
+
+        .metric-value {
+          font-size: 1.5rem;
+        }
+
+        .heatmap-container {
+          padding: 16px;
+        }
+
+        .heatmap-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .heatmap-grid {
+          grid-template-columns: repeat(26, 10px);
+          gap: 2px;
+        }
+
+        .heatmap-cell {
+          width: 10px;
+          height: 10px;
+        }
+
+        .months-row {
+          width: 30px;
+          padding-top: 20px;
+        }
+
+        .month-label {
+          font-size: 0.6rem;
+          height: 10px;
+        }
+
+        .daily-progress-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .daily-progress-header h2 {
+          font-size: 1.3rem;
+        }
+
+        .add-day-btn {
+          align-self: stretch;
+          text-align: center;
+        }
+
+        .auth-input-group {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .auth-input {
+          min-width: 100%;
+          margin-bottom: 8px;
+        }
+
+        .auth-btn {
+          flex: 1;
+          min-width: auto;
+        }
+
+        .user-info-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .user-info-content button {
+          align-self: stretch;
+        }
+
+        .modal-content {
+          width: 95%;
+          padding: 15px;
+        }
+
+        #syncStatus {
+          margin-left: 0;
+          margin-right: 0;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .metrics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .heatmap-grid {
+          grid-template-columns: repeat(13, 8px);
+          gap: 1px;
+        }
+
+        .heatmap-cell {
+          width: 8px;
+          height: 8px;
+        }
+
+        .months-row {
+          width: 25px;
+          padding-top: 16px;
+        }
+
+        .month-label {
+          font-size: 0.5rem;
+          height: 8px;
+        }
+
+        .daily-progress-header h2 {
+          font-size: 1.2rem;
+        }
+
+        .auth-section {
+          padding: 12px;
+        }
+
+        .auth-title {
+          font-size: 1rem;
+          margin-bottom: 12px;
+        }
+
+        .auth-input-group {
+          gap: 8px;
+        }
+
+        .auth-input {
+          padding: 6px 8px;
+          font-size: 0.9rem;
+        }
+
+        .auth-btn {
+          padding: 6px 12px;
+          font-size: 0.9rem;
+        }
+
+        .confirm-buttons {
+          flex-direction: column;
+        }
+
+        .confirm-btn {
+          min-width: auto;
+          width: 100%;
+        }
+
+        .personal-info-input-group {
+          flex-direction: column;
+        }
+
+        .personal-info-link-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .personal-info-remove-btn {
+          align-self: flex-end;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .daily-progress-header {
+          gap: 8px;
+        }
+
+        .daily-progress-header h2 {
+          font-size: 1.1rem;
+        }
+
+        .add-day-btn {
+          padding: 6px 12px;
+          font-size: 0.9rem;
+        }
+
+        .auth-section {
+          padding: 10px;
+        }
+      }
+
+      /* Focus styles for accessibility */
+      .heatmap-cell:focus {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 1px;
+        z-index: 3;
+      }
+
+      /* Keyboard navigation support */
+      .heatmap-grid {
+        position: relative;
+      }
+
+      .heatmap-cell.focused {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 1px;
+        z-index: 3;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <header>
-        <h1>FocusFlow</h1>
-        <div id="syncStatus">
-          <div class="sync-dot synced"></div>
-          <span>Synced</span>
-        </div>
-        <div>
-          <button class="sync-button" id="syncButton">🔄 Sync Now</button>
-          <button class="theme-toggle" id="themeToggle">
-            Switch to Light Theme
-          </button>
-        </div>
-      </header>
-      <!-- Toast Notification Container -->
-      <div class="toast-container" id="toastContainer"></div>
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Left Column (70%) -->
+      <div class="left-column">
+        <div class="container">
+          <header>
+            <h1>FocusFlow</h1>
+            <div id="syncStatus">
+              <div class="sync-dot synced"></div>
+              <span>Synced</span>
+            </div>
+            <div>
+              <button class="sync-button" id="syncButton">🔄 Sync Now</button>
+              <button class="theme-toggle" id="themeToggle">
+                Switch to Light Theme
+              </button>
+            </div>
+          </header>
 
-      <!-- Confirmation Dialog -->
-      <div class="confirm-dialog" id="confirmDialog">
-        <div class="confirm-content">
-          <div class="confirm-title" id="confirmTitle">Confirm Action</div>
-          <div class="confirm-message" id="confirmMessage">
-            Are you sure you want to proceed?
-          </div>
-          <div class="confirm-buttons">
-            <button class="confirm-btn cancel" id="confirmCancel">
-              Cancel
-            </button>
-            <button class="confirm-btn confirm" id="confirmOk">OK</button>
-          </div>
-        </div>
-      </div>
-      <!-- Replace the existing activity-tracker-container with this updated version -->
-      <div class="activity-tracker-container">
-        <div class="activity-tracker-header">
-          <h2>Progress Analytics</h2>
-          <span class="activity-tracker-subtitle"
-            >Starting from 25-09-2025 (Day 1)</span
-          >
-        </div>
+          <!-- Toast Notification Container -->
+          <div class="toast-container" id="toastContainer"></div>
 
-        <!-- Analytics Dashboard -->
-        <div class="analytics-dashboard">
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <div class="metric-value" id="currentStreak">0</div>
-              <div class="metric-label">Current Streak 🔥</div>
-              <div class="metric-subtitle">days in a row</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value" id="totalSolved">0</div>
-              <div class="metric-label">Total Solved</div>
-              <div class="metric-subtitle">problems</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value" id="averageDaily">0.0</div>
-              <div class="metric-label">Daily Average</div>
-              <div class="metric-subtitle">problems/day</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value" id="maxStreak">0</div>
-              <div class="metric-label">Max Streak</div>
-              <div class="metric-subtitle">best record</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- GitHub-style Heatmap -->
-        <div class="heatmap-container">
-          <div class="heatmap-header">
-            <h3>Consistency Map 📌</h3>
-            <div class="heatmap-legend">
-              <span>Less</span>
-              <div class="legend-colors">
-                <div class="legend-color level-0"></div>
-                <div class="legend-color level-1"></div>
-                <div class="legend-color level-2"></div>
-                <div class="legend-color level-3"></div>
-                <div class="legend-color level-4"></div>
+          <!-- Confirmation Dialog -->
+          <div class="confirm-dialog" id="confirmDialog">
+            <div class="confirm-content">
+              <div class="confirm-title" id="confirmTitle">Confirm Action</div>
+              <div class="confirm-message" id="confirmMessage">
+                Are you sure you want to proceed?
               </div>
-              <span>More</span>
+              <div class="confirm-buttons">
+                <button class="confirm-btn cancel" id="confirmCancel">
+                  Cancel
+                </button>
+                <button class="confirm-btn confirm" id="confirmOk">OK</button>
+              </div>
             </div>
           </div>
 
-          <div class="heatmap-content">
-            <div class="months-row">
-              <!-- Month labels will be generated by JavaScript -->
-            </div>
-            <div class="heatmap-grid" id="heatmapGrid">
-              <!-- Heatmap cells will be generated by JavaScript -->
-            </div>
+          <!-- Daily Questions Table -->
+          <table>
+            <thead>
+              <tr>
+                <th class="day-cell">Day</th>
+                <th class="questions-cell">Questions</th>
+                <th class="status-cell">Status</th>
+                <th class="tags-cell">Tags</th>
+                <th class="links-cell">Important Links</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Rows will be generated by JavaScript -->
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Your progress is automatically saved. Keep coding! 🚀</p>
+            <p>
+              If you find this helpful, please give a ⭐ on
+              <a
+                href="https://github.com/anupam6335/Daily-Tracker"
+                target="_blank"
+                rel="noopener noreferrer"
+                >GitHub</a
+              >!
+            </p>
           </div>
         </div>
       </div>
-      <!-- Add this right after the <header> section -->
-      <div class="daily-progress-container">
-        <div class="daily-progress-header">
-          <h2>Daily Progress</h2>
-          <button id="addDayBtn" class="add-day-btn">+ Add New Day</button>
-        </div>
 
-        <div id="authSection" class="auth-section" style="display: none">
-          <div id="loginForm" class="auth-form">
-            <h3 class="auth-title">Please log in to access this page</h3>
-            <div class="auth-input-group">
-              <input
-                type="text"
-                id="usernameInput"
-                placeholder="Username"
-                class="auth-input"
-              />
-              <input
-                type="password"
-                id="passwordInput"
-                placeholder="Password"
-                class="auth-input"
-              />
-              <button id="loginBtn" class="auth-btn primary">Login</button>
-              <button id="showRegisterBtn" class="auth-btn secondary">
-                Register
-              </button>
-            </div>
-
-            <div style="margin-top: 10px; text-align: center">
-              <button
-                id="showForgotPasswordBtn"
-                class="auth-btn"
-                style="
-                  background: none;
-                  border: none;
-                  color: var(--link-color);
-                  text-decoration: underline;
-                  cursor: pointer;
-                  font-size: 0.9rem;
-                "
-              >
-                Forgot username/password?
-              </button>
-            </div>
+      <!-- Right Column (30%) -->
+      <div class="right-column">
+        <!-- Daily Progress -->
+        <div class="daily-progress-container">
+          <div class="daily-progress-header">
+            <h2>Daily Progress</h2>
+            <button id="addDayBtn" class="add-day-btn">+ Add New Day</button>
           </div>
 
-          <div id="registerForm" class="auth-form" style="display: none">
-            <h3 class="auth-title">Create Account</h3>
-            <div class="auth-input-group">
-              <input
-                type="text"
-                id="regUsernameInput"
-                placeholder="Username"
-                class="auth-input"
-              />
-              <input
-                type="password"
-                id="regPasswordInput"
-                placeholder="Password"
-                class="auth-input"
-              />
-              <input
-                type="password"
-                id="regConfirmPasswordInput"
-                placeholder="Confirm Password"
-                class="auth-input"
-              />
-              <button id="registerBtn" class="auth-btn primary">
-                Register
-              </button>
-              <button id="showLoginBtn" class="auth-btn secondary">
-                Back to Login
-              </button>
-            </div>
-          </div>
-
-          <!-- Forgot Password Form -->
-          <div id="forgotPasswordForm" class="auth-form" style="display: none">
-            <h3 class="auth-title">Reset Password</h3>
-            <div class="auth-input-group">
-              <input
-                type="text"
-                id="forgotUsernameInput"
-                placeholder="Enter your username"
-                class="auth-input"
-              />
-              <button id="sendResetCodeBtn" class="auth-btn primary">
-                Send Reset Code
-              </button>
-              <button id="showLoginFromForgotBtn" class="auth-btn secondary">
-                Back to Login
-              </button>
-            </div>
-
-            <!-- Reset Code Section (initially hidden) -->
-            <div
-              id="resetCodeSection"
-              style="
-                display: none;
-                margin-top: 15px;
-                padding-top: 15px;
-                border-top: 1px solid var(--border-color);
-              "
-            >
+          <div id="authSection" class="auth-section" style="display: none">
+            <div id="loginForm" class="auth-form">
+              <h3 class="auth-title">Please log in to access this page</h3>
               <div class="auth-input-group">
                 <input
                   type="text"
-                  id="resetCodeInput"
-                  placeholder="Enter reset code"
+                  id="usernameInput"
+                  placeholder="Username"
                   class="auth-input"
                 />
                 <input
                   type="password"
-                  id="newPasswordInput"
-                  placeholder="New password"
+                  id="passwordInput"
+                  placeholder="Password"
                   class="auth-input"
                 />
-                <input
-                  type="password"
-                  id="confirmNewPasswordInput"
-                  placeholder="Confirm new password"
-                  class="auth-input"
-                />
-                <button id="resetPasswordBtn" class="auth-btn primary">
-                  Reset Password
+                <button id="loginBtn" class="auth-btn primary">Login</button>
+                <button id="showRegisterBtn" class="auth-btn secondary">
+                  Register
                 </button>
+              </div>
+
+              <div style="margin-top: 10px; text-align: center">
+                <button
+                  id="showForgotPasswordBtn"
+                  class="auth-btn"
+                  style="
+                    background: none;
+                    border: none;
+                    color: var(--link-color);
+                    text-decoration: underline;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                  "
+                >
+                  Forgot username/password?
+                </button>
+              </div>
+            </div>
+
+            <div id="registerForm" class="auth-form" style="display: none">
+              <h3 class="auth-title">Create Account</h3>
+              <div class="auth-input-group">
+                <input
+                  type="text"
+                  id="regUsernameInput"
+                  placeholder="Username"
+                  class="auth-input"
+                />
+                <input
+                  type="password"
+                  id="regPasswordInput"
+                  placeholder="Password"
+                  class="auth-input"
+                />
+                <input
+                  type="password"
+                  id="regConfirmPasswordInput"
+                  placeholder="Confirm Password"
+                  class="auth-input"
+                />
+                <button id="registerBtn" class="auth-btn primary">
+                  Register
+                </button>
+                <button id="showLoginBtn" class="auth-btn secondary">
+                  Back to Login
+                </button>
+              </div>
+            </div>
+
+            <!-- Forgot Password Form -->
+            <div id="forgotPasswordForm" class="auth-form" style="display: none">
+              <h3 class="auth-title">Reset Password</h3>
+              <div class="auth-input-group">
+                <input
+                  type="text"
+                  id="forgotUsernameInput"
+                  placeholder="Enter your username"
+                  class="auth-input"
+                />
+                <button id="sendResetCodeBtn" class="auth-btn primary">
+                  Send Reset Code
+                </button>
+                <button id="showLoginFromForgotBtn" class="auth-btn secondary">
+                  Back to Login
+                </button>
+              </div>
+
+              <!-- Reset Code Section (initially hidden) -->
+              <div
+                id="resetCodeSection"
+                style="
+                  display: none;
+                  margin-top: 15px;
+                  padding-top: 15px;
+                  border-top: 1px solid var(--border-color);
+                "
+              >
+                <div class="auth-input-group">
+                  <input
+                    type="text"
+                    id="resetCodeInput"
+                    placeholder="Enter reset code"
+                    class="auth-input"
+                  />
+                  <input
+                    type="password"
+                    id="newPasswordInput"
+                    placeholder="New password"
+                    class="auth-input"
+                  />
+                  <input
+                    type="password"
+                    id="confirmNewPasswordInput"
+                    placeholder="Confirm new password"
+                    class="auth-input"
+                  />
+                  <button id="resetPasswordBtn" class="auth-btn primary">
+                    Reset Password
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="userInfo" class="user-info" style="display: none">
+              <div class="user-info-content">
+                <span>Logged in as: <strong id="currentUsername"></strong></span>
+                <button id="logoutBtn" class="auth-btn secondary">Logout</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consistency Map -->
+        <div class="activity-tracker-container">
+          <div class="activity-tracker-header">
+            <h2>Progress Analytics</h2>
+            <span class="activity-tracker-subtitle"
+              >Starting from 25-09-2025 (Day 1)</span
+            >
+          </div>
+
+          <!-- Analytics Dashboard -->
+          <div class="analytics-dashboard">
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-value" id="currentStreak">0</div>
+                <div class="metric-label">Current Streak</div>
+                <div class="metric-subtitle">days in a row</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="totalSolved">0</div>
+                <div class="metric-label">Total Solved</div>
+                <div class="metric-subtitle">problems</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="averageDaily">0.0</div>
+                <div class="metric-label">Daily Average</div>
+                <div class="metric-subtitle">problems/day</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="maxStreak">0</div>
+                <div class="metric-label">Max Streak  🔥</div>
+                <div class="metric-subtitle">best record</div>
               </div>
             </div>
           </div>
 
-          <div id="userInfo" class="user-info" style="display: none">
-            <div class="user-info-content">
-              <span>Logged in as: <strong id="currentUsername"></strong></span>
-              <button id="logoutBtn" class="auth-btn secondary">Logout</button>
+          <!-- GitHub-style Heatmap -->
+          <div class="heatmap-container">
+            <div class="heatmap-header">
+              <h3>Consistency Map 📌</h3>
+              <div class="heatmap-legend">
+                <span>Less</span>
+                <div class="legend-colors">
+                  <div class="legend-color level-0"></div>
+                  <div class="legend-color level-1"></div>
+                  <div class="legend-color level-2"></div>
+                  <div class="legend-color level-3"></div>
+                  <div class="legend-color level-4"></div>
+                </div>
+                <span>More</span>
+              </div>
+            </div>
+
+            <div class="heatmap-content">
+              <div class="months-row">
+                <!-- Month labels will be generated by JavaScript -->
+              </div>
+              <div class="heatmap-grid" id="heatmapGrid">
+                <!-- Heatmap cells will be generated by JavaScript -->
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th class="day-cell">Day</th>
-            <th class="questions-cell">Questions</th>
-            <th class="status-cell">Status</th>
-            <th class="tags-cell">Tags</th>
-            <th class="links-cell">Important Links</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- Rows will be generated by JavaScript -->
-        </tbody>
-      </table>
-
-      <div class="footer">
-        <p>Your progress is automatically saved. Keep coding! 🚀</p>
-        <p>
-          If you find this helpful, please give a ⭐ on
-          <a
-            href="https://github.com/anupam6335/Daily-Tracker"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub</a
-          >!
-        </p>
+        <!-- User Details -->
+        <div class="personal-info-container">
+          <div class="personal-info-header">
+            <div class="personal-info-title">Quick Links</div>
+            <button class="personal-info-toggle" title="Toggle visibility">
+              −
+            </button>
+          </div>
+          <div class="personal-info-content">
+            <div class="personal-info-input-group">
+              <input
+                type="text"
+                class="personal-info-input"
+                placeholder="Enter link URL"
+                id="personalInfoInput"
+              />
+              <button class="personal-info-add-btn" id="personalInfoAddBtn">
+                Add
+              </button>
+            </div>
+            <div class="personal-info-links" id="personalInfoLinks">
+              <div class="personal-info-empty">
+                No links added yet. Add your frequently visited links above.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2184,7 +1961,7 @@
       </div>
     </div>
 
-    <script>
+     <script>
       // Initialize app data
       let appData = [];
       const TOTAL_DAYS = 1;
