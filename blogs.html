@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blogs - FocusFlow</title>
+    <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
+    <style>
+      /* Reuse existing theme variables */
+      :root {
+        --bg-color: #0d1117;
+        --text-color: #c9d1d9;
+        --accent-color: #58a6ff;
+        --border-color: #30363d;
+        --table-header-bg: #161b22;
+        --row-alt-bg: #161b22;
+        --tag-bg: #58a6ff;
+        --success-color: #3fb950;
+        --warning-color: #d29922;
+        --danger-color: #231312;
+        --link-color: #58a6ff;
+      }
+
+      .light-theme {
+        --bg-color: #ffffff;
+        --text-color: #24292f;
+        --accent-color: #0969da;
+        --border-color: #d0d7de;
+        --table-header-bg: #f6f8fa;
+        --row-alt-bg: #f6f8fa;
+        --tag-bg: #0969da;
+        --success-color: #1a7f37;
+        --warning-color: #9a6700;
+        --danger-color: #cf222e;
+        --link-color: #0969da;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      h1 {
+        font-size: 2rem;
+        color: var(--accent-color);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .nav-link {
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+      }
+
+      .nav-link:hover {
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .nav-link.active {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .blog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .create-blog-btn {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+      }
+
+      .create-blog-btn:hover {
+        opacity: 0.9;
+      }
+
+      /* Tabs Styling */
+      .tabs-container {
+        margin-bottom: 30px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.2s;
+        font-weight: 500;
+        position: relative;
+      }
+
+      .tab:hover {
+        background: rgba(88, 166, 255, 0.1);
+      }
+
+      .tab.active {
+        color: var(--accent-color);
+        background: rgba(88, 166, 255, 0.1);
+      }
+
+      .tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent-color);
+      }
+
+      .tab-badge {
+        background: var(--accent-color);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-left: 8px;
+      }
+
+      .blogs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .blog-card {
+        background: var(--table-header-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .blog-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .blog-card h3 {
+        color: var(--accent-color);
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+
+      .blog-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        opacity: 0.7;
+      }
+
+      .blog-content-preview {
+        margin-bottom: 15px;
+        line-height: 1.5;
+        max-height: 4.5em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+      }
+
+      .blog-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+
+      .blog-tag {
+        background: var(--tag-bg);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+      }
+
+      .blog-visibility {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        background: var(--border-color);
+      }
+
+      .blog-likes {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+      }
+
+      .like-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 5px;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .like-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .like-btn.liked {
+        color: #ff6b6b;
+      }
+
+      .like-btn:not(.liked) {
+        color: var(--text-color);
+        opacity: 0.7;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        opacity: 0.7;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+      }
+
+      .pagination-btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-color);
+        color: var(--text-color);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .pagination-btn:hover:not(:disabled) {
+        background: var(--table-header-bg);
+      }
+
+      .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        display: flex;
+        align-items: center;
+        margin: 0 10px;
+      }
+
+      /* Toast Notification Styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+      }
+
+      .toast {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast.hide {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+
+      .toast-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .toast-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .toast-message {
+        color: var(--text-color);
+        opacity: 0.9;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        opacity: 0.7;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+
+      .toast-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent-color);
+        width: 100%;
+        transform: scaleX(1);
+        transform-origin: left;
+        transition: transform 5s linear;
+      }
+
+      .toast-progress.hide {
+        transform: scaleX(0);
+      }
+
+      /* Toast Types */
+      .toast.success {
+        border-left: 4px solid var(--success-color);
+      }
+
+      .toast.success .toast-icon {
+        color: var(--success-color);
+      }
+
+      .toast.error {
+        border-left: 4px solid var(--danger-color);
+      }
+
+      .toast.error .toast-icon {
+        color: var(--danger-color);
+      }
+
+      .toast.warning {
+        border-left: 4px solid var(--warning-color);
+      }
+
+      .toast.warning .toast-icon {
+        color: var(--warning-color);
+      }
+
+      .toast.info {
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .toast.info .toast-icon {
+        color: var(--accent-color);
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: var(--bg-color);
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        border: 1px solid var(--border-color);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-title {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: 10px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .form-textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: monospace;
+      }
+
+      .form-input:focus,
+      .form-textarea:focus {
+        outline: 1px solid var(--accent-color);
+      }
+
+      .form-checkbox {
+        margin-right: 10px;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .markdown-help {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 5px;
+      }
+
+      .auth-required {
+        text-align: center;
+        padding: 40px;
+        opacity: 0.7;
+      }
+
+      .login-btn {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 15px;
+      }
+
+      @media (max-width: 768px) {
+        .blogs-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .blog-header {
+          flex-direction: column;
+          gap: 15px;
+          align-items: flex-start;
+        }
+
+        .modal-content {
+          padding: 20px;
+        }
+
+        .tabs {
+          flex-wrap: wrap;
+        }
+
+        .tab {
+          flex: 1;
+          min-width: 120px;
+          text-align: center;
+        }
+      }
+
+      /* Toast Notification Styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+      }
+
+      .toast {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast.hide {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+
+      .toast-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .toast-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .toast-message {
+        color: var(--text-color);
+        opacity: 0.9;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        opacity: 0.7;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+
+      .toast-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent-color);
+        width: 100%;
+        transform: scaleX(1);
+        transform-origin: left;
+        transition: transform 5s linear;
+      }
+
+      .toast-progress.hide {
+        transform: scaleX(0);
+      }
+
+      /* Toast Types */
+      .toast.success {
+        border-left: 4px solid var(--success-color);
+      }
+
+      .toast.success .toast-icon {
+        color: var(--success-color);
+      }
+
+      .toast.error {
+        border-left: 4px solid var(--danger-color);
+      }
+
+      .toast.error .toast-icon {
+        color: var(--danger-color);
+      }
+
+      .toast.warning {
+        border-left: 4px solid var(--warning-color);
+      }
+
+      .toast.warning .toast-icon {
+        color: var(--warning-color);
+      }
+
+      .toast.info {
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .toast.info .toast-icon {
+        color: var(--accent-color);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>FocusFlow Blogs</h1>
+        <div class="nav-links">
+          <a href="https://daily-tracker-upst.onrender.com/" class="nav-link"
+            >← Back to Tracker</a
+          >
+          <a href="https://daily-tracker-upst.onrender.com/blogs" class="nav-link active"
+            >Blogs</a
+          >
+        </div>
+      </header>
+
+      <div id="authSection" style="display: none">
+        <div class="auth-required">
+          <h3>Please log in to access blogs</h3>
+          <p>You need to be logged in to read and create blogs.</p>
+          <button
+            class="login-btn"
+            onclick="window.location.href='https://daily-tracker-upst.onrender.com/'"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+
+      <div id="blogsContent" style="display: none">
+        <div class="blog-header">
+          <h2>Community Blogs</h2>
+          <button class="create-blog-btn" onclick="openCreateModal()">
+            + Create Blog
+          </button>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('all')" id="tab-all">
+              All Blogs
+              <span class="tab-badge" id="all-blogs-count">0</span>
+            </button>
+            <button
+              class="tab"
+              onclick="switchTab('my-blogs')"
+              id="tab-my-blogs"
+            >
+              My Blogs
+              <span class="tab-badge" id="my-blogs-count">0</span>
+            </button>
+            <button class="tab" onclick="switchTab('popular')" id="tab-popular">
+              Popular
+              <span class="tab-badge" id="popular-blogs-count">0</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="blogsContainer">
+          <div class="blogs-grid" id="blogsGrid">
+            <!-- Blogs will be loaded here -->
+          </div>
+        </div>
+
+        <div class="pagination" id="pagination">
+          <!-- Pagination will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Create/Edit Blog Modal -->
+      <div class="modal" id="blogModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Create New Blog</h3>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+          </div>
+          <form id="blogForm">
+            <div class="form-group">
+              <label class="form-label" for="blogTitle">Title</label>
+              <input type="text" id="blogTitle" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blogContent"
+                >Content (Markdown supported)</label
+              >
+              <textarea
+                id="blogContent"
+                class="form-textarea"
+                required
+              ></textarea>
+              <div class="markdown-help">
+                Supports Markdown: **bold**, *italic*, `code`, # headers, -
+                lists
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blogTags"
+                >Tags (comma separated)</label
+              >
+              <input
+                type="text"
+                id="blogTags"
+                class="form-input"
+                placeholder="coding, algorithms, tips"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="blogIsPublic"
+                  class="form-checkbox"
+                  checked
+                />
+                Make this blog public
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal()"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" id="modalSubmit">
+                Create Blog
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+      let currentPage = 1;
+      let totalPages = 1;
+      let editingBlog = null;
+      let currentTab = "all"; // 'all', 'my-blogs', 'popular'
+      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+      const BASE_URL = "https://daily-tracker-upst.onrender.com";
+
+      // Toast Notification System
+      class ToastManager {
+        constructor() {
+          this.container = document.getElementById("toastContainer");
+          if (!this.container) {
+            this.container = document.createElement("div");
+            this.container.className = "toast-container";
+            this.container.id = "toastContainer";
+            this.container.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    max-width: 400px;
+                `;
+            document.body.appendChild(this.container);
+          }
+          this.toastId = 0;
+        }
+
+        showToast(message, type = "info", title = "", duration = 5000) {
+          const toastId = this.toastId++;
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+          toast.id = `toast-${toastId}`;
+
+          const icon = this.getIcon(type);
+          const progressBar =
+            duration > 0 ? '<div class="toast-progress"></div>' : "";
+
+          toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ""}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
+                ${progressBar}
+            `;
+
+          this.container.appendChild(toast);
+
+          // Animate in
+          setTimeout(() => toast.classList.add("show"), 10);
+
+          // Auto-hide if duration is set
+          if (duration > 0) {
+            const progress = toast.querySelector(".toast-progress");
+            if (progress) {
+              setTimeout(() => progress.classList.add("hide"), 10);
+            }
+            setTimeout(() => this.hideToast(toastId), duration);
+          }
+
+          return toastId;
+        }
+
+        hideToast(toastId) {
+          const toast = document.getElementById(`toast-${toastId}`);
+          if (toast) {
+            toast.classList.remove("show");
+            toast.classList.add("hide");
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 300);
+          }
+        }
+
+        getIcon(type) {
+          const icons = {
+            success: "✓",
+            error: "⚠",
+            warning: "⚠",
+            info: "ℹ",
+          };
+          return icons[type] || icons.info;
+        }
+
+        // Convenience methods
+        success(message, title = "Success", duration = 5000) {
+          return this.showToast(message, "success", title, duration);
+        }
+
+        error(message, title = "Error", duration = 7000) {
+          return this.showToast(message, "error", title, duration);
+        }
+
+        warning(message, title = "Warning", duration = 6000) {
+          return this.showToast(message, "warning", title, duration);
+        }
+
+        info(message, title = "Info", duration = 4000) {
+          return this.showToast(message, "info", title, duration);
+        }
+      }
+
+      // Initialize toast manager
+      const toastManager = new ToastManager();
+
+      // Check authentication and load blogs
+      async function initBlogs() {
+        const token = localStorage.getItem("authToken");
+        const userId = localStorage.getItem("userId");
+
+        if (!token || !userId) {
+          document.getElementById("authSection").style.display = "block";
+          return;
+        }
+
+        document.getElementById("blogsContent").style.display = "block";
+        await loadBlogs();
+        await updateTabCounts();
+      }
+
+      // Switch between tabs
+      function switchTab(tabName) {
+        currentTab = tabName;
+        currentPage = 1;
+
+        // Update active tab UI
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        document.getElementById(`tab-${tabName}`).classList.add("active");
+
+        // Load appropriate blogs
+        loadBlogs();
+      }
+
+      // Load blogs based on current tab
+     // Load blogs based on current tab - UPDATED to fix popular tab
+async function loadBlogs(page = 1) {
+  try {
+    const token = localStorage.getItem("authToken");
+    let url = "";
+
+    // Determine which API endpoint to call based on current tab
+    switch (currentTab) {
+      case "all":
+        url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
+        break;
+      case "my-blogs":
+        url = `${API_BASE_URL}/blogs/my?page=${page}&limit=9`;
+        break;
+      case "popular":
+        url = `${API_BASE_URL}/blogs/popular?limit=9`;
+        break;
+      default:
+        url = `${API_BASE_URL}/blogs?page=${page}&limit=9`;
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      // Handle 404 for popular route specifically
+      if (response.status === 404 && currentTab === 'popular') {
+        throw new Error("Popular blogs endpoint not found. Please check server configuration.");
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      displayBlogs(result.blogs);
+
+      // Setup pagination only for tabs that support it
+      if (currentTab !== "popular") {
+        setupPagination(
+          result.currentPage,
+          result.totalPages,
+          result.total
+        );
+      } else {
+        document.getElementById("pagination").innerHTML = "";
+      }
+    } else {
+      toastManager.error(
+        result.error || "Failed to load blogs",
+        "Blog Error"
+      );
+    }
+  } catch (error) {
+    console.error("Error loading blogs:", error);
+    
+    // More specific error message for popular tab
+    if (currentTab === 'popular') {
+      toastManager.error(
+        "Failed to load popular blogs. The feature might be temporarily unavailable.",
+        "Popular Blogs Error"
+      );
+    } else {
+      toastManager.error(
+        "Failed to load blogs. Please try again.",
+        "Network Error"
+      );
+    }
+  }
+}
+     // Update tab counts - FIXED for popular tab
+async function updateTabCounts() {
+  try {
+    const token = localStorage.getItem("authToken");
+
+    // Get counts for all tabs
+    const [allBlogsRes, myBlogsRes, popularBlogsRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/blogs/all?limit=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`${API_BASE_URL}/blogs/my?limit=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`${API_BASE_URL}/blogs/popular?limit=100`, { // Increased limit to get accurate count
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ]);
+
+    const [allBlogs, myBlogs, popularBlogs] = await Promise.all([
+      allBlogsRes.ok ? allBlogsRes.json() : { success: false },
+      myBlogsRes.ok ? myBlogsRes.json() : { success: false },
+      popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
+    ]);
+
+    // Update badge counts with fallbacks
+    if (allBlogs.success) {
+      document.getElementById("all-blogs-count").textContent =
+        allBlogs.total || 0;
+    } else {
+      document.getElementById("all-blogs-count").textContent = "0";
+    }
+    
+    if (myBlogs.success) {
+      document.getElementById("my-blogs-count").textContent =
+        myBlogs.total || 0;
+    } else {
+      document.getElementById("my-blogs-count").textContent = "0";
+    }
+    
+    if (popularBlogs.success) {
+      document.getElementById("popular-blogs-count").textContent =
+        popularBlogs.blogs?.length || 0;
+    } else {
+      document.getElementById("popular-blogs-count").textContent = "0";
+    }
+  } catch (error) {
+    console.error("Error updating tab counts:", error);
+    // Set fallback values
+    document.getElementById("all-blogs-count").textContent = "0";
+    document.getElementById("my-blogs-count").textContent = "0";
+    document.getElementById("popular-blogs-count").textContent = "0";
+  }
+}
+      // Display blogs in grid
+      function displayBlogs(blogs) {
+        const blogsGrid = document.getElementById("blogsGrid");
+        const currentUser = localStorage.getItem("userId");
+
+        if (blogs.length === 0) {
+          let emptyMessage = "";
+          switch (currentTab) {
+            case "all":
+              emptyMessage = "No public blogs available yet.";
+              break;
+            case "my-blogs":
+              emptyMessage = "You haven't created any blogs yet.";
+              break;
+            case "popular":
+              emptyMessage = "No popular blogs yet.";
+              break;
+            default:
+              emptyMessage = "No blogs available.";
+          }
+
+          blogsGrid.innerHTML = `
+                <div class="empty-state">
+                    <h3>No blogs found</h3>
+                    <p>${emptyMessage}</p>
+                    ${
+                      currentTab === "my-blogs"
+                        ? '<button class="create-blog-btn" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
+                        : ""
+                    }
+                </div>
+            `;
+          return;
+        }
+
+        blogsGrid.innerHTML = blogs
+          .map(
+            (blog) => `
+        <div class="blog-card" onclick="viewBlog('${blog.slug}')">
+          <h3>${escapeHtml(blog.title)}</h3>
+          <div class="blog-meta">
+            <span>By ${escapeHtml(blog.author)}</span>
+            <span class="blog-visibility">
+              ${blog.isPublic ? "🌍 Public" : "🔒 Private"}
+            </span>
+          </div>
+          ${
+            blog.tags && blog.tags.length > 0
+              ? `
+              <div class="blog-tags">
+                ${blog.tags
+                  .map(
+                    (tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`
+                  )
+                  .join("")}
+              </div>
+            `
+              : ""
+          }
+          <div class="blog-content-preview">
+            ${escapeHtml(
+              blog.content ? blog.content.substring(0, 150) : "No content"
+            )}...
+          </div>
+          <div class="blog-meta">
+            <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
+            <div style="display: flex; gap: 15px; align-items: center;">
+              <div class="blog-likes">
+                <button class="like-btn ${
+                  blog.likedBy &&
+                  blog.likedBy.includes(currentUser) &&
+                  blog.author !== currentUser
+                    ? "liked"
+                    : blog.author === currentUser
+                    ? "disabled"
+                    : ""
+                }" 
+                        onclick="event.stopPropagation(); ${
+                          blog.author !== currentUser
+                            ? `toggleLike('${blog.slug}')`
+                            : ""
+                        }"
+                        ${
+                          blog.author === currentUser
+                            ? 'disabled style="opacity: 0.5; cursor: not-allowed;"'
+                            : ""
+                        }>
+                  ${
+                    blog.likedBy && blog.likedBy.includes(currentUser)
+                      ? "❤️"
+                      : "🤍"
+                  }
+                </button>
+                <span>${blog.likes || 0}</span>
+              </div>
+              <div style="font-size: 0.9rem; opacity: 0.7;">
+                👁️ ${blog.views || 0} views
+              </div>
+              ${
+                blog.author === currentUser
+                  ? `
+                  <button class="btn btn-secondary" onclick="event.stopPropagation(); editBlog('${blog.slug}')">
+                    Edit
+                  </button>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+          ${
+            blog.popularityScore !== undefined
+              ? `
+            <div style="margin-top: 8px; font-size: 0.8rem; opacity: 0.7;">
+              Popularity Score: ${blog.popularityScore}
+            </div>
+          `
+              : ""
+          }
+        </div>
+    `
+          )
+          .join("");
+      }
+
+      // Setup pagination
+      function setupPagination(currentPage, totalPages, total) {
+        const pagination = document.getElementById("pagination");
+
+        if (totalPages <= 1) {
+          pagination.innerHTML = "";
+          return;
+        }
+
+        pagination.innerHTML = `
+            <button class="pagination-btn" ${
+              currentPage === 1 ? "disabled" : ""
+            } 
+                onclick="loadBlogs(${currentPage - 1})">Previous</button>
+            
+            <div class="pagination-info">
+                Page ${currentPage} of ${totalPages}
+            </div>
+            
+            <button class="pagination-btn" ${
+              currentPage === totalPages ? "disabled" : ""
+            } 
+                onclick="loadBlogs(${currentPage + 1})">Next</button>
+        `;
+      }
+
+      // Toggle like on a blog
+      async function toggleLike(slug) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const currentUser = localStorage.getItem("userId");
+          const blogCard = event.target.closest(".blog-card");
+          const blogAuthor = blogCard
+            .querySelector(".blog-meta span")
+            .textContent.replace("By ", "");
+
+          // Prevent self-like on frontend
+          if (blogAuthor === currentUser) {
+            toastManager.warning(
+              "You cannot like your own blog",
+              "Self-like Restricted"
+            );
+            return;
+          }
+
+          const response = await fetch(`${API_BASE_URL}/blogs/${slug}/like`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error || `HTTP error! status: ${response.status}`
+            );
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Update the UI immediately for better UX
+            const likeBtn = event.target.closest(".like-btn");
+            const likesCount = likeBtn.nextElementSibling;
+
+            if (likeBtn.classList.contains("liked")) {
+              likeBtn.classList.remove("liked");
+              likeBtn.innerHTML = "🤍";
+              likesCount.textContent = parseInt(likesCount.textContent) - 1;
+            } else {
+              likeBtn.classList.add("liked");
+              likeBtn.innerHTML = "❤️";
+              likesCount.textContent = parseInt(likesCount.textContent) + 1;
+            }
+
+            // Reload the current tab to reflect the like change in popularity
+            await loadBlogs(currentPage);
+            await updateTabCounts();
+          } else {
+            toastManager.error(result.error, "Like Failed");
+          }
+        } catch (error) {
+          console.error("Error toggling like:", error);
+          if (error.message.includes("Cannot like your own blog")) {
+            toastManager.warning(
+              "You cannot like your own blog",
+              "Self-like Restricted"
+            );
+          } else {
+            toastManager.error(
+              "Failed to like blog. Please try again.",
+              "Network Error"
+            );
+          }
+        }
+      }
+      // Open create blog modal
+      function openCreateModal() {
+        editingBlog = null;
+        document.getElementById("modalTitle").textContent = "Create New Blog";
+        document.getElementById("modalSubmit").textContent = "Create Blog";
+        document.getElementById("blogForm").reset();
+        document.getElementById("blogModal").style.display = "flex";
+      }
+
+      // Open edit blog modal
+      async function editBlog(slug) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(`${API_BASE_URL}/blogs/${slug}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            editingBlog = result.blog;
+            document.getElementById("modalTitle").textContent = "Edit Blog";
+            document.getElementById("modalSubmit").textContent = "Update Blog";
+            document.getElementById("blogTitle").value = editingBlog.title;
+            document.getElementById("blogContent").value = editingBlog.content;
+            document.getElementById("blogTags").value = editingBlog.tags
+              ? editingBlog.tags.join(", ")
+              : "";
+            document.getElementById("blogIsPublic").checked =
+              editingBlog.isPublic;
+            document.getElementById("blogModal").style.display = "flex";
+          } else {
+            toastManager.error(result.error, "Error Loading Blog");
+          }
+        } catch (error) {
+          console.error("Error loading blog for edit:", error);
+          toastManager.error(
+            "Failed to load blog for editing",
+            "Network Error"
+          );
+        }
+      }
+
+      // Close modal
+      function closeModal() {
+        document.getElementById("blogModal").style.display = "none";
+        editingBlog = null;
+      }
+
+      // Handle form submission
+      document
+        .getElementById("blogForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const title = document.getElementById("blogTitle").value;
+          const content = document.getElementById("blogContent").value;
+          const tags = document
+            .getElementById("blogTags")
+            .value.split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag);
+          const isPublic = document.getElementById("blogIsPublic").checked;
+
+          if (!title.trim() || !content.trim()) {
+            toastManager.warning(
+              "Title and content are required",
+              "Validation Error"
+            );
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("authToken");
+            const url = editingBlog
+              ? `${API_BASE_URL}/blogs/${editingBlog.slug}`
+              : `${API_BASE_URL}/blogs`;
+            const method = editingBlog ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+              method,
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ title, content, tags, isPublic }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(
+                `HTTP error! status: ${response.status}, response: ${errorText}`
+              );
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+              closeModal();
+              await loadBlogs();
+              await updateTabCounts();
+              toastManager.success(
+                editingBlog
+                  ? "Blog updated successfully!"
+                  : "Blog created successfully!",
+                editingBlog ? "Blog Updated" : "Blog Created"
+              );
+            } else {
+              toastManager.error(result.error, "Save Failed");
+            }
+          } catch (error) {
+            console.error("Error saving blog:", error);
+            toastManager.error(
+              "Failed to save blog. Please try again.",
+              "Network Error"
+            );
+          }
+        });
+
+      // Add this function to track views when blog is opened
+      async function trackBlogView(slug) {
+        try {
+          await fetch(`${API_BASE_URL}/blogs/${slug}/view`, {
+            method: "POST",
+          });
+          // We don't need to handle the response, just fire and forget
+        } catch (error) {
+          console.error("Error tracking view:", error);
+          // Silent fail - don't disrupt user experience
+        }
+      }
+
+      // Update the viewBlog function to track views
+      function viewBlog(slug) {
+        trackBlogView(slug); // Track view before navigation
+        window.location.href = `${BASE_URL}/blogs/${slug}`;
+      }
+
+      // Utility function to escape HTML
+      function escapeHtml(unsafe) {
+        return unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Initialize blogs when page loads
+      document.addEventListener("DOMContentLoaded", initBlogs);
+    </script>
+  </body>
+</html>

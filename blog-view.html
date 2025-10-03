@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog - FocusFlow</title>
+    <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
+    <style>
+      /* Reuse existing theme variables */
+      :root {
+        --bg-color: #0d1117;
+        --text-color: #c9d1d9;
+        --accent-color: #58a6ff;
+        --border-color: #30363d;
+        --table-header-bg: #161b22;
+        --row-alt-bg: #161b22;
+        --tag-bg: #58a6ff;
+        --success-color: #3fb950;
+        --warning-color: #d29922;
+        --danger-color: #231312;
+        --link-color: #58a6ff;
+      }
+
+      .light-theme {
+        --bg-color: #ffffff;
+        --text-color: #24292f;
+        --accent-color: #0969da;
+        --border-color: #d0d7de;
+        --table-header-bg: #f6f8fa;
+        --row-alt-bg: #f6f8fa;
+        --tag-bg: #0969da;
+        --success-color: #1a7f37;
+        --warning-color: #9a6700;
+        --danger-color: #cf222e;
+        --link-color: #0969da;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      h1 {
+        font-size: 2rem;
+        color: var(--accent-color);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .nav-link {
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+      }
+
+      .nav-link:hover {
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .blog-article {
+        background: var(--table-header-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 30px;
+      }
+
+      .blog-header {
+        margin-bottom: 30px;
+      }
+
+      .blog-title {
+        font-size: 2.5rem;
+        color: var(--accent-color);
+        margin-bottom: 15px;
+        line-height: 1.2;
+      }
+
+      .blog-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      .blog-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .blog-tag {
+        background: var(--tag-bg);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+      }
+
+      .blog-visibility {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        background: var(--border-color);
+      }
+
+      .blog-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+      }
+
+      /* Enhanced Markdown Styling */
+      .blog-content h1,
+      .blog-content h2,
+      .blog-content h3,
+      .blog-content h4,
+      .blog-content h5,
+      .blog-content h6 {
+        color: var(--accent-color);
+        margin: 1.5em 0 0.5em 0;
+        line-height: 1.3;
+      }
+
+      .blog-content h1 {
+        font-size: 2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0.3em;
+      }
+      .blog-content h2 {
+        font-size: 1.75rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.3em;
+      }
+      .blog-content h3 {
+        font-size: 1.5rem;
+      }
+      .blog-content h4 {
+        font-size: 1.25rem;
+      }
+      .blog-content h5 {
+        font-size: 1.1rem;
+      }
+      .blog-content h6 {
+        font-size: 1rem;
+      }
+
+      .blog-content p {
+        margin-bottom: 1.2em;
+      }
+
+      .blog-content ul,
+      .blog-content ol {
+        margin: 1em 0;
+        padding-left: 2em;
+      }
+
+      .blog-content li {
+        margin-bottom: 0.5em;
+      }
+
+      .blog-content blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding-left: 1em;
+        margin: 1.5em 0;
+        opacity: 0.8;
+        font-style: italic;
+        background: rgba(88, 166, 255, 0.05);
+        padding: 1em;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .blog-content code {
+        background: var(--bg-color);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        color: var(--accent-color);
+      }
+
+      .blog-content pre {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1em;
+        overflow-x: auto;
+        margin: 1.5em 0;
+      }
+
+      .blog-content pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--text-color);
+      }
+
+      .blog-content a {
+        color: var(--link-color);
+        text-decoration: none;
+      }
+
+      .blog-content a:hover {
+        text-decoration: underline;
+      }
+
+      .blog-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5em 0;
+      }
+
+      .blog-content th,
+      .blog-content td {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        text-align: left;
+      }
+
+      .blog-content th {
+        background: var(--table-header-bg);
+        font-weight: 600;
+      }
+
+      .blog-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+        margin: 1.5em 0;
+      }
+
+      .blog-content strong {
+        font-weight: 600;
+        color: var(--accent-color);
+      }
+
+      .blog-content em {
+        font-style: italic;
+        opacity: 0.9;
+      }
+
+      .blog-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn-danger {
+        background-color: var(--danger-color);
+        color: white;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .error-message {
+        text-align: center;
+        padding: 40px;
+        opacity: 0.7;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        opacity: 0.7;
+      }
+
+      @media (max-width: 768px) {
+        .blog-article {
+          padding: 20px;
+        }
+
+        .blog-title {
+          font-size: 2rem;
+        }
+
+        .blog-meta {
+          flex-direction: column;
+          gap: 10px;
+          align-items: flex-start;
+        }
+
+        .blog-actions {
+          flex-direction: column;
+        }
+      }
+
+      /* Toast Notification Styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+      }
+
+      .toast {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast.hide {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+
+      .toast-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .toast-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .toast-message {
+        color: var(--text-color);
+        opacity: 0.9;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        opacity: 0.7;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+
+      .toast-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent-color);
+        width: 100%;
+        transform: scaleX(1);
+        transform-origin: left;
+        transition: transform 5s linear;
+      }
+
+      .toast-progress.hide {
+        transform: scaleX(0);
+      }
+
+      /* Toast Types */
+      .toast.success {
+        border-left: 4px solid var(--success-color);
+      }
+
+      .toast.success .toast-icon {
+        color: var(--success-color);
+      }
+
+      .toast.error {
+        border-left: 4px solid var(--danger-color);
+      }
+
+      .toast.error .toast-icon {
+        color: var(--danger-color);
+      }
+
+      .toast.warning {
+        border-left: 4px solid var(--warning-color);
+      }
+
+      .toast.warning .toast-icon {
+        color: var(--warning-color);
+      }
+
+      .toast.info {
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .toast.info .toast-icon {
+        color: var(--accent-color);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>FocusFlow</h1>
+        <div class="nav-links">
+          <a href="https://daily-tracker-upst.onrender.com/blogs" class="nav-link"
+            >← Back to Blogs</a
+          >
+          <a href="https://daily-tracker-upst.onrender.com/" class="nav-link">Tracker</a>
+        </div>
+      </header>
+
+      <div id="blogContent">
+        <div class="loading" id="loading">
+          <h3>Loading blog...</h3>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none">
+          <h3>Blog not found</h3>
+          <p>
+            The blog you're looking for doesn't exist or you don't have
+            permission to view it.
+          </p>
+          <a
+            href="https://daily-tracker-upst.onrender.com/blogs"
+            class="btn btn-primary"
+            style="margin-top: 15px"
+            >Back to Blogs</a
+          >
+        </div>
+
+        <article id="blogArticle" class="blog-article" style="display: none">
+          <div class="blog-header">
+            <h1 class="blog-title" id="blogTitle"></h1>
+            <div class="blog-meta">
+              <div>
+                By <strong id="blogAuthor"></strong> •
+                <span id="blogDate"></span>
+                <span class="blog-visibility" id="blogVisibility"></span>
+              </div>
+            </div>
+            <div class="blog-tags" id="blogTags"></div>
+          </div>
+
+          <div class="blog-content" id="blogContentText"></div>
+
+          <div class="blog-actions" id="blogActions">
+            <a href="https://daily-tracker-upst.onrender.com/blogs" class="btn btn-secondary"
+              >Back to Blogs</a
+            >
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Add Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      // Get blog slug from URL
+      const pathSegments = window.location.pathname.split("/");
+      const blogSlug = pathSegments[pathSegments.length - 1];
+      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+
+      // Toast Notification System
+      class ToastManager {
+        constructor() {
+          this.container = document.getElementById("toastContainer");
+          if (!this.container) {
+            this.container = document.createElement("div");
+            this.container.className = "toast-container";
+            this.container.id = "toastContainer";
+            this.container.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    max-width: 400px;
+                `;
+            document.body.appendChild(this.container);
+          }
+          this.toastId = 0;
+        }
+
+        showToast(message, type = "info", title = "", duration = 5000) {
+          const toastId = this.toastId++;
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+          toast.id = `toast-${toastId}`;
+
+          const icon = this.getIcon(type);
+          const progressBar =
+            duration > 0 ? '<div class="toast-progress"></div>' : "";
+
+          toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ""}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
+                ${progressBar}
+            `;
+
+          this.container.appendChild(toast);
+
+          setTimeout(() => toast.classList.add("show"), 10);
+
+          if (duration > 0) {
+            const progress = toast.querySelector(".toast-progress");
+            if (progress) {
+              setTimeout(() => progress.classList.add("hide"), 10);
+            }
+            setTimeout(() => this.hideToast(toastId), duration);
+          }
+
+          return toastId;
+        }
+
+        hideToast(toastId) {
+          const toast = document.getElementById(`toast-${toastId}`);
+          if (toast) {
+            toast.classList.remove("show");
+            toast.classList.add("hide");
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 300);
+          }
+        }
+
+        getIcon(type) {
+          const icons = {
+            success: "✓",
+            error: "⚠",
+            warning: "⚠",
+            info: "ℹ",
+          };
+          return icons[type] || icons.info;
+        }
+
+        success(message, title = "Success", duration = 5000) {
+          return this.showToast(message, "success", title, duration);
+        }
+
+        error(message, title = "Error", duration = 7000) {
+          return this.showToast(message, "error", title, duration);
+        }
+
+        warning(message, title = "Warning", duration = 6000) {
+          return this.showToast(message, "warning", title, duration);
+        }
+
+        info(message, title = "Info", duration = 4000) {
+          return this.showToast(message, "info", title, duration);
+        }
+      }
+
+      // Initialize toast manager
+      const toastManager = new ToastManager();
+
+      // Configure marked options
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+        sanitize: false,
+      });
+
+      async function loadBlog() {
+        try {
+          const token = localStorage.getItem("authToken");
+          const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+          
+    // Track view first
+    await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
+      method: 'POST',
+      headers: headers
+    }).catch(err => console.error('View tracking failed:', err));
+
+          const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
+            headers,
+          });
+
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Blog not found");
+            } else if (response.status === 403) {
+              throw new Error("Access denied");
+            } else {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+          }
+
+          const result = await response.json();
+
+          document.getElementById("loading").style.display = "none";
+
+          if (result.success) {
+            displayBlog(result.blog);
+          } else {
+            showError(result.error || "Failed to load blog");
+          }
+        } catch (error) {
+          console.error("Error loading blog:", error);
+          document.getElementById("loading").style.display = "none";
+          showError(error.message);
+        }
+      }
+
+      function displayBlog(blog) {
+        document.getElementById("blogArticle").style.display = "block";
+
+        // Set basic info
+        document.getElementById("blogTitle").textContent = blog.title;
+        document.getElementById("blogAuthor").textContent = blog.author;
+        document.getElementById("blogDate").textContent = new Date(
+          blog.createdAt
+        ).toLocaleDateString();
+        document.getElementById("blogVisibility").textContent = blog.isPublic
+          ? "🌍 Public"
+          : "🔒 Private";
+        document.getElementById("blogVisibility").title = blog.isPublic
+          ? "Public blog"
+          : "Private blog";
+
+           // Add views to meta info
+  const metaElement = document.querySelector('.blog-meta div');
+  metaElement.innerHTML = `
+    By <strong>${blog.author}</strong> • 
+    <span>${new Date(blog.createdAt).toLocaleDateString()}</span> •
+    <span>👁️ ${blog.views || 0} views</span> •
+    <span class="blog-visibility">${blog.isPublic ? '🌍 Public' : '🔒 Private'}</span>
+  `;
+
+
+        // Set tags
+        const tagsContainer = document.getElementById("blogTags");
+        if (blog.tags && blog.tags.length > 0) {
+          tagsContainer.innerHTML = blog.tags
+            .map((tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`)
+            .join("");
+        } else {
+          tagsContainer.innerHTML = "";
+        }
+
+        // Render markdown content
+        const contentContainer = document.getElementById("blogContentText");
+        if (blog.content && blog.content.trim()) {
+          try {
+            const htmlContent = marked.parse(blog.content);
+            contentContainer.innerHTML = htmlContent;
+          } catch (error) {
+            console.error("Error parsing markdown:", error);
+            contentContainer.innerHTML = `<p>${escapeHtml(blog.content)}</p>`;
+          }
+        } else {
+          contentContainer.innerHTML = "<p>No content available.</p>";
+        }
+
+        // Set up actions for blog author
+        const actionsContainer = document.getElementById("blogActions");
+        const currentUser = localStorage.getItem("userId");
+
+        if (currentUser === blog.author) {
+          actionsContainer.innerHTML += `
+                <button class="btn btn-primary" onclick="editBlog('${blog.slug}')">Edit Blog</button>
+                <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
+            `;
+        }
+
+        // Update page title
+        document.title = `${blog.title} - FocusFlow Blogs`;
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("errorMessage");
+        errorDiv.style.display = "block";
+        if (message) {
+          errorDiv.querySelector("p").textContent = message;
+        }
+      }
+
+      function editBlog(slug) {
+        window.location.href = `https://daily-tracker-upst.onrender.com/blogs?edit=${slug}`;
+      }
+
+      async function deleteBlog(slug) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this blog? This action cannot be undone."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(`${API_BASE_URL}/blogs/${slug}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            toastManager.success("Blog deleted successfully!", "Blog Deleted");
+            setTimeout(() => {
+              window.location.href = "https://daily-tracker-upst.onrender.com/blogs";
+            }, 1500);
+          } else {
+            toastManager.error(result.error, "Delete Failed");
+          }
+        } catch (error) {
+          console.error("Error deleting blog:", error);
+          toastManager.error(
+            "Failed to delete blog. Please try again.",
+            "Network Error"
+          );
+        }
+      }
+
+      // Utility function to escape HTML
+      function escapeHtml(unsafe) {
+        return unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", loadBlog);
+    </script>
+  </body>
+</html>

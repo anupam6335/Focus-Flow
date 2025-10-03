@@ -1632,15 +1632,30 @@
         <div class="container">
           <header>
             <h1>FocusFlow</h1>
-            <div id="syncStatus">
-              <div class="sync-dot synced"></div>
-              <span>Synced</span>
-            </div>
-            <div>
-              <button class="sync-button" id="syncButton">🔄 Sync Now</button>
-              <button class="theme-toggle" id="themeToggle">
-                Switch to Light Theme
-              </button>
+            <!-- Add this inside the header section, after the existing content -->
+            <div style="display: flex; align-items: center; gap: 15px">
+              <a
+                href="/blogs.html"
+                style="
+                  color: var(--text-color);
+                  text-decoration: none;
+                  padding: 8px 16px;
+                  border-radius: 6px;
+                  transition: background-color 0.2s;
+                "
+              >
+                📝 Blogs
+              </a>
+              <div id="syncStatus">
+                <div class="sync-dot synced"></div>
+                <span>Synced</span>
+              </div>
+              <div>
+                <button class="sync-button" id="syncButton">🔄 Sync Now</button>
+                <button class="theme-toggle" id="themeToggle">
+                  Switch to Light Theme
+                </button>
+              </div>
             </div>
           </header>
 
@@ -2179,7 +2194,7 @@
               // Progress data remains in localStorage
             }
           } catch (error) {
-            console.log("Auto-login check failed:", error);
+            // console.log("Auto-login check failed:", error);
             showLoginForm();
             // Progress data remains in localStorage
           }
@@ -2793,10 +2808,10 @@
                 throw new Error(result.error);
               }
             } catch (error) {
-              console.log(
-                "Failed to load from MongoDB, using default data:",
-                error
-              );
+              // console.log(
+              //   "Failed to load from MongoDB, using default data:",
+              //   error
+              // );
               // Initialize with default data for 100 days
               initializeDefaultData();
             }
@@ -2857,7 +2872,7 @@
 
       // Save data to both localStorage and MongoDB - FIXED VERSION
       async function saveData() {
-        console.log("💾 saveData() called");
+        // console.log("💾 saveData() called");
 
         // Mark that we have pending changes
         pendingChanges = true;
@@ -2868,19 +2883,19 @@
           localStorage.setItem("appVersion", currentVersion.toString());
           localStorage.setItem("lastUpdated", lastUpdated);
 
-          console.log("💾 Local storage updated");
+          // console.log("💾 Local storage updated");
 
           // Also save to MongoDB if logged in
           if (authToken) {
-            console.log("💾 Saving main data to MongoDB...");
+            // console.log("💾 Saving main data to MongoDB...");
             await saveToMongoDB();
-            console.log("💾 Main data saved to MongoDB");
+            // console.log("💾 Main data saved to MongoDB");
 
             // Now save activity tracker data
-            console.log("💾 Now saving activity tracker data...");
+            // console.log("💾 Now saving activity tracker data...");
             // await saveActivityTrackerData();
           } else {
-            console.log("💾 User not logged in, only saving locally");
+            // console.log("💾 User not logged in, only saving locally");
             updateSyncStatus("offline", "Changes saved locally");
           }
         } catch (error) {
@@ -2890,13 +2905,13 @@
         // Always update the activity tracker display
         renderEnhancedActivityTracker();
 
-        console.log("💾 saveData() completed");
+        // console.log("💾 saveData() completed");
       }
 
       // Save data to MongoDB with conflict detection
       async function saveToMongoDB() {
         if (isSyncing) {
-          console.log("Already syncing, skipping...");
+          // console.log("Already syncing, skipping...");
           return;
         }
 
@@ -2939,7 +2954,7 @@
             throw new Error(result.error || "Sync failed");
           }
         } catch (error) {
-          console.log("Failed to save to MongoDB:", error);
+          // console.log("Failed to save to MongoDB:", error);
           updateSyncStatus("error", "Failed to sync with cloud");
 
           // Retry after 5 seconds
@@ -2982,7 +2997,7 @@
         // Periodic sync as backup (every 1 minutes)
         setInterval(() => {
           if (authToken && !isSyncing) {
-            console.log("🕒 Periodic background sync...");
+            // console.log("🕒 Periodic background sync...");
             saveActivityTrackerData();
           }
         }, 60000); // 1 minutes
@@ -3088,7 +3103,7 @@
           if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
           syncDebounceTimer = setTimeout(() => {
             if (authToken && !isSyncing) {
-              console.log("🔄 Auto-sync triggered by user action");
+              // console.log("🔄 Auto-sync triggered by user action");
               saveActivityTrackerData();
             }
           }, 800); // 800ms debounce
@@ -3181,10 +3196,10 @@
             };
           }
         } catch (error) {
-          console.log(
-            "Failed to load activity tracker data from MongoDB:",
-            error
-          );
+          // console.log(
+          //   "Failed to load activity tracker data from MongoDB:",
+          //   error
+          // );
           // Initialize with calculated data on error
           window.activityTrackerData = {
             currentStreak: 0,
@@ -3201,19 +3216,19 @@
       // Enhanced saveActivityTrackerData function with better error handling
       async function saveActivityTrackerData() {
         if (!authToken) {
-          console.log("🔐 Not logged in, skipping activity tracker save");
+          // console.log("🔐 Not logged in, skipping activity tracker save");
           return;
         }
 
         if (isSyncing) {
-          console.log("⏳ Sync already in progress, skipping...");
+          // console.log("⏳ Sync already in progress, skipping...");
           return;
         }
 
         isSyncing = true;
 
         try {
-          console.log("💾 Starting automatic activity tracker save...");
+          // console.log("💾 Starting automatic activity tracker save...");
 
           // Calculate fresh data
           const analytics = calculateAnalytics();
@@ -3229,7 +3244,7 @@
             activityHistory: activityHistory,
           };
 
-          console.log("💾 Activity data to save:", trackerData);
+          // console.log("💾 Activity data to save:", trackerData);
 
           const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
             method: "POST",
@@ -3245,7 +3260,7 @@
           const result = await response.json();
 
           if (result.success) {
-            console.log("✅ Activity tracker data saved automatically");
+            // console.log("✅ Activity tracker data saved automatically");
             // Update local copy
             window.activityTrackerData = trackerData;
             // Update sync status briefly
@@ -3620,7 +3635,7 @@
       }
       // Handle sync conflict when server has newer data - IMPROVED VERSION
       async function handleSyncConflict(conflictResult) {
-        console.log("🔄 Handling sync conflict...");
+        // console.log("🔄 Handling sync conflict...");
 
         // Check if this is a minor conflict that can be auto-merged
         if (!conflictResult.requiresUserResolution) {
@@ -3755,7 +3770,7 @@
             }
           }
         } catch (error) {
-          console.log("Background sync failed:", error);
+          // console.log("Background sync failed:", error);
 
           // Don't show error for network issues during background sync
           if (error.message.includes("Failed to fetch")) {
@@ -3775,7 +3790,7 @@
 
       // Improved save function with better change detection
       async function saveData() {
-        console.log("💾 saveData() called");
+        // console.log("💾 saveData() called");
 
         // Better change detection - only mark as pending if there are actual changes
         const previousData = JSON.parse(
@@ -3785,7 +3800,7 @@
 
         // Check if there are meaningful changes
         if (JSON.stringify(previousData) === currentDataString) {
-          console.log("💾 No meaningful changes detected, skipping save");
+          // console.log("💾 No meaningful changes detected, skipping save");
           return;
         }
 
@@ -3797,14 +3812,14 @@
           localStorage.setItem("appVersion", currentVersion.toString());
           localStorage.setItem("lastUpdated", lastUpdated);
 
-          console.log("💾 Local storage updated");
+          // console.log("💾 Local storage updated");
 
           // Save to MongoDB if logged in (with improved error handling)
           if (authToken) {
-            console.log("💾 Saving to MongoDB...");
+            // console.log("💾 Saving to MongoDB...");
             await saveToMongoDB();
           } else {
-            console.log("💾 User not logged in, only saving locally");
+            // console.log("💾 User not logged in, only saving locally");
             updateSyncStatus("offline", "Changes saved locally");
           }
         } catch (error) {
@@ -3854,7 +3869,7 @@
             throw new Error(result.error || "Save failed");
           }
         } catch (error) {
-          console.log("Force push failed:", error);
+          // console.log("Force push failed:", error);
           updateSyncStatus("error", "Save failed");
 
           // Show appropriate error message
@@ -3915,7 +3930,7 @@
             throw new Error(result.error || "Force push failed");
           }
         } catch (error) {
-          console.log("Force push failed:", error);
+          // console.log("Force push failed:", error);
           updateSyncStatus("error", "Force push failed");
         }
       }
@@ -3947,9 +3962,9 @@
 
             // Check if server has newer data
             if (serverVersion > currentVersion) {
-              console.log(
-                "Server has newer data, updating local copy immediately"
-              );
+              // console.log(
+              //   "Server has newer data, updating local copy immediately"
+              // );
               appData = result.data;
               currentVersion = serverVersion;
               lastUpdated = serverLastUpdated;
@@ -3974,7 +3989,7 @@
             }
           }
         } catch (error) {
-          console.log("Background sync failed:", error);
+          // console.log("Background sync failed:", error);
           updateSyncStatus("offline", "Working offline");
 
           // Don't show error toast for background sync failures to avoid annoying users
@@ -4020,7 +4035,7 @@
             throw new Error(result.error || "Sync failed");
           }
         } catch (error) {
-          console.log("Force sync failed:", error);
+          // console.log("Force sync failed:", error);
           updateSyncStatus("error", "Sync failed");
         }
       }
@@ -5112,7 +5127,7 @@
           oscillator.stop(audioContext.currentTime + 0.3);
         } catch (error) {
           // Silent fail if audio context is not supported or user hasn't interacted
-          console.log("Audio not available or user interaction required");
+          // console.log("Audio not available or user interaction required");
         }
       }
 
@@ -5189,12 +5204,12 @@
 
       // Set up direct event listeners as backup
       function setupDirectEventListeners() {
-        console.log("🎯 Setting up direct event listeners...");
+        // console.log("🎯 Setting up direct event listeners...");
 
         // Listen for clicks on checkboxes
         document.addEventListener("change", function (e) {
           if (e.target.classList.contains("question-checkbox")) {
-            console.log("🎯 Checkbox change detected");
+            // console.log("🎯 Checkbox change detected");
             setTimeout(() => {
               saveActivityTrackerData();
             }, 1000);
@@ -5204,7 +5219,7 @@
         // Listen for clicks on add question buttons
         document.addEventListener("click", function (e) {
           if (e.target.classList.contains("add-question-btn")) {
-            console.log("🎯 Add question button click detected");
+            // console.log("🎯 Add question button click detected");
             setTimeout(() => {
               saveActivityTrackerData();
             }, 1000);
@@ -5218,14 +5233,14 @@
             (e.target.classList.contains("add-tag-input") ||
               e.target.classList.contains("add-link-input"))
           ) {
-            console.log("🎯 Tag/link input Enter key detected");
+            // console.log("🎯 Tag/link input Enter key detected");
             setTimeout(() => {
               saveActivityTrackerData();
             }, 1000);
           }
         });
 
-        console.log("✅ Direct event listeners set up");
+        // console.log("✅ Direct event listeners set up");
       }
       // Initialize activity tracker and app when DOM is loaded - FIXED VERSION
       document.addEventListener("DOMContentLoaded", function () {
