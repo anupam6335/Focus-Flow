@@ -1,0 +1,285 @@
+/* responsive.css - Mobile-first responsive fixes for FocusFlow */
+/* !important flags to override any existing styles */
+
+/* ===== MOBILE-FIRST BASE STYLES ===== */
+
+/* Reset and force header styles */
+header {
+  position: relative !important;
+  width: 100% !important;
+  background-color: var(--bg-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 15px 0 !important;
+  margin-bottom: 20px !important;
+  z-index: 1000 !important;
+  display: block !important;
+}
+
+.header-container {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 15px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 15px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+/* Logo scaling for mobile */
+.site-logo {
+  font-size: 1.5rem !important;
+  color: var(--accent-color) !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Navigation links mobile layout */
+.nav-links {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.nav-link {
+  color: var(--text-color) !important;
+  text-decoration: none !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  transition: background-color 0.2s !important;
+  font-size: 0.9rem !important;
+  border: 1px solid var(--border-color) !important;
+  display: inline-block !important;
+}
+
+.nav-link:hover {
+  background-color: rgba(88, 166, 255, 0.1) !important;
+}
+
+.nav-link.active {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* Header controls for index page */
+.header-controls {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.sync-status {
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  font-size: 0.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(88, 166, 255, 0.1) !important;
+  border: 1px solid transparent !important;
+}
+
+.header-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.sync-button,
+.theme-toggle {
+  padding: 8px 12px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: opacity 0.2s !important;
+  font-size: 0.9rem !important;
+  white-space: nowrap !important;
+}
+
+.sync-button {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+.theme-toggle {
+  background: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Main content spacing for mobile */
+.container {
+  padding-top: 10px !important;
+  margin-top: 0 !important;
+}
+
+.main-container {
+  padding-top: 10px !important;
+  margin-top: 0 !important;
+}
+
+/* Ensure content doesn't hide under header */
+body {
+  padding-top: 0 !important;
+}
+
+/* Fix body padding for all pages */
+body {
+  padding: 15px 10px !important;
+}
+
+/* Blog link specific styling */
+.blog-link {
+  background: rgba(88, 166, 255, 0.1) !important;
+  border: 1px solid var(--accent-color) !important;
+  width: 100%;
+  text-align: center;
+}
+
+/* ===== TABLET STYLES (768px and up) ===== */
+@media (min-width: 768px) {
+  .header-container {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 20px !important;
+  }
+  
+  .site-logo {
+    font-size: 1.8rem !important;
+  }
+  
+  .nav-links {
+    flex-wrap: nowrap !important;
+    gap: 15px !important;
+  }
+  
+  .nav-link {
+    font-size: 1rem !important;
+    padding: 8px 16px !important;
+  }
+  
+  .header-controls {
+    width: auto !important;
+    justify-content: flex-end !important;
+  }
+  
+  .header-buttons {
+    flex-wrap: nowrap !important;
+  }
+  
+  .sync-button,
+  .theme-toggle {
+    font-size: 1rem !important;
+    padding: 8px 16px !important;
+  }
+  
+  /* Adjust content spacing for larger headers */
+  .container {
+    padding-top: 20px !important;
+  }
+  
+  .main-container {
+    padding-top: 20px !important;
+  }
+  
+  body {
+    padding: 20px !important;
+  }
+}
+
+/* ===== DESKTOP STYLES (1024px and up) ===== */
+@media (min-width: 1024px) {
+  .header-container {
+    padding: 0 20px !important;
+  }
+  
+  .site-logo {
+    font-size: 2rem !important;
+  }
+  
+  .nav-links {
+    gap: 20px !important;
+  }
+}
+
+/* ===== LARGE DESKTOP STYLES (1200px and up) ===== */
+@media (min-width: 1200px) {
+  .header-container {
+    padding: 0 !important;
+  }
+}
+
+/* ===== SPECIFIC FIXES FOR EXTRA SMALL SCREENS ===== */
+@media (max-width: 360px) {
+  .header-container {
+    padding: 0 10px !important;
+    gap: 12px !important;
+  }
+  
+  .site-logo {
+    font-size: 1.3rem !important;
+  }
+  
+  .nav-links {
+    gap: 8px !important;
+  }
+  
+  .nav-link {
+    padding: 6px 10px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .header-buttons {
+    gap: 6px !important;
+  }
+  
+  .sync-button,
+  .theme-toggle {
+    /* padding: 6px 10px !important; */
+    font-size: 0.85rem !important;
+  }
+  
+  .sync-status {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* ===== TOAST POSITIONING FIXES FOR MOBILE ===== */
+.toast-container {
+  top: 80px !important; /* Position below header */
+  right: 10px !important;
+  max-width: calc(100vw - 20px) !important;
+}
+
+@media (min-width: 768px) {
+  .toast-container {
+    top: 20px !important;
+    right: 20px !important;
+    max-width: 400px !important;
+  }
+}
+
+/* ===== MODAL POSITIONING FIXES ===== */
+.modal-content {
+  margin: 20px 10px !important;
+  max-height: calc(100vh - 120px) !important;
+  overflow-y: auto !important;
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    margin: 0 !important;
+    max-height: 90vh !important;
+  }
+}
+
+/* Force override any existing header margin/padding */
+header {
+  margin-bottom: 30px !important;
+}
