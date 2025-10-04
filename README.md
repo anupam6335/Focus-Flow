@@ -69,13 +69,13 @@ FocusFlow/
 ## 🎨 Project Preview
 
 ### 📊 Main Dashboard - Your Progress Command Center
-![FocusFlow Dashboard](https://github.com/user-attachments/assets/e520c458-8f70-44ec-ae4c-34f7ec60d286)
+![FocusFlow Dashboard](https://github.com/user-attachments/assets/13daba48-bf23-4be6-a377-aa7ea482f2ac)
 
 ### 📝 Blogging Platform - Share Your Wisdom
-![Blog Platform](https://github.com/user-attachments/assets/0000789f-b914-4233-9b29-2dc0097864a8)
+![Blog Platform](https://github.com/user-attachments/assets/f0c6bdab-7230-457c-bb05-e943120648f7)
 
 ### 🔍 Blog Reader - Immersive Learning Experience
-![Blog Reader](https://github.com/user-attachments/assets/757f3086-432d-476b-8075-b0c5656bcd52)
+![Blog Reader](https://github.com/user-attachments/assets/abbe6626-132d-4a9d-b3cb-aa3a0ccc5664)
 
 ---
 
