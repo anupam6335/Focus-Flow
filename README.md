@@ -8,194 +8,435 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D14.0-brightgreen)](package.json)
 [![MongoDB](https://img.shields.io/badge/database-MongoDB-green)](https://mongodb.com)
 
-## 🌟 The Story Behind FocusFlow
+## 🚨 Important Project Structure Note
 
-> "I almost gave up on my coding journey. The loneliness of learning, the invisible progress, the forgotten insights—it was crushing. Then I built FocusFlow to save myself, and it ended up saving my journey."
+**Current Structure**: Single-file monolith (all code in one folder)  
+**Ideal Structure**: Modular folder-based architecture  
+**Contribution Welcome**: If you'd like to refactor this into a proper folder structure, please make a PR! I'll be happy to merge it.
 
-FocusFlow was born from frustration. Like many developers, I struggled with:
+### 📁 Current Single-File Structure
+```
+FocusFlow/
+├── server.js          # Everything: Models, Routes, Auth, Middleware
+├── index.html         # Main app with embedded CSS/JS
+├── blogs.html         # Blog platform with embedded CSS/JS  
+├── blog-view.html     # Blog reader with embedded CSS/JS
+├── package.json
+└── .env
+```
 
-- **📉 Motivation rollercoaster** - Bursts of energy followed by weeks of silence
-- **🧠 Knowledge evaporation** - Brilliant insights lost because I didn't write them down
-- **📊 Progress invisibility** - No way to see how far I'd actually come
-- **👥 Learning isolation** - Coding alone without community or shared wisdom
+### 📁 Ideal Modular Structure (Future Goal)
+```
+FocusFlow/
+├── backend/
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Blog.js
+│   │   ├── ProgressData.js
+│   │   └── ActivityTracker.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── blogs.js
+│   │   ├── progress.js
+│   │   └── analytics.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── validation.js
+│   ├── config/
+│   │   └── database.js
+│   └── server.js
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── styles/
+│   │   └── utils/
+│   ├── public/
+│   └── package.json
+└── package.json
+```
 
-One evening, after solving a tough algorithm problem, I realized: *the solution wasn't just in the code—it was in the process.* That's when FocusFlow transformed from an idea into a mission: **make consistency visible, rewarding, and shared.**
+**Want to help refactor?** This project currently uses a single-file approach for simplicity. If you'd like to contribute by creating a proper folder structure with separated concerns, I'd greatly appreciate a Pull Request!
 
 ---
 
-## 🎯 What Problem Does FocusFlow Solve?
+## 🌟 The Story Behind FocusFlow
 
-### The Developer's Dilemma
-- **89% of developers** struggle with consistent learning habits
-- **Progress amnesia** - forgetting what you've accomplished kills motivation
-- **Isolated learning** - coding alone without community support
-- **Unshared insights** - brilliant solutions that never help anyone else
-
-### Our Solution
-FocusFlow transforms learning from a solo struggle into a celebrated journey:
-
-- **📊 Visual Progress Ecosystem** - See your growth through heatmaps, streaks, and analytics
-- **📝 Integrated Knowledge Sharing** - Turn your insights into helpful blogs for others
-- **🔥 Gamified Consistency** - Streaks and achievements that make practice addictive
-- **👥 Community Wisdom** - Learn from others' journeys while documenting your own
+> "I almost gave up on my coding journey. The loneliness of learning, the invisible progress, the forgotten insights—it was crushing. Then I built FocusFlow to save myself, and it ended up saving my journey."
 
 ---
 
 ## 🎨 Project Preview
 
 ### 📊 Main Dashboard - Your Progress Command Center
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/60666d5b-b3d2-4d58-8c64-bf8e06ed36c4" />
-
-
-*Experience the clean, intuitive interface where your coding journey comes to life. Track daily progress, visualize consistency, and celebrate achievements.*
+![FocusFlow Dashboard](https://github.com/user-attachments/assets/e520c458-8f70-44ec-ae4c-34f7ec60d286)
 
 ### 📝 Blogging Platform - Share Your Wisdom
-<img width="1920" height="1080" alt="FocusFlow Blog Platform" src="https://github.com/user-attachments/assets/cb34c6de-2061-4b6a-81ed-c8df7a4d3bb6" />
-
-*Transform your learning insights into valuable content. Write with full Markdown support, engage with the community, and build your developer reputation.*
+![Blog Platform](https://github.com/user-attachments/assets/0000789f-b914-4233-9b29-2dc0097864a8)
 
 ### 🔍 Blog Reader - Immersive Learning Experience
-<img width="1920" height="1080" alt="FocusFlow Blog Reader" src="https://github.com/user-attachments/assets/757f3086-432d-476b-8075-b0c5656bcd52" />
-
-*Dive deep into community knowledge with our beautiful reading experience. Clean typography, syntax highlighting, and responsive design make learning enjoyable.*
+![Blog Reader](https://github.com/user-attachments/assets/757f3086-432d-476b-8075-b0c5656bcd52)
 
 ---
 
-## 🔄 System Architecture & Workflow
+## 🔄 Complete System Architecture & Workflow
 
-### 🏗️ Complete System Flow Diagram
+### 🏗️ FocusFlow Ecosystem Flow Diagram
 
 ```mermaid
-graph TB
-    %% Frontend Components
-    subgraph Frontend [Frontend - Vercel]
-        A[index.html - Progress Tracker]
-        B[blogs.html - Blog Platform]
-        C[blog-view.html - Blog Reader]
-        D[Local Storage - Offline Cache]
-    end
-
-    %% Backend Components
-    subgraph Backend [Backend API - Render]
-        E[server.js - Express Server]
-        F[JWT Authentication]
-        G[API Routes - 25+ Endpoints]
-        H[Real-time Sync Engine]
-    end
-
-    %% Database
-    subgraph Database [MongoDB Atlas]
-        I[Users Collection]
-        J[Blogs Collection]
-        K[Progress Data Collection]
-        L[Activity Tracker Collection]
-    end
-
-    %% External Services
-    M[Marked.js - Markdown Rendering]
-    N[bcryptjs - Password Hashing]
-    O[jsonwebtoken - Auth Tokens]
-
-    %% Data Flow Connections
-    A -->|HTTP Requests| E
-    B -->|JSON API Calls| E
-    C -->|Real-time Updates| E
-    D -->|Auto-sync| E
+flowchart TB
+    %% ========== USERS ==========
+    User[👤 User]:::user
     
-    E -->|JWT Verification| F
-    E -->|CRUD Operations| I
-    E -->|Blog Management| J
-    E -->|Progress Tracking| K
-    E -->|Analytics Data| L
-    
-    F -->|Password Hashing| N
-    F -->|Token Generation| O
-    C -->|Markdown Processing| M
-
-    %% User Actions
-    subgraph UserActions [User Actions & Data Flow]
-        P[Add/Complete Activity] --> Q[Update Local Storage] --> R[Sync with Backend]
-        S[Create/Edit Blog] --> T[Generate Slug] --> U[Save to MongoDB]
-        V[View Blog] --> W[Increment View Counter] --> X[Update Popularity Score]
-        Y[Like Blog] --> Z[Update Engagement] --> AA[Recalculate Popularity]
+    %% ========== FRONTEND COMPONENTS ==========
+    subgraph Frontend[🌐 Frontend - Vercel]
+        A[index.html<br/>Progress Tracker]:::frontend
+        B[blogs.html<br/>Blog Platform]:::frontend
+        C[blog-view.html<br/>Blog Reader]:::frontend
+        D[Local Storage<br/>Offline Cache]:::storage
     end
-
-    %% Style for better visualization
-    classDef frontend fill:#e1f5fe
-    classDef backend fill:#f3e5f5
-    classDef database fill:#e8f5e8
-    classDef services fill:#fff3e0
-    classDef actions fill:#fce4ec
     
-    class A,B,C,D frontend
-    class E,F,G,H backend
-    class I,J,K,L database
-    class M,N,O services
-    class P,S,V,Y actions
+    %% ========== BACKEND API ==========
+    subgraph Backend[⚙️ Backend API - Render]
+        E[server.js<br/>Express Server]:::backend
+        F[JWT Authentication<br/>Security Layer]:::security
+        G[API Routes<br/>25+ Endpoints]:::api
+        H[Real-time Sync Engine]:::sync
+    end
+    
+    %% ========== DATABASE COLLECTIONS ==========
+    subgraph Database[🗄️ MongoDB Atlas]
+        I[👥 Users Collection]:::dbUsers
+        J[📝 Blogs Collection]:::dbBlogs
+        K[📊 Progress Data]:::dbProgress
+        L[📈 Activity Analytics]:::dbAnalytics
+    end
+    
+    %% ========== EXTERNAL SERVICES ==========
+    subgraph Services[🔧 External Services]
+        M[Marked.js<br/>Markdown Rendering]:::markdown
+        N[bcryptjs<br/>Password Hashing]:::security
+        O[jsonwebtoken<br/>Auth Tokens]:::security
+    end
+    
+    %% ========== USER WORKFLOWS ==========
+    subgraph Workflows[🎯 User Workflows]
+        %% Progress Tracking Flow
+        subgraph ProgressFlow[📊 Progress Tracking]
+            P1[Add/Complete Activity]:::progress
+            P2[Update Local Storage]:::storage
+            P3[Sync with Backend]:::sync
+            P4[Update Heatmap & Analytics]:::analytics
+        end
+        
+        %% Blog Management Flow
+        subgraph BlogFlow[📝 Blog Management]
+            B1[Create/Edit Blog]:::blog
+            B2[Generate Slug]:::blog
+            B3[Save to Database]:::dbBlogs
+            B4[Update Blog Lists]:::blog
+        end
+        
+        %% Engagement Flow
+        subgraph EngagementFlow[❤️ Engagement System]
+            E1[View Blog]:::engagement
+            E2[Increment View Counter]:::analytics
+            E3[Like/Unlike Blog]:::engagement
+            E4[Update Popularity Score]:::analytics
+        end
+    end
+    
+    %% ========== DATA FLOW CONNECTIONS ==========
+    %% User to Frontend
+    User -.->|1. User Interaction| A
+    User -.->|2. Blog Creation| B
+    User -.->|3. Content Reading| C
+    
+    %% Frontend to Backend
+    A -.->|4. Progress Updates| E
+    B -.->|5. Blog Operations| E
+    C -.->|6. View Tracking| E
+    D -.->|7. Auto-sync| E
+    
+    %% Backend to Database
+    E -.->|8. JWT Verification| F
+    E -.->|9. User Management| I
+    E -.->|10. Blog Operations| J
+    E -.->|11. Progress Tracking| K
+    E -.->|12. Analytics Data| L
+    
+    %% Backend to Services
+    F -.->|13. Password Hashing| N
+    F -.->|14. Token Generation| O
+    C -.->|15. Markdown Processing| M
+    
+    %% Workflow Connections
+    P1 ==>|Instant UI Update| P2 ==>|Background Sync| P3 ==>|Real-time Analytics| P4
+    B1 ==>|Auto-slug Creation| B2 ==>|Database Save| B3 ==>|UI Refresh| B4
+    E1 ==>|View Count| E2 ==>|Popularity Calc| E4
+    E3 ==>|Like Action| E4
+    
+    %% Connect Workflows to Main System
+    P1 -.-> A
+    P4 -.-> K
+    B1 -.-> B
+    B3 -.-> J
+    E1 -.-> C
+    E4 -.-> L
+    
+    %% ========== STYLING ==========
+    classDef user fill:#4CAF50,color:white,stroke:#388E3C,stroke-width:2px
+    classDef frontend fill:#2196F3,color:white,stroke:#1976D2,stroke-width:2px
+    classDef backend fill:#9C27B0,color:white,stroke:#7B1FA2,stroke-width:2px
+    classDef security fill:#F44336,color:white,stroke:#D32F2F,stroke-width:2px
+    classDef api fill:#FF9800,color:white,stroke:#F57C00,stroke-width:2px
+    classDef sync fill:#009688,color:white,stroke:#00796B,stroke-width:2px
+    classDef storage fill:#795548,color:white,stroke:#5D4037,stroke-width:2px
+    classDef dbUsers fill:#607D8B,color:white,stroke:#455A64,stroke-width:2px
+    classDef dbBlogs fill:#E91E63,color:white,stroke:#C2185B,stroke-width:2px
+    classDef dbProgress fill:#3F51B5,color:white,stroke:#303F9F,stroke-width:2px
+    classDef dbAnalytics fill:#00BCD4,color:white,stroke:#0097A7,stroke-width:2px
+    classDef markdown fill:#8BC34A,color:white,stroke:#689F38,stroke-width:2px
+    classDef progress fill:#FF5722,color:white,stroke:#E64A19,stroke-width:2px
+    classDef blog fill:#9C27B0,color:white,stroke:#7B1FA2,stroke-width:2px
+    classDef engagement fill:#FFC107,color:black,stroke:#FFA000,stroke-width:2px
+    classDef analytics fill:#00BCD4,color:white,stroke:#0097A7,stroke-width:2px
+
+    %% Animation styles
+    linkStyle 0 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 1 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 2 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 3 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 4 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 5 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 6 stroke:#795548,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 7 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 8 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 9 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 10 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 11 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 12 stroke:#F44336,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 13 stroke:#F44336,stroke-width:3px,stroke-dasharray:5 5
+    linkStyle 14 stroke:#8BC34A,stroke-width:3px,stroke-dasharray:5 5
 ```
 
-### 📈 Real-time Data Flow Explanation
+---
 
-#### 🎯 **Daily Progress Tracking Flow**
-```
-User Action → Frontend (index.html) → Local Storage → Backend API → MongoDB → Analytics Update
-     ↓              ↓                   ↓              ↓              ↓           ↓
-Complete Task → Update UI Immediately → Cache Data → Sync with Server → Save Progress → Update Heatmap
-```
+## 🎬 Animated Workflow Demonstration
 
-**What happens when you complete a task:**
-1. **Instant UI Update** - Checkbox toggles immediately with visual feedback
-2. **Local Storage Cache** - Data saved locally for offline access
-3. **Background Sync** - Automatic synchronization with backend (2-second debounce)
-4. **Database Persistence** - Progress saved to MongoDB with version control
-5. **Analytics Recalculation** - Streaks, heatmap, and statistics updated in real-time
-6. **Achievement Check** - System checks for 5+ completed tasks to trigger celebrations
-
-#### 📝 **Blog Management Flow**
+### 🎯 **Real-time Progress Tracking Animation**
 ```
-Create Blog → Generate Slug → Save Draft → Publish → Update Lists → Track Engagement
-     ↓             ↓             ↓          ↓          ↓             ↓
-Rich Editor → URL-Friendly ID → Auto-save → MongoDB → Blog Feeds → Views/Likes
-```
-
-**What happens when you publish a blog:**
-1. **Content Creation** - Write with Markdown editor in `blogs.html`
-2. **Slug Generation** - Automatic URL-friendly title conversion (e.g., "My Coding Journey" → "my-coding-journey")
-3. **Privacy Settings** - Choose public (community visible) or private (personal notes)
-4. **Database Storage** - Full content saved to Blogs collection
-5. **List Updates** - Appears in "My Blogs" tab immediately, "All Blogs" if public
-6. **Engagement Tracking** - View counters and like system activated
-
-#### 👁️ **Blog Reading & Engagement Flow**
-```
-Visit Blog → Load Content → Render Markdown → Track View → Update Popularity → Show in Feeds
-     ↓           ↓             ↓             ↓           ↓              ↓
-blog-view.html → API Fetch → Marked.js → View Counter → Score Calc → Popular Tab
+👤 User Action (Click/Tap) 
+    ↓ (Animation: Ripple effect from user click)
+🎯 Complete Task in index.html
+    ↓ (Animation: Checkbox fills with color, confetti bursts)
+💾 Local Storage Updates (Instant)
+    ↓ (Animation: Data flowing to storage icon)
+🔄 Background Sync (2s debounce)
+    ↓ (Animation: Sync arrows pulsing)
+⚙️ Backend API Processes
+    ↓ (Animation: Server icon glowing)
+🗄️ MongoDB Saves Progress
+    ↓ (Animation: Database icon pulsing)
+📈 Analytics Recalculate
+    ↓ (Animation: Charts animating with new data)
+🎉 UI Updates with Celebration
+    ↓ (Animation: Heatmap cells lighting up sequentially)
 ```
 
-**What happens when someone reads your blog:**
-1. **Page Load** - User visits `/blogs/your-blog-slug`
-2. **Content Fetch** - `blog-view.html` calls API to get blog data
-3. **Markdown Rendering** - Raw Markdown transformed to beautiful HTML
-4. **View Tracking** - Automatic view counter increment (prevents duplicate counts)
-5. **Popularity Update** - Popularity score recalculated: `(likes + views)`
-6. **Feed Placement** - Blog may appear higher in "Popular" tab rankings
-
-#### 🔄 **Real-time Sync Architecture**
+### ✍️ **Blog Creation Flow Animation**
 ```
-Frontend Changes → Debounce (2s) → Conflict Check → Smart Merge → Database Update
-     ↓               ↓              ↓              ↓            ↓
+👤 User Writes Blog in blogs.html
+    ↓ (Animation: Cursor typing with glow effect)
+🔗 Auto-Slug Generation
+    ↓ (Animation: Text transforming into URL format)
+💾 Draft Auto-saves
+    ↓ (Animation: Floppy disk icon spinning)
+🌐 User Clicks "Publish"
+    ↓ (Animation: Paper airplane flying to server)
+⚙️ Backend Validates & Saves
+    ↓ (Animation: Shield icon with checkmark)
+🗄️ Blog Saved to Database
+    ↓ (Animation: Document sliding into database)
+📋 Blog Lists Update
+    ↓ (Animation: New card sliding into blog grid)
+👁️ Real-time View Tracking
+    ↓ (Animation: Eye icon with counter incrementing)
+```
+
+### ❤️ **Blog Engagement Animation**
+```
+👤 User Views Blog in blog-view.html
+    ↓ (Animation: Page sliding in with fade effect)
+👀 View Counter Increments
+    ↓ (Animation: Number rolling up with +1)
+📖 Markdown Renders Beautifully
+    ↓ (Animation: Code blocks highlighting sequentially)
+❤️ User Likes Blog
+    ↓ (Animation: Heart filling with color and pulsing)
+📊 Popularity Score Updates
+    ↓ (Animation: Score meter filling up)
+🏆 Blog Ranks Higher in Popular
+    ↓ (Animation: Blog card moving up in list)
+```
+
+### 🔄 **Smart Sync Animation**
+```
+🖱️ User Makes Changes
+    ↓ (Animation: Pencil drawing lines)
+⏳ 2-Second Debounce Timer
+    ↓ (Animation: Hourglass filling)
+🔄 Conflict Detection Check
+    ↓ (Animation: Magnifying glass scanning)
+🤖 Intelligent Auto-Merge
+    ↓ (Animation: Gears turning and merging)
+💾 Database Update
+    ↓ (Animation: Data flowing into cloud)
+✅ Sync Complete
+    ↓ (Animation: Green checkmark with confirmation)
+```
+
+---
+
+## 📈 Real-time Data Flow Explained
+
+### 🎯 **Daily Progress Tracking Flow**
+```
+👤 User Action → 🌐 Frontend (index.html) → 💾 Local Storage → ⚙️ Backend API → 🗄️ MongoDB → 📈 Analytics Update
+     ↓                ↓                       ↓                  ↓                ↓               ↓
+Complete Task → Instant UI Feedback → Offline Cache → Smart Sync → Save Progress → Update Heatmap
+```
+
+**Step-by-Step Process:**
+1. **🎯 User Action**: Complete a coding task or add new activity
+2. **⚡ Instant UI Update**: Checkbox toggles with visual feedback and celebration animations
+3. **💾 Local Storage**: Data cached immediately for offline access
+4. **🔄 Background Sync**: Automatic synchronization with backend (2-second debounce)
+5. **🗄️ Database Persistence**: Progress saved to MongoDB with version control
+6. **📈 Analytics Recalculation**: Streaks, heatmap, and statistics updated in real-time
+7. **🎉 Achievement Check**: System triggers confetti for 5+ completed tasks
+
+### 📝 **Blog Management Flow**
+```
+✍️ Create Blog → 🔗 Generate Slug → 💾 Save Draft → 🌐 Publish → 📋 Update Lists → 📊 Track Engagement
+     ↓               ↓                 ↓            ↓            ↓                 ↓
+Rich Editor → URL-Friendly ID → Auto-save → MongoDB → Blog Feeds → Views/Likes Analytics
+```
+
+**Step-by-Step Process:**
+1. **✍️ Content Creation**: Write with full Markdown editor in `blogs.html`
+2. **🔗 Slug Generation**: Automatic URL conversion ("My Coding Journey" → "my-coding-journey")
+3. **🔒 Privacy Settings**: Choose public (community) or private (personal notes)
+4. **💾 Database Storage**: Full content saved to Blogs collection
+5. **📋 List Updates**: Appears in "My Blogs" immediately, "All Blogs" if public
+6. **📊 Engagement Tracking**: View counters and like system activated
+
+### 👁️ **Blog Reading & Engagement Flow**
+```
+🔍 Visit Blog → 📥 Load Content → 🎨 Render Markdown → 👀 Track View → 📊 Update Popularity → 🏆 Show in Feeds
+     ↓             ↓                 ↓                 ↓              ↓                    ↓
+blog-view.html → API Fetch → Marked.js Processing → View Counter → Score Calculation → Popular Tab Ranking
+```
+
+**Step-by-Step Process:**
+1. **🔍 Page Load**: User visits `/blogs/your-blog-slug`
+2. **📥 Content Fetch**: `blog-view.html` calls API to get blog data
+3. **🎨 Markdown Rendering**: Raw Markdown transformed to beautiful HTML with syntax highlighting
+4. **👀 View Tracking**: Automatic view counter increment (prevents duplicate counts)
+5. **📊 Popularity Update**: Score recalculated: `Popularity = (likes + views)`
+6. **🏆 Feed Placement**: Blog appears higher in "Popular" tab based on engagement
+
+### 🔄 **Real-time Sync Architecture**
+```
+🖱️ Frontend Changes → ⏳ Debounce (2s) → 🔄 Conflict Check → 🤖 Smart Merge → 💾 Database Update
+     ↓                   ↓                  ↓                 ↓                ↓
 User Input → Wait for Pause → Version Compare → Auto-Resolve → Persist Changes
 ```
 
-**How synchronization protects your data:**
-1. **Debounced Saving** - Waits 2 seconds after last change to prevent API spam
-2. **Conflict Detection** - Checks if server has newer version of your data
-3. **Intelligent Merging** - Automatically combines compatible changes
-4. **User Resolution** - Prompts for manual resolution if significant conflicts
-5. **Version Control** - Every change tracked with timestamp and version number
+**How Synchronization Protects Your Data:**
+1. **⏳ Debounced Saving**: Waits 2 seconds after last change to prevent API spam
+2. **🔄 Conflict Detection**: Checks if server has newer version of your data
+3. **🤖 Intelligent Merging**: Automatically combines compatible changes
+4. **👤 User Resolution**: Prompts for manual resolution if significant conflicts
+5. **📊 Version Control**: Every change tracked with timestamp and version number
 
 ---
+
+## 🏗️ System Architecture Deep Dive
+
+### 🌐 **Frontend Architecture (Vercel)**
+```
+https://my-focus-flow.vercel.app/
+├── 📊 index.html (Progress Tracker & Analytics Dashboard)
+│   ├── 🎯 Daily Progress Management
+│   ├── 📈 GitHub-style Heatmap
+│   ├── 🔥 Streak Analytics
+│   └── 🎉 Achievement System
+├── 📝 blogs.html (Community Blogging Platform)
+│   ├── ✍️ Markdown Editor
+│   ├── 📋 Triple-tab Interface (All/My/Popular)
+│   ├── ❤️ Like & Engagement System
+│   └── 🔍 Search & Filtering
+├── 🔍 blog-view.html (Advanced Blog Reader)
+│   ├── 🎨 Markdown Rendering
+│   ├── 👀 View Counter
+│   ├── 📊 Popularity Tracking
+│   └── 📱 Responsive Reading
+└── 💾 Local Storage (Offline-First Cache)
+    ├── ⚡ Instant UI Updates
+    ├── 🔄 Auto-sync Queue
+    └── 📱 Cross-device Consistency
+```
+
+### ⚙️ **Backend Architecture (Render)**
+```
+https://daily-tracker-upst.onrender.com/api/
+├── 🔐 Authentication System
+│   ├── 🎫 JWT Token Management (230-day sessions)
+│   ├── 🔒 bcrypt Password Hashing
+│   ├── 📧 Password Recovery (OTP-based)
+│   └── 👤 User Session Management
+├── 📊 Progress Data API
+│   ├── 💾 CRUD Operations
+│   ├── 🔄 Conflict Resolution
+│   ├── 📈 Analytics Calculation
+│   └── ⚡ Real-time Sync
+├── 📝 Blog Management API
+│   ├── ✍️ Blog CRUD Operations
+│   ├── 🔗 Slug Generation
+│   ├️ 👀 View Tracking
+│   ├️ ❤️ Like System
+│   └️ 📊 Popularity Scoring
+└── 🗄️ Database Layer
+    ├── 👥 Users Collection
+    ├── 📝 Blogs Collection
+    ├── 📊 Progress Data
+    └── 📈 Activity Analytics
+```
+
+---
+
+## 🔧 Technical Integration Points
+
+### 🔐 **Security Integration**
+```
+User Login → bcryptjs (Password Hash) → JWT Token Generation → Secure API Calls → MongoDB Validation
+```
+
+### 📊 **Analytics Pipeline**
+```
+User Actions → Local Tracking → API Submission → MongoDB Storage → Heatmap Generation → UI Rendering
+```
+
+### 🔄 **Sync Engine**
+```
+Frontend Changes → Debounce Timer → Version Check → Conflict Resolution → Database Update → UI Refresh
+```
+
+### 🎨 **Markdown Processing**
+```
+Raw Markdown → Marked.js Processing → DOM Sanitization → HTML Rendering → Syntax Highlighting
+```
 
 ## ✨ Features That Make a Difference
 
@@ -226,35 +467,6 @@ User Input → Wait for Pause → Version Compare → Auto-Resolve → Persist C
 - **🔥 Streak Intelligence** - Current streak, max streak, and daily averages
 - **🎯 Progress Momentum** - Watch your consistency compound over time
 - **💪 Habit Formation Engine** - Scientifically-backed consistency tools
-
----
-
-## 🏗️ Project Architecture
-
-### Frontend (Vercel)
-```
-🌐 https://my-focus-flow.vercel.app/
-├── index.html (Main Progress Tracker with Analytics)
-├── blogs.html (Community Blogging Platform)
-├── blog-view.html (Advanced Blog Reader with Markdown)
-├── responsive.css (Mobile-First Responsive Design)
-└── FocusFlow.ico (Brand Identity)
-```
-
-### Backend (Render)
-```
-⚙️ https://daily-tracker-upst.onrender.com/
-├── server.js (Express API with 25+ Endpoints)
-├── MongoDB (User Data, Blogs, Analytics)
-├── JWT Authentication System
-└── Real-time Sync Engine
-```
-
-### Key Technical Stack
-- **Frontend**: Vanilla JavaScript, CSS3, HTML5 (Zero dependencies for maximum performance)
-- **Backend**: Node.js, Express.js, MongoDB, JWT, bcryptjs, Marked.js
-- **Deployment**: Vercel (Frontend), Render (Backend)
-- **Markdown**: Marked.js for rich blog content rendering
 
 ---
 
