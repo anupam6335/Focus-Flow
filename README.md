@@ -81,7 +81,7 @@ FocusFlow/
 
 ## 🔄 Complete System Architecture & Workflow
 
-### 🏗️ FocusFlow Ecosystem Flow Diagram
+### 🏗️ FocusFlow Ecosystem Flow Diagram [link](https://www.mermaidchart.com/app/projects/e9e5d958-0c91-416a-8623-5f12732be3d7/diagrams/1bc62070-cc0b-46f9-b9d0-8b6160bbc390/share/invite/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudElEIjoiMWJjNjIwNzAtY2MwYi00NmY5LWI5ZDAtOGI2MTYwYmJjMzkwIiwiYWNjZXNzIjoiRWRpdCIsImlhdCI6MTc1OTU2NDUxOX0.D7MEH3GTBCWUTd97qBti9GAcUFRKoPn5Rc1hgwD6-Vs)
 
 ```mermaid
 flowchart TB
