@@ -934,3 +934,90 @@ pre, code {
   bottom: 0 !important;
   z-index: -1 !important;
 }
+
+
+
+
+/* ===== CUSTOM SCROLLBAR - CODELEAF THEME ===== */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--codeleaf-bg-secondary, #f1f8f1);
+  border-radius: var(--codeleaf-radius-md, 6px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--codeleaf-accent-muted, #a8d4a8);
+  border-radius: var(--codeleaf-radius-md, 6px);
+  border: 2px solid var(--codeleaf-bg-secondary, #f1f8f1);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--codeleaf-accent-secondary, #4ca64c);
+  transform: scale(1.05);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--codeleaf-accent-primary, #2d7a2d);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--codeleaf-bg-secondary, #f1f8f1);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--codeleaf-accent-muted, #a8d4a8) var(--codeleaf-bg-secondary, #f1f8f1);
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: var(--codeleaf-bg-secondary, #0f230f);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--codeleaf-accent-muted, #2d5a2d);
+    border-color: var(--codeleaf-bg-secondary, #0f230f);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--codeleaf-accent-secondary, #5cb85c);
+  }
+  
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--codeleaf-accent-primary, #4ca64c);
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: var(--codeleaf-bg-secondary, #0f230f);
+  }
+  
+  * {
+    scrollbar-color: var(--codeleaf-accent-muted, #2d5a2d) var(--codeleaf-bg-secondary, #0f230f);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-width: 1px;
+  }
+}
