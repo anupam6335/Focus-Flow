@@ -842,3 +842,95 @@ pre, code {
   white-space: pre-wrap !important;
   word-wrap: break-word !important;
 }
+
+
+
+
+
+
+/* ===== LIKE BUTTON FIXES ===== */
+.like-btn {
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  font-size: 1.2rem !important;
+  padding: 5px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+  min-height: auto !important;
+  min-width: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.like-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.like-btn.liked {
+  color: #ff6b6b !important;
+  opacity: 1 !important;
+}
+
+.like-btn:not(.liked) {
+  color: var(--codeleaf-text-primary) !important;
+  opacity: 0.7 !important;
+}
+
+/* Fix for event propagation issues */
+.blog-card .like-btn {
+  pointer-events: auto !important;
+}
+
+.blog-card * {
+  pointer-events: none !important;
+}
+
+.blog-card .like-btn * {
+  pointer-events: auto !important;
+}
+
+/* Ensure the like button container doesn't block clicks */
+.blog-likes {
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+}
+
+/* Fix for the blog card clickable areas */
+.blog-card {
+  position: relative !important;
+}
+
+.blog-card > *:not(.blog-likes):not(.like-btn) {
+  pointer-events: auto !important;
+}
+
+/* Dark mode support for like button */
+@media (prefers-color-scheme: dark) {
+  .like-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+}
+
+/* Mobile responsiveness for like button */
+@media (max-width: 767px) {
+  .like-btn {
+    font-size: 1.1rem !important;
+    padding: 4px !important;
+  }
+}
+
+/* Additional fix for event target issues */
+.like-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: -1 !important;
+}
