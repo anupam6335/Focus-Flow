@@ -1,4 +1,4 @@
-# FocusFlow - Track Your Progress, Master Your Journey
+# 🌿 FocusFlow - Track Your Progress, Master Your Journey
 
 [![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://my-focus-flow.vercel.app/)
 [![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/anupam6335/FocusFlow/releases)
