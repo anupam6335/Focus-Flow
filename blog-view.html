@@ -478,6 +478,71 @@
       .toast.info .toast-icon {
         color: var(--accent-color);
       }
+
+      /* Scroll to Top Button */
+      .scroll-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.5rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      .scroll-to-top.visible {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .scroll-to-top:hover {
+        background: var(--link-color);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      .scroll-to-top:active {
+        transform: translateY(0);
+      }
+
+      .scroll-to-top:focus {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .scroll-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+          font-size: 1.3rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .scroll-to-top {
+          bottom: 15px;
+          right: 15px;
+          width: 40px;
+          height: 40px;
+          font-size: 1.2rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -486,7 +551,9 @@
         <div class="header-container">
           <h1 class="site-logo">FocusFlow</h1>
           <div class="nav-links">
-            <a href="https://my-focus-flow.vercel.app/blogs.html" class="nav-link"
+            <a
+              href="https://my-focus-flow.vercel.app/blogs.html"
+              class="nav-link"
               >← Back to Blogs</a
             >
             <a href="https://my-focus-flow.vercel.app/" class="nav-link"
@@ -824,10 +891,55 @@
           .replace(/'/g, "&#039;");
       }
 
+      // Scroll to Top Functionality
+      function initScrollToTop() {
+        const scrollToTopBtn = document.getElementById("scrollToTop");
+
+        if (!scrollToTopBtn) return;
+
+        // Show/hide button based on scroll position
+        function toggleScrollToTop() {
+          if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add("visible");
+          } else {
+            scrollToTopBtn.classList.remove("visible");
+          }
+        }
+
+        // Smooth scroll to top
+        function scrollToTop() {
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        }
+
+        // Event listeners
+        window.addEventListener("scroll", toggleScrollToTop);
+        scrollToTopBtn.addEventListener("click", scrollToTop);
+
+        // Keyboard accessibility
+        scrollToTopBtn.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            scrollToTop();
+          }
+        });
+
+        // Initialize
+        toggleScrollToTop();
+      }
+
+      // Initialize scroll to top when DOM is loaded
+      document.addEventListener("DOMContentLoaded", initScrollToTop);
+
       // Initialize when page loads
       document.addEventListener("DOMContentLoaded", loadBlog);
     </script>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
+      ↑
+    </button>
   </body>
 </html>
-
-
