@@ -598,10 +598,9 @@ app.get("/api/blogs/popular", authenticateToken, async (req, res) => {
       };
     }
 
-    const blogs = await Blog.find(query)
-      .select(
-        "title slug author isPublic tags likes likedBy views createdAt updatedAt content"
-      );
+    const blogs = await Blog.find(query).select(
+      "title slug author isPublic tags likes likedBy views createdAt updatedAt content"
+    );
 
     // Calculate popularity score and sort
     const blogsWithPopularity = blogs
@@ -621,7 +620,6 @@ app.get("/api/blogs/popular", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 // Get all public blogs (for "All Blogs" tab) - UPDATED to include views
 app.get("/api/blogs/all", authenticateToken, async (req, res) => {
@@ -684,7 +682,6 @@ app.get("/api/blogs/my", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 // Keep the existing /api/blogs route for backward compatibility - UPDATED to include views
 app.get("/api/blogs", authenticateToken, async (req, res) => {
@@ -954,7 +951,6 @@ app.post("/api/blogs/:slug/like", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 // Helper function to generate slug
 function generateSlug(title) {

@@ -803,14 +803,8 @@
         <div class="header-container">
           <h1 class="site-logo">FocusFlow Blogs</h1>
           <div class="nav-links">
-            <a href="https://my-focus-flow.vercel.app/" class="nav-link"
-              >← Back to Tracker</a
-            >
-            <a
-              href="https://my-focus-flow.vercel.app/blogs.html"
-              class="nav-link active"
-              >Blogs</a
-            >
+            <a id="back-link" class="nav-link">← Back to Tracker</a>
+            <a id="blog-link" class="nav-link active">Blogs</a>
           </div>
         </div>
       </header>
@@ -941,6 +935,12 @@
       let currentTab = "all"; // 'all', 'my-blogs', 'popular'
       const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
       const BASE_URL = "https://daily-tracker-upst.onrender.com";
+
+      // URL Redirect
+      const FRONTEND_URL = "https://my-focus-flow.vercel.app";
+
+      document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
+      document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;
 
       // Toast Notification System
       class ToastManager {

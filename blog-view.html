@@ -543,6 +543,154 @@
           font-size: 1.2rem;
         }
       }
+
+      /* Ensure modal styles are consistent */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: var(--bg-color);
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        border: 1px solid var(--border-color);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-title {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      /* Form styles */
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: 10px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .form-textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: monospace;
+      }
+
+      .form-input:focus,
+      .form-textarea:focus {
+        outline: 1px solid var(--accent-color);
+      }
+
+      .form-checkbox {
+        margin-right: 10px;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .markdown-help {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 5px;
+      }
+
+      /* Blog header actions styling */
+      .blog-title-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 15px;
+      }
+
+      .blog-header-actions {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+        margin-top: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .blog-title-section {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .blog-header-actions {
+          width: 100%;
+          justify-content: flex-start;
+        }
+      }
     </style>
   </head>
   <body>
@@ -551,14 +699,8 @@
         <div class="header-container">
           <h1 class="site-logo">FocusFlow</h1>
           <div class="nav-links">
-            <a
-              href="https://my-focus-flow.vercel.app/blogs.html"
-              class="nav-link"
-              >← Back to Blogs</a
-            >
-            <a href="https://my-focus-flow.vercel.app/" class="nav-link"
-              >Tracker</a
-            >
+            <a id="back-to-blogs" class="nav-link">← Back to Blogs</a>
+            <a id="tracker-link" class="nav-link">Tracker</a>
           </div>
         </div>
       </header>
@@ -575,7 +717,7 @@
             permission to view it.
           </p>
           <a
-            href="https://daily-tracker-upst.onrender.com/blogs"
+            href="https://my-focus-flow.vercel.app/blogs"
             class="btn btn-primary"
             style="margin-top: 15px"
             >Back to Blogs</a
@@ -584,7 +726,10 @@
 
         <article id="blogArticle" class="blog-article" style="display: none">
           <div class="blog-header">
-            <h1 class="blog-title" id="blogTitle"></h1>
+            <div class="blog-title-section">
+              <h1 class="blog-title" id="blogTitle"></h1>
+              <div class="blog-header-actions" id="blogHeaderActions"></div>
+            </div>
             <div class="blog-meta">
               <div>
                 By <strong id="blogAuthor"></strong> •
@@ -598,16 +743,76 @@
           <div class="blog-content" id="blogContentText"></div>
 
           <div class="blog-actions" id="blogActions">
-            <a
-              href="https://daily-tracker-upst.onrender.com/blogs"
-              class="btn btn-secondary"
-              >Back to Blogs</a
-            >
+            <a href="/blogs.html" class="btn btn-secondary">Back to Blogs</a>
           </div>
         </article>
       </div>
     </div>
+    <!-- Edit Blog Modal -->
+    <div class="modal" id="editBlogModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Blog</h3>
+          <button class="close-modal" onclick="closeEditModal()">
+            &times;
+          </button>
+        </div>
+        <form id="editBlogForm">
+          <div class="form-group">
+            <label class="form-label" for="editBlogTitle">Title</label>
+            <input type="text" id="editBlogTitle" class="form-input" required />
+          </div>
 
+          <div class="form-group">
+            <label class="form-label" for="editBlogContent"
+              >Content (Markdown supported)</label
+            >
+            <textarea
+              id="editBlogContent"
+              class="form-textarea"
+              required
+            ></textarea>
+            <div class="markdown-help">
+              Supports Markdown: **bold**, *italic*, `code`, # headers, - lists
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editBlogTags"
+              >Tags (comma separated)</label
+            >
+            <input
+              type="text"
+              id="editBlogTags"
+              class="form-input"
+              placeholder="coding, algorithms, tips"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input
+                type="checkbox"
+                id="editBlogIsPublic"
+                class="form-checkbox"
+              />
+              Make this blog public
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeEditModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">Update Blog</button>
+          </div>
+        </form>
+      </div>
+    </div>
     <!-- Add Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -615,6 +820,15 @@
       const pathSegments = window.location.pathname.split("/");
       const blogSlug = pathSegments[pathSegments.length - 1];
       const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+
+      const FRONTEND_URL = "https://my-focus-flow.vercel.app"; // or dynamically detect it
+
+      document.getElementById(
+        "back-to-blogs"
+      ).href = `${FRONTEND_URL}/blogs.html`;
+      document.getElementById(
+        "tracker-link"
+      ).href = `${FRONTEND_URL}/index.html`;
 
       // Toast Notification System
       class ToastManager {
@@ -816,15 +1030,17 @@
           contentContainer.innerHTML = "<p>No content available.</p>";
         }
 
-        // Set up actions for blog author
+        // Set up actions for blog author - moved to header
+        const headerActionsContainer =
+          document.getElementById("blogHeaderActions");
         const actionsContainer = document.getElementById("blogActions");
         const currentUser = localStorage.getItem("userId");
 
         if (currentUser === blog.author) {
-          actionsContainer.innerHTML += `
-                <button class="btn btn-primary" onclick="editBlog('${blog.slug}')">Edit Blog</button>
-                <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
-            `;
+          headerActionsContainer.innerHTML = `
+            <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
+            <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
+          `;
         }
 
         // Update page title
@@ -866,8 +1082,7 @@
           if (result.success) {
             toastManager.success("Blog deleted successfully!", "Blog Deleted");
             setTimeout(() => {
-              window.location.href =
-                "https://daily-tracker-upst.onrender.com/blogs";
+              window.location.href = "https://my-focus-flow.vercel.app/blogs";
             }, 1500);
           } else {
             toastManager.error(result.error, "Delete Failed");
@@ -929,6 +1144,289 @@
         // Initialize
         toggleScrollToTop();
       }
+
+      // Edit Blog Modal Functions
+      // Edit Blog Modal Functions
+      function openEditModal() {
+        // Get current blog data from the page
+        const blogTitle = document.getElementById("blogTitle").textContent;
+        const blogContentElement = document.getElementById("blogContentText");
+
+        // For content, we need to get the original markdown from the server
+        // Since we only have HTML, we'll use a simple conversion for now
+        // In a real app, you might want to store the original markdown separately
+        let markdownContent = "";
+
+        // Simple HTML to markdown conversion (basic)
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = blogContentElement.innerHTML;
+
+        // Convert common HTML elements back to markdown
+        markdownContent = tempDiv.innerHTML
+          .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1\n\n")
+          .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1\n\n")
+          .replace(/<h3[^>]*>(.*?)<\/h3>/g, "### $1\n\n")
+          .replace(/<strong[^>]*>(.*?)<\/strong>/g, "**$1**")
+          .replace(/<em[^>]*>(.*?)<\/em>/g, "*$1*")
+          .replace(/<code[^>]*>(.*?)<\/code>/g, "`$1`")
+          .replace(/<pre[^>]*>(.*?)<\/pre>/gs, "```\n$1\n```")
+          .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n\n")
+          .replace(/<br\s*\/?>/g, "\n")
+          .replace(/<[^>]+>/g, "") // Remove any remaining HTML tags
+          .trim();
+
+        // Get tags
+        const blogTags = Array.from(document.querySelectorAll(".blog-tag"))
+          .map((tag) => tag.textContent)
+          .join(", ");
+
+        // Get public/private status
+        const isPublic = document
+          .querySelector(".blog-visibility")
+          .textContent.includes("Public");
+
+        // Fill the edit form
+        document.getElementById("editBlogTitle").value = blogTitle;
+        document.getElementById("editBlogContent").value = markdownContent;
+        document.getElementById("editBlogTags").value = blogTags;
+        document.getElementById("editBlogIsPublic").checked = isPublic;
+
+        document.getElementById("editBlogModal").style.display = "flex";
+      }
+      function closeEditModal() {
+        document.getElementById("editBlogModal").style.display = "none";
+      }
+
+      // Handle edit form submission
+      document
+        .getElementById("editBlogForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const title = document.getElementById("editBlogTitle").value;
+          const content = document.getElementById("editBlogContent").value;
+          const tags = document
+            .getElementById("editBlogTags")
+            .value.split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag);
+          const isPublic = document.getElementById("editBlogIsPublic").checked;
+
+          if (!title.trim() || !content.trim()) {
+            toastManager.warning(
+              "Title and content are required",
+              "Validation Error"
+            );
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+              toastManager.error(
+                "Please log in to update blog",
+                "Authentication Error"
+              );
+              return;
+            }
+
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = "Updating...";
+            submitBtn.disabled = true;
+
+            const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ title, content, tags, isPublic }),
+            });
+
+            // Check if response is OK
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("Server error response:", errorText);
+              throw new Error(
+                `HTTP ${response.status}: ${response.statusText}`
+              );
+            }
+
+            // Try to parse response as JSON
+            let result;
+            try {
+              const responseText = await response.text();
+              result = responseText ? JSON.parse(responseText) : {};
+            } catch (parseError) {
+              console.error("JSON parse error:", parseError);
+              throw new Error("Invalid server response format");
+            }
+
+            // Check if result indicates success
+            if (result && result.success) {
+              closeEditModal();
+              toastManager.success(
+                "Blog updated successfully!",
+                "Blog Updated"
+              );
+
+              // Wait a moment for the toast to show, then reload
+              setTimeout(() => {
+                // If slug changed, redirect to new URL, otherwise reload
+                if (
+                  result.blog &&
+                  result.blog.slug &&
+                  result.blog.slug !== blogSlug
+                ) {
+                  window.location.href = `/blogs/${result.blog.slug}`;
+                } else {
+                  window.location.reload();
+                }
+              }, 1500);
+            } else {
+              throw new Error(
+                result.error || result.message || "Update failed"
+              );
+            }
+          } catch (error) {
+            console.error("Error updating blog:", error);
+
+            // More specific error messages
+            if (
+              error.message.includes("HTTP 401") ||
+              error.message.includes("HTTP 403")
+            ) {
+              toastManager.error(
+                "Authentication failed. Please log in again.",
+                "Auth Error"
+              );
+            } else if (error.message.includes("HTTP 404")) {
+              toastManager.error(
+                "Blog not found. It may have been deleted.",
+                "Not Found"
+              );
+            } else if (error.message.includes("HTTP 409")) {
+              toastManager.error(
+                "A blog with this title already exists.",
+                "Conflict"
+              );
+            } else {
+              toastManager.error(
+                `Failed to update blog: ${error.message}`,
+                "Update Error"
+              );
+            }
+          } finally {
+            // Reset button state
+            const submitBtn = document.querySelector(
+              '#editBlogForm button[type="submit"]'
+            );
+            if (submitBtn) {
+              submitBtn.textContent = "Update Blog";
+              submitBtn.disabled = false;
+            }
+          }
+        });
+      // New function to refresh blog content without full reload
+      function refreshBlogContent(updatedBlog) {
+        // Hide loading and error messages
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("errorMessage").style.display = "none";
+
+        // Show the blog article
+        const blogArticle = document.getElementById("blogArticle");
+        blogArticle.style.display = "block";
+
+        // Update the blog content with the new data
+        document.getElementById("blogTitle").textContent = updatedBlog.title;
+        document.getElementById("blogAuthor").textContent = updatedBlog.author;
+        document.getElementById("blogDate").textContent = new Date(
+          updatedBlog.createdAt
+        ).toLocaleDateString();
+
+        // Update visibility
+        const visibilityElement = document.getElementById("blogVisibility");
+        visibilityElement.textContent = updatedBlog.isPublic
+          ? "🌍 Public"
+          : "🔒 Private";
+        visibilityElement.title = updatedBlog.isPublic
+          ? "Public blog"
+          : "Private blog";
+
+        // Update meta info with views
+        const metaElement = document.querySelector(".blog-meta div");
+        metaElement.innerHTML = `
+    By <strong>${escapeHtml(updatedBlog.author)}</strong> • 
+    <span>${new Date(updatedBlog.createdAt).toLocaleDateString()}</span> •
+    <span>👁️ ${updatedBlog.views || 0} views</span> •
+    <span class="blog-visibility">${
+      updatedBlog.isPublic ? "🌍 Public" : "🔒 Private"
+    }</span>
+  `;
+
+        // Update tags
+        const tagsContainer = document.getElementById("blogTags");
+        if (updatedBlog.tags && updatedBlog.tags.length > 0) {
+          tagsContainer.innerHTML = updatedBlog.tags
+            .map((tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`)
+            .join("");
+        } else {
+          tagsContainer.innerHTML = "";
+        }
+
+        // Render markdown content
+        const contentContainer = document.getElementById("blogContentText");
+        if (updatedBlog.content && updatedBlog.content.trim()) {
+          try {
+            const htmlContent = marked.parse(updatedBlog.content);
+            contentContainer.innerHTML = htmlContent;
+          } catch (error) {
+            console.error("Error parsing markdown:", error);
+            contentContainer.innerHTML = `<p>${escapeHtml(
+              updatedBlog.content
+            )}</p>`;
+          }
+        } else {
+          contentContainer.innerHTML = "<p>No content available.</p>";
+        }
+
+        // Update page title
+        document.title = `${updatedBlog.title} - FocusFlow Blogs`;
+
+        // Update the edit and delete buttons with the new slug
+        const headerActionsContainer =
+          document.getElementById("blogHeaderActions");
+        const actionsContainer = document.getElementById("blogActions");
+        const currentUser = localStorage.getItem("userId");
+
+        if (currentUser === updatedBlog.author) {
+          headerActionsContainer.innerHTML = `
+            <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
+            <button class="btn btn-danger" onclick="deleteBlog('${updatedBlog.slug}')">Delete Blog</button>
+          `;
+        }
+      }
+
+      // Close modal when clicking outside
+      document
+        .getElementById("editBlogModal")
+        .addEventListener("click", (e) => {
+          if (e.target === document.getElementById("editBlogModal")) {
+            closeEditModal();
+          }
+        });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.key === "Escape" &&
+          document.getElementById("editBlogModal").style.display === "flex"
+        ) {
+          closeEditModal();
+        }
+      });
 
       // Initialize scroll to top when DOM is loaded
       document.addEventListener("DOMContentLoaded", initScrollToTop);
