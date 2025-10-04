@@ -1295,15 +1295,37 @@
       }
 
       // Toggle like on a blog
-      async function toggleLike(slug) {
+     // Toggle like on a blog - FIXED VERSION
+      async function toggleLike(slug, event) {
+        // Ensure event is properly passed and prevent default behavior
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        
         try {
           const token = localStorage.getItem("authToken");
           const currentUser = localStorage.getItem("userId");
-          const blogCard = event.target.closest(".blog-card");
-          const blogAuthor = blogCard
-            .querySelector(".blog-meta span")
-            .textContent.replace("By ", "");
-
+          
+          // Get blog card and author information safely
+          let blogCard;
+          let blogAuthor;
+          
+          if (event && event.target) {
+            blogCard = event.target.closest(".blog-card");
+          } else {
+            // Fallback: find blog card by slug or other means
+            blogCard = document.querySelector(`[onclick*="${slug}"]`)?.closest('.blog-card') || 
+                       document.querySelector('.blog-card');
+          }
+          
+          if (blogCard) {
+            const authorElement = blogCard.querySelector(".blog-meta span");
+            if (authorElement) {
+              blogAuthor = authorElement.textContent.replace("By ", "").trim();
+            }
+          }
+      
           // Prevent self-like on frontend
           if (blogAuthor === currentUser) {
             toastManager.warning(
@@ -1312,38 +1334,50 @@
             );
             return;
           }
-
+      
           const response = await fetch(`${API_BASE_URL}/blogs/${slug}/like`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-
+      
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(
               errorData.error || `HTTP error! status: ${response.status}`
             );
           }
-
+      
           const result = await response.json();
-
+      
           if (result.success) {
             // Update the UI immediately for better UX
-            const likeBtn = event.target.closest(".like-btn");
-            const likesCount = likeBtn.nextElementSibling;
-
-            if (likeBtn.classList.contains("liked")) {
-              likeBtn.classList.remove("liked");
-              likeBtn.innerHTML = "🤍";
-              likesCount.textContent = parseInt(likesCount.textContent) - 1;
-            } else {
-              likeBtn.classList.add("liked");
-              likeBtn.innerHTML = "❤️";
-              likesCount.textContent = parseInt(likesCount.textContent) + 1;
+            let likeBtn;
+            if (event && event.target) {
+              likeBtn = event.target.closest(".like-btn");
+            } else if (blogCard) {
+              likeBtn = blogCard.querySelector(".like-btn");
             }
-
+            
+            if (likeBtn) {
+              const likesCount = likeBtn.nextElementSibling;
+              
+              if (likeBtn.classList.contains("liked")) {
+                likeBtn.classList.remove("liked");
+                likeBtn.innerHTML = "🤍";
+                if (likesCount) {
+                  likesCount.textContent = parseInt(likesCount.textContent) - 1;
+                }
+              } else {
+                likeBtn.classList.add("liked");
+                likeBtn.innerHTML = "❤️";
+                if (likesCount) {
+                  likesCount.textContent = parseInt(likesCount.textContent) + 1;
+                }
+              }
+            }
+      
             // Reload the current tab to reflect the like change in popularity
             await loadBlogs(currentPage);
             await updateTabCounts();
@@ -1524,6 +1558,7 @@
     </script>
   </body>
 </html>
+
 
 
 
