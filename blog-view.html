@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="responsive.css">
     <title>Blog - FocusFlow</title>
     <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
+    <link rel="stylesheet" href="responsive.css" />
     <style>
       /* Reuse existing theme variables */
       :root {
@@ -483,12 +483,16 @@
   <body>
     <div class="container">
       <header>
-        <h1>FocusFlow</h1>
-        <div class="nav-links">
-          <a href="https://daily-tracker-upst.onrender.com/blogs" class="nav-link"
-            >← Back to Blogs</a
-          >
-          <a href="https://daily-tracker-upst.onrender.com/" class="nav-link">Tracker</a>
+        <div class="header-container">
+          <h1 class="site-logo">FocusFlow</h1>
+          <div class="nav-links">
+            <a href="https://my-focus-flow.vercel.app/blogs" class="nav-link"
+              >← Back to Blogs</a
+            >
+            <a href="https://my-focus-flow.vercel.app/" class="nav-link"
+              >Tracker</a
+            >
+          </div>
         </div>
       </header>
 
@@ -527,7 +531,9 @@
           <div class="blog-content" id="blogContentText"></div>
 
           <div class="blog-actions" id="blogActions">
-            <a href="https://daily-tracker-upst.onrender.com/blogs" class="btn btn-secondary"
+            <a
+              href="https://daily-tracker-upst.onrender.com/blogs"
+              class="btn btn-secondary"
               >Back to Blogs</a
             >
           </div>
@@ -656,12 +662,11 @@
           const token = localStorage.getItem("authToken");
           const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-          
-    // Track view first
-    await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
-      method: 'POST',
-      headers: headers
-    }).catch(err => console.error('View tracking failed:', err));
+          // Track view first
+          await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
+            method: "POST",
+            headers: headers,
+          }).catch((err) => console.error("View tracking failed:", err));
 
           const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
             headers,
@@ -709,15 +714,16 @@
           ? "Public blog"
           : "Private blog";
 
-           // Add views to meta info
-  const metaElement = document.querySelector('.blog-meta div');
-  metaElement.innerHTML = `
+        // Add views to meta info
+        const metaElement = document.querySelector(".blog-meta div");
+        metaElement.innerHTML = `
     By <strong>${blog.author}</strong> • 
     <span>${new Date(blog.createdAt).toLocaleDateString()}</span> •
     <span>👁️ ${blog.views || 0} views</span> •
-    <span class="blog-visibility">${blog.isPublic ? '🌍 Public' : '🔒 Private'}</span>
+    <span class="blog-visibility">${
+      blog.isPublic ? "🌍 Public" : "🔒 Private"
+    }</span>
   `;
-
 
         // Set tags
         const tagsContainer = document.getElementById("blogTags");
@@ -793,7 +799,8 @@
           if (result.success) {
             toastManager.success("Blog deleted successfully!", "Blog Deleted");
             setTimeout(() => {
-              window.location.href = "https://daily-tracker-upst.onrender.com/blogs";
+              window.location.href =
+                "https://daily-tracker-upst.onrender.com/blogs";
             }, 1500);
           } else {
             toastManager.error(result.error, "Delete Failed");
@@ -822,4 +829,3 @@
     </script>
   </body>
 </html>
-

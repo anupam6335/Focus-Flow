@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="responsive.css">
     <title>Blogs - FocusFlow</title>
     <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
+    <link rel="stylesheet" href="responsive.css" />
     <style>
       /* Reuse existing theme variables */
       :root {
@@ -735,14 +735,18 @@
   <body>
     <div class="container">
       <header>
-        <h1>FocusFlow Blogs</h1>
-        <div class="nav-links">
-          <a href="https://daily-tracker-upst.onrender.com/" class="nav-link"
-            >← Back to Tracker</a
-          >
-          <a href="https://daily-tracker-upst.onrender.com/blogs" class="nav-link active"
-            >Blogs</a
-          >
+        <div class="header-container">
+          <h1 class="site-logo">FocusFlow Blogs</h1>
+          <div class="nav-links">
+            <a href="https://my-focus-flow.vercel.app/" class="nav-link"
+              >← Back to Tracker</a
+            >
+            <a
+              href="https://my-focus-flow.vercel.app/blogs"
+              class="nav-link active"
+              >Blogs</a
+            >
+          </div>
         </div>
       </header>
 
@@ -752,7 +756,7 @@
           <p>You need to be logged in to read and create blogs.</p>
           <button
             class="login-btn"
-            onclick="window.location.href='https://daily-tracker-upst.onrender.com/'"
+            onclick="window.location.href='https://my-focus-flow.vercel.app/'"
           >
             Go to Login
           </button>
@@ -874,7 +878,7 @@
       let editingBlog = null;
       let currentTab = "all"; // 'all', 'my-blogs', 'popular'
       const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
-      const BASE_URL = "https://daily-tracker-upst.onrender.com";
+      const BASE_URL = "https://my-focus-flow.vercel.app/";
 
       // Toast Notification System
       class ToastManager {
@@ -1011,132 +1015,135 @@
       }
 
       // Load blogs based on current tab
-     // Load blogs based on current tab - UPDATED to fix popular tab
-async function loadBlogs(page = 1) {
-  try {
-    const token = localStorage.getItem("authToken");
-    let url = "";
+      // Load blogs based on current tab - UPDATED to fix popular tab
+      async function loadBlogs(page = 1) {
+        try {
+          const token = localStorage.getItem("authToken");
+          let url = "";
 
-    // Determine which API endpoint to call based on current tab
-    switch (currentTab) {
-      case "all":
-        url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
-        break;
-      case "my-blogs":
-        url = `${API_BASE_URL}/blogs/my?page=${page}&limit=9`;
-        break;
-      case "popular":
-        url = `${API_BASE_URL}/blogs/popular?limit=9`;
-        break;
-      default:
-        url = `${API_BASE_URL}/blogs?page=${page}&limit=9`;
-    }
+          // Determine which API endpoint to call based on current tab
+          switch (currentTab) {
+            case "all":
+              url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
+              break;
+            case "my-blogs":
+              url = `${API_BASE_URL}/blogs/my?page=${page}&limit=9`;
+              break;
+            case "popular":
+              url = `${API_BASE_URL}/blogs/popular?limit=9`;
+              break;
+            default:
+              url = `${API_BASE_URL}/blogs?page=${page}&limit=9`;
+          }
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-    if (!response.ok) {
-      // Handle 404 for popular route specifically
-      if (response.status === 404 && currentTab === 'popular') {
-        throw new Error("Popular blogs endpoint not found. Please check server configuration.");
+          if (!response.ok) {
+            // Handle 404 for popular route specifically
+            if (response.status === 404 && currentTab === "popular") {
+              throw new Error(
+                "Popular blogs endpoint not found. Please check server configuration."
+              );
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            displayBlogs(result.blogs);
+
+            // Setup pagination only for tabs that support it
+            if (currentTab !== "popular") {
+              setupPagination(
+                result.currentPage,
+                result.totalPages,
+                result.total
+              );
+            } else {
+              document.getElementById("pagination").innerHTML = "";
+            }
+          } else {
+            toastManager.error(
+              result.error || "Failed to load blogs",
+              "Blog Error"
+            );
+          }
+        } catch (error) {
+          console.error("Error loading blogs:", error);
+
+          // More specific error message for popular tab
+          if (currentTab === "popular") {
+            toastManager.error(
+              "Failed to load popular blogs. The feature might be temporarily unavailable.",
+              "Popular Blogs Error"
+            );
+          } else {
+            toastManager.error(
+              "Failed to load blogs. Please try again.",
+              "Network Error"
+            );
+          }
+        }
       }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+      // Update tab counts - FIXED for popular tab
+      async function updateTabCounts() {
+        try {
+          const token = localStorage.getItem("authToken");
 
-    const result = await response.json();
+          // Get counts for all tabs
+          const [allBlogsRes, myBlogsRes, popularBlogsRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/blogs/all?limit=1`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${API_BASE_URL}/blogs/my?limit=1`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${API_BASE_URL}/blogs/popular?limit=100`, {
+              // Increased limit to get accurate count
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-    if (result.success) {
-      displayBlogs(result.blogs);
+          const [allBlogs, myBlogs, popularBlogs] = await Promise.all([
+            allBlogsRes.ok ? allBlogsRes.json() : { success: false },
+            myBlogsRes.ok ? myBlogsRes.json() : { success: false },
+            popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
+          ]);
 
-      // Setup pagination only for tabs that support it
-      if (currentTab !== "popular") {
-        setupPagination(
-          result.currentPage,
-          result.totalPages,
-          result.total
-        );
-      } else {
-        document.getElementById("pagination").innerHTML = "";
+          // Update badge counts with fallbacks
+          if (allBlogs.success) {
+            document.getElementById("all-blogs-count").textContent =
+              allBlogs.total || 0;
+          } else {
+            document.getElementById("all-blogs-count").textContent = "0";
+          }
+
+          if (myBlogs.success) {
+            document.getElementById("my-blogs-count").textContent =
+              myBlogs.total || 0;
+          } else {
+            document.getElementById("my-blogs-count").textContent = "0";
+          }
+
+          if (popularBlogs.success) {
+            document.getElementById("popular-blogs-count").textContent =
+              popularBlogs.blogs?.length || 0;
+          } else {
+            document.getElementById("popular-blogs-count").textContent = "0";
+          }
+        } catch (error) {
+          console.error("Error updating tab counts:", error);
+          // Set fallback values
+          document.getElementById("all-blogs-count").textContent = "0";
+          document.getElementById("my-blogs-count").textContent = "0";
+          document.getElementById("popular-blogs-count").textContent = "0";
+        }
       }
-    } else {
-      toastManager.error(
-        result.error || "Failed to load blogs",
-        "Blog Error"
-      );
-    }
-  } catch (error) {
-    console.error("Error loading blogs:", error);
-    
-    // More specific error message for popular tab
-    if (currentTab === 'popular') {
-      toastManager.error(
-        "Failed to load popular blogs. The feature might be temporarily unavailable.",
-        "Popular Blogs Error"
-      );
-    } else {
-      toastManager.error(
-        "Failed to load blogs. Please try again.",
-        "Network Error"
-      );
-    }
-  }
-}
-     // Update tab counts - FIXED for popular tab
-async function updateTabCounts() {
-  try {
-    const token = localStorage.getItem("authToken");
-
-    // Get counts for all tabs
-    const [allBlogsRes, myBlogsRes, popularBlogsRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/blogs/all?limit=1`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${API_BASE_URL}/blogs/my?limit=1`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${API_BASE_URL}/blogs/popular?limit=100`, { // Increased limit to get accurate count
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-    ]);
-
-    const [allBlogs, myBlogs, popularBlogs] = await Promise.all([
-      allBlogsRes.ok ? allBlogsRes.json() : { success: false },
-      myBlogsRes.ok ? myBlogsRes.json() : { success: false },
-      popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
-    ]);
-
-    // Update badge counts with fallbacks
-    if (allBlogs.success) {
-      document.getElementById("all-blogs-count").textContent =
-        allBlogs.total || 0;
-    } else {
-      document.getElementById("all-blogs-count").textContent = "0";
-    }
-    
-    if (myBlogs.success) {
-      document.getElementById("my-blogs-count").textContent =
-        myBlogs.total || 0;
-    } else {
-      document.getElementById("my-blogs-count").textContent = "0";
-    }
-    
-    if (popularBlogs.success) {
-      document.getElementById("popular-blogs-count").textContent =
-        popularBlogs.blogs?.length || 0;
-    } else {
-      document.getElementById("popular-blogs-count").textContent = "0";
-    }
-  } catch (error) {
-    console.error("Error updating tab counts:", error);
-    // Set fallback values
-    document.getElementById("all-blogs-count").textContent = "0";
-    document.getElementById("my-blogs-count").textContent = "0";
-    document.getElementById("popular-blogs-count").textContent = "0";
-  }
-}
       // Display blogs in grid
       function displayBlogs(blogs) {
         const blogsGrid = document.getElementById("blogsGrid");
@@ -1517,4 +1524,3 @@ async function updateTabCounts() {
     </script>
   </body>
 </html>
-

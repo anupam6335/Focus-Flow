@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="responsive.css">
     <link rel="icon" type="image/x-icon" href="FocusFlow.ico" />
+    <link rel="stylesheet" href="responsive.css">
     <title>FocusFlow – Track Your Progress, Master Your Journey</title>
     <style>
       :root {
@@ -50,6 +50,7 @@
         padding: 20px;
         transition: background-color 0.3s, color 0.3s;
         overflow-x: hidden;
+        padding-top: 80px !important;
       }
 
       .main-container {
@@ -84,11 +85,16 @@
         margin-bottom: 30px;
         padding-bottom: 15px;
         border-bottom: 1px solid var(--border-color);
+        min-height: 60px;
+        padding: 12px 0;
+        flex-wrap: wrap;
+        gap: 12px;
       }
 
       h1 {
-        font-size: 2rem;
+        font-size: 1.5rem;
         color: var(--accent-color);
+        line-height: 1.2;
       }
 
       .theme-toggle {
@@ -104,6 +110,27 @@
 
       .theme-toggle:hover {
         opacity: 0.9;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .nav-link {
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+
+      .nav-link:hover {
+        background-color: rgba(88, 166, 255, 0.1);
       }
 
       table {
@@ -1343,6 +1370,28 @@
         transform: translateY(0);
       }
 
+      /* Tablet header styles */
+      @media (min-width: 769px) {
+        .container header {
+          min-height: auto;
+          flex-wrap: nowrap;
+          gap: 20px;
+        }
+
+        .container h1 {
+          font-size: 2rem;
+        }
+
+        .nav-link {
+          padding: 8px 16px;
+          font-size: 1rem;
+        }
+
+        body {
+          padding-top: 20px !important;
+        }
+      }
+
       /* Responsive Design */
       @media (max-width: 1200px) {
         .main-container {
@@ -1631,34 +1680,24 @@
       <!-- Left Column (70%) -->
       <div class="left-column">
         <div class="container">
-          <header>
-            <h1>FocusFlow</h1>
-            <!-- Add this inside the header section, after the existing content -->
-            <div style="display: flex; align-items: center; gap: 15px">
-              <a
-                href="/blogs.html"
-                style="
-                  color: var(--text-color);
-                  text-decoration: none;
-                  padding: 8px 16px;
-                  border-radius: 6px;
-                  transition: background-color 0.2s;
-                "
-              >
-                📝 Blogs
-              </a>
-              <div id="syncStatus">
-                <div class="sync-dot synced"></div>
-                <span>Synced</span>
-              </div>
-              <div>
-                <button class="sync-button" id="syncButton">🔄 Sync Now</button>
-                <button class="theme-toggle" id="themeToggle">
-                  Switch to Light Theme
-                </button>
-              </div>
-            </div>
-          </header>
+         <header>
+  <div class="header-container">
+    <h1 class="site-logo">FocusFlow</h1>
+    <div class="header-controls">
+      <a href="/blogs.html" class="nav-link blog-link">📝 Blogs</a>
+      <div id="syncStatus" class="sync-status">
+        <div class="sync-dot synced"></div>
+        <span>Synced</span>
+      </div>
+      <div class="header-buttons">
+        <button class="sync-button" id="syncButton">🔄 Sync Now</button>
+        <button class="theme-toggle" id="themeToggle">
+          Switch to Light Theme
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
 
           <!-- Toast Notification Container -->
           <div class="toast-container" id="toastContainer"></div>
@@ -5268,4 +5307,3 @@
     </script>
   </body>
 </html>
-
