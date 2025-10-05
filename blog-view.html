@@ -762,7 +762,7 @@
             permission to view it.
           </p>
           <a
-            href="https://daily-tracker-upst.onrender.com/blogs.html"
+            href="https://focus-flow-lopn.onrender.com/blogs.html"
             class="btn btn-primary"
             style="margin-top: 15px"
             >Back to Blogs</a
@@ -788,7 +788,7 @@
           <div class="blog-content" id="blogContentText"></div>
 
           <div class="blog-actions" id="blogActions">
-            <a href="https://daily-tracker-upst.onrender.com/blogs.html" class="btn btn-secondary">Back to Blogs</a>
+            <a href="https://focus-flow-lopn.onrender.com/blogs.html" class="btn btn-secondary">Back to Blogs</a>
           </div>
         </article>
       </div>
@@ -864,9 +864,9 @@
       // Get blog slug from URL
       const pathSegments = window.location.pathname.split("/");
       const blogSlug = pathSegments[pathSegments.length - 1];
-      const API_BASE_URL = "https://daily-tracker-upst.onrender.com/api";
+      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 
-      const FRONTEND_URL = "https://daily-tracker-upst.onrender.com"; // or dynamically detect it
+      const FRONTEND_URL = "https://focus-flow-lopn.onrender.com"; // or dynamically detect it
 
       document.getElementById(
         "back-to-blogs"
@@ -1105,7 +1105,7 @@
       }
 
       function editBlog(slug) {
-        window.location.href = `https://daily-tracker-upst.onrender.com/blogs?edit=${slug}`;
+        window.location.href = `https://focus-flow-lopn.onrender.com/blogs?edit=${slug}`;
       }
 
       async function deleteBlog(slug) {
@@ -1132,7 +1132,7 @@
             toastManager.success("Blog deleted successfully!", "Blog Deleted");
             setTimeout(() => {
               window.location.href =
-                "https://daily-tracker-upst.onrender.com/blogs.html";
+                "https://focus-flow-lopn.onrender.com/blogs.html";
             }, 1500);
           } else {
             toastManager.error(result.error, "Delete Failed");
