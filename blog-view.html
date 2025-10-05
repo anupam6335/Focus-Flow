@@ -673,10 +673,55 @@
       }
 
       .blog-header-actions {
-        display: flex;
+        display: flex !important;
         gap: 10px;
-        flex-shrink: 0;
-        margin-top: 5px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 768px) {
+        .blog-title-section {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .blog-header-actions {
+          width: 100%;
+          justify-content: flex-start;
+          margin-top: 10px;
+        }
+        .blog-header-actions .btn {
+          min-width: 120px;
+          padding: 10px 16px;
+          font-size: 14px;
+          flex: 1;
+          max-width: calc(50% - 5px);
+        }
+
+        /* Ensure buttons are touch-friendly on mobile */
+        .btn {
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      /* Additional safety rules to prevent hiding */
+      .blog-actions,
+      .blog-header-actions {
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: flex !important;
+      }
+
+      /* Fix for the blog title section layout on mobile */
+      .blog-title-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 15px;
       }
 
       @media (max-width: 768px) {
@@ -1041,6 +1086,10 @@
             <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
             <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
           `;
+          // Ensure buttons are visible
+          headerActionsContainer.style.display = "flex";
+          headerActionsContainer.style.gap = "10px";
+          headerActionsContainer.style.flexWrap = "wrap";
         }
 
         // Update page title
@@ -1082,7 +1131,8 @@
           if (result.success) {
             toastManager.success("Blog deleted successfully!", "Blog Deleted");
             setTimeout(() => {
-              window.location.href = "https://my-focus-flow.vercel.app/blogs.html";
+              window.location.href =
+                "https://my-focus-flow.vercel.app/blogs.html";
             }, 1500);
           } else {
             toastManager.error(result.error, "Delete Failed");
@@ -1441,4 +1491,3 @@
     </button>
   </body>
 </html>
-
