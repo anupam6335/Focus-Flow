@@ -870,7 +870,7 @@
       const blogSlug = pathSegments[pathSegments.length - 1];
       const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 
-      const FRONTEND_URL = "https://focus-flow-lopn.onrender.com"; // or dynamically detect it
+      const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
       document.getElementById(
         "back-to-blogs"
@@ -888,15 +888,15 @@
             this.container.className = "toast-container";
             this.container.id = "toastContainer";
             this.container.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 10000;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                    max-width: 400px;
-                `;
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          max-width: 400px;
+        `;
             document.body.appendChild(this.container);
           }
           this.toastId = 0;
@@ -913,14 +913,14 @@
             duration > 0 ? '<div class="toast-progress"></div>' : "";
 
           toast.innerHTML = `
-                <div class="toast-icon">${icon}</div>
-                <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ""}
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
-                ${progressBar}
-            `;
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+          ${title ? `<div class="toast-title">${title}</div>` : ""}
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
+        ${progressBar}
+      `;
 
           this.container.appendChild(toast);
 
@@ -987,6 +987,56 @@
         sanitize: false,
       });
 
+      // BLOG SHARE FUNCTIONALITY - MAKE IT GLOBAL
+      window.shareBlog = async function () {
+        try {
+          const currentUrl = window.location.href;
+          console.log("Sharing URL:", currentUrl); // Debug log
+
+          // Use modern Clipboard API if available
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(currentUrl);
+            toastManager.success(
+              "Blog URL copied to clipboard!",
+              "Share Successful"
+            );
+          }
+          // Fallback for older browsers
+          else {
+            const textArea = document.createElement("textarea");
+            textArea.value = currentUrl;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            const successful = document.execCommand("copy");
+            document.body.removeChild(textArea);
+
+            if (successful) {
+              toastManager.success(
+                "Blog URL copied to clipboard!",
+                "Share Successful"
+              );
+            } else {
+              throw new Error("Fallback copy method failed");
+            }
+          }
+        } catch (error) {
+          console.error("Share failed:", error);
+
+          // Ultimate fallback - show URL for manual copy
+          const currentUrl = window.location.href;
+          toastManager.info(
+            `Copy this URL to share: ${currentUrl}`,
+            "Manual Share Required",
+            10000
+          );
+        }
+      };
+
       async function loadBlog() {
         try {
           const token = localStorage.getItem("authToken");
@@ -1028,55 +1078,6 @@
         }
       }
 
-      // Blog Share Functionality
-      async function shareBlog() {
-        try {
-          const currentUrl = window.location.href;
-
-          // Use modern Clipboard API if available
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(currentUrl);
-            toastManager.success(
-              "Blog URL copied to clipboard!",
-              "Share Successful"
-            );
-          }
-          // Fallback for older browsers
-          else {
-            const textArea = document.createElement("textarea");
-            textArea.value = currentUrl;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-999999px";
-            textArea.style.top = "-999999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            const successful = document.execCommand("copy");
-            document.body.removeChild(textArea);
-
-            if (successful) {
-              toastManager.success(
-                "Blog URL copied to clipboard!",
-                "Share Successful"
-              );
-            } else {
-              throw new Error("Fallback copy method failed");
-            }
-          }
-        } catch (error) {
-          console.error("Share failed:", error);
-
-          // Ultimate fallback - show URL in alert for manual copy
-          const currentUrl = window.location.href;
-          toastManager.info(
-            `Copy this URL to share: ${currentUrl}`,
-            "Manual Share Required",
-            10000
-          );
-        }
-      }
-
       function displayBlog(blog) {
         document.getElementById("blogArticle").style.display = "block";
 
@@ -1096,13 +1097,13 @@
         // Add views to meta info
         const metaElement = document.querySelector(".blog-meta div");
         metaElement.innerHTML = `
-    By <strong>${blog.author}</strong> • 
-    <span>${new Date(blog.createdAt).toLocaleDateString()}</span> •
-    <span>👁️ ${blog.views || 0} views</span> •
-    <span class="blog-visibility">${
-      blog.isPublic ? "🌍 Public" : "🔒 Private"
-    }</span>
-  `;
+      By <strong>${blog.author}</strong> • 
+      <span>${new Date(blog.createdAt).toLocaleDateString()}</span> •
+      <span>👁️ ${blog.views || 0} views</span> •
+      <span class="blog-visibility">${
+        blog.isPublic ? "🌍 Public" : "🔒 Private"
+      }</span>
+    `;
 
         // Set tags
         const tagsContainer = document.getElementById("blogTags");
@@ -1128,24 +1129,37 @@
           contentContainer.innerHTML = "<p>No content available.</p>";
         }
 
-        // Set up actions for blog author - moved to header
+        // Set up header actions
         const headerActionsContainer =
           document.getElementById("blogHeaderActions");
-        const actionsContainer = document.getElementById("blogActions");
         const currentUser = localStorage.getItem("userId");
 
-        // Clear existing actions first
+        // Clear existing actions
         headerActionsContainer.innerHTML = "";
 
-        // ADD SHARE BUTTON FOR ALL PUBLIC BLOGS
-        addShareButtonToHeader(blog);
+        // Add share button for ALL public blogs
+        if (blog.isPublic) {
+          const shareButton = document.createElement("button");
+          shareButton.className = "btn btn-primary";
+          shareButton.innerHTML = "📤 Share Blog";
+          shareButton.onclick = window.shareBlog; // Use global function
+          shareButton.title = "Copy blog URL to clipboard";
+          headerActionsContainer.appendChild(shareButton);
+        }
 
         // Add edit/delete buttons only for blog author
         if (currentUser === blog.author) {
-          headerActionsContainer.innerHTML += `
-      <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
-      <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
-    `;
+          const editButton = document.createElement("button");
+          editButton.className = "btn btn-primary";
+          editButton.textContent = "Edit Blog";
+          editButton.onclick = openEditModal;
+          headerActionsContainer.appendChild(editButton);
+
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "btn btn-danger";
+          deleteButton.textContent = "Delete Blog";
+          deleteButton.onclick = () => deleteBlog(blog.slug);
+          headerActionsContainer.appendChild(deleteButton);
         }
 
         // Ensure buttons are visible
@@ -1157,42 +1171,12 @@
         document.title = `${blog.title} - FocusFlow Blogs`;
       }
 
-      // Add share button to blog header for all public blogs
-      function addShareButtonToHeader(blog) {
-        const headerActionsContainer =
-          document.getElementById("blogHeaderActions");
-
-        if (!headerActionsContainer) {
-          console.error("blogHeaderActions container not found");
-          return;
-        }
-
-        // Only add share button for public blogs
-        if (blog.isPublic) {
-          const shareButton = document.createElement("button");
-          shareButton.className = "btn btn-primary";
-          shareButton.innerHTML = "📤 Share Blog";
-          shareButton.onclick = shareBlog;
-          shareButton.title = "Copy blog URL to clipboard";
-
-          // Insert share button at the beginning
-          headerActionsContainer.insertBefore(
-            shareButton,
-            headerActionsContainer.firstChild
-          );
-        }
-      }
-
       function showError(message) {
         const errorDiv = document.getElementById("errorMessage");
         errorDiv.style.display = "block";
         if (message) {
           errorDiv.querySelector("p").textContent = message;
         }
-      }
-
-      function editBlog(slug) {
-        window.location.href = `https://focus-flow-lopn.onrender.com/blogs?edit=${slug}`;
       }
 
       async function deleteBlog(slug) {
@@ -1243,62 +1227,15 @@
           .replace(/'/g, "&#039;");
       }
 
-      // Scroll to Top Functionality
-      function initScrollToTop() {
-        const scrollToTopBtn = document.getElementById("scrollToTop");
-
-        if (!scrollToTopBtn) return;
-
-        // Show/hide button based on scroll position
-        function toggleScrollToTop() {
-          if (window.pageYOffset > 300) {
-            scrollToTopBtn.classList.add("visible");
-          } else {
-            scrollToTopBtn.classList.remove("visible");
-          }
-        }
-
-        // Smooth scroll to top
-        function scrollToTop() {
-          window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-          });
-        }
-
-        // Event listeners
-        window.addEventListener("scroll", toggleScrollToTop);
-        scrollToTopBtn.addEventListener("click", scrollToTop);
-
-        // Keyboard accessibility
-        scrollToTopBtn.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            scrollToTop();
-          }
-        });
-
-        // Initialize
-        toggleScrollToTop();
-      }
-
-      // Edit Blog Modal Functions
       // Edit Blog Modal Functions
       function openEditModal() {
-        // Get current blog data from the page
         const blogTitle = document.getElementById("blogTitle").textContent;
         const blogContentElement = document.getElementById("blogContentText");
 
-        // For content, we need to get the original markdown from the server
-        // Since we only have HTML, we'll use a simple conversion for now
-        // In a real app, you might want to store the original markdown separately
         let markdownContent = "";
-
-        // Simple HTML to markdown conversion (basic)
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = blogContentElement.innerHTML;
 
-        // Convert common HTML elements back to markdown
         markdownContent = tempDiv.innerHTML
           .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1\n\n")
           .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1\n\n")
@@ -1309,20 +1246,17 @@
           .replace(/<pre[^>]*>(.*?)<\/pre>/gs, "```\n$1\n```")
           .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n\n")
           .replace(/<br\s*\/?>/g, "\n")
-          .replace(/<[^>]+>/g, "") // Remove any remaining HTML tags
+          .replace(/<[^>]+>/g, "")
           .trim();
 
-        // Get tags
         const blogTags = Array.from(document.querySelectorAll(".blog-tag"))
           .map((tag) => tag.textContent)
           .join(", ");
 
-        // Get public/private status
         const isPublic = document
           .querySelector(".blog-visibility")
           .textContent.includes("Public");
 
-        // Fill the edit form
         document.getElementById("editBlogTitle").value = blogTitle;
         document.getElementById("editBlogContent").value = markdownContent;
         document.getElementById("editBlogTags").value = blogTags;
@@ -1330,6 +1264,7 @@
 
         document.getElementById("editBlogModal").style.display = "flex";
       }
+
       function closeEditModal() {
         document.getElementById("editBlogModal").style.display = "none";
       }
@@ -1367,7 +1302,6 @@
               return;
             }
 
-            // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = "Updating...";
@@ -1382,36 +1316,28 @@
               body: JSON.stringify({ title, content, tags, isPublic }),
             });
 
-            // Check if response is OK
             if (!response.ok) {
               const errorText = await response.text();
-              console.error("Server error response:", errorText);
               throw new Error(
                 `HTTP ${response.status}: ${response.statusText}`
               );
             }
 
-            // Try to parse response as JSON
             let result;
             try {
               const responseText = await response.text();
               result = responseText ? JSON.parse(responseText) : {};
             } catch (parseError) {
-              console.error("JSON parse error:", parseError);
               throw new Error("Invalid server response format");
             }
 
-            // Check if result indicates success
             if (result && result.success) {
               closeEditModal();
               toastManager.success(
                 "Blog updated successfully!",
                 "Blog Updated"
               );
-
-              // Wait a moment for the toast to show, then reload
               setTimeout(() => {
-                // If slug changed, redirect to new URL, otherwise reload
                 if (
                   result.blog &&
                   result.blog.slug &&
@@ -1429,8 +1355,6 @@
             }
           } catch (error) {
             console.error("Error updating blog:", error);
-
-            // More specific error messages
             if (
               error.message.includes("HTTP 401") ||
               error.message.includes("HTTP 403")
@@ -1456,7 +1380,6 @@
               );
             }
           } finally {
-            // Reset button state
             const submitBtn = document.querySelector(
               '#editBlogForm button[type="submit"]'
             );
@@ -1466,87 +1389,8 @@
             }
           }
         });
-      // New function to refresh blog content without full reload
-      function refreshBlogContent(updatedBlog) {
-        // Hide loading and error messages
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("errorMessage").style.display = "none";
 
-        // Show the blog article
-        const blogArticle = document.getElementById("blogArticle");
-        blogArticle.style.display = "block";
-
-        // Update the blog content with the new data
-        document.getElementById("blogTitle").textContent = updatedBlog.title;
-        document.getElementById("blogAuthor").textContent = updatedBlog.author;
-        document.getElementById("blogDate").textContent = new Date(
-          updatedBlog.createdAt
-        ).toLocaleDateString();
-
-        // Update visibility
-        const visibilityElement = document.getElementById("blogVisibility");
-        visibilityElement.textContent = updatedBlog.isPublic
-          ? "🌍 Public"
-          : "🔒 Private";
-        visibilityElement.title = updatedBlog.isPublic
-          ? "Public blog"
-          : "Private blog";
-
-        // Update meta info with views
-        const metaElement = document.querySelector(".blog-meta div");
-        metaElement.innerHTML = `
-    By <strong>${escapeHtml(updatedBlog.author)}</strong> • 
-    <span>${new Date(updatedBlog.createdAt).toLocaleDateString()}</span> •
-    <span>👁️ ${updatedBlog.views || 0} views</span> •
-    <span class="blog-visibility">${
-      updatedBlog.isPublic ? "🌍 Public" : "🔒 Private"
-    }</span>
-  `;
-
-        // Update tags
-        const tagsContainer = document.getElementById("blogTags");
-        if (updatedBlog.tags && updatedBlog.tags.length > 0) {
-          tagsContainer.innerHTML = updatedBlog.tags
-            .map((tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`)
-            .join("");
-        } else {
-          tagsContainer.innerHTML = "";
-        }
-
-        // Render markdown content
-        const contentContainer = document.getElementById("blogContentText");
-        if (updatedBlog.content && updatedBlog.content.trim()) {
-          try {
-            const htmlContent = marked.parse(updatedBlog.content);
-            contentContainer.innerHTML = htmlContent;
-          } catch (error) {
-            console.error("Error parsing markdown:", error);
-            contentContainer.innerHTML = `<p>${escapeHtml(
-              updatedBlog.content
-            )}</p>`;
-          }
-        } else {
-          contentContainer.innerHTML = "<p>No content available.</p>";
-        }
-
-        // Update page title
-        document.title = `${updatedBlog.title} - FocusFlow Blogs`;
-
-        // Update the edit and delete buttons with the new slug
-        const headerActionsContainer =
-          document.getElementById("blogHeaderActions");
-        const actionsContainer = document.getElementById("blogActions");
-        const currentUser = localStorage.getItem("userId");
-
-        if (currentUser === updatedBlog.author) {
-          headerActionsContainer.innerHTML = `
-            <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
-            <button class="btn btn-danger" onclick="deleteBlog('${updatedBlog.slug}')">Delete Blog</button>
-          `;
-        }
-      }
-
-      // Close modal when clicking outside
+      // Modal event listeners
       document
         .getElementById("editBlogModal")
         .addEventListener("click", (e) => {
@@ -1555,7 +1399,6 @@
           }
         });
 
-      // Close modal with Escape key
       document.addEventListener("keydown", (e) => {
         if (
           e.key === "Escape" &&
@@ -1565,11 +1408,44 @@
         }
       });
 
-      // Initialize scroll to top when DOM is loaded
-      document.addEventListener("DOMContentLoaded", initScrollToTop);
+      // Scroll to Top Functionality
+      function initScrollToTop() {
+        const scrollToTopBtn = document.getElementById("scrollToTop");
+        if (!scrollToTopBtn) return;
+
+        function toggleScrollToTop() {
+          if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add("visible");
+          } else {
+            scrollToTopBtn.classList.remove("visible");
+          }
+        }
+
+        function scrollToTop() {
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        }
+
+        window.addEventListener("scroll", toggleScrollToTop);
+        scrollToTopBtn.addEventListener("click", scrollToTop);
+
+        scrollToTopBtn.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            scrollToTop();
+          }
+        });
+
+        toggleScrollToTop();
+      }
 
       // Initialize when page loads
-      document.addEventListener("DOMContentLoaded", loadBlog);
+      document.addEventListener("DOMContentLoaded", () => {
+        initScrollToTop();
+        loadBlog();
+      });
     </script>
 
     <!-- Scroll to Top Button -->
