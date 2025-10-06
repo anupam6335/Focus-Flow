@@ -89,6 +89,26 @@
         background-color: rgba(88, 166, 255, 0.1);
       }
 
+      /* Main Content Layout */
+      .main-content {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+      }
+
+      .blog-content-area {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .right-sidebar {
+        width: 350px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
       .blog-article {
         background: var(--table-header-bg);
         border: 1px solid var(--border-color);
@@ -328,6 +348,174 @@
         opacity: 0.7;
       }
 
+      /* Sidebar Sections - CodeLeaf Theme */
+      .sidebar-section {
+        background: var(--codeleaf-bg-primary, var(--table-header-bg));
+        border: 1px solid var(--codeleaf-border-light, var(--border-color));
+        border-radius: var(--codeleaf-radius-lg, 8px);
+        padding: var(--codeleaf-space-4, 20px);
+        box-shadow: var(--codeleaf-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.1));
+      }
+
+      .sidebar-title {
+        font-size: var(--codeleaf-font-lg, 1.125rem);
+        color: var(--codeleaf-accent-primary, var(--accent-color));
+        margin-bottom: var(--codeleaf-space-4, 20px);
+        padding-bottom: var(--codeleaf-space-2, 10px);
+        border-bottom: 1px solid
+          var(--codeleaf-border-light, var(--border-color));
+        font-weight: 600;
+      }
+
+      /* Popular Blogs Section - CodeLeaf Style */
+      .popular-blogs-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-3, 12px);
+      }
+
+      .popular-blog-item {
+        padding: var(--codeleaf-space-3, 12px);
+        border: 1px solid var(--codeleaf-border-light, var(--border-color));
+        border-radius: var(--codeleaf-radius-md, 6px);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        background: var(--codeleaf-bg-primary, var(--bg-color));
+      }
+
+      .popular-blog-item:hover {
+        border-color: var(--codeleaf-accent-muted, var(--accent-color));
+        transform: translateY(-1px);
+        box-shadow: var(--codeleaf-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
+      }
+
+      .popular-blog-title {
+        font-weight: 600;
+        color: var(--codeleaf-accent-primary, var(--accent-color));
+        margin-bottom: var(--codeleaf-space-1, 5px);
+        font-size: var(--codeleaf-font-sm, 0.875rem);
+        line-height: 1.4;
+      }
+
+      .popular-blog-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--codeleaf-font-xs, 0.75rem);
+        color: var(--codeleaf-text-tertiary, var(--text-color));
+        opacity: 0.8;
+      }
+
+      /* Comments Section - CodeLeaf Style */
+      .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-4, 15px);
+        margin-bottom: var(--codeleaf-space-4, 20px);
+      }
+
+      .comment-item {
+        padding: var(--codeleaf-space-3, 12px);
+        border: 1px solid var(--codeleaf-border-light, var(--border-color));
+        border-radius: var(--codeleaf-radius-md, 6px);
+        background: var(--codeleaf-bg-primary, var(--bg-color));
+      }
+
+      .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--codeleaf-space-2, 8px);
+      }
+
+      .comment-author {
+        font-weight: 600;
+        color: var(--codeleaf-accent-primary, var(--accent-color));
+        font-size: var(--codeleaf-font-sm, 0.875rem);
+      }
+
+      .comment-date {
+        font-size: var(--codeleaf-font-xs, 0.75rem);
+        color: var(--codeleaf-text-tertiary, var(--text-color));
+        opacity: 0.7;
+      }
+
+      .comment-content {
+        font-size: var(--codeleaf-font-sm, 0.875rem);
+        line-height: 1.5;
+        color: var(--codeleaf-text-secondary, var(--text-color));
+      }
+
+      .comment-input-area {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-3, 10px);
+      }
+
+      .comment-input {
+        background: var(--codeleaf-bg-primary, var(--bg-color));
+        border: 1px solid var(--codeleaf-border-medium, var(--border-color));
+        border-radius: var(--codeleaf-radius-md, 6px);
+        padding: var(--codeleaf-space-3, 10px);
+        color: var(--codeleaf-text-primary, var(--text-color));
+        font-size: var(--codeleaf-font-sm, 0.875rem);
+        resize: vertical;
+        min-height: 80px;
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+      }
+
+      .comment-input:focus {
+        outline: none;
+        border-color: var(--codeleaf-accent-primary, var(--accent-color));
+        box-shadow: 0 0 0 2px rgba(45, 122, 45, 0.1);
+      }
+
+      .comment-submit-btn {
+        align-self: flex-end;
+        padding: var(--codeleaf-space-2, 8px) var(--codeleaf-space-4, 16px);
+        background: var(--codeleaf-accent-primary, var(--accent-color));
+        color: white;
+        border: none;
+        border-radius: var(--codeleaf-radius-md, 6px);
+        cursor: pointer;
+        font-size: var(--codeleaf-font-sm, 0.875rem);
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .comment-submit-btn:hover:not(:disabled) {
+        background: var(--codeleaf-accent-secondary, var(--accent-color));
+        transform: translateY(-1px);
+      }
+
+      .comment-submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .right-sidebar {
+          width: 300px;
+        }
+      }
+
+      @media (max-width: 992px) {
+        .main-content {
+          flex-direction: column;
+        }
+
+        .right-sidebar {
+          width: 100%;
+          order: -1;
+        }
+
+        .blog-content-area {
+          width: 100%;
+        }
+      }
+
       @media (max-width: 768px) {
         .blog-article {
           padding: 20px;
@@ -345,6 +533,33 @@
 
         .blog-actions {
           flex-direction: column;
+        }
+
+        .sidebar-section {
+          padding: 15px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 0 10px;
+        }
+
+        body {
+          padding: 10px;
+        }
+
+        .blog-article {
+          padding: 15px;
+        }
+
+        .sidebar-section {
+          padding: 12px;
+        }
+
+        .popular-blog-meta {
+          flex-direction: column;
+          gap: 2px;
         }
       }
 
@@ -750,53 +965,116 @@
         </div>
       </header>
 
-      <div id="blogContent">
-        <div class="loading" id="loading">
-          <h3>Loading blog...</h3>
-        </div>
-
-        <div id="errorMessage" class="error-message" style="display: none">
-          <h3>Blog not found</h3>
-          <p>
-            The blog you're looking for doesn't exist or you don't have
-            permission to view it.
-          </p>
-          <a
-            href="https://focus-flow-lopn.onrender.com/blogs.html"
-            class="btn btn-primary"
-            style="margin-top: 15px"
-            >Back to Blogs</a
-          >
-        </div>
-
-        <article id="blogArticle" class="blog-article" style="display: none">
-          <div class="blog-header">
-            <div class="blog-title-section">
-              <h1 class="blog-title" id="blogTitle"></h1>
-              <div class="blog-header-actions" id="blogHeaderActions"></div>
+      <div class="main-content">
+        <div class="blog-content-area">
+          <div id="blogContent">
+            <div class="loading" id="loading">
+              <h3>Loading blog...</h3>
             </div>
-            <div class="blog-meta">
-              <div>
-                By <strong id="blogAuthor"></strong> •
-                <span id="blogDate"></span>
-                <span class="blog-visibility" id="blogVisibility"></span>
+
+            <div id="errorMessage" class="error-message" style="display: none">
+              <h3>Blog not found</h3>
+              <p>
+                The blog you're looking for doesn't exist or you don't have
+                permission to view it.
+              </p>
+              <a
+                href="https://focus-flow-lopn.onrender.com/blogs.html"
+                class="btn btn-primary"
+                style="margin-top: 15px"
+                >Back to Blogs</a
+              >
+            </div>
+
+            <article
+              id="blogArticle"
+              class="blog-article"
+              style="display: none"
+            >
+              <div class="blog-header">
+                <div class="blog-title-section">
+                  <h1 class="blog-title" id="blogTitle"></h1>
+                  <div class="blog-header-actions" id="blogHeaderActions"></div>
+                </div>
+                <div class="blog-meta">
+                  <div>
+                    By <strong id="blogAuthor"></strong> •
+                    <span id="blogDate"></span>
+                    <span class="blog-visibility" id="blogVisibility"></span>
+                  </div>
+                </div>
+                <div class="blog-tags" id="blogTags"></div>
+              </div>
+
+              <div class="blog-content" id="blogContentText"></div>
+
+              <div class="blog-actions" id="blogActions">
+                <a
+                  href="https://focus-flow-lopn.onrender.com/blogs.html"
+                  class="btn btn-secondary"
+                  >Back to Blogs</a
+                >
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+          <!-- Popular Blogs Section -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">Popular Blogs</h3>
+            <div class="popular-blogs-list" id="popularBlogsList">
+              <!-- Popular blogs will be dynamically loaded here -->
+              <div class="popular-blog-item">
+                <div class="popular-blog-title">Loading popular blogs...</div>
+                <div class="popular-blog-meta">
+                  <span>By Author</span>
+                  <span>👁️ 0 views</span>
+                </div>
               </div>
             </div>
-            <div class="blog-tags" id="blogTags"></div>
           </div>
 
-          <div class="blog-content" id="blogContentText"></div>
-
-          <div class="blog-actions" id="blogActions">
-            <a
-              href="https://focus-flow-lopn.onrender.com/blogs.html"
-              class="btn btn-secondary"
-              >Back to Blogs</a
-            >
+          <!-- Comments Section -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">Comments</h3>
+            <div class="comments-list" id="commentsList">
+              <!-- Sample comments for UI demonstration -->
+              <div class="comment-item">
+                <div class="comment-header">
+                  <span class="comment-author">John Doe</span>
+                  <span class="comment-date">2 hours ago</span>
+                </div>
+                <div class="comment-content">
+                  Great insights! This really helped me understand the concept
+                  better.
+                </div>
+              </div>
+              <div class="comment-item">
+                <div class="comment-header">
+                  <span class="comment-author">Jane Smith</span>
+                  <span class="comment-date">1 day ago</span>
+                </div>
+                <div class="comment-content">
+                  Thanks for sharing this valuable information. Looking forward
+                  to more posts!
+                </div>
+              </div>
+            </div>
+            <div class="comment-input-area">
+              <textarea
+                class="comment-input"
+                placeholder="Add a comment... (UI only - functionality coming soon)"
+                disabled
+              ></textarea>
+              <button class="comment-submit-btn" disabled>Post Comment</button>
+            </div>
           </div>
-        </article>
+        </div>
       </div>
     </div>
+
     <!-- Edit Blog Modal -->
     <div class="modal" id="editBlogModal">
       <div class="modal-content">
@@ -862,6 +1140,7 @@
         </form>
       </div>
     </div>
+
     <!-- Add Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -1068,6 +1347,7 @@
 
           if (result.success) {
             displayBlog(result.blog);
+            loadPopularBlogs(result.blog.tags);
           } else {
             showError(result.error || "Failed to load blog");
           }
@@ -1076,6 +1356,70 @@
           document.getElementById("loading").style.display = "none";
           showError(error.message);
         }
+      }
+
+      // Load popular blogs based on current blog's tags
+      async function loadPopularBlogs(currentBlogTags) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+          // Get popular blogs
+          const response = await fetch(
+            `${API_BASE_URL}/blogs/popular?limit=5`,
+            {
+              headers,
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            displayPopularBlogs(result.blogs);
+          } else {
+            console.error("Failed to load popular blogs:", result.error);
+            displayPopularBlogs([]);
+          }
+        } catch (error) {
+          console.error("Error loading popular blogs:", error);
+          displayPopularBlogs([]);
+        }
+      }
+
+      function displayPopularBlogs(blogs) {
+        const popularBlogsList = document.getElementById("popularBlogsList");
+
+        if (!blogs || blogs.length === 0) {
+          popularBlogsList.innerHTML = `
+            <div class="popular-blog-item">
+              <div class="popular-blog-title">No popular blogs available</div>
+              <div class="popular-blog-meta">
+                <span>Check back later</span>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        popularBlogsList.innerHTML = blogs
+          .map(
+            (blog) => `
+            <div class="popular-blog-item" onclick="window.location.href='/blogs/${
+              blog.slug
+            }'">
+              <div class="popular-blog-title">${escapeHtml(blog.title)}</div>
+              <div class="popular-blog-meta">
+                <span>By ${escapeHtml(blog.author)}</span>
+                <span>👁️ ${blog.views || 0} views</span>
+              </div>
+            </div>
+          `
+          )
+          .join("");
       }
 
       function displayBlog(blog) {
@@ -1202,8 +1546,7 @@
           if (result.success) {
             toastManager.success("Blog deleted successfully!", "Blog Deleted");
             setTimeout(() => {
-              window.location.href =
-                "https://focus-flow-lopn.onrender.com/blogs.html";
+              window.location.href = "https://focus-flow-lopn.onrender.com/blogs.html";
             }, 1500);
           } else {
             toastManager.error(result.error, "Delete Failed");
