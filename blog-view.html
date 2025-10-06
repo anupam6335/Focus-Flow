@@ -788,7 +788,11 @@
           <div class="blog-content" id="blogContentText"></div>
 
           <div class="blog-actions" id="blogActions">
-            <a href="https://focus-flow-lopn.onrender.com/blogs.html" class="btn btn-secondary">Back to Blogs</a>
+            <a
+              href="https://focus-flow-lopn.onrender.com/blogs.html"
+              class="btn btn-secondary"
+              >Back to Blogs</a
+            >
           </div>
         </article>
       </div>
@@ -1024,6 +1028,55 @@
         }
       }
 
+      // Blog Share Functionality
+      async function shareBlog() {
+        try {
+          const currentUrl = window.location.href;
+
+          // Use modern Clipboard API if available
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(currentUrl);
+            toastManager.success(
+              "Blog URL copied to clipboard!",
+              "Share Successful"
+            );
+          }
+          // Fallback for older browsers
+          else {
+            const textArea = document.createElement("textarea");
+            textArea.value = currentUrl;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            const successful = document.execCommand("copy");
+            document.body.removeChild(textArea);
+
+            if (successful) {
+              toastManager.success(
+                "Blog URL copied to clipboard!",
+                "Share Successful"
+              );
+            } else {
+              throw new Error("Fallback copy method failed");
+            }
+          }
+        } catch (error) {
+          console.error("Share failed:", error);
+
+          // Ultimate fallback - show URL in alert for manual copy
+          const currentUrl = window.location.href;
+          toastManager.info(
+            `Copy this URL to share: ${currentUrl}`,
+            "Manual Share Required",
+            10000
+          );
+        }
+      }
+
       function displayBlog(blog) {
         document.getElementById("blogArticle").style.display = "block";
 
@@ -1081,19 +1134,53 @@
         const actionsContainer = document.getElementById("blogActions");
         const currentUser = localStorage.getItem("userId");
 
+        // Clear existing actions first
+        headerActionsContainer.innerHTML = "";
+
+        // ADD SHARE BUTTON FOR ALL PUBLIC BLOGS
+        addShareButtonToHeader(blog);
+
+        // Add edit/delete buttons only for blog author
         if (currentUser === blog.author) {
-          headerActionsContainer.innerHTML = `
-            <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
-            <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
-          `;
-          // Ensure buttons are visible
-          headerActionsContainer.style.display = "flex";
-          headerActionsContainer.style.gap = "10px";
-          headerActionsContainer.style.flexWrap = "wrap";
+          headerActionsContainer.innerHTML += `
+      <button class="btn btn-primary" onclick="openEditModal()">Edit Blog</button>
+      <button class="btn btn-danger" onclick="deleteBlog('${blog.slug}')">Delete Blog</button>
+    `;
         }
+
+        // Ensure buttons are visible
+        headerActionsContainer.style.display = "flex";
+        headerActionsContainer.style.gap = "10px";
+        headerActionsContainer.style.flexWrap = "wrap";
 
         // Update page title
         document.title = `${blog.title} - FocusFlow Blogs`;
+      }
+
+      // Add share button to blog header for all public blogs
+      function addShareButtonToHeader(blog) {
+        const headerActionsContainer =
+          document.getElementById("blogHeaderActions");
+
+        if (!headerActionsContainer) {
+          console.error("blogHeaderActions container not found");
+          return;
+        }
+
+        // Only add share button for public blogs
+        if (blog.isPublic) {
+          const shareButton = document.createElement("button");
+          shareButton.className = "btn btn-primary";
+          shareButton.innerHTML = "📤 Share Blog";
+          shareButton.onclick = shareBlog;
+          shareButton.title = "Copy blog URL to clipboard";
+
+          // Insert share button at the beginning
+          headerActionsContainer.insertBefore(
+            shareButton,
+            headerActionsContainer.firstChild
+          );
+        }
       }
 
       function showError(message) {
