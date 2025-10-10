@@ -162,13 +162,10 @@
         gap: var(--codeleaf-space-6);
       }
 
-      /* === MINI-MAP NAVIGATION === */
+      /* === DRAGGABLE MINI-MAP NAVIGATION === */
       .mini-map-container {
         position: fixed;
-        right: var(--codeleaf-space-8);
-        top: 50%;
-        left: 59%;
-        transform: translateY(-50%);
+        /* CHANGED: Remove fixed positioning constraints to make it draggable */
         width: 350px;
         max-height: 400px;
         background: var(--codeleaf-bg-primary);
@@ -180,6 +177,12 @@
         overflow: hidden;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
+        /* NEW: Make cursor indicate draggable */
+        cursor: move;
+        /* NEW: Default position for initial load */
+        top: 50%;
+        left: 59%;
+        transform: translateY(-50%);
       }
 
       .mini-map-container.collapsed {
@@ -200,6 +203,11 @@
         margin-bottom: var(--codeleaf-space-2);
         padding-bottom: var(--codeleaf-space-2);
         border-bottom: 1px solid var(--codeleaf-border-light);
+        /* NEW: Prevent text selection during drag */
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
       }
 
       .mini-map-title {
@@ -1426,7 +1434,7 @@
 
       <div class="main-content">
         <div class="blog-content-area">
-          <!-- Mini-map Navigation -->
+          <!-- Mini-map Navigation - NOW DRAGGABLE -->
           <div class="mini-map-container" id="miniMap">
             <div class="mini-map-header">
               <h4 class="mini-map-title">Mini Map</h4>
@@ -1734,10 +1742,11 @@
       // Initialize toast manager
       const toastManager = new ToastManager();
 
-      // Completely Fixed Markdown Renderer
+      // Completely Fixed Markdown Renderer with Mermaid Support
       class MarkdownRenderer {
         constructor() {
           this.isMermaidInitialized = false;
+          this.mermaidDiagrams = new Map();
           this.init();
         }
 
@@ -1760,16 +1769,32 @@
             sanitize: false,
           });
 
-          // Initialize Mermaid
+          // Initialize Mermaid with proper configuration
           if (typeof mermaid !== "undefined") {
-            mermaid.initialize({
-              startOnLoad: false,
-              theme: "default",
-              securityLevel: "loose",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
-            });
-            this.isMermaidInitialized = true;
+            try {
+              mermaid.initialize({
+                startOnLoad: false,
+                theme: document.body.classList.contains("light-theme")
+                  ? "default"
+                  : "dark",
+                securityLevel: "loose",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+                flowchart: {
+                  htmlLabels: true,
+                  curve: "basis",
+                },
+                sequence: {
+                  diagramMarginX: 50,
+                  diagramMarginY: 10,
+                  actorMargin: 50,
+                },
+              });
+              this.isMermaidInitialized = true;
+              console.log("Mermaid initialized successfully");
+            } catch (error) {
+              console.error("Mermaid initialization failed:", error);
+            }
           }
 
           // Initialize Highlight.js
@@ -1781,21 +1806,28 @@
           }
         }
 
-        // Enhanced render method with all features
+        // Enhanced render method with Mermaid support
         async render(markdownText) {
           if (!markdownText) return "";
 
           try {
-            // Pre-process mermaid diagrams
+            // Pre-process mermaid diagrams to prevent markdown parsing
             const processedMarkdown = this.preprocessMermaid(markdownText);
 
             // Render markdown to HTML
             const rawHtml = marked.parse(processedMarkdown);
 
-            // Sanitize HTML
+            // Sanitize HTML while preserving mermaid containers
             const cleanHtml = DOMPurify.sanitize(rawHtml, {
-              ADD_TAGS: ["pre", "code", "span", "button"],
-              ADD_ATTR: ["class", "data-lang", "data-code", "onclick"],
+              ADD_TAGS: ["pre", "code", "span", "button", "div"],
+              ADD_ATTR: [
+                "class",
+                "data-lang",
+                "data-code",
+                "onclick",
+                "data-mermaid-id",
+                "data-processed",
+              ],
               ALLOW_DATA_ATTR: true,
             });
 
@@ -1806,15 +1838,53 @@
           }
         }
 
-        // Pre-process mermaid diagrams before markdown parsing
+        // Enhanced Mermaid pre-processing with better error handling
         preprocessMermaid(text) {
-          return text.replace(
+          let diagramCount = 0;
+
+          console.log("Preprocessing markdown for Mermaid diagrams...");
+
+          // Process mermaid code blocks
+          const processedText = text.replace(
             /```mermaid\s*([\s\S]*?)```/g,
             (match, diagram) => {
-              const id = "mermaid-" + Math.random().toString(36).substr(2, 9);
-              return `<div class="mermaid-container" data-mermaid-id="${id}">${diagram.trim()}</div>`;
+              diagramCount++;
+              const id = "mermaid-" + Date.now() + "-" + diagramCount;
+              const cleanDiagram = diagram.trim();
+
+              console.log(
+                `Found Mermaid diagram ${id}:`,
+                cleanDiagram.substring(0, 100) + "..."
+              );
+
+              // Store the diagram for later rendering
+              this.mermaidDiagrams.set(id, cleanDiagram);
+
+              return `<div class="mermaid-container" data-mermaid-id="${id}" data-diagram="${this.escapeHtml(
+                cleanDiagram.substring(0, 50)
+              )}...">
+            <div class="mermaid-loading">🔄 Rendering diagram...</div>
+            <div class="mermaid-error" style="display: none;"></div>
+            <div class="mermaid-content"></div>
+            <div class="mermaid-debug" style="font-size: 10px; color: #666; margin-top: 5px;">
+                Diagram ID: ${id}
+            </div>
+        </div>`;
             }
           );
+
+          console.log(`Processed ${diagramCount} Mermaid diagrams`);
+          return processedText;
+        }
+
+        // Escape HTML for safe display
+        escapeHtml(unsafe) {
+          return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
         }
 
         // NEW: Process the final HTML after it's inserted into the DOM
@@ -1835,9 +1905,147 @@
           this.addHeadingAnchors(container);
         }
 
+        // Enhanced Mermaid diagram rendering with detailed logging
+        async renderMermaidDiagrams(container) {
+          console.log("Starting Mermaid diagram rendering...");
+
+          if (!this.isMermaidInitialized) {
+            console.error("Mermaid not initialized!");
+            this.showGlobalError(
+              container,
+              "Mermaid library failed to initialize"
+            );
+            return;
+          }
+
+          const mermaidContainers =
+            container.querySelectorAll(".mermaid-container");
+
+          console.log(`Found ${mermaidContainers.length} Mermaid containers`);
+
+          if (mermaidContainers.length === 0) {
+            console.log("No Mermaid containers found");
+            return;
+          }
+
+          for (const containerEl of mermaidContainers) {
+            try {
+              const mermaidId = containerEl.getAttribute("data-mermaid-id");
+              console.log(`Rendering diagram: ${mermaidId}`);
+
+              let diagram = this.mermaidDiagrams.get(mermaidId);
+
+              if (!diagram) {
+                console.warn(`No diagram content found for ${mermaidId}`);
+                continue;
+              }
+
+              // Show loading state
+              const loadingEl = containerEl.querySelector(".mermaid-loading");
+              const errorEl = containerEl.querySelector(".mermaid-error");
+              const contentEl = containerEl.querySelector(".mermaid-content");
+
+              if (loadingEl) loadingEl.style.display = "block";
+              if (errorEl) errorEl.style.display = "none";
+              if (contentEl) contentEl.innerHTML = "";
+
+              // Validate Mermaid syntax
+              if (!diagram || diagram.trim().length === 0) {
+                throw new Error("Empty diagram content");
+              }
+
+              console.log(
+                `Rendering diagram content: ${diagram.substring(0, 100)}...`
+              );
+
+              // Render the diagram with timeout
+              const renderPromise = mermaid.render(mermaidId, diagram);
+              const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(
+                  () => reject(new Error("Rendering timeout after 10s")),
+                  10000
+                );
+              });
+
+              const { svg, bindFunctions } = await Promise.race([
+                renderPromise,
+                timeoutPromise,
+              ]);
+
+              if (contentEl) {
+                contentEl.innerHTML = svg;
+                if (bindFunctions) {
+                  bindFunctions(contentEl);
+                }
+              }
+
+              // Hide loading, show content
+              if (loadingEl) loadingEl.style.display = "none";
+              if (contentEl) contentEl.style.display = "block";
+
+              // Mark as processed
+              containerEl.setAttribute("data-processed", "true");
+
+              console.log(
+                `✅ Successfully rendered Mermaid diagram: ${mermaidId}`
+              );
+            } catch (error) {
+              console.error(
+                `❌ Mermaid rendering error for ${mermaidId}:`,
+                error
+              );
+              this.handleMermaidError(containerEl, error);
+            }
+          }
+
+          console.log("Mermaid diagram rendering completed");
+        }
+        // Validate basic Mermaid syntax
+        isValidMermaidSyntax(diagram) {
+          const diagramTypes = [
+            "graph",
+            "flowchart",
+            "sequenceDiagram",
+            "classDiagram",
+            "stateDiagram",
+            "erDiagram",
+            "journey",
+            "gantt",
+            "pie",
+            "quadrantChart",
+            "gitGraph",
+          ];
+
+          const firstLine = diagram.trim().split("\n")[0].toLowerCase();
+          return diagramTypes.some((type) => firstLine.includes(type));
+        }
+
+        // Handle Mermaid rendering errors gracefully
+        handleMermaidError(container, error) {
+          const loadingEl = container.querySelector(".mermaid-loading");
+          const errorEl = container.querySelector(".mermaid-error");
+          const contentEl = container.querySelector(".mermaid-content");
+
+          if (loadingEl) loadingEl.style.display = "none";
+          if (errorEl) {
+            errorEl.style.display = "block";
+            errorEl.innerHTML = `
+        <div style="padding: 10px; background: #fee; border: 1px solid #fcc; border-radius: 4px;">
+          <strong>Diagram Error:</strong> ${this.escapeHtml(error.message)}
+          <br><small>Check your Mermaid syntax and try again.</small>
+        </div>
+      `;
+          }
+          if (contentEl) contentEl.style.display = "none";
+
+          container.setAttribute("data-error", "true");
+        }
+
         // FIXED: Add copy buttons directly to the final DOM
         addCopyButtons(container) {
-          const codeBlocks = container.querySelectorAll("pre");
+          const codeBlocks = container.querySelectorAll(
+            "pre:not(.mermaid-container pre)"
+          );
 
           codeBlocks.forEach((pre) => {
             // Skip if already has copy button
@@ -1896,7 +2104,7 @@
           }
 
           try {
-            // Use modern Clipboard API
+            // Use modern Clipboard API if available
             if (navigator.clipboard && window.isSecureContext) {
               await navigator.clipboard.writeText(codeToCopy);
               this.showCopySuccess(button);
@@ -1956,28 +2164,6 @@
           }, 2000);
         }
 
-        // Render mermaid diagrams
-        async renderMermaidDiagrams(container) {
-          if (!this.isMermaidInitialized) return;
-
-          const mermaidContainers =
-            container.querySelectorAll(".mermaid-container");
-
-          for (const container of mermaidContainers) {
-            try {
-              const diagram = container.textContent.trim();
-              const { svg } = await mermaid.render(
-                `mermaid-${Date.now()}`,
-                diagram
-              );
-              container.innerHTML = svg;
-            } catch (error) {
-              console.error("Mermaid rendering error:", error);
-              container.innerHTML = `<div class="error-message">Diagram rendering failed: ${error.message}</div>`;
-            }
-          }
-        }
-
         // Enhance tables with responsive features
         enhanceTables(container) {
           const tables = container.querySelectorAll("table");
@@ -2034,7 +2220,7 @@
       // Initialize Markdown Renderer
       const markdownRenderer = new MarkdownRenderer();
 
-      // Mini-map functionality
+      // ENHANCED: Mini-map functionality with DRAGGABLE support
       class MiniMap {
         constructor() {
           this.container = document.getElementById("miniMap");
@@ -2043,12 +2229,20 @@
           this.toggleBtn = document.getElementById("miniMapToggle");
           this.headings = [];
           this.isCollapsed = false;
+          
+          // NEW: Dragging state variables
+          this.isDragging = false;
+          this.dragStartX = 0;
+          this.dragStartY = 0;
+          this.initialLeft = 0;
+          this.initialTop = 0;
 
           this.init();
         }
 
         init() {
           this.setupEventListeners();
+          this.loadPosition(); // Load saved position if exists
         }
 
         setupEventListeners() {
@@ -2069,6 +2263,127 @@
               this.scrollToSection(e.target.dataset.id);
             }
           });
+
+          // NEW: Dragging event listeners
+          this.container.addEventListener("mousedown", this.startDrag.bind(this));
+          document.addEventListener("mousemove", this.drag.bind(this));
+          document.addEventListener("mouseup", this.stopDrag.bind(this));
+
+          // NEW: Touch events for mobile dragging
+          this.container.addEventListener("touchstart", this.startDragTouch.bind(this));
+          document.addEventListener("touchmove", this.dragTouch.bind(this));
+          document.addEventListener("touchend", this.stopDrag.bind(this));
+        }
+
+        // NEW: Mouse dragging methods
+        startDrag(e) {
+          if (e.target.classList.contains("mini-map-toggle") || 
+              e.target.classList.contains("mini-map-item") ||
+              e.target.closest(".mini-map-content")) {
+            return; // Don't start drag on interactive elements
+          }
+          
+          this.isDragging = true;
+          this.dragStartX = e.clientX;
+          this.dragStartY = e.clientY;
+          
+          const rect = this.container.getBoundingClientRect();
+          this.initialLeft = rect.left;
+          this.initialTop = rect.top;
+          
+          this.container.style.cursor = "grabbing";
+          e.preventDefault();
+        }
+
+        startDragTouch(e) {
+          if (e.target.classList.contains("mini-map-toggle") || 
+              e.target.classList.contains("mini-map-item") ||
+              e.target.closest(".mini-map-content")) {
+            return;
+          }
+          
+          this.isDragging = true;
+          const touch = e.touches[0];
+          this.dragStartX = touch.clientX;
+          this.dragStartY = touch.clientY;
+          
+          const rect = this.container.getBoundingClientRect();
+          this.initialLeft = rect.left;
+          this.initialTop = rect.top;
+          
+          this.container.style.cursor = "grabbing";
+          e.preventDefault();
+        }
+
+        drag(e) {
+          if (!this.isDragging) return;
+          
+          const deltaX = e.clientX - this.dragStartX;
+          const deltaY = e.clientY - this.dragStartY;
+          
+          const newLeft = this.initialLeft + deltaX;
+          const newTop = this.initialTop + deltaY;
+          
+          this.container.style.left = `${newLeft}px`;
+          this.container.style.top = `${newTop}px`;
+          this.container.style.right = "auto"; // Remove right positioning
+          this.container.style.transform = "none"; // Remove transform
+        }
+
+        dragTouch(e) {
+          if (!this.isDragging) return;
+          
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - this.dragStartX;
+          const deltaY = touch.clientY - this.dragStartY;
+          
+          const newLeft = this.initialLeft + deltaX;
+          const newTop = this.initialTop + deltaY;
+          
+          this.container.style.left = `${newLeft}px`;
+          this.container.style.top = `${newTop}px`;
+          this.container.style.right = "auto";
+          this.container.style.transform = "none";
+        }
+
+        stopDrag() {
+          if (this.isDragging) {
+            this.isDragging = false;
+            this.container.style.cursor = "move";
+            this.savePosition(); // Save position when dragging stops
+          }
+        }
+
+        // NEW: Save position to localStorage
+        savePosition() {
+          const rect = this.container.getBoundingClientRect();
+          const position = {
+            left: rect.left,
+            top: rect.top,
+            collapsed: this.isCollapsed
+          };
+          localStorage.setItem('miniMapPosition', JSON.stringify(position));
+        }
+
+        // NEW: Load position from localStorage
+        loadPosition() {
+          try {
+            const saved = localStorage.getItem('miniMapPosition');
+            if (saved) {
+              const position = JSON.parse(saved);
+              this.container.style.left = `${position.left}px`;
+              this.container.style.top = `${position.top}px`;
+              this.container.style.right = "auto";
+              this.container.style.transform = "none";
+              
+              // Restore collapsed state if needed
+              if (position.collapsed && !this.isCollapsed) {
+                this.toggle();
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to load mini-map position:', e);
+          }
         }
 
         generateMiniMap(headings) {
@@ -2137,6 +2452,7 @@
           this.isCollapsed = !this.isCollapsed;
           this.container.classList.toggle("collapsed", this.isCollapsed);
           this.toggleBtn.textContent = this.isCollapsed ? "+" : "−";
+          this.savePosition(); // Save state when toggled
         }
       }
 
@@ -2236,7 +2552,7 @@
         }
       }
 
-      // Fixed blog display with Markdown rendering
+      // Fixed blog display with enhanced Markdown rendering including Mermaid
       async function displayBlogWithMarkdown(blog) {
         document.getElementById("blogArticle").style.display = "block";
 
@@ -2269,9 +2585,9 @@
           try {
             // Show loading state for markdown processing
             contentContainer.innerHTML =
-              '<div class="loading">Rendering content...</div>';
+              '<div class="loading">Rendering content with diagrams...</div>';
 
-            // Render markdown with all enhancements
+            // Render markdown with all enhancements including Mermaid
             const htmlContent = await markdownRenderer.render(blog.content);
             contentContainer.innerHTML = htmlContent;
 
@@ -2305,7 +2621,6 @@
         // Set up header actions
         setupBlogHeaderActions(blog);
       }
-
       // Setup blog header actions
       function setupBlogHeaderActions(blog) {
         const headerActionsContainer =
