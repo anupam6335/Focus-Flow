@@ -6,6 +6,17 @@
     <title>Blog - FocusFlow</title>
     <link rel="icon" type="image/x-icon" href="/FocusFlow.ico" />
     <link rel="stylesheet" href="/responsive.css" />
+
+    <!-- Markdown Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.7/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css"
+    />
+
     <style>
       /* CodeLeaf Theme Integration */
       :root {
@@ -309,6 +320,276 @@
         z-index: 2;
       }
 
+      /* === ENHANCED MARKDOWN STYLING === */
+      .blog-content {
+        font-size: var(--codeleaf-font-base);
+        line-height: 1.8;
+        color: var(--codeleaf-text-primary);
+      }
+
+      /* Headings */
+      .blog-content h1 {
+        font-size: var(--codeleaf-font-2xl);
+        border-bottom: 3px solid var(--codeleaf-accent-muted);
+        padding-bottom: var(--codeleaf-space-2);
+        margin: var(--codeleaf-space-8) 0 var(--codeleaf-space-4) 0;
+        scroll-margin-top: var(--codeleaf-space-8);
+      }
+
+      .blog-content h2 {
+        font-size: var(--codeleaf-font-xl);
+        border-bottom: 2px solid var(--codeleaf-accent-muted);
+        padding-bottom: var(--codeleaf-space-2);
+        margin: var(--codeleaf-space-6) 0 var(--codeleaf-space-3) 0;
+        scroll-margin-top: var(--codeleaf-space-8);
+      }
+
+      .blog-content h3 {
+        font-size: var(--codeleaf-font-lg);
+        margin: var(--codeleaf-space-6) 0 var(--codeleaf-space-3) 0;
+        scroll-margin-top: var(--codeleaf-space-8);
+      }
+
+      .blog-content h4,
+      .blog-content h5,
+      .blog-content h6 {
+        margin: var(--codeleaf-space-4) 0 var(--codeleaf-space-2) 0;
+        scroll-margin-top: var(--codeleaf-space-8);
+      }
+
+      /* Code Blocks with Syntax Highlighting */
+      .blog-content pre {
+        background: var(--codeleaf-bg-tertiary);
+        border: 1px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-4);
+        margin: var(--codeleaf-space-4) 0;
+        overflow-x: auto;
+        position: relative;
+      }
+
+      .blog-content pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--codeleaf-text-primary);
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: var(--codeleaf-font-sm);
+        line-height: 1.5;
+        display: block;
+      }
+
+      /* Copy-to-Clipboard Button */
+      .copy-code-btn {
+        position: absolute;
+        top: var(--codeleaf-space-2);
+        right: var(--codeleaf-space-2);
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-sm);
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-2);
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-secondary);
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s ease;
+        z-index: 10;
+      }
+
+      .blog-content pre:hover .copy-code-btn {
+        opacity: 1;
+      }
+
+      .copy-code-btn:hover {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        border-color: var(--codeleaf-accent-primary);
+      }
+
+      .copy-code-btn.copied {
+        background: var(--codeleaf-success);
+        color: white;
+        border-color: var(--codeleaf-success);
+      }
+
+      /* Mermaid Diagram Container */
+      .mermaid-container {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-4);
+        margin: var(--codeleaf-space-4) 0;
+        text-align: center;
+        overflow-x: auto;
+      }
+
+      .mermaid-container .mermaid {
+        display: inline-block;
+        max-width: 100%;
+      }
+
+      /* Tables with Enhanced Styling */
+      .blog-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: var(--codeleaf-space-4) 0;
+        background: var(--codeleaf-bg-primary);
+        border-radius: var(--codeleaf-radius-md);
+        overflow: hidden;
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      .blog-content th,
+      .blog-content td {
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-4);
+        border: 1px solid var(--codeleaf-border-light);
+        text-align: left;
+      }
+
+      .blog-content th {
+        background: var(--codeleaf-bg-secondary);
+        color: var(--codeleaf-accent-primary);
+        font-weight: 600;
+        font-size: var(--codeleaf-font-sm);
+      }
+
+      .blog-content tr:nth-child(even) {
+        background: var(--codeleaf-bg-tertiary);
+      }
+
+      /* Blockquotes */
+      .blog-content blockquote {
+        border-left: 4px solid var(--codeleaf-accent-primary);
+        padding: var(--codeleaf-space-4) var(--codeleaf-space-6);
+        margin: var(--codeleaf-space-4) 0;
+        background: var(--codeleaf-bg-secondary);
+        border-radius: 0 var(--codeleaf-radius-md) var(--codeleaf-radius-md) 0;
+        font-style: italic;
+        position: relative;
+      }
+
+      .blog-content blockquote::before {
+        content: "❝";
+        font-size: var(--codeleaf-font-2xl);
+        color: var(--codeleaf-accent-muted);
+        position: absolute;
+        top: var(--codeleaf-space-2);
+        left: var(--codeleaf-space-2);
+        opacity: 0.6;
+      }
+
+      /* Lists */
+      .blog-content ul,
+      .blog-content ol {
+        margin: var(--codeleaf-space-4) 0;
+        padding-left: var(--codeleaf-space-6);
+      }
+
+      .blog-content li {
+        margin-bottom: var(--codeleaf-space-2);
+      }
+
+      .blog-content ul li::before {
+        content: "▸";
+        color: var(--codeleaf-accent-primary);
+        font-weight: bold;
+        margin-right: var(--codeleaf-space-2);
+      }
+
+      /* Task Lists */
+      .blog-content input[type="checkbox"] {
+        margin-right: var(--codeleaf-space-2);
+        accent-color: var(--codeleaf-accent-primary);
+      }
+
+      /* Inline Code */
+      .blog-content code:not(pre code) {
+        background: var(--codeleaf-bg-tertiary);
+        padding: 2px 6px;
+        border-radius: var(--codeleaf-radius-sm);
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.9em;
+        color: var(--codeleaf-accent-primary);
+        border: 1px solid var(--codeleaf-border-light);
+      }
+
+      /* Links */
+      .blog-content a {
+        color: var(--codeleaf-accent-primary);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .blog-content a:hover {
+        color: var(--codeleaf-accent-secondary);
+        border-bottom-color: var(--codeleaf-accent-secondary);
+      }
+
+      /* Horizontal Rules */
+      .blog-content hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--codeleaf-accent-muted),
+          transparent
+        );
+        margin: var(--codeleaf-space-6) 0;
+      }
+
+      /* Images */
+      .blog-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--codeleaf-radius-md);
+        margin: var(--codeleaf-space-4) 0;
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      /* Heading Anchors */
+      .heading-anchor {
+        text-decoration: none;
+        margin-left: var(--codeleaf-space-2);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .blog-content h1:hover .heading-anchor,
+      .blog-content h2:hover .heading-anchor,
+      .blog-content h3:hover .heading-anchor,
+      .blog-content h4:hover .heading-anchor,
+      .blog-content h5:hover .heading-anchor,
+      .blog-content h6:hover .heading-anchor {
+        opacity: 1;
+      }
+
+      /* Responsive Adjustments */
+      @media (max-width: 768px) {
+        .blog-content pre {
+          padding: var(--codeleaf-space-3);
+          margin: var(--codeleaf-space-3) 0;
+        }
+
+        .copy-code-btn {
+          opacity: 1; /* Always visible on mobile */
+        }
+
+        .blog-content table {
+          font-size: var(--codeleaf-font-sm);
+        }
+
+        .blog-content th,
+        .blog-content td {
+          padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+        }
+
+        .mermaid-container {
+          padding: var(--codeleaf-space-3);
+        }
+      }
+
       /* === AWARD-WINNING BLOG CONTENT DESIGN === */
       .blog-article {
         background: var(--codeleaf-bg-primary);
@@ -454,272 +735,6 @@
         background: var(--codeleaf-bg-secondary);
         color: var(--codeleaf-text-secondary);
         font-weight: 500;
-      }
-
-      /* === ENHANCED MARKDOWN STYLING - AWARD WINNING TYPOGRAPHY === */
-      .blog-content {
-        font-size: var(--codeleaf-font-base);
-        line-height: 1.8;
-        color: var(--codeleaf-text-primary);
-      }
-
-      /* Headings with elegant styling */
-      .blog-content h1,
-      .blog-content h2,
-      .blog-content h3,
-      .blog-content h4,
-      .blog-content h5,
-      .blog-content h6 {
-        color: var(--codeleaf-accent-primary);
-        margin: var(--codeleaf-space-6) 0 var(--codeleaf-space-3) 0;
-        line-height: 1.3;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-        position: relative;
-        scroll-margin-top: var(--codeleaf-space-8);
-      }
-
-      .blog-content h1 {
-        font-size: var(--codeleaf-font-2xl);
-        border-bottom: 3px solid var(--codeleaf-accent-muted);
-        padding-bottom: var(--codeleaf-space-2);
-        margin-top: var(--codeleaf-space-8);
-      }
-
-      .blog-content h2 {
-        font-size: var(--codeleaf-font-xl);
-        border-bottom: 2px solid var(--codeleaf-accent-muted);
-        padding-bottom: var(--codeleaf-space-2);
-        margin-top: var(--codeleaf-space-6);
-      }
-
-      .blog-content h3 {
-        font-size: var(--codeleaf-font-lg);
-        margin-top: var(--codeleaf-space-6);
-      }
-
-      .blog-content h4 {
-        font-size: var(--codeleaf-font-base);
-        color: var(--codeleaf-text-secondary);
-        margin-top: var(--codeleaf-space-4);
-      }
-
-      /* Paragraphs with improved readability */
-      .blog-content p {
-        margin-bottom: var(--codeleaf-space-4);
-        text-align: justify;
-        hyphens: auto;
-      }
-
-      .blog-content p:first-of-type {
-        font-size: var(--codeleaf-font-lg);
-        color: var(--codeleaf-text-primary);
-        font-weight: 500;
-        line-height: 1.7;
-        background: var(--codeleaf-bg-secondary);
-        padding: var(--codeleaf-space-4);
-        border-radius: var(--codeleaf-radius-md);
-        border-left: 4px solid var(--codeleaf-accent-primary);
-      }
-
-      /* Lists with custom bullets */
-      .blog-content ul,
-      .blog-content ol {
-        margin: var(--codeleaf-space-4) 0;
-        padding-left: var(--codeleaf-space-6);
-      }
-
-      .blog-content li {
-        margin-bottom: var(--codeleaf-space-2);
-        position: relative;
-      }
-
-      .blog-content ul li::before {
-        content: "▸";
-        color: var(--codeleaf-accent-primary);
-        font-weight: bold;
-        position: absolute;
-        left: -var(--codeleaf-space-4);
-      }
-
-      .blog-content ol {
-        counter-reset: list-counter;
-      }
-
-      .blog-content ol li {
-        counter-increment: list-counter;
-      }
-
-      .blog-content ol li::before {
-        content: counter(list-counter) ".";
-        color: var(--codeleaf-accent-primary);
-        font-weight: bold;
-        position: absolute;
-        left: -var(--codeleaf-space-4);
-      }
-
-      /* Blockquotes with elegant design */
-      .blog-content blockquote {
-        border-left: 4px solid var(--codeleaf-accent-primary);
-        padding: var(--codeleaf-space-4) var(--codeleaf-space-6);
-        margin: var(--codeleaf-space-6) 0;
-        background: var(--codeleaf-bg-secondary);
-        border-radius: 0 var(--codeleaf-radius-md) var(--codeleaf-radius-md) 0;
-        font-style: italic;
-        position: relative;
-        box-shadow: var(--codeleaf-shadow-sm);
-      }
-
-      .blog-content blockquote::before {
-        content: "❝";
-        font-size: var(--codeleaf-font-2xl);
-        color: var(--codeleaf-accent-muted);
-        position: absolute;
-        top: var(--codeleaf-space-2);
-        left: var(--codeleaf-space-2);
-        opacity: 0.6;
-      }
-
-      .blog-content blockquote p {
-        margin: 0;
-        padding-left: var(--codeleaf-space-4);
-      }
-
-      /* Code blocks with syntax-highlighting ready design */
-      .blog-content code {
-        background: var(--codeleaf-bg-tertiary);
-        padding: var(--codeleaf-space-1) var(--codeleaf-space-2);
-        border-radius: var(--codeleaf-radius-sm);
-        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-        font-size: 0.9em;
-        border: 1px solid var(--codeleaf-border-light);
-        color: var(--codeleaf-accent-primary);
-        font-weight: 500;
-      }
-
-      .blog-content pre {
-        background: linear-gradient(
-          135deg,
-          var(--codeleaf-bg-tertiary),
-          var(--codeleaf-bg-secondary)
-        );
-        border: 1px solid var(--codeleaf-border-medium);
-        border-radius: var(--codeleaf-radius-lg);
-        padding: var(--codeleaf-space-4);
-        overflow-x: auto;
-        margin: var(--codeleaf-space-6) 0;
-        box-shadow: var(--codeleaf-shadow-md);
-        position: relative;
-      }
-
-      .blog-content pre::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(
-          135deg,
-          var(--codeleaf-accent-primary),
-          var(--codeleaf-accent-secondary)
-        );
-        border-radius: var(--codeleaf-radius-lg) var(--codeleaf-radius-lg) 0 0;
-      }
-
-      .blog-content pre code {
-        background: none;
-        border: none;
-        padding: 0;
-        color: var(--codeleaf-text-primary);
-        font-weight: normal;
-        font-size: var(--codeleaf-font-sm);
-        line-height: 1.5;
-      }
-
-      /* Links with smooth transitions */
-      .blog-content a {
-        color: var(--codeleaf-accent-primary);
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: all 0.2s ease;
-        font-weight: 500;
-      }
-
-      .blog-content a:hover {
-        color: var(--codeleaf-accent-secondary);
-        border-bottom-color: var(--codeleaf-accent-secondary);
-      }
-
-      /* Tables with modern design */
-      .blog-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: var(--codeleaf-space-6) 0;
-        background: var(--codeleaf-bg-primary);
-        border-radius: var(--codeleaf-radius-md);
-        overflow: hidden;
-        box-shadow: var(--codeleaf-shadow-sm);
-      }
-
-      .blog-content th,
-      .blog-content td {
-        padding: var(--codeleaf-space-3) var(--codeleaf-space-4);
-        border: 1px solid var(--codeleaf-border-light);
-        text-align: left;
-      }
-
-      .blog-content th {
-        background: var(--codeleaf-bg-secondary);
-        color: var(--codeleaf-accent-primary);
-        font-weight: 600;
-        font-size: var(--codeleaf-font-sm);
-      }
-
-      .blog-content tr:nth-child(even) {
-        background: var(--codeleaf-bg-tertiary);
-      }
-
-      /* Images with elegant framing */
-      .blog-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: var(--codeleaf-radius-md);
-        margin: var(--codeleaf-space-6) 0;
-        box-shadow: var(--codeleaf-shadow-lg);
-        transition: all 0.3s ease;
-        border: 1px solid var(--codeleaf-border-light);
-      }
-
-      .blog-content img:hover {
-        transform: scale(1.02);
-        box-shadow: var(--codeleaf-shadow-lg),
-          0 8px 32px rgba(45, 122, 45, 0.15);
-      }
-
-      /* Text emphasis */
-      .blog-content strong {
-        font-weight: 700;
-        color: var(--codeleaf-accent-primary);
-      }
-
-      .blog-content em {
-        font-style: italic;
-        color: var(--codeleaf-text-secondary);
-      }
-
-      /* Horizontal rules */
-      .blog-content hr {
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          var(--codeleaf-accent-muted),
-          transparent
-        );
-        margin: var(--codeleaf-space-8) 0;
-        border-radius: 2px;
       }
 
       /* Blog Actions */
@@ -970,7 +985,7 @@
       .comment-input:focus {
         outline: none;
         border-color: var(--codeleaf-accent-primary);
-        box-shadow: 0 0 0 2px rgba(45, 122, 45, 0.1);
+        box-shadow: 0 0 0 3px rgba(45, 122, 45, 0.1);
       }
 
       .comment-submit-btn {
@@ -1154,7 +1169,7 @@
       .form-textarea:focus {
         outline: none;
         border-color: var(--codeleaf-accent-primary);
-        box-shadow: 0 0 0 2px rgba(45, 122, 45, 0.1);
+        box-shadow: 0 0 0 3px rgba(45, 122, 45, 0.1);
       }
 
       .form-checkbox {
@@ -1235,7 +1250,7 @@
         }
 
         .mini-map-container {
-          top:80%;
+          top: 80%;
           left: 35%;
           display: block; /* Hide mini-map on smaller screens */
         }
@@ -1330,6 +1345,70 @@
         visibility: visible !important;
         opacity: 1 !important;
         display: flex !important;
+      }
+
+      /* Enhanced Copy Button Styles - Always Visible */
+      .copy-code-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-sm);
+        padding: 6px 10px;
+        font-size: 11px;
+        color: var(--codeleaf-text-secondary);
+        cursor: pointer;
+        opacity: 1; /* Always visible */
+        transition: all 0.2s ease;
+        z-index: 10;
+        font-family: inherit;
+        pointer-events: auto;
+        font-weight: 500;
+      }
+
+      .copy-code-btn:hover {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        border-color: var(--codeleaf-accent-primary);
+        transform: translateY(-1px);
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      .copy-code-btn.copied {
+        background: var(--codeleaf-success);
+        color: white;
+        border-color: var(--codeleaf-success);
+        transform: scale(0.95);
+      }
+
+      .copy-code-btn:active {
+        transform: scale(0.92);
+      }
+
+      /* Ensure code blocks have enough padding for the button */
+      .blog-content pre {
+        position: relative;
+        background: var(--codeleaf-bg-tertiary);
+        border: 1px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: 45px 16px 16px 16px; /* Extra top padding for button */
+        margin: var(--codeleaf-space-4) 0;
+        overflow-x: auto;
+      }
+
+      /* Mobile adjustments */
+      @media (max-width: 768px) {
+        .copy-code-btn {
+          padding: 5px 8px;
+          font-size: 10px;
+          top: 6px;
+          right: 6px;
+        }
+
+        .blog-content pre {
+          padding: 40px 12px 12px 12px;
+        }
       }
     </style>
   </head>
@@ -1536,8 +1615,9 @@
       </div>
     </div>
 
-    <!-- Add Marked.js for Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
       // Get blog slug from URL
       const pathSegments = window.location.pathname.split("/");
@@ -1654,12 +1734,305 @@
       // Initialize toast manager
       const toastManager = new ToastManager();
 
-      // Configure marked options
-      marked.setOptions({
-        breaks: true,
-        gfm: true,
-        sanitize: false,
-      });
+      // Completely Fixed Markdown Renderer
+      class MarkdownRenderer {
+        constructor() {
+          this.isMermaidInitialized = false;
+          this.init();
+        }
+
+        init() {
+          // Configure marked options
+          marked.setOptions({
+            highlight: function (code, lang) {
+              if (lang && hljs.getLanguage(lang)) {
+                try {
+                  return hljs.highlight(code, { language: lang }).value;
+                } catch (err) {
+                  console.warn(`Highlight.js error for language ${lang}:`, err);
+                }
+              }
+              return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true,
+            tables: true,
+            sanitize: false,
+          });
+
+          // Initialize Mermaid
+          if (typeof mermaid !== "undefined") {
+            mermaid.initialize({
+              startOnLoad: false,
+              theme: "default",
+              securityLevel: "loose",
+              fontFamily:
+                '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+            });
+            this.isMermaidInitialized = true;
+          }
+
+          // Initialize Highlight.js
+          if (typeof hljs !== "undefined") {
+            hljs.configure({
+              cssSelector: "pre code",
+              ignoreUnescapedHTML: true,
+            });
+          }
+        }
+
+        // Enhanced render method with all features
+        async render(markdownText) {
+          if (!markdownText) return "";
+
+          try {
+            // Pre-process mermaid diagrams
+            const processedMarkdown = this.preprocessMermaid(markdownText);
+
+            // Render markdown to HTML
+            const rawHtml = marked.parse(processedMarkdown);
+
+            // Sanitize HTML
+            const cleanHtml = DOMPurify.sanitize(rawHtml, {
+              ADD_TAGS: ["pre", "code", "span", "button"],
+              ADD_ATTR: ["class", "data-lang", "data-code", "onclick"],
+              ALLOW_DATA_ATTR: true,
+            });
+
+            return cleanHtml;
+          } catch (error) {
+            console.error("Markdown rendering error:", error);
+            return `<div class="error-message">Error rendering content: ${error.message}</div>`;
+          }
+        }
+
+        // Pre-process mermaid diagrams before markdown parsing
+        preprocessMermaid(text) {
+          return text.replace(
+            /```mermaid\s*([\s\S]*?)```/g,
+            (match, diagram) => {
+              const id = "mermaid-" + Math.random().toString(36).substr(2, 9);
+              return `<div class="mermaid-container" data-mermaid-id="${id}">${diagram.trim()}</div>`;
+            }
+          );
+        }
+
+        // NEW: Process the final HTML after it's inserted into the DOM
+        async processFinalContent(container) {
+          // Add copy buttons to code blocks
+          this.addCopyButtons(container);
+
+          // Setup copy button event delegation
+          this.setupCopyButtonEvents(container);
+
+          // Render mermaid diagrams
+          await this.renderMermaidDiagrams(container);
+
+          // Enhance tables
+          this.enhanceTables(container);
+
+          // Add heading anchors
+          this.addHeadingAnchors(container);
+        }
+
+        // FIXED: Add copy buttons directly to the final DOM
+        addCopyButtons(container) {
+          const codeBlocks = container.querySelectorAll("pre");
+
+          codeBlocks.forEach((pre) => {
+            // Skip if already has copy button
+            if (pre.querySelector(".copy-code-btn")) return;
+
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "copy-code-btn";
+            copyBtn.textContent = "Copy";
+            copyBtn.title = "Copy code to clipboard";
+            copyBtn.type = "button";
+
+            // Store the code content in a data attribute
+            const codeElement = pre.querySelector("code");
+            if (codeElement) {
+              copyBtn.setAttribute("data-code", codeElement.textContent || "");
+            }
+
+            pre.style.position = "relative";
+            pre.appendChild(copyBtn);
+          });
+        }
+
+        // FIXED: Setup event delegation on the actual document
+        setupCopyButtonEvents(container) {
+          // Remove any existing listeners to prevent duplicates
+          container.removeEventListener("click", this.handleContainerClick);
+
+          // Add new event listener
+          this.handleContainerClick = (e) => {
+            if (e.target.classList.contains("copy-code-btn")) {
+              this.handleCopyButtonClick(e.target);
+            }
+          };
+
+          container.addEventListener("click", this.handleContainerClick);
+        }
+
+        // FIXED: Handle copy button click
+        async handleCopyButtonClick(button) {
+          let codeToCopy = "";
+
+          // Get code from data attribute
+          if (button.hasAttribute("data-code")) {
+            codeToCopy = button.getAttribute("data-code");
+          }
+          // Fallback: get code from the pre element
+          else {
+            const pre = button.closest("pre");
+            const codeElement = pre?.querySelector("code");
+            codeToCopy = codeElement?.textContent || "";
+          }
+
+          if (!codeToCopy.trim()) {
+            console.warn("No code found to copy");
+            return;
+          }
+
+          try {
+            // Use modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(codeToCopy);
+              this.showCopySuccess(button);
+            }
+            // Fallback for older browsers
+            else {
+              const textArea = document.createElement("textarea");
+              textArea.value = codeToCopy;
+              textArea.style.position = "fixed";
+              textArea.style.left = "-999999px";
+              textArea.style.top = "-999999px";
+              document.body.appendChild(textArea);
+              textArea.focus();
+              textArea.select();
+
+              try {
+                const successful = document.execCommand("copy");
+                document.body.removeChild(textArea);
+
+                if (successful) {
+                  this.showCopySuccess(button);
+                } else {
+                  throw new Error("execCommand copy failed");
+                }
+              } catch (execError) {
+                document.body.removeChild(textArea);
+                throw execError;
+              }
+            }
+          } catch (error) {
+            console.error("Failed to copy text: ", error);
+            this.showCopyError(button);
+          }
+        }
+
+        // Show copy success state
+        showCopySuccess(button) {
+          const originalText = button.textContent;
+          button.textContent = "Copied!";
+          button.classList.add("copied");
+
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove("copied");
+          }, 2000);
+        }
+
+        // Show copy error state
+        showCopyError(button) {
+          const originalText = button.textContent;
+          button.textContent = "Failed";
+          button.style.background = "var(--codeleaf-error)";
+
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.style.background = "";
+          }, 2000);
+        }
+
+        // Render mermaid diagrams
+        async renderMermaidDiagrams(container) {
+          if (!this.isMermaidInitialized) return;
+
+          const mermaidContainers =
+            container.querySelectorAll(".mermaid-container");
+
+          for (const container of mermaidContainers) {
+            try {
+              const diagram = container.textContent.trim();
+              const { svg } = await mermaid.render(
+                `mermaid-${Date.now()}`,
+                diagram
+              );
+              container.innerHTML = svg;
+            } catch (error) {
+              console.error("Mermaid rendering error:", error);
+              container.innerHTML = `<div class="error-message">Diagram rendering failed: ${error.message}</div>`;
+            }
+          }
+        }
+
+        // Enhance tables with responsive features
+        enhanceTables(container) {
+          const tables = container.querySelectorAll("table");
+
+          tables.forEach((table) => {
+            // Wrap tables for responsive scrolling
+            const wrapper = document.createElement("div");
+            wrapper.style.overflowX = "auto";
+            wrapper.style.margin = "var(--codeleaf-space-4) 0";
+
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+          });
+        }
+
+        // Add anchor links to headings
+        addHeadingAnchors(container) {
+          const headings = container.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+          headings.forEach((heading) => {
+            if (heading.id) return;
+
+            const id = heading.textContent
+              .toLowerCase()
+              .replace(/[^\w]+/g, "-")
+              .replace(/^-+|-+$/g, "");
+
+            heading.id = id;
+
+            const anchor = document.createElement("a");
+            anchor.href = `#${id}`;
+            anchor.className = "heading-anchor";
+            anchor.innerHTML = "🔗";
+            anchor.style.marginLeft = "var(--codeleaf-space-2)";
+            anchor.style.opacity = "0";
+            anchor.style.transition = "opacity 0.2s ease";
+            anchor.style.textDecoration = "none";
+
+            heading.style.position = "relative";
+            heading.appendChild(anchor);
+
+            // Show anchor on hover
+            heading.addEventListener("mouseenter", () => {
+              anchor.style.opacity = "1";
+            });
+
+            heading.addEventListener("mouseleave", () => {
+              anchor.style.opacity = "0";
+            });
+          });
+        }
+      }
+
+      // Initialize Markdown Renderer
+      const markdownRenderer = new MarkdownRenderer();
 
       // Mini-map functionality
       class MiniMap {
@@ -1820,7 +2193,8 @@
         }
       };
 
-      async function loadBlog() {
+      // Enhanced blog content loader with Markdown support
+      async function loadBlogWithMarkdown() {
         try {
           const token = localStorage.getItem("authToken");
           const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -1850,7 +2224,7 @@
           document.getElementById("loading").style.display = "none";
 
           if (result.success) {
-            displayBlog(result.blog);
+            await displayBlogWithMarkdown(result.blog);
             loadPopularBlogs(result.blog.tags);
           } else {
             showError(result.error || "Failed to load blog");
@@ -1860,6 +2234,116 @@
           document.getElementById("loading").style.display = "none";
           showError(error.message);
         }
+      }
+
+      // Fixed blog display with Markdown rendering
+      async function displayBlogWithMarkdown(blog) {
+        document.getElementById("blogArticle").style.display = "block";
+
+        // Set basic info
+        document.getElementById("blogTitle").textContent = blog.title;
+        document.getElementById("blogAuthor").textContent = `By ${blog.author}`;
+        document.getElementById("blogDate").textContent = new Date(
+          blog.createdAt
+        ).toLocaleDateString();
+        document.getElementById("blogViews").textContent = `${
+          blog.views || 0
+        } views`;
+        document.getElementById("blogVisibility").textContent = blog.isPublic
+          ? "🌍 Public"
+          : "🔒 Private";
+
+        // Set tags
+        const tagsContainer = document.getElementById("blogTags");
+        if (blog.tags && blog.tags.length > 0) {
+          tagsContainer.innerHTML = blog.tags
+            .map((tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`)
+            .join("");
+        } else {
+          tagsContainer.innerHTML = "";
+        }
+
+        // Render markdown content with enhanced features
+        const contentContainer = document.getElementById("blogContentText");
+        if (blog.content && blog.content.trim()) {
+          try {
+            // Show loading state for markdown processing
+            contentContainer.innerHTML =
+              '<div class="loading">Rendering content...</div>';
+
+            // Render markdown with all enhancements
+            const htmlContent = await markdownRenderer.render(blog.content);
+            contentContainer.innerHTML = htmlContent;
+
+            // CRITICAL FIX: Process the final content AFTER it's inserted into the DOM
+            await markdownRenderer.processFinalContent(contentContainer);
+
+            // Generate IDs for headings and create mini-map
+            setTimeout(() => {
+              const headings = Array.from(
+                contentContainer.querySelectorAll("h1, h2, h3, h4, h5, h6")
+              );
+              headings.forEach((heading, index) => {
+                if (!heading.id) {
+                  heading.id = `section-${index}`;
+                }
+              });
+
+              if (typeof miniMap !== "undefined") {
+                miniMap.generateMiniMap(headings);
+              }
+            }, 100);
+          } catch (error) {
+            console.error("Error rendering markdown:", error);
+            // Fallback to basic markdown rendering
+            contentContainer.innerHTML = `<p>${escapeHtml(blog.content)}</p>`;
+          }
+        } else {
+          contentContainer.innerHTML = "<p>No content available.</p>";
+        }
+
+        // Set up header actions
+        setupBlogHeaderActions(blog);
+      }
+
+      // Setup blog header actions
+      function setupBlogHeaderActions(blog) {
+        const headerActionsContainer =
+          document.getElementById("blogHeaderActions");
+        const currentUser = localStorage.getItem("userId");
+
+        // Clear existing actions
+        headerActionsContainer.innerHTML = "";
+
+        // Add share button for ALL public blogs
+        if (blog.isPublic) {
+          const shareButton = document.createElement("button");
+          shareButton.className = "btn btn-primary";
+          shareButton.innerHTML = "📤 Share Blog";
+          shareButton.onclick = window.shareBlog; // Use global function
+          shareButton.title = "Copy blog URL to clipboard";
+          headerActionsContainer.appendChild(shareButton);
+        }
+
+        // Add edit/delete buttons only for blog author
+        if (currentUser === blog.author) {
+          const editButton = document.createElement("button");
+          editButton.className = "btn btn-primary";
+          editButton.textContent = "✏️ Edit Blog";
+          editButton.onclick = openEditModal;
+          headerActionsContainer.appendChild(editButton);
+
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "btn btn-danger";
+          deleteButton.textContent = "🗑️ Delete Blog";
+          deleteButton.onclick = () => deleteBlog(blog.slug);
+          headerActionsContainer.appendChild(deleteButton);
+        }
+
+        // Ensure buttons are visible
+        headerActionsContainer.style.display = "flex";
+        headerActionsContainer.style.gap = "10px";
+        headerActionsContainer.style.flexWrap = "wrap";
       }
 
       // Load popular blogs based on current blog's tags
@@ -1924,101 +2408,6 @@
           `
           )
           .join("");
-      }
-
-      function displayBlog(blog) {
-        document.getElementById("blogArticle").style.display = "block";
-
-        // Set basic info
-        document.getElementById("blogTitle").textContent = blog.title;
-        document.getElementById("blogAuthor").textContent = `By ${blog.author}`;
-        document.getElementById("blogDate").textContent = new Date(
-          blog.createdAt
-        ).toLocaleDateString();
-        document.getElementById("blogViews").textContent = `${
-          blog.views || 0
-        } views`;
-        document.getElementById("blogVisibility").textContent = blog.isPublic
-          ? "🌍 Public"
-          : "🔒 Private";
-
-        // Set tags
-        const tagsContainer = document.getElementById("blogTags");
-        if (blog.tags && blog.tags.length > 0) {
-          tagsContainer.innerHTML = blog.tags
-            .map((tag) => `<span class="blog-tag">${escapeHtml(tag)}</span>`)
-            .join("");
-        } else {
-          tagsContainer.innerHTML = "";
-        }
-
-        // Render markdown content
-        const contentContainer = document.getElementById("blogContentText");
-        if (blog.content && blog.content.trim()) {
-          try {
-            const htmlContent = marked.parse(blog.content);
-            contentContainer.innerHTML = htmlContent;
-
-            // Generate IDs for headings and create mini-map
-            setTimeout(() => {
-              const headings = Array.from(
-                contentContainer.querySelectorAll("h1, h2, h3, h4, h5, h6")
-              );
-              headings.forEach((heading, index) => {
-                if (!heading.id) {
-                  heading.id = `section-${index}`;
-                }
-              });
-              miniMap.generateMiniMap(headings);
-            }, 100);
-          } catch (error) {
-            console.error("Error parsing markdown:", error);
-            contentContainer.innerHTML = `<p>${escapeHtml(blog.content)}</p>`;
-          }
-        } else {
-          contentContainer.innerHTML = "<p>No content available.</p>";
-        }
-
-        // Set up header actions
-        const headerActionsContainer =
-          document.getElementById("blogHeaderActions");
-        const currentUser = localStorage.getItem("userId");
-
-        // Clear existing actions
-        headerActionsContainer.innerHTML = "";
-
-        // Add share button for ALL public blogs
-        if (blog.isPublic) {
-          const shareButton = document.createElement("button");
-          shareButton.className = "btn btn-primary";
-          shareButton.innerHTML = "📤 Share Blog";
-          shareButton.onclick = window.shareBlog; // Use global function
-          shareButton.title = "Copy blog URL to clipboard";
-          headerActionsContainer.appendChild(shareButton);
-        }
-
-        // Add edit/delete buttons only for blog author
-        if (currentUser === blog.author) {
-          const editButton = document.createElement("button");
-          editButton.className = "btn btn-primary";
-          editButton.textContent = "✏️ Edit Blog";
-          editButton.onclick = openEditModal;
-          headerActionsContainer.appendChild(editButton);
-
-          const deleteButton = document.createElement("button");
-          deleteButton.className = "btn btn-danger";
-          deleteButton.textContent = "🗑️ Delete Blog";
-          deleteButton.onclick = () => deleteBlog(blog.slug);
-          headerActionsContainer.appendChild(deleteButton);
-        }
-
-        // Ensure buttons are visible
-        headerActionsContainer.style.display = "flex";
-        headerActionsContainer.style.gap = "10px";
-        headerActionsContainer.style.flexWrap = "wrap";
-
-        // Update page title
-        document.title = `${blog.title} - FocusFlow Blogs`;
       }
 
       function showError(message) {
@@ -2290,10 +2679,15 @@
         toggleScrollToTop();
       }
 
+      // Replace the original loadBlog function
+      async function loadBlog() {
+        await loadBlogWithMarkdown();
+      }
+
       // Initialize when page loads
       document.addEventListener("DOMContentLoaded", () => {
         initScrollToTop();
-        loadBlog();
+        loadBlog(); // This now uses the enhanced version
       });
     </script>
 
