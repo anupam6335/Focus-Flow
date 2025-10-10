@@ -941,6 +941,383 @@
           width: 100%;
         }
       }
+
+      /* Updated Blog Card CSS */
+      .blog-card {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        position: relative;
+        box-shadow: var(--codeleaf-shadow-sm);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .blog-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(45, 122, 45, 0.15),
+          0 8px 24px rgba(45, 122, 45, 0.1), 0 0 0 1px rgba(76, 166, 76, 0.1);
+        border-color: var(--codeleaf-accent-muted);
+      }
+
+      .blog-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(45, 122, 45, 0.1) 0%,
+          rgba(76, 166, 76, 0.05) 50%,
+          rgba(168, 212, 168, 0.02) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .blog-card:hover::before {
+        opacity: 1;
+      }
+
+      /* Blog Card Header */
+      .blog-card-header {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .blog-card-image {
+        width: 100%;
+        height: 180px;
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-accent-primary) 0%,
+          var(--codeleaf-accent-secondary) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .blog-card-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(0, 0, 0, 0.1) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .blog-card:hover .blog-card-overlay {
+        opacity: 1;
+      }
+
+      .blog-card-category {
+        position: absolute;
+        top: var(--codeleaf-space-3);
+        left: var(--codeleaf-space-3);
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--codeleaf-accent-primary);
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-3);
+        border-radius: 12px;
+        font-size: var(--codeleaf-font-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+
+      .blog-card:hover .blog-card-category {
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      /* Blog Card Body */
+      .blog-card-body {
+        padding: var(--codeleaf-space-4);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-3);
+        position: relative;
+        z-index: 2;
+        background: var(--codeleaf-bg-primary);
+      }
+
+      /* Blog Meta Section */
+      .blog-card-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-3);
+        margin-bottom: var(--codeleaf-space-2);
+      }
+
+      .blog-author-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--codeleaf-bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .avatar-icon {
+        font-size: var(--codeleaf-font-sm);
+        opacity: 0.8;
+      }
+
+      .blog-meta-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .blog-author {
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 600;
+        color: var(--codeleaf-text-primary);
+        line-height: 1.2;
+      }
+
+      .blog-date {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        line-height: 1.2;
+      }
+
+      .blog-visibility-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--codeleaf-space-1);
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-2);
+        background: var(--codeleaf-bg-secondary);
+        border-radius: 12px;
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        flex-shrink: 0;
+      }
+
+      .visibility-icon {
+        font-size: 0.8rem;
+      }
+
+      .visibility-text {
+        font-weight: 500;
+      }
+
+      /* Blog Title */
+      .blog-card-title {
+        font-size: var(--codeleaf-font-lg);
+        font-weight: 700;
+        color: var(--codeleaf-text-primary);
+        line-height: 1.3;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: color 0.2s ease;
+      }
+
+      .blog-card:hover .blog-card-title {
+        color: var(--codeleaf-accent-primary);
+      }
+
+      /* Blog Excerpt */
+      .blog-card-excerpt {
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-secondary);
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+      }
+
+      /* Blog Card Footer */
+      .blog-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: var(--codeleaf-space-3);
+        padding-top: var(--codeleaf-space-3);
+        border-top: 1px solid var(--codeleaf-border-light);
+      }
+
+      .blog-stats {
+        display: flex;
+        gap: var(--codeleaf-space-4);
+      }
+
+      .blog-stat {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-1);
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+      }
+
+      .stat-icon {
+        font-size: 0.9rem;
+      }
+
+      .stat-count {
+        font-weight: 600;
+        color: var(--codeleaf-text-secondary);
+      }
+
+      .blog-actions {
+        display: flex;
+        gap: var(--codeleaf-space-1);
+      }
+
+      .blog-action-btn {
+        background: none;
+        border: none;
+        padding: var(--codeleaf-space-2);
+        border-radius: var(--codeleaf-radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      .blog-action-btn:hover:not(.disabled) {
+        background: var(--codeleaf-bg-tertiary);
+        transform: translateY(-1px);
+      }
+
+      .blog-action-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .blog-action-btn.liked {
+        color: #ff6b6b;
+      }
+
+      .action-icon {
+        font-size: 1rem;
+        transition: transform 0.2s ease;
+      }
+
+      .blog-action-btn:hover:not(.disabled) .action-icon {
+        transform: scale(1.1);
+      }
+
+      /* Responsive Adjustments */
+      @media (max-width: 768px) {
+        .blog-card-image {
+          height: 160px;
+        }
+
+        .blog-card-body {
+          padding: var(--codeleaf-space-3);
+        }
+
+        .blog-card-title {
+          font-size: var(--codeleaf-font-base);
+        }
+
+        .blog-card-excerpt {
+          font-size: var(--codeleaf-font-sm);
+          -webkit-line-clamp: 2;
+        }
+
+        .blog-stats {
+          gap: var(--codeleaf-space-3);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .blog-card-image {
+          height: 140px;
+        }
+
+        .blog-card-meta {
+          gap: var(--codeleaf-space-2);
+        }
+
+        .blog-author-avatar {
+          width: 28px;
+          height: 28px;
+        }
+
+        .blog-visibility-tag .visibility-text {
+          display: none;
+        }
+
+        .blog-card-footer {
+          flex-direction: column;
+          gap: var(--codeleaf-space-2);
+          align-items: flex-start;
+        }
+
+        .blog-actions {
+          align-self: flex-end;
+        }
+      }
+
+      /* Animation Enhancements */
+      @keyframes cardFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+
+      .blog-card:hover {
+        animation: cardFloat 3s ease-in-out infinite;
+      }
+
+      /* Focus States for Accessibility */
+      .blog-card:focus-within {
+        outline: 2px solid var(--codeleaf-accent-primary);
+        outline-offset: 2px;
+      }
+
+      .blog-action-btn:focus {
+        outline: 2px solid var(--codeleaf-accent-primary);
+        outline-offset: 2px;
+      }
+
+      /* Dark Mode Enhancements */
+      @media (prefers-color-scheme: dark) {
+        .blog-card-category {
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--codeleaf-accent-secondary);
+          backdrop-filter: blur(20px);
+        }
+
+        .blog-author-avatar {
+          background: var(--codeleaf-bg-secondary);
+        }
+      }
     </style>
   </head>
   <body>
@@ -1422,6 +1799,34 @@
         return layout;
       }
 
+      // Helper function to format blog dates
+      function formatBlogDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) return "Yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
+
+      // Helper function to escape HTML
+      function escapeHtml(unsafe) {
+        return unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
       // Display blogs in Instagram-style grid with proper layout
       function displayBlogs(blogs) {
         const blogsGrid = document.getElementById("blogsGrid");
@@ -1466,104 +1871,93 @@
             const cardType = item.type;
 
             return `
-              <div class="blog-card ${cardType}" onclick="viewBlog('${
-              blog.slug
-            }')">
-                <div class="blog-card-image"></div>
-                <div class="blog-card-content">
-                  <h3>${escapeHtml(blog.title)}</h3>
-                  <div class="blog-meta">
-                    <span>By ${escapeHtml(blog.author)}</span>
-                    <span class="blog-visibility">
-                      ${blog.isPublic ? "🌍 Public" : "🔒 Private"}
-                    </span>
-                  </div>
-                  ${
-                    blog.tags && blog.tags.length > 0
-                      ? `
-                      <div class="blog-tags">
-                        ${blog.tags
-                          .slice(0, 3) // Limit to 3 tags for better layout
-                          .map(
-                            (tag) =>
-                              `<span class="blog-tag">${escapeHtml(tag)}</span>`
-                          )
-                          .join("")}
-                        ${
-                          blog.tags.length > 3
-                            ? `<span class="blog-tag">+${
-                                blog.tags.length - 3
-                              }</span>`
-                            : ""
-                        }
-                      </div>
-                    `
-                      : ""
-                  }
-                  <div class="blog-content-preview">
-                    ${escapeHtml(
-                      blog.content
-                        ? blog.content.substring(
-                            0,
-                            cardType === "big" ? 150 : 100
-                          )
-                        : "No content"
-                    )}${
-              blog.content &&
-              blog.content.length > (cardType === "big" ? 150 : 100)
-                ? "..."
-                : ""
-            }
-                  </div>
-                  <div class="blog-meta">
-                    <span>${new Date(
-                      blog.createdAt
-                    ).toLocaleDateString()}</span>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                      <div class="blog-likes">
-                        <button class="like-btn ${
-                          blog.likedBy &&
-                          blog.likedBy.includes(currentUser) &&
-                          blog.author !== currentUser
-                            ? "liked"
-                            : blog.author === currentUser
-                            ? "disabled"
-                            : ""
-                        }" 
-                                onclick="event.stopPropagation(); ${
-                                  blog.author !== currentUser
-                                    ? `toggleLike('${blog.slug}', event)`
-                                    : ""
-                                }"
-                                ${
-                                  blog.author === currentUser
-                                    ? 'disabled style="opacity: 0.5; cursor: not-allowed;"'
-                                    : ""
-                                }>
-                          ${
-                            blog.likedBy && blog.likedBy.includes(currentUser)
-                              ? "❤️"
-                              : "🤍"
-                          }
-                        </button>
-                        <span>${blog.likes || 0}</span>
-                      </div>
-                      <div style="font-size: 0.8rem; opacity: 0.7;">
-                        👁️ ${blog.views || 0}
-                      </div>
-                      ${
-                        blog.author === currentUser
-                          ? `
-                          <button class="btn btn-secondary" onclick="event.stopPropagation(); editBlog('${blog.slug}')" style="padding: 4px 8px; font-size: 0.8rem;">
-                            Edit
-                          </button>
-                      `
-                          : ""
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
+             <!-- Updated Blog Card HTML -->
+<div class="blog-card" onclick="viewBlog('${blog.slug}')">
+  <div class="blog-card-header">
+    <div class="blog-card-image">
+      <div class="blog-card-overlay"></div>
+      <div class="blog-card-category">${
+        blog.tags && blog.tags.length > 0 ? blog.tags[0] : "General"
+      }</div>
+    </div>
+  </div>
+  
+  <div class="blog-card-body">
+    <div class="blog-card-meta">
+      <div class="blog-author-avatar">
+        <span class="avatar-icon">👤</span>
+      </div>
+      <div class="blog-meta-info">
+        <span class="blog-author">${escapeHtml(blog.author)}</span>
+        <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
+      </div>
+      <div class="blog-visibility-tag">
+        <span class="visibility-icon">${blog.isPublic ? "🌍" : "🔒"}</span>
+        <span class="visibility-text">${
+          blog.isPublic ? "Public" : "Private"
+        }</span>
+      </div>
+    </div>
+    
+    <h3 class="blog-card-title">${escapeHtml(blog.title)}</h3>
+    
+    <div class="blog-card-excerpt">
+      ${escapeHtml(
+        blog.content ? blog.content.substring(0, 120) : "No content available"
+      )}${blog.content && blog.content.length > 120 ? "..." : ""}
+    </div>
+    
+    <div class="blog-card-footer">
+      <div class="blog-stats">
+        <div class="blog-stat">
+          <span class="stat-icon">❤️</span>
+          <span class="stat-count">${blog.likes || 0}</span>
+        </div>
+        <div class="blog-stat">
+          <span class="stat-icon">👁️</span>
+          <span class="stat-count">${blog.views || 0}</span>
+        </div>
+      </div>
+      
+      <div class="blog-actions">
+        ${
+          blog.author === currentUser
+            ? `
+          <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
+            <span class="action-icon">✏️</span>
+          </button>
+        `
+            : ""
+        }
+        <button class="blog-action-btn like-btn ${
+          blog.likedBy &&
+          blog.likedBy.includes(currentUser) &&
+          blog.author !== currentUser
+            ? "liked"
+            : ""
+        } 
+                   ${blog.author === currentUser ? "disabled" : ""}" 
+                onclick="event.stopPropagation(); ${
+                  blog.author !== currentUser
+                    ? `toggleLike('${blog.slug}', event)`
+                    : ""
+                }"
+                ${blog.author === currentUser ? "disabled" : ""}
+                title="${
+                  blog.author === currentUser
+                    ? "Cannot like your own blog"
+                    : blog.likedBy && blog.likedBy.includes(currentUser)
+                    ? "Unlike blog"
+                    : "Like blog"
+                }">
+          <span class="action-icon">${
+            blog.likedBy && blog.likedBy.includes(currentUser) ? "❤️" : "🤍"
+          }</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
             `;
           })
           .join("");
