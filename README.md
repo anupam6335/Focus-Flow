@@ -1,95 +1,82 @@
 # 🌿 FocusFlow - Track Your Progress, Master Your Journey
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://my-focus-flow.vercel.app/)
-[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/anupam6335/FocusFlow/releases)
-[![Live Demo](https://img.shields.io/badge/demo-live%20project-success)](https://my-focus-flow.vercel.app/)
-[![Backend Status](https://img.shields.io/badge/backend-live%20API-informational)](https://daily-tracker-upst.onrender.com/)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/anupam6335/FocusFlow)
+[![Live Demo](https://img.shields.io/badge/demo-live%20project-success)](https://focus-flow-lopn.onrender.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D14.0-brightgreen)](package.json)
 [![MongoDB](https://img.shields.io/badge/database-MongoDB-green)](https://mongodb.com)
 
-## 🚨 Important Project Structure Note
+## 🎯 The Story Behind FocusFlow
 
-**Current Structure**: Single-file monolith (all code in one folder)  
-**Ideal Structure**: Modular folder-based architecture  
-**Contribution Welcome**: If you'd like to refactor this into a proper folder structure, please make a PR! I'll be happy to merge it.
+> "I almost lost everything. After months of solving complex Data Structures and Algorithms problems, my hard drive crashed. Weeks of carefully crafted solutions, optimization notes, and 'aha!' moments—gone in an instant. The worst part? I couldn't even remember the elegant solution to a problem I'd solved just two weeks prior during a crucial technical interview."
 
-### 📁 Current Single-File Structure
-```
-FocusFlow/
-├── server.js          # Everything: Models, Routes, Auth, Middleware
-├── index.html         # Main app with embedded CSS/JS
-├── blogs.html         # Blog platform with embedded CSS/JS  
-├── blog-view.html     # Blog reader with embedded CSS/JS
-├── package.json
-└── .env
-```
+**This was my reality.** Like thousands of developers, I was solving DSA problems across multiple platforms—LeetCode, HackerRank, CodeForces—but my progress was scattered, my insights were fleeting, and my learning was disorganized.
 
-### 📁 Ideal Modular Structure (Future Goal)
-```
-FocusFlow/
-├── backend/
-│   ├── models/
-│   │   ├── User.js
-│   │   ├── Blog.js
-│   │   ├── ProgressData.js
-│   │   └── ActivityTracker.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── blogs.js
-│   │   ├── progress.js
-│   │   └── analytics.js
-│   ├── middleware/
-│   │   ├── auth.js
-│   │   └── validation.js
-│   ├── config/
-│   │   └── database.js
-│   └── server.js
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── styles/
-│   │   └── utils/
-│   ├── public/
-│   └── package.json
-└── package.json
-```
+### The Breaking Point
+- **Lost Local Notes**: Hard drive failure wiped out months of progress
+- **Interview Amnesia**: Forgetting optimal solutions to previously solved problems
+- **Invisible Progress**: No way to visualize consistency or track improvement over time
+- **Isolated Learning**: Solving in silos without community wisdom or shared insights
 
-**Want to help refactor?** This project currently uses a single-file approach for simplicity. If you'd like to contribute by creating a proper folder structure with separated concerns, I'd greatly appreciate a Pull Request!
+### The Solution Born from Frustration
+FocusFlow emerged from this pain. It's not just another progress tracker—it's the system I wish I had when I was preparing for technical interviews and building my problem-solving skills. A unified platform that combines **progress tracking**, **visual analytics**, and **community learning** into one cohesive experience.
+
+## ✨ What is FocusFlow?
+
+FocusFlow is a comprehensive web application designed specifically for developers tracking their Data Structures and Algorithms journey. It transforms scattered coding practice into organized, measurable progress with built-in community features for shared learning.
 
 ---
 
-## 🌟 The Story Behind FocusFlow
+## 🚀 Live Application
 
-> "I almost gave up on my coding journey. The loneliness of learning, the invisible progress, the forgotten insights—it was crushing. Then I built FocusFlow to save myself, and it ended up saving my journey."
+### 🌐 **Single Unified URL:**
+# [https://focus-flow-lopn.onrender.com/](https://focus-flow-lopn.onrender.com/)
 
----
-
-## 🎨 Project Preview
-
-### 📊 Main Dashboard - Your Progress Command Center
-![FocusFlow Dashboard](https://github.com/user-attachments/assets/13daba48-bf23-4be6-a377-aa7ea482f2ac)
-
-### 📝 Blogging Platform - Share Your Wisdom
-![Blog Platform](https://github.com/user-attachments/assets/f0c6bdab-7230-457c-bb05-e943120648f7)
-
-### 🔍 Blog Reader - Immersive Learning Experience
-![Blog Reader](https://github.com/user-attachments/assets/abbe6626-132d-4a9d-b3cb-aa3a0ccc5664)
+**One URL, Three Powerful Interfaces:**
+- **📊 Progress Tracker**: `https://focus-flow-lopn.onrender.com/`
+- **📝 Blog Platform**: `https://focus-flow-lopn.onrender.com/blogs.html`
+- **🔍 Blog Reader**: `https://focus-flow-lopn.onrender.com/blogs/your-blog-slug`
 
 ---
 
-## 🔄 Complete System Architecture & Workflow
+## 🎯 Core Features
 
-### 🏗️ FocusFlow Ecosystem Flow Diagram [link](https://www.mermaidchart.com/app/projects/e9e5d958-0c91-416a-8623-5f12732be3d7/diagrams/1bc62070-cc0b-46f9-b9d0-8b6160bbc390/share/invite/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudElEIjoiMWJjNjIwNzAtY2MwYi00NmY5LWI5ZDAtOGI2MTYwYmJjMzkwIiwiYWNjZXNzIjoiRWRpdCIsImlhdCI6MTc1OTU2NDUxOX0.D7MEH3GTBCWUTd97qBti9GAcUFRKoPn5Rc1hgwD6-Vs)
+### 📊 Intelligent Progress Tracking
+- **Daily DSA Problem Management** with completion tracking
+- **GitHub-style Heatmap** for visual consistency tracking
+- **Streak Analytics** (current streak, max streak, daily averages)
+- **Smart Tagging System** for problem categorization
+- **Link Management** with URL-to-tag conversion
+- **Achievement Celebrations** for milestone recognition
+
+### 📝 Integrated Blogging Platform
+- **Markdown-Powered Editor** with live preview
+- **Public/Private Blog Control** for sharing or personal notes
+- **Real-time View Tracking** and engagement analytics
+- **Like System** with community interaction
+- **Popularity-Based Ranking** (views + likes)
+- **Tag-Based Categorization** for discoverability
+
+### 🔐 Enterprise-Grade Infrastructure
+- **JWT Authentication** with 230-day sessions
+- **Real-time Multi-device Sync** with conflict resolution
+- **Offline-First Architecture** with local storage caching
+- **Password Recovery System** with OTP verification
+- **Secure API Architecture** with proper validation
+
+---
+
+## 🏗️ System Architecture & Workflow
+
+### High-Level System Architecture
 
 ```mermaid
-flowchart TB
+graph TB
     %% ========== USERS ==========
     User[👤 User]:::user
     
     %% ========== FRONTEND COMPONENTS ==========
-    subgraph Frontend[🌐 Frontend - Vercel]
+    subgraph Frontend[🌐 Frontend - Single Page Application]
         A[index.html<br/>Progress Tracker]:::frontend
         B[blogs.html<br/>Blog Platform]:::frontend
         C[blog-view.html<br/>Blog Reader]:::frontend
@@ -100,7 +87,7 @@ flowchart TB
     subgraph Backend[⚙️ Backend API - Render]
         E[server.js<br/>Express Server]:::backend
         F[JWT Authentication<br/>Security Layer]:::security
-        G[API Routes<br/>25+ Endpoints]:::api
+        G[API Routes<br/>RESTful Endpoints]:::api
         H[Real-time Sync Engine]:::sync
     end
     
@@ -112,77 +99,19 @@ flowchart TB
         L[📈 Activity Analytics]:::dbAnalytics
     end
     
-    %% ========== EXTERNAL SERVICES ==========
-    subgraph Services[🔧 External Services]
-        M[Marked.js<br/>Markdown Rendering]:::markdown
-        N[bcryptjs<br/>Password Hashing]:::security
-        O[jsonwebtoken<br/>Auth Tokens]:::security
-    end
-    
-    %% ========== USER WORKFLOWS ==========
-    subgraph Workflows[🎯 User Workflows]
-        %% Progress Tracking Flow
-        subgraph ProgressFlow[📊 Progress Tracking]
-            P1[Add/Complete Activity]:::progress
-            P2[Update Local Storage]:::storage
-            P3[Sync with Backend]:::sync
-            P4[Update Heatmap & Analytics]:::analytics
-        end
-        
-        %% Blog Management Flow
-        subgraph BlogFlow[📝 Blog Management]
-            B1[Create/Edit Blog]:::blog
-            B2[Generate Slug]:::blog
-            B3[Save to Database]:::dbBlogs
-            B4[Update Blog Lists]:::blog
-        end
-        
-        %% Engagement Flow
-        subgraph EngagementFlow[❤️ Engagement System]
-            E1[View Blog]:::engagement
-            E2[Increment View Counter]:::analytics
-            E3[Like/Unlike Blog]:::engagement
-            E4[Update Popularity Score]:::analytics
-        end
-    end
-    
-    %% ========== DATA FLOW CONNECTIONS ==========
-    %% User to Frontend
-    User -.->|1. User Interaction| A
-    User -.->|2. Blog Creation| B
-    User -.->|3. Content Reading| C
-    
-    %% Frontend to Backend
-    A -.->|4. Progress Updates| E
-    B -.->|5. Blog Operations| E
-    C -.->|6. View Tracking| E
-    D -.->|7. Auto-sync| E
-    
-    %% Backend to Database
-    E -.->|8. JWT Verification| F
-    E -.->|9. User Management| I
-    E -.->|10. Blog Operations| J
-    E -.->|11. Progress Tracking| K
-    E -.->|12. Analytics Data| L
-    
-    %% Backend to Services
-    F -.->|13. Password Hashing| N
-    F -.->|14. Token Generation| O
-    C -.->|15. Markdown Processing| M
-    
-    %% Workflow Connections
-    P1 ==>|Instant UI Update| P2 ==>|Background Sync| P3 ==>|Real-time Analytics| P4
-    B1 ==>|Auto-slug Creation| B2 ==>|Database Save| B3 ==>|UI Refresh| B4
-    E1 ==>|View Count| E2 ==>|Popularity Calc| E4
-    E3 ==>|Like Action| E4
-    
-    %% Connect Workflows to Main System
-    P1 -.-> A
-    P4 -.-> K
-    B1 -.-> B
-    B3 -.-> J
-    E1 -.-> C
-    E4 -.-> L
+    %% ========== DATA FLOW ==========
+    User --> A
+    User --> B
+    User --> C
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    E --> F
+    E --> I
+    E --> J
+    E --> K
+    E --> L
     
     %% ========== STYLING ==========
     classDef user fill:#4CAF50,color:white,stroke:#388E3C,stroke-width:2px
@@ -196,520 +125,886 @@ flowchart TB
     classDef dbBlogs fill:#E91E63,color:white,stroke:#C2185B,stroke-width:2px
     classDef dbProgress fill:#3F51B5,color:white,stroke:#303F9F,stroke-width:2px
     classDef dbAnalytics fill:#00BCD4,color:white,stroke:#0097A7,stroke-width:2px
-    classDef markdown fill:#8BC34A,color:white,stroke:#689F38,stroke-width:2px
-    classDef progress fill:#FF5722,color:white,stroke:#E64A19,stroke-width:2px
-    classDef blog fill:#9C27B0,color:white,stroke:#7B1FA2,stroke-width:2px
-    classDef engagement fill:#FFC107,color:black,stroke:#FFA000,stroke-width:2px
-    classDef analytics fill:#00BCD4,color:white,stroke:#0097A7,stroke-width:2px
+```
 
-    %% Animation styles
-    linkStyle 0 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 1 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 2 stroke:#4CAF50,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 3 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 4 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 5 stroke:#2196F3,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 6 stroke:#795548,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 7 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 8 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 9 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 10 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 11 stroke:#9C27B0,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 12 stroke:#F44336,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 13 stroke:#F44336,stroke-width:3px,stroke-dasharray:5 5
-    linkStyle 14 stroke:#8BC34A,stroke-width:3px,stroke-dasharray:5 5
+### User Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MongoDB
+    participant LS as Local Storage
+    
+    Note over U,LS: Registration Flow
+    U->>F: Fill registration form
+    F->>B: POST /api/register
+    B->>DB: Check username uniqueness
+    B->>B: Hash password (bcrypt)
+    B->>DB: Create user record
+    B->>DB: Create default progress data
+    B->>F: Registration success
+    
+    Note over U,LS: Login Flow
+    U->>F: Enter credentials
+    F->>B: POST /api/login
+    B->>DB: Find user by username
+    B->>B: Verify password (bcrypt.compare)
+    B->>B: Generate JWT token (230 days)
+    B->>F: Return JWT token + user data
+    F->>LS: Store token & user info
+    F->>F: Update UI to logged-in state
+    
+    Note over U,LS: Auto-Login Flow
+    F->>LS: Check for existing token
+    F->>B: GET /api/verify-token
+    B->>B: Verify JWT signature
+    B->>F: Token valid response
+    F->>F: Auto-login user
+    
+    Note over U,LS: Password Reset Flow
+    U->>F: Request password reset
+    F->>B: POST /api/forgot-password
+    B->>DB: Generate & store OTP code
+    B->>F: Return OTP (demo purposes)
+    U->>F: Enter OTP + new password
+    F->>B: POST /api/reset-password
+    B->>DB: Validate OTP & expiry
+    B->>B: Hash new password
+    B->>DB: Update user password
+    B->>F: Password reset success
+```
+
+### DSA Problem Tracking Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant LS as Local Storage
+    participant B as Backend
+    participant DB as MongoDB
+    
+    Note over U,DB: Add New Problem
+    U->>F: Click "Add Question"
+    F->>F: Create new question entry
+    F->>LS: Save to localStorage immediately
+    F->>F: Update UI instantly
+    F->>B: POST /api/data (debounced)
+    B->>DB: Save with version control
+    B->>F: Return updated data
+    
+    Note over U,DB: Toggle Completion
+    U->>F: Click checkbox
+    F->>F: Toggle completion state
+    F->>F: Trigger celebration if 5+ solved
+    F->>LS: Save to localStorage
+    F->>B: POST /api/data (background sync)
+    B->>DB: Update completion status
+    B->>B: Recalculate analytics
+    B->>DB: Update activity tracker
+    
+    Note over U,DB: Edit Problem Details
+    U->>F: Click question text/link
+    F->>F: Open edit modal
+    U->>F: Update text/URL
+    F->>F: Validate input
+    F->>LS: Save changes locally
+    F->>B: POST /api/data
+    B->>DB: Update problem details
+    
+    Note over U,DB: Add Tags/Links
+    U->>F: Enter tag/link + press Enter
+    F->>F: Create colored tag/link element
+    F->>LS: Save to localStorage
+    F->>B: POST /api/data
+    B->>DB: Update tags/links array
+```
+
+### Blog Post Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MongoDB
+    
+    Note over U,DB: Blog Creation
+    U->>F: Click "Create Blog"
+    F->>F: Open blog creation modal
+    U->>F: Enter title, content, tags
+    U->>F: Set public/private visibility
+    U->>F: Click "Create Blog"
+    F->>B: POST /api/blogs
+    B->>B: Generate slug from title
+    B->>DB: Check slug uniqueness
+    B->>DB: Create blog document
+    B->>F: Return created blog
+    F->>F: Show success message
+    F->>F: Redirect to blog view
+    
+    Note over U,DB: Blog Editing
+    U->>F: Click "Edit Blog" (author only)
+    F->>B: GET /api/blogs/:slug
+    B->>DB: Fetch blog data
+    B->>F: Return blog content
+    F->>F: Populate edit modal
+    U->>F: Make changes
+    U->>F: Click "Update Blog"
+    F->>B: PUT /api/blogs/:slug
+    B->>DB: Update blog document
+    B->>F: Return updated blog
+    F->>F: Show update success
+    
+    Note over U,DB: Blog Viewing
+    U->>F: Visit blog URL
+    F->>B: GET /api/blogs/:slug
+    B->>DB: Fetch blog + increment views
+    B->>F: Return blog data
+    F->>F: Render markdown content
+    F->>F: Update view count display
+    
+    Note over U,DB: Blog Engagement
+    U->>F: Click "Like" button
+    F->>B: POST /api/blogs/:slug/like
+    B->>B: Check not self-liking
+    B->>DB: Toggle like status
+    B->>F: Return updated like count
+    F->>F: Update like UI
+```
+
+### Blog Discovery Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MongoDB
+    
+    Note over U,DB: Browse All Blogs
+    U->>F: Visit /blogs.html
+    F->>B: GET /api/blogs/all
+    B->>DB: Query public blogs
+    B->>F: Return paginated results
+    F->>F: Render blog grid
+    F->>F: Apply responsive layout
+    
+    Note over U,DB: Filter My Blogs
+    U->>F: Click "My Blogs" tab
+    F->>B: GET /api/blogs/my
+    B->>DB: Query user's blogs
+    B->>F: Return user's blogs
+    F->>F: Show edit/delete controls
+    
+    Note over U,DB: Discover Popular Blogs
+    U->>F: Click "Popular" tab
+    F->>B: GET /api/blogs/popular
+    B->>DB: Query by popularity score
+    B->>F: Return ranked blogs
+    F->>F: Render with popularity indicators
+    
+    Note over U,DB: Search & Navigation
+    U->>F: Scroll/paginate
+    F->>B: Request next page
+    B->>DB: Paginated query
+    B->>F: Return additional blogs
+    F->>F: Append to grid
 ```
 
 ---
 
-## 🎬 Animated Workflow Demonstration
+## 🛠️ Technology Stack
 
-### 🎯 **Real-time Progress Tracking Animation**
-```
-👤 User Action (Click/Tap) 
-    ↓ (Animation: Ripple effect from user click)
-🎯 Complete Task in index.html
-    ↓ (Animation: Checkbox fills with color, confetti bursts)
-💾 Local Storage Updates (Instant)
-    ↓ (Animation: Data flowing to storage icon)
-🔄 Background Sync (2s debounce)
-    ↓ (Animation: Sync arrows pulsing)
-⚙️ Backend API Processes
-    ↓ (Animation: Server icon glowing)
-🗄️ MongoDB Saves Progress
-    ↓ (Animation: Database icon pulsing)
-📈 Analytics Recalculate
-    ↓ (Animation: Charts animating with new data)
-🎉 UI Updates with Celebration
-    ↓ (Animation: Heatmap cells lighting up sequentially)
-```
-
-### ✍️ **Blog Creation Flow Animation**
-```
-👤 User Writes Blog in blogs.html
-    ↓ (Animation: Cursor typing with glow effect)
-🔗 Auto-Slug Generation
-    ↓ (Animation: Text transforming into URL format)
-💾 Draft Auto-saves
-    ↓ (Animation: Floppy disk icon spinning)
-🌐 User Clicks "Publish"
-    ↓ (Animation: Paper airplane flying to server)
-⚙️ Backend Validates & Saves
-    ↓ (Animation: Shield icon with checkmark)
-🗄️ Blog Saved to Database
-    ↓ (Animation: Document sliding into database)
-📋 Blog Lists Update
-    ↓ (Animation: New card sliding into blog grid)
-👁️ Real-time View Tracking
-    ↓ (Animation: Eye icon with counter incrementing)
-```
-
-### ❤️ **Blog Engagement Animation**
-```
-👤 User Views Blog in blog-view.html
-    ↓ (Animation: Page sliding in with fade effect)
-👀 View Counter Increments
-    ↓ (Animation: Number rolling up with +1)
-📖 Markdown Renders Beautifully
-    ↓ (Animation: Code blocks highlighting sequentially)
-❤️ User Likes Blog
-    ↓ (Animation: Heart filling with color and pulsing)
-📊 Popularity Score Updates
-    ↓ (Animation: Score meter filling up)
-🏆 Blog Ranks Higher in Popular
-    ↓ (Animation: Blog card moving up in list)
-```
-
-### 🔄 **Smart Sync Animation**
-```
-🖱️ User Makes Changes
-    ↓ (Animation: Pencil drawing lines)
-⏳ 2-Second Debounce Timer
-    ↓ (Animation: Hourglass filling)
-🔄 Conflict Detection Check
-    ↓ (Animation: Magnifying glass scanning)
-🤖 Intelligent Auto-Merge
-    ↓ (Animation: Gears turning and merging)
-💾 Database Update
-    ↓ (Animation: Data flowing into cloud)
-✅ Sync Complete
-    ↓ (Animation: Green checkmark with confirmation)
-```
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript | Progressive Web App with offline capabilities |
+| **Backend** | Node.js, Express.js | RESTful API server with middleware |
+| **Database** | MongoDB with Mongoose ODM | Document-based data storage |
+| **Authentication** | JWT, bcryptjs | Secure user authentication & authorization |
+| **Markdown** | Marked.js, DOMPurify | Safe markdown rendering & sanitization |
+| **Deployment** | Render | Full-stack hosting platform |
+| **Styling** | CSS Grid, Flexbox, CSS Variables | Responsive design with theme support |
 
 ---
 
-## 📈 Real-time Data Flow Explained
-
-### 🎯 **Daily Progress Tracking Flow**
-```
-👤 User Action → 🌐 Frontend (index.html) → 💾 Local Storage → ⚙️ Backend API → 🗄️ MongoDB → 📈 Analytics Update
-     ↓                ↓                       ↓                  ↓                ↓               ↓
-Complete Task → Instant UI Feedback → Offline Cache → Smart Sync → Save Progress → Update Heatmap
-```
-
-**Step-by-Step Process:**
-1. **🎯 User Action**: Complete a coding task or add new activity
-2. **⚡ Instant UI Update**: Checkbox toggles with visual feedback and celebration animations
-3. **💾 Local Storage**: Data cached immediately for offline access
-4. **🔄 Background Sync**: Automatic synchronization with backend (2-second debounce)
-5. **🗄️ Database Persistence**: Progress saved to MongoDB with version control
-6. **📈 Analytics Recalculation**: Streaks, heatmap, and statistics updated in real-time
-7. **🎉 Achievement Check**: System triggers confetti for 5+ completed tasks
-
-### 📝 **Blog Management Flow**
-```
-✍️ Create Blog → 🔗 Generate Slug → 💾 Save Draft → 🌐 Publish → 📋 Update Lists → 📊 Track Engagement
-     ↓               ↓                 ↓            ↓            ↓                 ↓
-Rich Editor → URL-Friendly ID → Auto-save → MongoDB → Blog Feeds → Views/Likes Analytics
-```
-
-**Step-by-Step Process:**
-1. **✍️ Content Creation**: Write with full Markdown editor in `blogs.html`
-2. **🔗 Slug Generation**: Automatic URL conversion ("My Coding Journey" → "my-coding-journey")
-3. **🔒 Privacy Settings**: Choose public (community) or private (personal notes)
-4. **💾 Database Storage**: Full content saved to Blogs collection
-5. **📋 List Updates**: Appears in "My Blogs" immediately, "All Blogs" if public
-6. **📊 Engagement Tracking**: View counters and like system activated
-
-### 👁️ **Blog Reading & Engagement Flow**
-```
-🔍 Visit Blog → 📥 Load Content → 🎨 Render Markdown → 👀 Track View → 📊 Update Popularity → 🏆 Show in Feeds
-     ↓             ↓                 ↓                 ↓              ↓                    ↓
-blog-view.html → API Fetch → Marked.js Processing → View Counter → Score Calculation → Popular Tab Ranking
-```
-
-**Step-by-Step Process:**
-1. **🔍 Page Load**: User visits `/blogs/your-blog-slug`
-2. **📥 Content Fetch**: `blog-view.html` calls API to get blog data
-3. **🎨 Markdown Rendering**: Raw Markdown transformed to beautiful HTML with syntax highlighting
-4. **👀 View Tracking**: Automatic view counter increment (prevents duplicate counts)
-5. **📊 Popularity Update**: Score recalculated: `Popularity = (likes + views)`
-6. **🏆 Feed Placement**: Blog appears higher in "Popular" tab based on engagement
-
-### 🔄 **Real-time Sync Architecture**
-```
-🖱️ Frontend Changes → ⏳ Debounce (2s) → 🔄 Conflict Check → 🤖 Smart Merge → 💾 Database Update
-     ↓                   ↓                  ↓                 ↓                ↓
-User Input → Wait for Pause → Version Compare → Auto-Resolve → Persist Changes
-```
-
-**How Synchronization Protects Your Data:**
-1. **⏳ Debounced Saving**: Waits 2 seconds after last change to prevent API spam
-2. **🔄 Conflict Detection**: Checks if server has newer version of your data
-3. **🤖 Intelligent Merging**: Automatically combines compatible changes
-4. **👤 User Resolution**: Prompts for manual resolution if significant conflicts
-5. **📊 Version Control**: Every change tracked with timestamp and version number
-
----
-
-## 🏗️ System Architecture Deep Dive
-
-### 🌐 **Frontend Architecture (Vercel)**
-```
-https://my-focus-flow.vercel.app/
-├── 📊 index.html (Progress Tracker & Analytics Dashboard)
-│   ├── 🎯 Daily Progress Management
-│   ├── 📈 GitHub-style Heatmap
-│   ├── 🔥 Streak Analytics
-│   └── 🎉 Achievement System
-├── 📝 blogs.html (Community Blogging Platform)
-│   ├── ✍️ Markdown Editor
-│   ├── 📋 Triple-tab Interface (All/My/Popular)
-│   ├── ❤️ Like & Engagement System
-│   └── 🔍 Search & Filtering
-├── 🔍 blog-view.html (Advanced Blog Reader)
-│   ├── 🎨 Markdown Rendering
-│   ├── 👀 View Counter
-│   ├── 📊 Popularity Tracking
-│   └── 📱 Responsive Reading
-└── 💾 Local Storage (Offline-First Cache)
-    ├── ⚡ Instant UI Updates
-    ├── 🔄 Auto-sync Queue
-    └── 📱 Cross-device Consistency
-```
-
-### ⚙️ **Backend Architecture (Render)**
-```
-https://daily-tracker-upst.onrender.com/api/
-├── 🔐 Authentication System
-│   ├── 🎫 JWT Token Management (230-day sessions)
-│   ├── 🔒 bcrypt Password Hashing
-│   ├── 📧 Password Recovery (OTP-based)
-│   └── 👤 User Session Management
-├── 📊 Progress Data API
-│   ├── 💾 CRUD Operations
-│   ├── 🔄 Conflict Resolution
-│   ├── 📈 Analytics Calculation
-│   └── ⚡ Real-time Sync
-├── 📝 Blog Management API
-│   ├── ✍️ Blog CRUD Operations
-│   ├── 🔗 Slug Generation
-│   ├️ 👀 View Tracking
-│   ├️ ❤️ Like System
-│   └️ 📊 Popularity Scoring
-└── 🗄️ Database Layer
-    ├── 👥 Users Collection
-    ├── 📝 Blogs Collection
-    ├── 📊 Progress Data
-    └── 📈 Activity Analytics
-```
-
----
-
-## 🔧 Technical Integration Points
-
-### 🔐 **Security Integration**
-```
-User Login → bcryptjs (Password Hash) → JWT Token Generation → Secure API Calls → MongoDB Validation
-```
-
-### 📊 **Analytics Pipeline**
-```
-User Actions → Local Tracking → API Submission → MongoDB Storage → Heatmap Generation → UI Rendering
-```
-
-### 🔄 **Sync Engine**
-```
-Frontend Changes → Debounce Timer → Version Check → Conflict Resolution → Database Update → UI Refresh
-```
-
-### 🎨 **Markdown Processing**
-```
-Raw Markdown → Marked.js Processing → DOM Sanitization → HTML Rendering → Syntax Highlighting
-```
-
-## ✨ Features That Make a Difference
-
-### 🎯 Core Progress Tracking
-- **📅 Intelligent Day Management** - Focus on today while seeing your historical journey
-- **✅ Achievement Celebrations** - Confetti animations and dark green status for 5+ completed tasks
-- **🏷️ Smart Tagging System** - Color-coded organization with auto-generated colors
-- **🔗 Advanced Link Management** - Convert URLs into beautiful, clickable tags
-- **🎨 Adaptive Theme System** - Seamless dark/light mode switching
-
-### 📝 Integrated Blogging Platform
-- **✍️ Rich Markdown Editor** - Full Markdown support with live preview and syntax highlighting
-- **👁️ Real-time View Tracking** - Watch your insights help others in real-time
-- **❤️ Engagement Ecosystem** - Like system with anti-self-like protection
-- **🔒 Granular Privacy** - Public blogs to share wisdom, private blogs for personal notes
-- **📊 Popularity Analytics** - Automatic ranking based on views + likes
-- **🏷️ Smart Categorization** - Tag blogs for discoverability and organization
-
-### 🔐 Enterprise-Grade Infrastructure
-- **☁️ Real-time Multi-device Sync** - Continue where you left off on any device
-- **🔒 Military-Grade Auth** - JWT tokens with 230-day sessions
-- **⚡ Intelligent Conflict Resolution** - Smart merging for simultaneous edits
-- **📱 Offline-First Architecture** - Full functionality without internet
-- **🔐 Secure Password Recovery** - OTP-based reset system
-
-### 📊 Advanced Analytics & Visualization
-- **📈 GitHub-Style Heatmap** - Beautiful activity visualization that tells your story
-- **🔥 Streak Intelligence** - Current streak, max streak, and daily averages
-- **🎯 Progress Momentum** - Watch your consistency compound over time
-- **💪 Habit Formation Engine** - Scientifically-backed consistency tools
-
----
-
-## 🚀 Quick Start - 30 Seconds to Productivity
-
-### 🌐 Use the Live Application
-**No installation required!** Start tracking immediately:
-
-👉 **[Live App: https://my-focus-flow.vercel.app/](https://my-focus-flow.vercel.app/)**
-
-### Quick Start Steps:
-1. **Visit** the live application
-2. **Create account** (5-second process)
-3. **Start with Day 1** - pre-loaded with curated example questions
-4. **Check off completed items** - watch your heatmap come alive
-5. **Write your first blog** - share your progress and help others
-6. **Explore community blogs** - learn from fellow developers' journeys
-
----
-
-## 💻 Developer Setup
-
-### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB instance (local or Atlas)
-
-### Local Development
-
-1. **Clone and setup**
-```bash
-git clone https://github.com/anupam6335/FocusFlow.git
-cd FocusFlow
-npm install
-```
-
-2. **Environment configuration**
-```env
-# .env file
-MONGODB_URI=your_mongodb_connection_string
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=your-super-secret-jwt-key
-```
-
-3. **Start development servers**
-```bash
-# Backend (with hot reload)
-npm run dev
-
-# Frontend - serve static files
-python -m http.server 8000
-# or
-npx http-server
-```
-
-4. **Access your local environment**
-- Frontend: `http://localhost:8000`
-- Backend API: `http://localhost:3000/api`
-
----
-
-## 📁 Project Structure Deep Dive
-
-### File-by-File Explanation
+## 📁 Project Folder Structure
 
 ```
 FocusFlow/
-├── 🎯 Core Application
-│   ├── index.html          # Main progress tracker with advanced analytics
-│   ├── blogs.html          # Community blogging platform with tabs
-│   ├── blog-view.html      # Individual blog reader with full Markdown
-│   └── responsive.css      # Mobile-first responsive design system
-├── ⚙️ Backend & Configuration
-│   ├── server.js           # Express server with 25+ API endpoints
-│   ├── package.json        # Dependencies and deployment scripts
-│   ├── render.yaml         # Render deployment configuration
-│   └── vercel.json         # Vercel deployment configuration
-├── 🔐 Security & Data
-│   └── .env               # Environment variables (template)
+├── 🎯 Core Application Files
+│   ├── index.html              # Main progress tracker dashboard
+│   ├── blogs.html              # Blog creation & management platform
+│   ├── blog-view.html          # Individual blog post reader
+│   └── responsive.css          # Mobile-first responsive styles
+├── ⚙️ Server & Configuration
+│   ├── server.js               # Monolithic Express server (Models + Routes + Auth)
+│   ├── package.json            # Dependencies and npm scripts
+│   └── .env                    # Environment variables (template)
 └── 📄 Documentation
-    ├── LICENSE            # MIT License
-    └── README.md          # This comprehensive guide
+    ├── LICENSE                 # MIT License
+    └── README.md               # This comprehensive documentation
 ```
 
-### Key Technical Implementation Details
+### File Purpose Breakdown
 
-**Smart Conflict Resolution** (`server.js`)
-- Intelligent data merging for simultaneous edits
-- Version-based conflict detection with 2-second grace period
-- Auto-merge for compatible changes, user resolution for conflicts
+**`index.html`** - Main Application Dashboard
+- Progress tracking table with daily DSA problem management
+- Real-time analytics dashboard with heatmap visualization
+- User authentication interface
+- Sync status indicators and controls
 
-**Real-time Sync Engine**
-- Debounced synchronization (2-second intervals)
-- Offline-first design with background sync
-- Progressive enhancement for poor connectivity
+**`blogs.html`** - Blog Management Platform
+- Three-tab interface (All Blogs, My Blogs, Popular)
+- Blog creation modal with markdown editor
+- Responsive blog card grid layout
+- Like and engagement system
 
-**Blogging Platform Architecture**
-- Slug-based URL routing for SEO-friendly blog links
-- Markdown parsing with syntax highlighting and sanitization
-- Real-time view counting and engagement analytics
-- Author-based permission system with privacy controls
+**`blog-view.html`** - Blog Reader
+- Full markdown rendering with syntax highlighting
+- View tracking and engagement features
+- Draggable mini-map navigation
+- Author controls for blog management
 
----
+**`server.js`** - Monolithic Backend Server
+- Express.js server with CORS and middleware
+- MongoDB models and connection handling
+- JWT authentication system
+- 25+ API endpoints for all functionality
+- Real-time sync with conflict resolution
 
-## 🎨 UI/UX Features
-
-### Progress Tracker (`index.html`)
-- **Editable Today-Only System** - Prevents retrospective cheating, focuses on present momentum
-- **Visual Status Indicators** - Emoji-based mood feedback with achievement colors
-- **Celebration Engine** - Confetti animations and popups for 5+ completed tasks
-- **Heatmap Integration** - GitHub-inspired activity visualization that grows with you
-
-### Blogging Platform (`blogs.html`, `blog-view.html`)
-- **Triple-Tab Interface** - All Blogs, My Blogs, and Popular sections
-- **Real-time Engagement** - Live like counts, view tracking, and popularity scores
-- **Rich Markdown Editor** - WYSIWYG-style editing with instant preview
-- **Mobile-Optimized Reading** - Responsive design for comfortable mobile consumption
-
----
-
-## 🔌 API Endpoints
-
-### Authentication & Users
-- `POST /api/register` - Secure user registration with validation
-- `POST /api/login` - JWT-based authentication
-- `POST /api/forgot-password` - Password reset initiation with OTP
-- `POST /api/reset-password` - Secure password reset completion
-
-### Progress Data Management
-- `GET /api/data` - Retrieve user progress with versioning
-- `POST /api/data` - Save progress with intelligent conflict resolution
-- `POST /api/force-sync` - Manual synchronization trigger
-
-### Blog Management
-- `GET /api/blogs` - Paginated blog listings with filters
-- `GET /api/blogs/all` - Public blogs feed for community learning
-- `GET /api/blogs/my` - User's personal blogs (public + private)
-- `GET /api/blogs/popular` - Popularity-ranked blogs (views + likes)
-- `POST /api/blogs` - Create new blog with slug generation
-- `PUT /api/blogs/:slug` - Update blog content with slug regeneration
-- `DELETE /api/blogs/:slug` - Secure blog deletion
-- `POST /api/blogs/:slug/like` - Like/unlike with anti-self-like protection
-- `POST /api/blogs/:slug/view` - Real-time view tracking
-
-### Analytics & Activity
-- `GET /api/activity-tracker` - Comprehensive progress analytics
-- `POST /api/activity-tracker` - Save activity data with auto-sync
+**`responsive.css`** - Styling System
+- Mobile-first responsive design
+- CodeLeaf theme system (dark/light mode)
+- Fluid typography and spacing
+- Component-specific styles
 
 ---
 
-## 🚀 Deployment Guide
+## 🔧 Installation & Local Development
 
-### Frontend Deployment (Vercel)
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB Atlas account or local MongoDB instance
+- Git for version control
+
+### Step-by-Step Setup
+
+1. **Clone the Repository**
 ```bash
-# Automatic deployment via Vercel
-npm run build
-# Deploys to: https://my-focus-flow.vercel.app/
+git clone https://github.com/anupam6335/FocusFlow.git
+cd FocusFlow
 ```
 
-### Backend Deployment (Render)
-```yaml
-# render.yaml configuration
-services:
-  - type: web
-    name: focusflow-backend
-    env: node
-    buildCommand: npm install
-    startCommand: npm start
+2. **Install Dependencies**
+```bash
+npm install
 ```
 
-### Environment Variables Production Setup
+3. **Environment Configuration**
+Create a `.env` file in the root directory:
 ```env
-MONGODB_URI=mongodb+srv://...
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/focusflow
 PORT=3000
-NODE_ENV=production
-JWT_SECRET=your-production-secret-key
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+NODE_ENV=development
+```
+
+4. **Start Development Server**
+```bash
+npm run dev
+```
+
+5. **Access Application**
+- Open browser to: `http://localhost:3000`
+- Backend API: `http://localhost:3000/api`
+
+### Database Setup Options
+
+**Option A: MongoDB Atlas (Recommended)**
+1. Create free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a new cluster
+3. Get connection string from "Connect" button
+4. Replace in `.env` file
+
+**Option B: Local MongoDB**
+1. Install MongoDB Community Edition
+2. Start MongoDB service
+3. Use connection string: `mongodb://localhost:27017/focusflow`
+
+---
+
+## 🚀 Production Deployment (Render)
+
+### Backend Deployment on Render
+
+1. **Create Render Account**
+   - Visit [render.com](https://render.com)
+   - Sign up with GitHub account
+
+2. **Create Web Service**
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Configure service:
+     - **Name**: `focusflow-backend`
+     - **Environment**: `Node`
+     - **Region**: Choose closest to your users
+     - **Branch**: `main`
+     - **Root Directory**: `.` (root)
+     - **Build Command**: `npm install`
+     - **Start Command**: `npm start`
+
+3. **Environment Variables**
+   Add the following in Render dashboard:
+   ```env
+   MONGODB_URI=your_mongodb_atlas_connection_string
+   JWT_SECRET=your-production-jwt-secret
+   NODE_ENV=production
+   ```
+
+4. **Deploy**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy
+   - Your backend will be available at: `https://focusflow-backend.onrender.com`
+
+### Frontend Deployment
+
+Since this is a monolithic application with static file serving, the entire application is deployed as a single service on Render.
+
+### Custom Domain (Optional)
+
+1. **In Render Dashboard**
+   - Go to your service settings
+   - Click "Add Custom Domain"
+   - Follow DNS configuration instructions
+
+2. **DNS Configuration**
+   - Add CNAME record pointing to your Render service URL
+   - Wait for SSL certificate provisioning
+
+---
+
+## 🔌 API Reference
+
+### Authentication Endpoints
+
+#### `POST /api/register`
+Create a new user account.
+
+**Request Body:**
+```json
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "User registered successfully"
+}
+```
+
+#### `POST /api/login`
+Authenticate user and return JWT token.
+
+**Request Body:**
+```json
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "jwt_token_here",
+  "message": "Login successful"
+}
+```
+
+#### `POST /api/forgot-password`
+Initiate password reset process.
+
+**Request Body:**
+```json
+{
+  "username": "your_username"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "If the username exists, a reset code has been sent",
+  "demoCode": "123456"
+}
+```
+
+#### `POST /api/reset-password`
+Complete password reset with OTP.
+
+**Request Body:**
+```json
+{
+  "username": "your_username",
+  "resetCode": "123456",
+  "newPassword": "new_secure_password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+```
+
+### Progress Data Endpoints
+
+#### `GET /api/data`
+Retrieve user's progress data.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [...],
+  "version": 1,
+  "lastUpdated": "2025-01-20T10:30:00.000Z"
+}
+```
+
+#### `POST /api/data`
+Save user's progress data with conflict resolution.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "data": [...],
+  "clientVersion": 1,
+  "lastUpdated": "2025-01-20T10:30:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [...],
+  "version": 2,
+  "lastUpdated": "2025-01-20T10:35:00.000Z"
+}
+```
+
+#### `POST /api/force-sync`
+Force synchronization from server data.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [...],
+  "version": 2,
+  "lastUpdated": "2025-01-20T10:35:00.000Z"
+}
+```
+
+### Blog Endpoints
+
+#### `GET /api/blogs/all`
+Get paginated public blogs.
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10)
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "blogs": [...],
+  "totalPages": 5,
+  "currentPage": 1,
+  "total": 42
+}
+```
+
+#### `GET /api/blogs/my`
+Get user's blogs (public and private).
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10)
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "blogs": [...],
+  "totalPages": 3,
+  "currentPage": 1,
+  "total": 25
+}
+```
+
+#### `GET /api/blogs/popular`
+Get blogs ranked by popularity.
+
+**Query Parameters:**
+- `limit` - Maximum items to return (default: 10)
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "blogs": [...]
+}
+```
+
+#### `POST /api/blogs`
+Create a new blog.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "Blog Title",
+  "content": "Markdown content here...",
+  "isPublic": true,
+  "tags": ["coding", "algorithms"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "blog": {
+    "title": "Blog Title",
+    "slug": "blog-title",
+    "content": "Markdown content here...",
+    "author": "username",
+    "isPublic": true,
+    "tags": ["coding", "algorithms"],
+    "likes": 0,
+    "views": 0,
+    "createdAt": "2025-01-20T10:30:00.000Z"
+  }
+}
+```
+
+#### `GET /api/blogs/:slug`
+Get a specific blog by slug.
+
+**Response:**
+```json
+{
+  "success": true,
+  "blog": {
+    "title": "Blog Title",
+    "slug": "blog-title",
+    "content": "Full markdown content...",
+    "author": "username",
+    "isPublic": true,
+    "tags": ["coding", "algorithms"],
+    "likes": 5,
+    "views": 42,
+    "createdAt": "2025-01-20T10:30:00.000Z",
+    "updatedAt": "2025-01-20T10:30:00.000Z"
+  }
+}
+```
+
+#### `PUT /api/blogs/:slug`
+Update a blog (author only).
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "Updated Title",
+  "content": "Updated content...",
+  "isPublic": false,
+  "tags": ["updated", "tags"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "blog": {
+    "title": "Updated Title",
+    "slug": "updated-title",
+    "content": "Updated content...",
+    "author": "username",
+    "isPublic": false,
+    "tags": ["updated", "tags"],
+    "updatedAt": "2025-01-20T11:30:00.000Z"
+  }
+}
+```
+
+#### `DELETE /api/blogs/:slug`
+Delete a blog (author only).
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Blog deleted successfully"
+}
+```
+
+#### `POST /api/blogs/:slug/like`
+Like or unlike a blog.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "likes": 6,
+  "hasLiked": true,
+  "message": "Blog liked"
+}
+```
+
+#### `POST /api/blogs/:slug/view`
+Increment blog view count.
+
+**Response:**
+```json
+{
+  "success": true,
+  "views": 43
+}
+```
+
+### Activity Tracker Endpoints
+
+#### `GET /api/activity-tracker`
+Get user's activity analytics.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "activityData": {
+    "currentStreak": 7,
+    "totalSolved": 45,
+    "averageDaily": 3.2,
+    "maxStreak": 15,
+    "heatmapData": {...},
+    "activityHistory": [...]
+  }
+}
+```
+
+#### `POST /api/activity-tracker`
+Save activity tracker data.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "activityData": {
+    "currentStreak": 7,
+    "totalSolved": 45,
+    "averageDaily": 3.2,
+    "maxStreak": 15,
+    "heatmapData": {...},
+    "activityHistory": [...]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Activity data saved successfully"
+}
 ```
 
 ---
 
-## 🐛 Troubleshooting & Common Issues
+## 💾 Core Concepts & Data Models
 
-### Blog View Tracking
-**Problem**: Blog views not incrementing properly  
-**Solution**: Ensure `POST /api/blogs/:slug/view` endpoint is called on blog view. Check browser console for CORS errors and verify the slug parameter matches.
+### User Model
+```javascript
+{
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }, // bcrypt hashed
+  createdAt: { type: Date, default: Date.now }
+}
+```
 
-### Responsive Header Issues
-**Problem**: Navigation breaks on mobile devices  
-**Solution**: Verify `responsive.css` media queries are correctly structured. Test with Chrome DevTools device simulation.
+### Progress Data Model
+```javascript
+{
+  userId: { type: String, required: true },
+  data: [{
+    day: Number,
+    questions: [{
+      text: String,
+      link: String,
+      completed: Boolean
+    }],
+    tags: [{
+      text: String,
+      color: String
+    }],
+    links: String, // Legacy field
+    linksArray: [{  // Modern field
+      url: String,
+      text: String
+    }]
+  }],
+  lastUpdated: { type: Date, default: Date.now },
+  version: { type: Number, default: 1 }
+}
+```
 
-### Popular Blogs Section
-**Problem**: Popular tab shows incorrect or no content  
-**Solution**: Check popularity score calculation: `(likes + views)`. Verify both fields exist in blog documents.
+### Blog Model
+```javascript
+{
+  title: { type: String, required: true },
+  slug: { type: String, required: true, unique: true },
+  content: { type: String, required: true },
+  author: { type: String, required: true },
+  isPublic: { type: Boolean, default: true },
+  tags: [{ type: String }],
+  likes: { type: Number, default: 0 },
+  likedBy: [{ type: String }], // Array of usernames
+  views: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}
+```
 
-### Sync Conflicts
-**Problem**: "Conflict detected" messages during data save  
-**Solution**: System auto-resolves most conflicts. Use "Sync Now" button for force synchronization. Conflicts occur when server data is significantly newer.
+### Activity Tracker Model
+```javascript
+{
+  userId: { type: String, required: true },
+  activityData: {
+    currentStreak: { type: Number, default: 0 },
+    totalSolved: { type: Number, default: 0 },
+    averageDaily: { type: Number, default: 0 },
+    maxStreak: { type: Number, default: 0 },
+    heatmapData: { type: Object, default: {} },
+    activityHistory: { type: Array, default: [] }
+  },
+  lastUpdated: { type: Date, default: Date.now }
+}
+```
 
-### Markdown Rendering
-**Problem**: Blog content not formatting correctly  
-**Solution**: Ensure Marked.js CDN is loaded. Verify blog content uses proper Markdown syntax. Check console for parsing errors.
-
-### Self-Like Prevention
-**Problem**: Cannot like own blogs  
-**Solution**: This is intentional! FocusFlow encourages community engagement, not self-promotion.
-
----
-
-## 🔮 Future Roadmap
-
-### 🚀 Coming Soon
-- [ ] **Mobile App** - React Native version for iOS/Android
-- [ ] **Advanced Analytics** - Learning pace predictions and personalized insights
-- [ ] **Community Features** - Follow other learners, collaborative goals, mentorship
-- [ ] **Export Capabilities** - PDF progress reports, GitHub contributions sync
-
-### 🎯 Planned Enhancements
-- [ ] **Custom Question Templates** - Pre-built learning paths for popular tech stacks
-- [ ] **Integration API** - Connect with LeetCode, HackerRank, and coding platforms
-- [ ] **Advanced Blog Features** - Comments, rich media embedding, code sandboxes
-- [ ] **Learning Reminders** - Smart notification system based on your patterns
-
-### 💡 Vision
-Transform FocusFlow into the ultimate learning companion that not only tracks progress but actively helps users learn more effectively through AI-powered recommendations and community wisdom sharing.
+### Password Reset Model
+```javascript
+{
+  username: { type: String, required: true },
+  resetCode: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+  used: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+}
+```
 
 ---
 
 ## 🤝 Contributing
 
-We believe in the power of community-driven development! Here's how you can help:
+We welcome contributions from the community! Here's how you can help:
 
-### Areas Needing Contribution
-- **UI/UX Improvements** - Especially mobile experience and accessibility
-- **Testing** - Cross-browser compatibility, performance optimization
-- **Documentation** - Tutorials, video guides, API documentation
-- **Feature Development** - Pick from our roadmap issues
+### Areas Needing Improvement
+- **Code Structure**: Refactor monolithic `server.js` into modular architecture
+- **Testing**: Add unit tests, integration tests, and end-to-end tests
+- **Performance**: Optimize database queries and frontend rendering
+- **Accessibility**: Improve screen reader support and keyboard navigation
+- **Documentation**: Enhance API documentation and user guides
 
 ### Development Process
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
+
+### Code Style Guidelines
+- Use consistent indentation (2 spaces)
+- Follow existing naming conventions
+- Add comments for complex logic
+- Test your changes thoroughly
+- Update documentation as needed
 
 ---
 
@@ -717,39 +1012,39 @@ We believe in the power of community-driven development! Here's how you can help
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🌟 Support & Community
+## 🌟 Acknowledgments
 
-- **🚀 Live Application**: [https://my-focus-flow.vercel.app/](https://my-focus-flow.vercel.app/)
-- **🐛 Bug Reports**: GitHub Issues
-- **💡 Feature Requests**: GitHub Discussions
-- **📚 Documentation**: This README + comprehensive inline code comments
+- **MongoDB Atlas** for providing free database hosting
+- **Render** for free tier hosting services
+- **Marked.js** team for excellent markdown parsing
+- The developer community for inspiration and feedback
 
 ---
 
-## 🎯 The Real Impact
+## 🆘 Support & Community
 
-> "I went from inconsistent practice to a 45-day coding streak. FocusFlow didn't just track my progress—it built my discipline. The blogging feature turned my scattered notes into helpful guides that actually helped other developers. This isn't just an app; it's a learning companion."
-> - Early User Testimonial
-
-FocusFlow transforms the lonely journey of skill acquisition into a visible, celebrated, and shared experience. It's the difference between learning in the dark and learning with a community cheering you on.
+- **🚀 Live Application**: [https://focus-flow-lopn.onrender.com/](https://focus-flow-lopn.onrender.com/)
+- **🐛 Bug Reports**: Create GitHub Issues
+- **💡 Feature Requests**: Use GitHub Discussions
+- **❓ Questions**: Check this documentation first
 
 ---
 
 <div align="center">
 
-## 🚀 Ready to Transform Your Learning Journey?
+## 🚀 Ready to Transform Your DSA Journey?
 
-### 🌐 **Start Your Journey Today:**
-# [https://my-focus-flow.vercel.app/](https://my-focus-flow.vercel.app/)
+### 🌐 **Start Tracking Today:**
+# [https://focus-flow-lopn.onrender.com/](https://focus-flow-lopn.onrender.com/)
 
-**Your future self will thank you for starting today.**
+**Stop losing your progress. Start building your legacy.**
 
-*"The best time to plant a tree was 20 years ago. The second best time is now."* - Chinese Proverb
+*"The expert in anything was once a beginner."* - Helen Hayes
 
-⭐ **Star this repo if FocusFlow helps your journey!**
+⭐ **Star this repo if FocusFlow helps your coding journey!**
 
 </div>
 
 ---
 
-**📈 Your progress story starts with one click. What will you accomplish today?** 🚀
+**Your future technical interviews will thank you for the consistent practice. What problem will you solve today?** 🚀
