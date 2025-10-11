@@ -1418,6 +1418,109 @@
           padding: 40px 12px 12px 12px;
         }
       }
+
+      /* Enhanced Interactive Checklist Styling */
+      .blog-content input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        margin-right: 10px !important;
+        cursor: pointer !important;
+        accent-color: var(--codeleaf-accent-primary) !important;
+        transform: scale(1) !important;
+        flex-shrink: 0 !important;
+        transition: all 0.2s ease !important;
+        border: 2px solid var(--codeleaf-border-medium) !important;
+        border-radius: 4px !important;
+      }
+
+      .blog-content input[type="checkbox"]:hover {
+        border-color: var(--codeleaf-accent-primary) !important;
+        transform: scale(1.05) !important;
+      }
+
+      .blog-content input[type="checkbox"]:checked {
+        background-color: var(--codeleaf-accent-primary) !important;
+        border-color: var(--codeleaf-accent-primary) !important;
+      }
+
+      /* Completed task styling */
+      .blog-content .task-list-item.checked {
+        opacity: 0.7 !important;
+      }
+
+      .blog-content .task-list-item.checked label {
+        text-decoration: line-through !important;
+        color: var(--codeleaf-text-tertiary) !important;
+      }
+
+      /* Checklist container styling */
+      .blog-content .contains-task-list {
+        background: var(--codeleaf-bg-secondary) !important;
+        border: 1px solid var(--codeleaf-border-light) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        padding: var(--codeleaf-space-4) !important;
+        margin: var(--codeleaf-space-4) 0 !important;
+      }
+
+      .blog-content .contains-task-list li {
+        background: var(--codeleaf-bg-primary) !important;
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3) !important;
+        border-radius: var(--codeleaf-radius-sm) !important;
+        margin-bottom: var(--codeleaf-space-2) !important;
+        border: 1px solid var(--codeleaf-border-light) !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .blog-content .contains-task-list li:hover {
+        border-color: var(--codeleaf-accent-muted) !important;
+        transform: translateX(4px) !important;
+      }
+
+      .blog-content .contains-task-list li:last-child {
+        margin-bottom: 0 !important;
+      }
+
+      /* Checklist Progress Indicators */
+      .checklist-progress {
+        margin-bottom: var(--codeleaf-space-4) !important;
+        padding: var(--codeleaf-space-3) !important;
+        background: var(--codeleaf-bg-tertiary) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        border-left: 4px solid var(--codeleaf-accent-primary) !important;
+      }
+
+      .checklist-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--codeleaf-border-light);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: var(--codeleaf-space-2);
+      }
+
+      .checklist-progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--codeleaf-accent-primary),
+          var(--codeleaf-accent-secondary)
+        );
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+
+      .checklist-progress-text {
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-secondary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .checklist-progress-percentage {
+        font-weight: 600;
+        color: var(--codeleaf-accent-primary);
+      }
     </style>
   </head>
   <body>
@@ -1767,6 +1870,8 @@
             gfm: true,
             tables: true,
             sanitize: false,
+            // ADD THIS: Enable checkbox rendering
+            renderer: new marked.Renderer(),
           });
 
           // Initialize Mermaid with proper configuration
@@ -1887,7 +1992,6 @@
             .replace(/'/g, "&#039;");
         }
 
-        // NEW: Process the final HTML after it's inserted into the DOM
         async processFinalContent(container) {
           // Add copy buttons to code blocks
           this.addCopyButtons(container);
@@ -1903,6 +2007,225 @@
 
           // Add heading anchors
           this.addHeadingAnchors(container);
+
+          // Enhance checkboxes
+          this.enhanceCheckboxes(container);
+
+          // ADD THIS: Add progress tracking
+          this.addChecklistProgress(container);
+        }
+
+        // Enhanced: Interactive checkboxes with persistence
+        enhanceCheckboxes(container) {
+          const checkboxes = container.querySelectorAll(
+            'input[type="checkbox"]'
+          );
+
+          checkboxes.forEach((checkbox) => {
+            // Ensure checkboxes have proper styling
+            checkbox.style.width = "18px";
+            checkbox.style.height = "18px";
+            checkbox.style.marginRight = "10px";
+            checkbox.style.cursor = "pointer";
+            checkbox.style.accentColor = "var(--codeleaf-accent-primary)";
+
+            // Wrap checkbox in proper task list item structure
+            const listItem = checkbox.closest("li");
+            if (listItem && !listItem.classList.contains("task-list-item")) {
+              listItem.classList.add("task-list-item");
+
+              // Ensure proper flex layout
+              listItem.style.display = "flex";
+              listItem.style.alignItems = "flex-start";
+              listItem.style.marginBottom = "8px";
+              listItem.style.paddingLeft = "0";
+
+              // Create unique ID for this checklist item
+              const checklistId = `checklist-${Date.now()}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`;
+              checkbox.id = checklistId;
+
+              // Wrap content in label for better accessibility
+              const content = Array.from(listItem.childNodes).filter(
+                (node) =>
+                  node !== checkbox &&
+                  (node.nodeType === Node.TEXT_NODE ||
+                    (node.nodeType === Node.ELEMENT_NODE &&
+                      node.tagName !== "INPUT"))
+              );
+
+              if (content.length > 0) {
+                const label = document.createElement("label");
+                label.htmlFor = checklistId;
+                label.style.flex = "1";
+                label.style.cursor = "pointer";
+                label.style.marginBottom = "0";
+                label.style.lineHeight = "1.5";
+                label.style.padding = "2px 0";
+
+                content.forEach((node) =>
+                  label.appendChild(node.cloneNode(true))
+                );
+
+                listItem.innerHTML = "";
+                listItem.appendChild(checkbox);
+                listItem.appendChild(label);
+              }
+
+              // Add checked state styling
+              if (checkbox.checked) {
+                listItem.classList.add("checked");
+              }
+
+              // Add click handler for interactive features
+              checkbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                  listItem.classList.add("checked");
+                  this.animateCheck(listItem);
+                } else {
+                  listItem.classList.remove("checked");
+                }
+
+                // Save state to localStorage
+                this.saveChecklistState(container);
+              });
+            }
+          });
+
+          // Load saved checklist states
+          this.loadChecklistState(container);
+        }
+
+        // NEW: Add progress tracking to checklists
+        addChecklistProgress(container) {
+          const checklists = container.querySelectorAll(".contains-task-list");
+
+          checklists.forEach((checklist, index) => {
+            const checkboxes = checklist.querySelectorAll(
+              'input[type="checkbox"]'
+            );
+            const totalItems = checkboxes.length;
+
+            if (totalItems > 0) {
+              // Create progress container
+              const progressContainer = document.createElement("div");
+              progressContainer.className = "checklist-progress";
+              progressContainer.innerHTML = `
+        <div class="checklist-progress-text">
+          <span>Checklist Progress</span>
+          <span class="checklist-progress-percentage">0%</span>
+        </div>
+        <div class="checklist-progress-bar">
+          <div class="checklist-progress-fill" style="width: 0%"></div>
+        </div>
+      `;
+
+              // Insert before checklist
+              checklist.parentNode.insertBefore(progressContainer, checklist);
+
+              // Update progress function
+              const updateProgress = () => {
+                const checkedItems = checklist.querySelectorAll(
+                  'input[type="checkbox"]:checked'
+                ).length;
+                const percentage =
+                  totalItems > 0
+                    ? Math.round((checkedItems / totalItems) * 100)
+                    : 0;
+
+                const progressFill = progressContainer.querySelector(
+                  ".checklist-progress-fill"
+                );
+                const progressPercentage = progressContainer.querySelector(
+                  ".checklist-progress-percentage"
+                );
+
+                progressFill.style.width = `${percentage}%`;
+                progressPercentage.textContent = `${percentage}%`;
+
+                // Color coding based on progress
+                if (percentage === 100) {
+                  progressContainer.style.borderLeftColor =
+                    "var(--codeleaf-success)";
+                  progressFill.style.background =
+                    "linear-gradient(90deg, var(--codeleaf-success), #4CAF50)";
+                } else if (percentage >= 50) {
+                  progressContainer.style.borderLeftColor =
+                    "var(--codeleaf-accent-primary)";
+                } else {
+                  progressContainer.style.borderLeftColor =
+                    "var(--codeleaf-warning)";
+                  progressFill.style.background =
+                    "linear-gradient(90deg, var(--codeleaf-warning), #FFA726)";
+                }
+              };
+
+              // Add event listeners to all checkboxes in this checklist
+              checkboxes.forEach((checkbox) => {
+                checkbox.addEventListener("change", updateProgress);
+              });
+
+              // Initial progress calculation
+              updateProgress();
+            }
+          });
+        }
+        // NEW: Animation for checking items
+        animateCheck(listItem) {
+          listItem.style.transform = "scale(1.02)";
+          listItem.style.background = "var(--codeleaf-accent-muted)";
+
+          setTimeout(() => {
+            listItem.style.transform = "scale(1)";
+            listItem.style.background = "var(--codeleaf-bg-primary)";
+          }, 300);
+        }
+
+        // NEW: Save checklist state to localStorage
+        saveChecklistState(container) {
+          const checkboxes = container.querySelectorAll(
+            'input[type="checkbox"]'
+          );
+          const state = {};
+
+          checkboxes.forEach((checkbox, index) => {
+            const listItem = checkbox.closest("li");
+            const text =
+              listItem?.querySelector("label")?.textContent?.trim() ||
+              `item-${index}`;
+            state[text] = checkbox.checked;
+          });
+
+          const blogSlug = window.blogSlug || "current-blog";
+          localStorage.setItem(`checklist-${blogSlug}`, JSON.stringify(state));
+        }
+
+        // NEW: Load checklist state from localStorage
+        loadChecklistState(container) {
+          const blogSlug = window.blogSlug || "current-blog";
+          const savedState = localStorage.getItem(`checklist-${blogSlug}`);
+
+          if (savedState) {
+            const state = JSON.parse(savedState);
+            const checkboxes = container.querySelectorAll(
+              'input[type="checkbox"]'
+            );
+
+            checkboxes.forEach((checkbox, index) => {
+              const listItem = checkbox.closest("li");
+              const text =
+                listItem?.querySelector("label")?.textContent?.trim() ||
+                `item-${index}`;
+
+              if (state[text] !== undefined) {
+                checkbox.checked = state[text];
+                if (state[text]) {
+                  listItem.classList.add("checked");
+                }
+              }
+            });
+          }
         }
 
         // Enhanced Mermaid diagram rendering with detailed logging
@@ -2229,7 +2552,7 @@
           this.toggleBtn = document.getElementById("miniMapToggle");
           this.headings = [];
           this.isCollapsed = false;
-          
+
           // NEW: Dragging state variables
           this.isDragging = false;
           this.dragStartX = 0;
@@ -2265,65 +2588,75 @@
           });
 
           // NEW: Dragging event listeners
-          this.container.addEventListener("mousedown", this.startDrag.bind(this));
+          this.container.addEventListener(
+            "mousedown",
+            this.startDrag.bind(this)
+          );
           document.addEventListener("mousemove", this.drag.bind(this));
           document.addEventListener("mouseup", this.stopDrag.bind(this));
 
           // NEW: Touch events for mobile dragging
-          this.container.addEventListener("touchstart", this.startDragTouch.bind(this));
+          this.container.addEventListener(
+            "touchstart",
+            this.startDragTouch.bind(this)
+          );
           document.addEventListener("touchmove", this.dragTouch.bind(this));
           document.addEventListener("touchend", this.stopDrag.bind(this));
         }
 
         // NEW: Mouse dragging methods
         startDrag(e) {
-          if (e.target.classList.contains("mini-map-toggle") || 
-              e.target.classList.contains("mini-map-item") ||
-              e.target.closest(".mini-map-content")) {
+          if (
+            e.target.classList.contains("mini-map-toggle") ||
+            e.target.classList.contains("mini-map-item") ||
+            e.target.closest(".mini-map-content")
+          ) {
             return; // Don't start drag on interactive elements
           }
-          
+
           this.isDragging = true;
           this.dragStartX = e.clientX;
           this.dragStartY = e.clientY;
-          
+
           const rect = this.container.getBoundingClientRect();
           this.initialLeft = rect.left;
           this.initialTop = rect.top;
-          
+
           this.container.style.cursor = "grabbing";
           e.preventDefault();
         }
 
         startDragTouch(e) {
-          if (e.target.classList.contains("mini-map-toggle") || 
-              e.target.classList.contains("mini-map-item") ||
-              e.target.closest(".mini-map-content")) {
+          if (
+            e.target.classList.contains("mini-map-toggle") ||
+            e.target.classList.contains("mini-map-item") ||
+            e.target.closest(".mini-map-content")
+          ) {
             return;
           }
-          
+
           this.isDragging = true;
           const touch = e.touches[0];
           this.dragStartX = touch.clientX;
           this.dragStartY = touch.clientY;
-          
+
           const rect = this.container.getBoundingClientRect();
           this.initialLeft = rect.left;
           this.initialTop = rect.top;
-          
+
           this.container.style.cursor = "grabbing";
           e.preventDefault();
         }
 
         drag(e) {
           if (!this.isDragging) return;
-          
+
           const deltaX = e.clientX - this.dragStartX;
           const deltaY = e.clientY - this.dragStartY;
-          
+
           const newLeft = this.initialLeft + deltaX;
           const newTop = this.initialTop + deltaY;
-          
+
           this.container.style.left = `${newLeft}px`;
           this.container.style.top = `${newTop}px`;
           this.container.style.right = "auto"; // Remove right positioning
@@ -2332,14 +2665,14 @@
 
         dragTouch(e) {
           if (!this.isDragging) return;
-          
+
           const touch = e.touches[0];
           const deltaX = touch.clientX - this.dragStartX;
           const deltaY = touch.clientY - this.dragStartY;
-          
+
           const newLeft = this.initialLeft + deltaX;
           const newTop = this.initialTop + deltaY;
-          
+
           this.container.style.left = `${newLeft}px`;
           this.container.style.top = `${newTop}px`;
           this.container.style.right = "auto";
@@ -2360,29 +2693,29 @@
           const position = {
             left: rect.left,
             top: rect.top,
-            collapsed: this.isCollapsed
+            collapsed: this.isCollapsed,
           };
-          localStorage.setItem('miniMapPosition', JSON.stringify(position));
+          localStorage.setItem("miniMapPosition", JSON.stringify(position));
         }
 
         // NEW: Load position from localStorage
         loadPosition() {
           try {
-            const saved = localStorage.getItem('miniMapPosition');
+            const saved = localStorage.getItem("miniMapPosition");
             if (saved) {
               const position = JSON.parse(saved);
               this.container.style.left = `${position.left}px`;
               this.container.style.top = `${position.top}px`;
               this.container.style.right = "auto";
               this.container.style.transform = "none";
-              
+
               // Restore collapsed state if needed
               if (position.collapsed && !this.isCollapsed) {
                 this.toggle();
               }
             }
           } catch (e) {
-            console.warn('Failed to load mini-map position:', e);
+            console.warn("Failed to load mini-map position:", e);
           }
         }
 
