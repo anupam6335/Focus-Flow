@@ -7,7 +7,7 @@
     <link rel="icon" type="image/x-icon" href="/FocusFlow.ico" />
     <link rel="stylesheet" href="/responsive.css" />
     <style>
-      /* CodeLeaf Theme Integration */
+      /* Existing CodeLeaf Theme Integration */
       :root {
         --codeleaf-bg-primary: #f8fbf8;
         --codeleaf-bg-secondary: #f1f8f1;
@@ -135,29 +135,95 @@
         border-color: var(--codeleaf-accent-primary);
       }
 
-      .blog-header {
+      /* NEW: Compact Blog Header Section */
+      .blog-header-compact {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--codeleaf-space-6);
+        margin-bottom: var(--codeleaf-space-4);
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-4);
+        background: var(--codeleaf-bg-secondary);
+        border-radius: var(--codeleaf-radius-lg);
+        border: 1px solid var(--codeleaf-border-light);
       }
 
-      .create-blog-btn {
+      .blog-header-compact h2 {
+        font-size: var(--codeleaf-font-lg);
+        color: var(--codeleaf-text-primary);
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .create-blog-btn-compact {
         background: var(--codeleaf-accent-primary);
         color: white;
         border: none;
-        padding: var(--codeleaf-space-3) var(--codeleaf-space-6);
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
         border-radius: var(--codeleaf-radius-md);
         cursor: pointer;
         font-weight: 500;
         transition: all 0.3s ease;
         font-size: var(--codeleaf-font-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
       }
 
-      .create-blog-btn:hover {
+      .create-blog-btn-compact:hover {
         background: var(--codeleaf-accent-secondary);
         transform: translateY(-2px);
         box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      /* NEW: Integrated Tabs with Compact Header */
+      .tabs-container-compact {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-4);
+        margin-bottom: var(--codeleaf-space-6);
+        flex-wrap: wrap;
+      }
+
+      .tabs-compact {
+        display: flex;
+        gap: var(--codeleaf-space-2);
+        flex: 1;
+        flex-wrap: wrap;
+      }
+
+      .tab-compact {
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+        background: none;
+        border: none;
+        color: var(--codeleaf-text-secondary);
+        cursor: pointer;
+        border-radius: var(--codeleaf-radius-md);
+        transition: all 0.2s ease;
+        font-weight: 500;
+        position: relative;
+        font-size: var(--codeleaf-font-sm);
+        border: 1px solid transparent;
+      }
+
+      .tab-compact:hover {
+        background: rgba(76, 166, 76, 0.05);
+        color: var(--codeleaf-accent-primary);
+        border-color: var(--codeleaf-border-light);
+      }
+
+      .tab-compact.active {
+        color: var(--codeleaf-accent-primary);
+        background: rgba(76, 166, 76, 0.1);
+        border-color: var(--codeleaf-accent-muted);
+      }
+
+      .tab-badge-compact {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: var(--codeleaf-font-xs);
+        margin-left: var(--codeleaf-space-1);
       }
 
       /* Enhanced Instagram-style Grid Layout with CodeLeaf Theme */
@@ -454,61 +520,6 @@
         .blog-card.small {
           grid-column: span 1;
         }
-      }
-
-      /* Tabs Styling - CodeLeaf Theme */
-      .tabs-container {
-        margin-bottom: var(--codeleaf-space-6);
-      }
-
-      .tabs {
-        display: flex;
-        gap: var(--codeleaf-space-2);
-        border-bottom: 1px solid var(--codeleaf-border-light);
-        margin-bottom: var(--codeleaf-space-4);
-        flex-wrap: wrap;
-      }
-
-      .tab {
-        padding: var(--codeleaf-space-3) var(--codeleaf-space-4);
-        background: none;
-        border: none;
-        color: var(--codeleaf-text-secondary);
-        cursor: pointer;
-        border-radius: var(--codeleaf-radius-md) var(--codeleaf-radius-md) 0 0;
-        transition: all 0.2s ease;
-        font-weight: 500;
-        position: relative;
-        font-size: var(--codeleaf-font-sm);
-      }
-
-      .tab:hover {
-        background: rgba(76, 166, 76, 0.05);
-        color: var(--codeleaf-accent-primary);
-      }
-
-      .tab.active {
-        color: var(--codeleaf-accent-primary);
-        background: rgba(76, 166, 76, 0.1);
-      }
-
-      .tab.active::after {
-        content: "";
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: var(--codeleaf-accent-primary);
-      }
-
-      .tab-badge {
-        background: var(--codeleaf-accent-primary);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: var(--codeleaf-font-xs);
-        margin-left: var(--codeleaf-space-2);
       }
 
       .empty-state {
@@ -895,24 +906,23 @@
 
       /* Responsive adjustments */
       @media (max-width: 768px) {
-        .blog-header {
+        .blog-header-compact {
           flex-direction: column;
-          gap: var(--codeleaf-space-4);
+          gap: var(--codeleaf-space-3);
           align-items: flex-start;
+        }
+
+        .tabs-container-compact {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .tabs-compact {
+          width: 100%;
         }
 
         .modal-content {
           padding: var(--codeleaf-space-4);
-        }
-
-        .tabs {
-          flex-wrap: wrap;
-        }
-
-        .tab {
-          flex: 1;
-          min-width: 120px;
-          text-align: center;
         }
 
         .scroll-to-top {
@@ -1327,6 +1337,7 @@
           <h1 class="site-logo">FocusFlow Blogs</h1>
           <div class="nav-links">
             <a id="back-link" class="nav-link">← Back to Tracker</a>
+            <a href="/profile.html" class="nav-link profile-link">👤 Profile</a>
             <a id="blog-link" class="nav-link active">Blogs</a>
           </div>
         </div>
@@ -1343,31 +1354,41 @@
       </div>
 
       <div id="blogsContent" style="display: none">
-        <div class="blog-header">
+        <!-- NEW: Compact Blog Header with Integrated Tabs -->
+        <div class="blog-header-compact">
           <h2>Community Blogs</h2>
-          <button class="create-blog-btn" onclick="openCreateModal()">
-            + Create Blog
+          <button class="create-blog-btn-compact" onclick="openCreateModal()">
+            <span>+</span>
+            <span>Create Blog</span>
           </button>
         </div>
 
-        <!-- Tabs Navigation -->
-        <div class="tabs-container">
-          <div class="tabs">
-            <button class="tab active" onclick="switchTab('all')" id="tab-all">
+        <!-- NEW: Integrated Tabs Navigation -->
+        <div class="tabs-container-compact">
+          <div class="tabs-compact">
+            <button
+              class="tab-compact active"
+              onclick="switchTab('all')"
+              id="tab-all"
+            >
               All Blogs
-              <span class="tab-badge" id="all-blogs-count">0</span>
+              <span class="tab-badge-compact" id="all-blogs-count">0</span>
             </button>
             <button
-              class="tab"
+              class="tab-compact"
               onclick="switchTab('my-blogs')"
               id="tab-my-blogs"
             >
               My Blogs
-              <span class="tab-badge" id="my-blogs-count">0</span>
+              <span class="tab-badge-compact" id="my-blogs-count">0</span>
             </button>
-            <button class="tab" onclick="switchTab('popular')" id="tab-popular">
+            <button
+              class="tab-compact"
+              onclick="switchTab('popular')"
+              id="tab-popular"
+            >
               Popular
-              <span class="tab-badge" id="popular-blogs-count">0</span>
+              <span class="tab-badge-compact" id="popular-blogs-count">0</span>
             </button>
           </div>
         </div>
@@ -1590,7 +1611,7 @@
         currentPage = 1;
 
         // Update active tab UI
-        document.querySelectorAll(".tab").forEach((tab) => {
+        document.querySelectorAll(".tab-compact").forEach((tab) => {
           tab.classList.remove("active");
         });
         document.getElementById(`tab-${tabName}`).classList.add("active");
@@ -1854,7 +1875,7 @@
                     <p>${emptyMessage}</p>
                     ${
                       currentTab === "my-blogs"
-                        ? '<button class="create-blog-btn" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
+                        ? '<button class="create-blog-btn-compact" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
                         : ""
                     }
                 </div>
