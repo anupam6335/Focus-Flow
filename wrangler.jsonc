@@ -1,7 +1,7 @@
 {
   "name": "focusflow-keep-alive",
   "compatibility_date": "2025-10-15",
-  "main": "index.js", // or whatever your worker file is called
+  "main": "worker.js", // or whatever your worker file is called
   "triggers": {
     "crons": ["*/5 * * * *"] // runs every 5 minutes
   }
