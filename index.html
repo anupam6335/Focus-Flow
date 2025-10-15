@@ -97,7 +97,7 @@
         line-height: 1.2;
       }
 
-      .theme-toggle {
+      /* .theme-toggle {
         background: var(--accent-color);
         color: white;
         border: none;
@@ -110,7 +110,7 @@
 
       .theme-toggle:hover {
         opacity: 0.9;
-      }
+      } */
 
       .nav-links {
         display: flex;
@@ -1737,6 +1737,45 @@
           font-size: 1.2rem;
         }
       }
+
+      /* NEW: Search Bar Styles */
+      .search-container {
+        margin: 20px 0;
+        width: 100%;
+      }
+
+      .search-bar {
+        width: 100%;
+        /* max-width: 400px; */
+        padding: 12px 16px;
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-color);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .search-bar:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+      }
+
+      .search-bar::placeholder {
+        color: var(--text-color);
+        opacity: 0.6;
+      }
+
+      .search-info {
+        margin-top: 8px;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        opacity: 0.7;
+      }
+
+
+      
     </style>
   </head>
   <body>
@@ -1762,13 +1801,27 @@
                   <button class="sync-button" id="syncButton">
                     🔄 Sync Now
                   </button>
-                  <button class="theme-toggle" id="themeToggle">
+                  <!-- <button class="theme-toggle" id="themeToggle" style="display: none;">
                     Switch to Light Theme
-                  </button>
+                  </button> -->
                 </div>
               </div>
             </div>
           </header>
+
+          <!-- NEW: Search Bar -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="searchBar"
+              class="search-bar"
+              placeholder="Search by day number (e.g., 1, 2, 3...)"
+              aria-label="Search days by number"
+            />
+            <div class="search-info" id="searchInfo">
+              Type a day number to filter. Clear to show all days.
+            </div>
+          </div>
 
           <!-- Toast Notification Container -->
           <div class="toast-container" id="toastContainer"></div>
@@ -1960,7 +2013,15 @@
             <div id="userInfo" class="user-info" style="display: none">
               <div class="user-info-content">
                 <span
-                  >Logged in as: <strong id="currentUsername"></strong
+                  >Logged in as:
+                  <a
+                    href="/profile.html"
+                    style="
+                      color: #d0d7de;
+                      text-decoration: none;
+                      text-transform: uppercase;
+                    "
+                    ><strong id="currentUsername"></strong></a
                 ></span>
                 <button id="logoutBtn" class="auth-btn secondary">
                   Logout
@@ -2101,6 +2162,12 @@
       const TOTAL_DAYS = 1;
       const APP_START_DATE = "2025-09-25"; // Your app's start date
 
+      // NEW: Search functionality variables with debounce
+      let searchFilter = "";
+      let filteredData = [];
+      let searchTimeout = null;
+      const SEARCH_DEBOUNCE_TIME = 300; // 300ms debounce
+
       const DEFAULT_QUESTIONS = [
         { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
         {
@@ -2114,7 +2181,7 @@
       ];
 
       // MongoDB configuration
-      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+      const API_BASE_URL = "http://localhost:3000/api";
       let userId = "default-user";
       let authToken = null;
 
@@ -2163,7 +2230,7 @@
 
       // DOM elements
       const tableBody = document.getElementById("tableBody");
-      const themeToggle = document.getElementById("themeToggle");
+      // const themeToggle = document.getElementById("themeToggle");
       const linkModal = document.getElementById("linkModal");
       const closeModal = document.getElementById("closeModal");
       const cancelModal = document.getElementById("cancelModal");
@@ -2172,6 +2239,10 @@
       const questionLinkInput = document.getElementById("questionLinkInput");
       const syncButton = document.getElementById("syncButton");
       const syncStatus = document.getElementById("syncStatus");
+
+      // NEW: Search bar elements
+      const searchBar = document.getElementById("searchBar");
+      const searchInfo = document.getElementById("searchInfo");
 
       // Auth DOM elements
       const authSection = document.getElementById("authSection");
@@ -2214,12 +2285,105 @@
 
       // Current editing question info
       let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+      // NEW: Search functionality with debounce
+      function setupSearchFunctionality() {
+        searchBar.addEventListener("input", function (e) {
+          const searchValue = e.target.value.trim();
+
+          // Clear previous timeout
+          if (searchTimeout) {
+            clearTimeout(searchTimeout);
+          }
+
+          // Set new timeout for debounce
+          searchTimeout = setTimeout(() => {
+            searchFilter = searchValue;
+            filterTableData();
+            renderTable();
+            updateSearchInfo();
+          }, SEARCH_DEBOUNCE_TIME);
+        });
+
+        // Clear search when Escape key is pressed
+        searchBar.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            searchBar.value = "";
+            searchFilter = "";
+
+            // Clear any pending search timeout
+            if (searchTimeout) {
+              clearTimeout(searchTimeout);
+              searchTimeout = null;
+            }
+
+            filterTableData();
+            renderTable();
+            updateSearchInfo();
+          }
+        });
+
+        // Clear search when input is cleared manually (backspace, delete, etc.)
+        searchBar.addEventListener("input", function (e) {
+          if (
+            e.inputType &&
+            e.inputType.includes("delete") &&
+            !searchBar.value.trim()
+          ) {
+            // Clear any pending search timeout
+            if (searchTimeout) {
+              clearTimeout(searchTimeout);
+              searchTimeout = null;
+            }
+
+            searchFilter = "";
+            filterTableData();
+            renderTable();
+            updateSearchInfo();
+          }
+        });
+      }
+
+      // NEW: Filter table data based on search input - IMPROVED VERSION
+      function filterTableData() {
+        if (!searchFilter) {
+          filteredData = [...appData]; // Show all data when no filter
+          return;
+        }
+
+        // Filter by day number - support exact and partial matches
+        filteredData = appData.filter((dayData) => {
+          const dayString = dayData.day.toString();
+          // Return true if the search filter matches the day number
+          return dayString.includes(searchFilter);
+        });
+      }
+
+      // NEW: Update search info text
+      function updateSearchInfo() {
+        if (!searchFilter) {
+          searchInfo.textContent =
+            "Type a day number to filter. Clear to show all days.";
+          searchInfo.style.color = "";
+        } else {
+          const resultCount = filteredData.length;
+          searchInfo.textContent = `Showing ${resultCount} day${
+            resultCount !== 1 ? "s" : ""
+          } matching "${searchFilter}"`;
+          searchInfo.style.color =
+            resultCount > 0 ? "var(--success-color)" : "var(--danger-color)";
+        }
+      }
 
       // Initialize the app
       async function initApp() {
         await checkAutoLogin();
         setupAuthEventListeners();
         await loadData();
+
+        // NEW: Initialize search functionality
+        setupSearchFunctionality();
+        filterTableData(); // Initialize filtered data
+
         renderTable();
         setupEventListeners();
 
@@ -2995,6 +3159,11 @@
           localStorage.setItem("lastUpdated", lastUpdated);
 
           // console.log("💾 Local storage updated");
+
+          // Update filtered data if search is active
+          if (searchFilter) {
+            filterTableData();
+          }
 
           // Also save to MongoDB if logged in
           if (authToken) {
@@ -4179,14 +4348,20 @@
         }
       }
 
-      // Modified renderTable function to apply editable states
+      // MODIFIED: renderTable function to use filtered data correctly
       function renderTable() {
         tableBody.innerHTML = "";
         const currentDay = getCurrentDayNumber();
 
-        appData.forEach((dayData, index) => {
-          const row = document.createElement("tr");
+        // Use filteredData for rendering when search is active, otherwise use appData
+        const dataToRender = searchFilter ? filteredData : appData;
+
+        dataToRender.forEach((dayData, index) => {
+          // Note: index here refers to position in dataToRender array, not original appData
+          const originalIndex = appData.findIndex((d) => d.day === dayData.day);
           const isEditableDay = isEditable(dayData.day);
+
+          const row = document.createElement("tr");
 
           // Apply non-editable class to entire row if not today
           if (!isEditableDay) {
@@ -4208,7 +4383,7 @@
 
           row.appendChild(dayCell);
 
-          // Questions column - MODIFIED with editable controls
+          // Questions column - MODIFIED to use originalIndex for data manipulation
           const questionsCell = document.createElement("td");
           questionsCell.className = "questions-cell";
 
@@ -4227,7 +4402,8 @@
 
             if (isEditableDay) {
               checkbox.addEventListener("change", () => {
-                toggleQuestionCompletion(index, qIndex);
+                // Use originalIndex to modify the actual data in appData
+                toggleQuestionCompletion(originalIndex, qIndex);
               });
             } else {
               checkbox.tabIndex = -1;
@@ -4255,7 +4431,7 @@
             if (isEditableDay) {
               questionText.addEventListener("click", (e) => {
                 if (!e.target.classList.contains("question-link")) {
-                  editQuestionText(index, qIndex, questionText);
+                  editQuestionText(originalIndex, qIndex, questionText);
                 }
               });
             }
@@ -4278,7 +4454,7 @@
 
             if (isEditableDay) {
               editLinkBtn.addEventListener("click", () => {
-                openLinkModal(index, qIndex);
+                openLinkModal(originalIndex, qIndex);
               });
             } else {
               editLinkBtn.tabIndex = -1;
@@ -4314,7 +4490,7 @@
             if (isEditableDay) {
               deleteQuestionBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
-                deleteQuestion(index, qIndex);
+                deleteQuestion(originalIndex, qIndex);
               });
             } else {
               deleteQuestionBtn.tabIndex = -1;
@@ -4337,16 +4513,6 @@
             }
 
             questionContent.appendChild(questionText);
-
-            // if (question.link) {
-            //   const linkDisplay = document.createElement("div");
-            //   linkDisplay.style.fontSize = "0.8rem";
-            //   linkDisplay.style.opacity = "0.7";
-            //   linkDisplay.style.marginTop = "2px";
-            //   linkDisplay.textContent = question.link;
-            //   questionContent.appendChild(linkDisplay);
-            // }
-
             questionItem.appendChild(checkbox);
             questionItem.appendChild(questionContent);
             questionsCell.appendChild(questionItem);
@@ -4363,7 +4529,7 @@
 
           if (isEditableDay) {
             addQuestionBtn.addEventListener("click", () => {
-              addNewQuestion(index);
+              addNewQuestion(originalIndex);
             });
           } else {
             addQuestionBtn.tabIndex = -1;
@@ -4392,7 +4558,7 @@
           statusCell.textContent = getStatusEmoji(dayData.questions);
           row.appendChild(statusCell);
 
-          // Tags column - MODIFIED for editable state
+          // Tags column - MODIFIED for editable state and proper indexing
           const tagsCell = document.createElement("td");
           tagsCell.className = "tags-cell";
 
@@ -4403,7 +4569,7 @@
 
             // Only show remove button for editable days
             if (isEditableDay) {
-              tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${index}" data-tag-index="${tagIndex}">×</span>`;
+              tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${originalIndex}" data-tag-index="${tagIndex}">×</span>`;
             } else {
               tagElement.textContent = tag.text;
               tagElement.style.opacity = "0.7";
@@ -4427,7 +4593,7 @@
           if (isEditableDay) {
             addTagInput.addEventListener("keypress", (e) => {
               if (e.key === "Enter" && addTagInput.value.trim() !== "") {
-                addNewTag(index, addTagInput.value.trim());
+                addNewTag(originalIndex, addTagInput.value.trim());
                 addTagInput.value = "";
               }
             });
@@ -4438,7 +4604,7 @@
           tagsCell.appendChild(addTagInput);
           row.appendChild(tagsCell);
 
-          // Links column - MODIFIED for editable state
+          // Links column - MODIFIED for editable state and proper indexing
           const linksCell = document.createElement("td");
           linksCell.className = "links-cell";
 
@@ -4464,7 +4630,7 @@
           if (isEditableDay) {
             linkInput.addEventListener("keypress", (e) => {
               if (e.key === "Enter" && linkInput.value.trim() !== "") {
-                addNewLink(index, linkInput.value.trim());
+                addNewLink(originalIndex, linkInput.value.trim());
                 linkInput.value = "";
               }
             });
@@ -4536,7 +4702,7 @@
                 removeBtn.addEventListener("click", (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  removeLink(index, linkIndex);
+                  removeLink(originalIndex, linkIndex);
                 });
                 tagElement.appendChild(removeBtn);
               }
@@ -4551,11 +4717,33 @@
           tableBody.appendChild(row);
         });
 
+        // Update tag removal event listeners
+        setupTagRemovalListeners();
+
         // Always render activity tracker when table is rendered
         renderEnhancedActivityTracker();
 
         // Update add day button state
         updateAddDayButton();
+      }
+
+      // NEW: Setup tag removal listeners after table render
+      function setupTagRemovalListeners() {
+        tableBody.addEventListener("click", (e) => {
+          if (e.target.classList.contains("tag-remove")) {
+            const dayIndex = parseInt(e.target.dataset.day);
+            if (!shouldAllowMutation(dayIndex)) return;
+
+            const tagIndex = parseInt(e.target.dataset.tagIndex);
+            appData[dayIndex].tags.splice(tagIndex, 1);
+            saveData();
+            // Re-filter data if search is active
+            if (searchFilter) {
+              filterTableData();
+            }
+            renderTable();
+          }
+        });
       }
 
       // Update the deleteQuestion function to ensure modal closes
@@ -4978,14 +5166,14 @@
       // Setup event listeners
       function setupEventListeners() {
         // Theme toggle
-        themeToggle.addEventListener("click", () => {
-          document.body.classList.toggle("light-theme");
-          if (document.body.classList.contains("light-theme")) {
-            themeToggle.textContent = "Switch to Dark Theme";
-          } else {
-            themeToggle.textContent = "Switch to Light Theme";
-          }
-        });
+        // themeToggle.addEventListener("click", () => {
+        //   document.body.classList.toggle("light-theme");
+        //   if (document.body.classList.contains("light-theme")) {
+        //     themeToggle.textContent = "Switch to Dark Theme";
+        //   } else {
+        //     themeToggle.textContent = "Switch to Light Theme";
+        //   }
+        // });
 
         // Sync button - updated to use force sync
         syncButton.addEventListener("click", async () => {
@@ -5011,6 +5199,10 @@
             const tagIndex = parseInt(e.target.dataset.tagIndex);
             appData[dayIndex].tags.splice(tagIndex, 1);
             saveData();
+            // Re-filter data if search is active
+            if (searchFilter) {
+              filterTableData();
+            }
             renderTable();
           }
         });
