@@ -4,5 +4,13 @@
   "main": "worker.js", // or whatever your worker file is called
   "triggers": {
     "crons": ["*/5 * * * *"] // runs every 5 minutes
+  },
+"observability": {
+    "logs": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
   }
 }
