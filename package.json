@@ -7,7 +7,7 @@
     "dev": "nodemon server.js",
     "build": "echo 'Building for Vercel'",
     "vercel-build": "echo 'Vercel build completed'",
-    "deploy": "wrangler deploy index.js"
+    "deploy": "wrangler deploy worker.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -23,4 +23,5 @@
     "nodemon": "^2.0.20"
   }
 }
+
 
