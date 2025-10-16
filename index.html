@@ -1787,6 +1787,625 @@
       .status-cell {
         width: 100px;
       }
+
+      /* =================================================== */
+
+      /* ===== ENHANCED TABLE STYLES ===== */
+
+      /* Table container with subtle shadow and improved spacing */
+      table {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        margin-bottom: var(--codeleaf-space-6) !important;
+        background: var(--codeleaf-bg-primary) !important;
+        border: 1px solid var(--codeleaf-border-light) !important;
+        border-radius: var(--codeleaf-radius-lg) !important;
+        overflow: hidden !important;
+        box-shadow: var(--codeleaf-shadow-md) !important;
+        font-size: var(--codeleaf-font-sm) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+      }
+
+      /* Table header with gradient background */
+      thead {
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-bg-secondary) 0%,
+          var(--codeleaf-bg-tertiary) 100%
+        ) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      /* Table header cells with improved styling */
+      th {
+        background: transparent !important;
+        color: var(--codeleaf-text-primary) !important;
+        font-weight: 600 !important;
+        font-size: var(--codeleaf-font-sm) !important;
+        padding: var(--codeleaf-space-4) !important;
+        border-bottom: 2px solid var(--codeleaf-accent-muted) !important;
+        position: relative !important;
+        transition: all 0.3s ease !important;
+      }
+
+      /* Add subtle separator lines between header cells */
+      th:not(:last-child)::after {
+        content: "" !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: 20% !important;
+        height: 60% !important;
+        width: 1px !important;
+        background: var(--codeleaf-border-light) !important;
+      }
+
+      /* Table body rows with enhanced hover effects */
+      tbody tr {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+      }
+
+      /* Alternate row coloring with subtle gradient */
+      tbody tr:nth-child(even) {
+        background: linear-gradient(
+          90deg,
+          var(--codeleaf-bg-secondary) 0%,
+          transparent 100%
+        ) !important;
+      }
+
+      /* Enhanced hover effect for rows */
+      tbody tr:hover {
+        background: linear-gradient(
+          90deg,
+          var(--codeleaf-accent-muted) 0%,
+          transparent 100%
+        ) !important;
+        transform: translateX(4px) !important;
+        box-shadow: 0 2px 8px rgba(45, 122, 45, 0.1) !important;
+        z-index: 1 !important;
+      }
+
+      /* Table cells with improved padding and transitions */
+      td {
+        padding: var(--codeleaf-space-4) !important;
+        border-bottom: 1px solid var(--codeleaf-border-light) !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+
+      /* Remove border from last row */
+      tbody tr:last-child td {
+        border-bottom: none !important;
+      }
+
+      /* ===== ENHANCED DAY CELL STYLES ===== */
+      .day-cell {
+        width: 80px !important;
+        min-width: 80px !important;
+        text-align: center !important;
+        font-weight: 700 !important;
+        color: var(--codeleaf-accent-primary) !important;
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-bg-tertiary) 0%,
+          transparent 100%
+        ) !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+
+      /* Add decorative element to day cells */
+      .day-cell::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 3px !important;
+        height: 100% !important;
+        background: var(--codeleaf-accent-primary) !important;
+        transform: scaleY(0) !important;
+        transition: transform 0.3s ease !important;
+      }
+
+      .day-cell:hover::before {
+        transform: scaleY(1) !important;
+      }
+
+      /* Current day highlight */
+      .current-day .day-cell {
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-accent-primary) 0%,
+          var(--codeleaf-accent-secondary) 100%
+        ) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      .current-day .day-cell::before {
+        background: white !important;
+      }
+
+      /* ===== ENHANCED STATUS CELL ANIMATIONS ===== */
+      .status-cell {
+        width: 100px !important;
+        min-width: 100px !important;
+        text-align: center !important;
+        font-size: 1.5rem !important;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+        position: relative !important;
+      }
+
+      /* Status cell hover animation */
+      .status-cell:hover {
+        transform: scale(1.2) rotate(5deg) !important;
+        text-shadow: 0 4px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      /* Success status (all completed) */
+      .status-cell:contains("😊") {
+        color: var(--codeleaf-success) !important;
+        text-shadow: 0 2px 4px rgba(45, 122, 45, 0.2) !important;
+      }
+
+      /* Incomplete status */
+      .status-cell:contains("😞") {
+        color: var(--codeleaf-text-tertiary) !important;
+        opacity: 0.7 !important;
+      }
+
+      /* Neutral status */
+      .status-cell:contains("😐") {
+        color: var(--codeleaf-text-secondary) !important;
+      }
+
+      /* ===== ENHANCED QUESTION ITEMS ===== */
+      .question-item {
+        display: flex !important;
+        align-items: flex-start !important;
+        margin-bottom: var(--codeleaf-space-3) !important;
+        padding: var(--codeleaf-space-3) !important;
+        background: var(--codeleaf-bg-primary) !important;
+        border: 1px solid transparent !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+
+      .question-item:hover {
+        background: var(--codeleaf-bg-secondary) !important;
+        border-color: var(--codeleaf-accent-muted) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--codeleaf-shadow-sm) !important;
+      }
+
+      .question-item:last-child {
+        margin-bottom: 0 !important;
+      }
+
+      /* Completed question styling */
+      .question-item
+        input[type="checkbox"]:checked
+        ~ .question-content
+        .question-text {
+        color: var(--codeleaf-text-tertiary) !important;
+        text-decoration: line-through !important;
+        opacity: 0.8 !important;
+      }
+
+      /* Question text with smooth transitions */
+      .question-text {
+        cursor: pointer !important;
+        padding: var(--codeleaf-space-2) !important;
+        border-radius: var(--codeleaf-radius-sm) !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: var(--codeleaf-space-2) !important;
+      }
+
+      .question-text:hover {
+        background: rgba(45, 122, 45, 0.05) !important;
+        transform: translateX(4px) !important;
+      }
+
+      /* Editing state */
+      .question-text.editing {
+        background: rgba(45, 122, 45, 0.1) !important;
+        outline: 2px solid var(--codeleaf-accent-primary) !important;
+        animation: pulse-glow 2s infinite !important;
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 5px rgba(45, 122, 45, 0.3) !important;
+        }
+        50% {
+          box-shadow: 0 0 15px rgba(45, 122, 45, 0.5) !important;
+        }
+      }
+
+      /* ===== ENHANCED TAGS ===== */
+      .tag {
+        display: inline-flex !important;
+        align-items: center !important;
+        background: var(--codeleaf-accent-primary) !important;
+        color: white !important;
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-3) !important;
+        border-radius: 20px !important;
+        font-size: var(--codeleaf-font-xs) !important;
+        font-weight: 600 !important;
+        margin-right: var(--codeleaf-space-2) !important;
+        margin-bottom: var(--codeleaf-space-2) !important;
+        position: relative !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow: hidden !important;
+      }
+
+      .tag::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        ) !important;
+        transition: left 0.5s ease !important;
+      }
+
+      .tag:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      .tag:hover::before {
+        left: 100% !important;
+      }
+
+      /* Tag remove button with smooth animation */
+      .tag-remove {
+        margin-left: var(--codeleaf-space-2) !important;
+        cursor: pointer !important;
+        font-weight: bold !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 50% !important;
+        width: 16px !important;
+        height: 16px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .tag-remove:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        transform: scale(1.1) !important;
+      }
+
+      /* ===== ENHANCED BUTTONS ===== */
+      .add-question-btn,
+      .add-day-btn {
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-accent-primary) 0%,
+          var(--codeleaf-accent-secondary) 100%
+        ) !important;
+        color: white !important;
+        border: none !important;
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-4) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        cursor: pointer !important;
+        font-weight: 600 !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+
+      .add-question-btn::before,
+      .add-day-btn::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        ) !important;
+        transition: left 0.5s ease !important;
+      }
+
+      .add-question-btn:hover,
+      .add-day-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(45, 122, 45, 0.4) !important;
+      }
+
+      .add-question-btn:hover::before,
+      .add-day-btn:hover::before {
+        left: 100% !important;
+      }
+
+      /* ===== ENHANCED INPUT FIELDS ===== */
+      .add-tag-input,
+      .question-link-input,
+      .add-link-input {
+        background: var(--codeleaf-bg-primary) !important;
+        border: 2px solid var(--codeleaf-border-light) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3) !important;
+        color: var(--codeleaf-text-primary) !important;
+        font-size: var(--codeleaf-font-sm) !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+      }
+
+      .add-tag-input:focus,
+      .question-link-input:focus,
+      .add-link-input:focus {
+        outline: none !important;
+        border-color: var(--codeleaf-accent-primary) !important;
+        box-shadow: 0 0 0 3px rgba(45, 122, 45, 0.1) !important;
+        transform: translateY(-1px) !important;
+      }
+
+      /* ===== ANIMATIONS AND TRANSITIONS ===== */
+
+      /* Fade-in animation for new rows */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Apply animation to table rows */
+      tbody tr {
+        animation: fadeInUp 0.5s ease forwards;
+      }
+
+      /* Staggered animation for better visual appeal */
+      tbody tr:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+      tbody tr:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      tbody tr:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+      tbody tr:nth-child(4) {
+        animation-delay: 0.2s;
+      }
+      tbody tr:nth-child(5) {
+        animation-delay: 0.25s;
+      }
+
+      /* ===== RESPONSIVE ENHANCEMENTS ===== */
+
+      /* Mobile optimizations */
+      @media (max-width: 768px) {
+        table {
+          font-size: var(--codeleaf-font-xs) !important;
+          border-radius: var(--codeleaf-radius-md) !important;
+        }
+
+        th,
+        td {
+          padding: var(--codeleaf-space-3) !important;
+        }
+
+        .day-cell {
+          width: 60px !important;
+          min-width: 60px !important;
+          font-size: var(--codeleaf-font-xs) !important;
+        }
+
+        .status-cell {
+          width: 60px !important;
+          min-width: 60px !important;
+          font-size: 1.2rem !important;
+        }
+
+        .question-item {
+          padding: var(--codeleaf-space-2) !important;
+        }
+
+        .tag {
+          font-size: 0.65rem !important;
+          padding: 2px 8px !important;
+        }
+      }
+
+      /* Small mobile devices */
+      @media (max-width: 480px) {
+        table {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        thead {
+          display: none !important;
+        }
+
+        tbody tr {
+          display: block !important;
+          margin-bottom: var(--codeleaf-space-4) !important;
+          background: var(--codeleaf-bg-primary) !important;
+          border: 1px solid var(--codeleaf-border-light) !important;
+          border-radius: var(--codeleaf-radius-lg) !important;
+          box-shadow: var(--codeleaf-shadow-sm) !important;
+          padding: var(--codeleaf-space-4) !important;
+        }
+
+        td {
+          display: block !important;
+          border: none !important;
+          padding: var(--codeleaf-space-2) 0 !important;
+          text-align: left !important;
+        }
+
+        td::before {
+          content: attr(data-label) ": " !important;
+          font-weight: 600 !important;
+          color: var(--codeleaf-accent-primary) !important;
+          margin-right: var(--codeleaf-space-2) !important;
+        }
+
+        .day-cell,
+        .status-cell {
+          width: 100% !important;
+          text-align: left !important;
+        }
+
+        .day-cell::before {
+          display: none !important;
+        }
+      }
+
+      /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        table {
+          border: 2px solid var(--codeleaf-text-primary) !important;
+        }
+
+        th {
+          background: var(--codeleaf-text-primary) !important;
+          color: var(--codeleaf-bg-primary) !important;
+        }
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* Focus indicators for keyboard navigation */
+      .question-checkbox:focus-visible,
+      .add-question-btn:focus-visible,
+      .tag-remove:focus-visible,
+      .add-tag-input:focus-visible {
+        outline: 2px solid var(--codeleaf-accent-primary) !important;
+        outline-offset: 2px !important;
+      }
+
+      /* ===== ENHANCED STATUS CELL ANIMATIONS ===== */
+      .status-cell {
+        width: 100px !important;
+        min-width: 100px !important;
+        text-align: center !important;
+        font-size: 1.5rem !important;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      /* Success status (all completed) */
+      .status-cell:has(
+          + .questions-cell input[type="checkbox"]:checked:last-child
+        ) {
+        color: var(--codeleaf-success) !important;
+        text-shadow: 0 2px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      /* Status cell completion animation */
+      .status-cell.completed {
+        animation: celebrate 0.6s ease-in-out !important;
+      }
+
+      @keyframes celebrate {
+        0% {
+          transform: scale(1) rotate(0deg);
+        }
+        25% {
+          transform: scale(1.4) rotate(-5deg);
+        }
+        50% {
+          transform: scale(1.6) rotate(5deg);
+        }
+        75% {
+          transform: scale(1.4) rotate(-3deg);
+        }
+        100% {
+          transform: scale(1.2) rotate(0deg);
+        }
+      }
+
+      /* Pulse animation for status updates */
+      .status-cell.updating {
+        animation: statusPulse 0.5s ease-in-out !important;
+      }
+
+      @keyframes statusPulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.3);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Enhanced hover effects */
+      .status-cell:hover {
+        transform: scale(1.2) rotate(5deg) !important;
+        text-shadow: 0 4px 12px rgba(45, 122, 45, 0.4) !important;
+        cursor: pointer !important;
+      }
+
+      /* Different emoji states with colors */
+      .status-cell[data-status="happy"] {
+        color: var(--codeleaf-success) !important;
+        text-shadow: 0 2px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      .status-cell[data-status="neutral"] {
+        color: var(--codeleaf-text-secondary) !important;
+        opacity: 0.9 !important;
+      }
+
+      .status-cell[data-status="sad"] {
+        color: var(--codeleaf-text-tertiary) !important;
+        opacity: 0.7 !important;
+      }
+
+      .status-cell[data-status="empty"] {
+        color: var(--codeleaf-border-medium) !important;
+        opacity: 0.5 !important;
+      }
+
+      /* =================================================== */
     </style>
   </head>
   <body>
@@ -4820,14 +5439,70 @@
         }
       }
 
-      // Modify all mutation functions to include guards
+      // // Modify all mutation functions to include guards
+      // function toggleQuestionCompletion(dayIndex, questionIndex) {
+      //   if (!shouldAllowMutation(dayIndex)) return;
+
+      //   appData[dayIndex].questions[questionIndex].completed =
+      //     !appData[dayIndex].questions[questionIndex].completed;
+      //   saveData();
+      //   updateStatusCell(dayIndex);
+      // }
+      // MODIFIED: Enhanced toggleQuestionCompletion function with instant status updates
       function toggleQuestionCompletion(dayIndex, questionIndex) {
         if (!shouldAllowMutation(dayIndex)) return;
 
+        // Toggle the completion status
         appData[dayIndex].questions[questionIndex].completed =
           !appData[dayIndex].questions[questionIndex].completed;
+
+        // Save data first
         saveData();
-        updateStatusCell(dayIndex);
+
+        // Update the status cell INSTANTLY
+        updateStatusCellInstantly(dayIndex);
+
+        // Check for celebration after toggling completion
+        checkAndCelebrateAchievements(dayIndex);
+      }
+
+      // NEW: Function to instantly update status cell without full table re-render
+      function updateStatusCellInstantly(dayIndex) {
+        const rows = tableBody.querySelectorAll("tr");
+
+        // Find the correct row using the original day number
+        const targetDay = appData[dayIndex].day;
+        let targetRow = null;
+
+        for (let i = 0; i < rows.length; i++) {
+          const dayCell = rows[i].querySelector(".day-cell");
+          if (dayCell) {
+            const dayNumber = parseInt(dayCell.textContent.trim());
+            if (dayNumber === targetDay) {
+              targetRow = rows[i];
+              break;
+            }
+          }
+        }
+
+        if (targetRow) {
+          const statusCell = targetRow.querySelector(".status-cell");
+          if (statusCell) {
+            // Update the emoji instantly
+            statusCell.textContent = getStatusEmoji(
+              appData[dayIndex].questions
+            );
+
+            // Add visual feedback animation
+            statusCell.style.transform = "scale(1.3)";
+            statusCell.style.transition =
+              "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+
+            setTimeout(() => {
+              statusCell.style.transform = "scale(1)";
+            }, 300);
+          }
+        }
       }
 
       // Modify the toggleQuestionCompletion function to include celebration check
@@ -4907,16 +5582,24 @@
 
       // Update status cell based on question completion
       function updateStatusCell(dayIndex) {
-        const statusCell =
-          tableBody.children[dayIndex].querySelector(".status-cell");
-        statusCell.textContent = getStatusEmoji(appData[dayIndex].questions);
+        // const statusCell =
+        //   tableBody.children[dayIndex].querySelector(".status-cell");
+        // statusCell.textContent = getStatusEmoji(appData[dayIndex].questions);
+        updateStatusCellInstantly(dayIndex); // Use the new instant update function
       }
 
-      // Get status emoji based on question completion
+      // MODIFIED: Enhanced getStatusEmoji function with better logic
       function getStatusEmoji(questions) {
-        if (questions.length === 0) return "😐";
-        const allCompleted = questions.every((q) => q.completed);
-        return allCompleted ? "😊" : "😞";
+        if (!questions || questions.length === 0) return "😐";
+
+        const completedCount = questions.filter((q) => q.completed).length;
+        const totalCount = questions.length;
+
+        if (completedCount === 0) return "😐"; // No questions completed
+        if (completedCount === totalCount) return "😊"; // All questions completed
+        if (completedCount >= Math.ceil(totalCount / 2)) return "🙂"; // More than half completed
+
+        return "😞"; // Some questions completed but less than half
       }
 
       // Add a new tag to a day
