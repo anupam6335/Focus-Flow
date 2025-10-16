@@ -1773,9 +1773,6 @@
         color: var(--text-color);
         opacity: 0.7;
       }
-
-
-      
     </style>
   </head>
   <body>
@@ -4348,7 +4345,33 @@
         }
       }
 
-      // MODIFIED: renderTable function to use filtered data correctly
+      // Add this helper function to get today's date in the same format as APP_START_DATE
+      function getTodayDateString() {
+        const today = new Date();
+        return today.toISOString().split("T")[0];
+      }
+
+      // Add this function to check if a day is the current day
+      function isCurrentDay(dayNumber) {
+        const startDate = new Date(APP_START_DATE);
+        const dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + (dayNumber - 1));
+
+        const today = new Date();
+
+        // Compare dates without time components
+        return dayDate.toDateString() === today.toDateString();
+      }
+
+      // Add this function to check if a day is completed (all questions done)
+      function isDayCompleted(dayData) {
+        return (
+          dayData.questions.length > 0 &&
+          dayData.questions.every((q) => q.completed)
+        );
+      }
+
+      // MODIFIED: renderTable function to sort with current day first and completed days in chronological order
       function renderTable() {
         tableBody.innerHTML = "";
         const currentDay = getCurrentDayNumber();
@@ -4356,10 +4379,33 @@
         // Use filteredData for rendering when search is active, otherwise use appData
         const dataToRender = searchFilter ? filteredData : appData;
 
-        dataToRender.forEach((dayData, index) => {
-          // Note: index here refers to position in dataToRender array, not original appData
+        // Sort the data: current day first, then incomplete days in chronological order, then completed days in chronological order
+        const sortedData = [...dataToRender].sort((a, b) => {
+          const aIsCurrent = isCurrentDay(a.day);
+          const bIsCurrent = isCurrentDay(b.day);
+          const aIsCompleted = isDayCompleted(a);
+          const bIsCompleted = isDayCompleted(b);
+
+          // Current day always comes first
+          if (aIsCurrent && !bIsCurrent) return -1;
+          if (!aIsCurrent && bIsCurrent) return 1;
+
+          // If both are current day, maintain order
+          if (aIsCurrent && bIsCurrent) return a.day - b.day;
+
+          // Among non-current days, incomplete days come before completed days
+          if (!aIsCompleted && bIsCompleted) return -1;
+          if (aIsCompleted && !bIsCompleted) return 1;
+
+          // If both are completed or both are incomplete, sort by day number
+          return a.day - b.day;
+        });
+
+        sortedData.forEach((dayData, displayIndex) => {
+          // Find the original index in appData for data manipulation
           const originalIndex = appData.findIndex((d) => d.day === dayData.day);
           const isEditableDay = isEditable(dayData.day);
+          const isCurrent = isCurrentDay(dayData.day);
 
           const row = document.createElement("tr");
 
@@ -4368,18 +4414,51 @@
             row.classList.add("non-editable-day");
           }
 
+          // Add current-day class for styling if it's the current day
+          if (isCurrent) {
+            row.classList.add("current-day");
+          }
+
           // Day column
           const dayCell = document.createElement("td");
           dayCell.className = "day-cell";
-          dayCell.textContent = dayData.day;
 
-          // Add screen reader information for non-editable days
-          if (!isEditableDay) {
-            const srText = document.createElement("span");
-            srText.className = "sr-only";
-            srText.textContent = " - Non-editable day";
-            dayCell.appendChild(srText);
+          // Add current day indicator
+          if (isCurrent) {
+            const dayWrapper = document.createElement("div");
+            dayWrapper.style.display = "flex";
+            dayWrapper.style.flexDirection = "column";
+            dayWrapper.style.alignItems = "center";
+            dayWrapper.style.gap = "4px";
+
+            const dayNumber = document.createElement("span");
+            dayNumber.textContent = dayData.day;
+
+            const currentBadge = document.createElement("span");
+            currentBadge.textContent = "📍 Today";
+            currentBadge.style.fontSize = "0.7rem";
+            currentBadge.style.color = "var(--accent-color)";
+            currentBadge.style.fontWeight = "bold";
+
+            dayWrapper.appendChild(dayNumber);
+            dayWrapper.appendChild(currentBadge);
+            dayCell.appendChild(dayWrapper);
+          } else {
+            dayCell.textContent = dayData.day;
           }
+
+          // Add screen reader information
+          const srText = document.createElement("span");
+          srText.className = "sr-only";
+          if (!isEditableDay) {
+            srText.textContent = " - Non-editable day";
+          }
+          if (isCurrent) {
+            srText.textContent = srText.textContent
+              ? srText.textContent + " - Current day"
+              : " - Current day";
+          }
+          dayCell.appendChild(srText);
 
           row.appendChild(dayCell);
 
@@ -4726,6 +4805,20 @@
         // Update add day button state
         updateAddDayButton();
       }
+
+      // Also add this CSS for the current day styling
+      const style = document.createElement("style");
+      style.textContent = `
+  .current-day {
+    background-color: rgba(88, 166, 255, 0.1) !important;
+    border-left: 3px solid var(--accent-color);
+  }
+  
+  .current-day td {
+    border-bottom: 2px solid var(--accent-color);
+  }
+`;
+      document.head.appendChild(style);
 
       // NEW: Setup tag removal listeners after table render
       function setupTagRemovalListeners() {
