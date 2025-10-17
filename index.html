@@ -505,7 +505,7 @@
 
       .auth-title {
         margin-bottom: 15px;
-        color: var(--accent-color);
+        color: var(--codeleaf-accent-primary);
         font-size: 1.1rem;
       }
 
@@ -1992,7 +1992,7 @@
         ~ .question-content
         .question-text {
         color: var(--codeleaf-text-tertiary) !important;
-        text-decoration: line-through !important;
+        /* text-decoration: line-through !important; */
         opacity: 0.8 !important;
       }
 
@@ -2406,6 +2406,1237 @@
       }
 
       /* =================================================== */
+      /* ===== ENHANCED TABLE DESIGN - CODELEAF THEME ===== */
+
+      /* Table container with CodeLeaf styling */
+      table {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        margin-bottom: var(--codeleaf-space-6) !important;
+        background: var(--codeleaf-bg-primary) !important;
+        border: 1px solid var(--codeleaf-border-light) !important;
+        border-radius: var(--codeleaf-radius-lg) !important;
+        overflow: hidden !important;
+        box-shadow: var(--codeleaf-shadow-sm) !important;
+        font-size: var(--codeleaf-font-sm) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+
+      /* Table header with organic gradient */
+      thead {
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-bg-secondary) 0%,
+          var(--codeleaf-bg-tertiary) 100%
+        ) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      /* Table header cells */
+      th {
+        background: transparent !important;
+        color: var(--codeleaf-text-primary) !important;
+        font-weight: 600 !important;
+        font-size: var(--codeleaf-font-sm) !important;
+        padding: var(--codeleaf-space-4) !important;
+        border-bottom: 2px solid var(--codeleaf-accent-muted) !important;
+        position: relative !important;
+        transition: all 0.3s ease !important;
+      }
+
+      /* Add subtle separator lines between header cells */
+      th:not(:last-child)::after {
+        content: "" !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: 20% !important;
+        height: 60% !important;
+        width: 1px !important;
+        background: var(--codeleaf-border-light) !important;
+      }
+
+      /* Table body rows with enhanced hover effects */
+      tbody tr {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+      }
+
+      /* Alternate row coloring with subtle gradient */
+      tbody tr:nth-child(even) {
+        background: linear-gradient(
+          90deg,
+          var(--codeleaf-bg-secondary) 0%,
+          transparent 100%
+        ) !important;
+      }
+
+      /* Enhanced hover effect for rows */
+      tbody tr:hover {
+        background: linear-gradient(
+          90deg,
+          var(--codeleaf-accent-muted) 0%,
+          transparent 100%
+        ) !important;
+        transform: translateX(4px) !important;
+        box-shadow: 0 2px 8px rgba(45, 122, 45, 0.1) !important;
+        z-index: 1 !important;
+      }
+
+      /* Table cells with improved padding and transitions */
+      td {
+        padding: var(--codeleaf-space-4) !important;
+        border-bottom: 1px solid var(--codeleaf-border-light) !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+
+      /* Remove border from last row */
+      tbody tr:last-child td {
+        border-bottom: none !important;
+      }
+
+      /* ===== ENHANCED DAY CELL STYLES ===== */
+      .day-cell {
+        width: 80px !important;
+        min-width: 80px !important;
+        text-align: center !important;
+        font-weight: 700 !important;
+        color: var(--codeleaf-accent-primary) !important;
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-bg-tertiary) 0%,
+          transparent 100%
+        ) !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+
+      /* Add decorative element to day cells */
+      .day-cell::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 3px !important;
+        height: 100% !important;
+        background: var(--codeleaf-accent-primary) !important;
+        transform: scaleY(0) !important;
+        transition: transform 0.3s ease !important;
+      }
+
+      .day-cell:hover::before {
+        transform: scaleY(1) !important;
+      }
+
+      /* Current day highlight */
+      .current-day .day-cell {
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-accent-primary) 0%,
+          var(--codeleaf-accent-secondary) 100%
+        ) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      .current-day .day-cell::before {
+        background: white !important;
+      }
+
+      /* ===== ENHANCED QUESTION TEXT STYLES ===== */
+      .question-text {
+        font-size: var(
+          --codeleaf-font-base
+        ) !important; /* Using CodeLeaf fluid typography */
+        font-weight: 500 !important;
+        line-height: 1.5 !important;
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-4) !important;
+        transition: all 0.3s ease !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: var(--codeleaf-space-3) !important;
+        color: var(--codeleaf-text-primary) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        margin: var(--codeleaf-space-1) 0 !important;
+      }
+
+      /* Larger font for better readability */
+      .question-text a.question-link {
+        font-size: var(--codeleaf-font-sm) !important;
+        font-weight: 400 !important;
+        color: var(--codeleaf-accent-primary) !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .question-text a.question-link:hover {
+        color: var(--codeleaf-accent-secondary) !important;
+        text-decoration: underline !important;
+      }
+
+      /* Enhanced hover state */
+      .question-text:hover {
+        background-color: rgba(45, 122, 45, 0.08) !important;
+        transform: translateX(4px) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+      }
+
+      /* Editing state */
+      .question-text.editing {
+        background: rgba(45, 122, 45, 0.12) !important;
+        outline: 2px solid var(--codeleaf-accent-primary) !important;
+        animation: pulse-glow 2s infinite !important;
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 5px rgba(45, 122, 45, 0.3) !important;
+        }
+        50% {
+          box-shadow: 0 0 15px rgba(45, 122, 45, 0.5) !important;
+        }
+      }
+
+      /* ===== ENHANCED BUTTON SPACING AND STYLING ===== */
+      /* Container for action buttons */
+      .question-actions {
+        display: flex !important;
+        gap: var(--codeleaf-space-3) !important; /* Using CodeLeaf spacing */
+        margin-left: auto !important;
+        padding-left: var(--codeleaf-space-4) !important;
+        align-items: center !important;
+      }
+
+      /* Individual button styling */
+      .edit-link-btn,
+      .delete-question-btn {
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: var(--codeleaf-space-2) !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        transition: all 0.3s ease !important;
+        font-size: 1.1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 40px !important;
+        height: 36px !important;
+        position: relative !important;
+      }
+
+      /* Edit button specific styling */
+      .edit-link-btn {
+        background: rgba(45, 122, 45, 0.1) !important;
+        border: 1px solid rgba(45, 122, 45, 0.3) !important;
+        color: var(--codeleaf-accent-primary) !important;
+      }
+
+      .edit-link-btn:hover {
+        background: rgba(45, 122, 45, 0.2) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: var(--codeleaf-shadow-sm) !important;
+      }
+
+      /* Delete button specific styling */
+      .delete-question-btn {
+        background: rgba(198, 69, 69, 0.1) !important;
+        border: 1px solid rgba(198, 69, 69, 0.3) !important;
+        color: var(--codeleaf-error) !important;
+      }
+
+      .delete-question-btn:hover {
+        background: rgba(198, 69, 69, 0.2) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 8px rgba(198, 69, 69, 0.3) !important;
+      }
+
+      /* Button tooltips */
+      .edit-link-btn::before,
+      .delete-question-btn::before {
+        content: attr(title) !important;
+        position: absolute !important;
+        bottom: -40px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        background: var(--codeleaf-bg-primary) !important;
+        color: var(--codeleaf-text-primary) !important;
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3) !important;
+        border-radius: var(--codeleaf-radius-sm) !important;
+        font-size: var(--codeleaf-font-xs) !important;
+        white-space: nowrap !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.3s ease !important;
+        border: 1px solid var(--codeleaf-border-light) !important;
+        z-index: 1000 !important;
+        box-shadow: var(--codeleaf-shadow-md) !important;
+      }
+
+      .edit-link-btn:hover::before,
+      .delete-question-btn:hover::before {
+        opacity: 1 !important;
+      }
+
+      /* ===== ENHANCED STATUS CELL STYLES ===== */
+      .status-cell {
+        width: 100px !important;
+        min-width: 100px !important;
+        text-align: center !important;
+        font-size: 1.5rem !important;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      /* Status cell hover animation */
+      .status-cell:hover {
+        transform: scale(1.2) rotate(5deg) !important;
+        text-shadow: 0 4px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      /* Success status (all completed) */
+      .status-cell:has(
+          + .questions-cell input[type="checkbox"]:checked:last-child
+        ) {
+        color: var(--codeleaf-success) !important;
+        text-shadow: 0 2px 8px rgba(45, 122, 45, 0.3) !important;
+      }
+
+      /* Status cell completion animation */
+      .status-cell.completed {
+        animation: celebrate 0.6s ease-in-out !important;
+      }
+
+      @keyframes celebrate {
+        0% {
+          transform: scale(1) rotate(0deg);
+        }
+        25% {
+          transform: scale(1.4) rotate(-5deg);
+        }
+        50% {
+          transform: scale(1.6) rotate(5deg);
+        }
+        75% {
+          transform: scale(1.4) rotate(-3deg);
+        }
+        100% {
+          transform: scale(1.2) rotate(0deg);
+        }
+      }
+
+      /* ===== ENHANCED TAGS ===== */
+      .tag {
+        display: inline-flex !important;
+        align-items: center !important;
+        background: var(--codeleaf-accent-primary) !important;
+        color: white !important;
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-3) !important;
+        border-radius: 20px !important;
+        font-size: var(--codeleaf-font-xs) !important;
+        font-weight: 600 !important;
+        margin-right: var(--codeleaf-space-2) !important;
+        margin-bottom: var(--codeleaf-space-2) !important;
+        position: relative !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow: hidden !important;
+      }
+
+      .tag::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        ) !important;
+        transition: left 0.5s ease !important;
+      }
+
+      .tag:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: var(--codeleaf-shadow-md) !important;
+      }
+
+      .tag:hover::before {
+        left: 100% !important;
+      }
+
+      /* Tag remove button with smooth animation */
+      .tag-remove {
+        margin-left: var(--codeleaf-space-2) !important;
+        cursor: pointer !important;
+        font-weight: bold !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 50% !important;
+        width: 16px !important;
+        height: 16px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .tag-remove:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        transform: scale(1.1) !important;
+      }
+
+      /* ===== ENHANCED QUESTION ITEMS ===== */
+      .question-item {
+        display: flex !important;
+        align-items: flex-start !important;
+        margin-bottom: var(--codeleaf-space-3) !important;
+        padding: var(--codeleaf-space-3) !important;
+        background: var(--codeleaf-bg-primary) !important;
+        border: 1px solid transparent !important;
+        border-radius: var(--codeleaf-radius-md) !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+
+      .question-item:hover {
+        background: var(--codeleaf-bg-secondary) !important;
+        border-color: var(--codeleaf-accent-muted) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--codeleaf-shadow-sm) !important;
+      }
+
+      .question-item:last-child {
+        margin-bottom: 0 !important;
+      }
+
+      /* Completed question styling */
+      .question-item
+        input[type="checkbox"]:checked
+        ~ .question-content
+        .question-text {
+        color: var(--codeleaf-text-tertiary) !important;
+        /* text-decoration: line-through !important; */
+        opacity: 0.8 !important;
+      }
+
+      /* ===== ENHANCED CHECKBOX STYLING ===== */
+      .question-checkbox {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: var(--codeleaf-space-3) !important;
+        cursor: pointer !important;
+        accent-color: var(--codeleaf-accent-primary) !important;
+        transform: scale(1) !important;
+        flex-shrink: 0 !important;
+        margin-top: 2px !important;
+      }
+
+      /* ===== RESPONSIVE ENHANCEMENTS ===== */
+
+      /* Mobile optimizations */
+      @media (max-width: 768px) {
+        table {
+          font-size: var(--codeleaf-font-xs) !important;
+          border-radius: var(--codeleaf-radius-md) !important;
+        }
+
+        th,
+        td {
+          padding: var(--codeleaf-space-3) !important;
+        }
+
+        .day-cell {
+          width: 60px !important;
+          min-width: 60px !important;
+          font-size: var(--codeleaf-font-xs) !important;
+        }
+
+        .status-cell {
+          width: 60px !important;
+          min-width: 60px !important;
+          font-size: 1.2rem !important;
+        }
+
+        .question-text {
+          font-size: var(--codeleaf-font-sm) !important;
+          padding: var(--codeleaf-space-2) var(--codeleaf-space-3) !important;
+        }
+
+        .question-actions {
+          gap: var(--codeleaf-space-2) !important;
+          padding-left: var(--codeleaf-space-2) !important;
+        }
+
+        .edit-link-btn,
+        .delete-question-btn {
+          min-width: 36px !important;
+          height: 32px !important;
+          font-size: 1rem !important;
+        }
+
+        .tag {
+          font-size: 0.65rem !important;
+          padding: 2px 8px !important;
+        }
+      }
+
+      /* Small mobile devices */
+      @media (max-width: 480px) {
+        table {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        thead {
+          display: none !important;
+        }
+
+        tbody tr {
+          display: block !important;
+          margin-bottom: var(--codeleaf-space-4) !important;
+          background: var(--codeleaf-bg-primary) !important;
+          border: 1px solid var(--codeleaf-border-light) !important;
+          border-radius: var(--codeleaf-radius-lg) !important;
+          box-shadow: var(--codeleaf-shadow-sm) !important;
+          padding: var(--codeleaf-space-4) !important;
+        }
+
+        td {
+          display: block !important;
+          border: none !important;
+          padding: var(--codeleaf-space-2) 0 !important;
+          text-align: left !important;
+        }
+
+        td::before {
+          content: attr(data-label) ": " !important;
+          font-weight: 600 !important;
+          color: var(--codeleaf-accent-primary) !important;
+          margin-right: var(--codeleaf-space-2) !important;
+        }
+
+        .day-cell,
+        .status-cell {
+          width: 100% !important;
+          text-align: left !important;
+        }
+
+        .day-cell::before {
+          display: none !important;
+        }
+      }
+
+      /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        table {
+          border: 2px solid var(--codeleaf-text-primary) !important;
+        }
+
+        th {
+          background: var(--codeleaf-text-primary) !important;
+          color: var(--codeleaf-bg-primary) !important;
+        }
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* Focus indicators for keyboard navigation */
+      .question-checkbox:focus-visible,
+      .edit-link-btn:focus-visible,
+      .delete-question-btn:focus-visible,
+      .tag-remove:focus-visible {
+        outline: 2px solid var(--codeleaf-accent-primary) !important;
+        outline-offset: 2px !important;
+      }
+
+      /* ===== ENHANCED MODAL STYLES - CODELEAF THEME ===== */
+
+      /* Modal Backdrop */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(13, 17, 23, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        padding: var(--codeleaf-space-4);
+        animation: modalFadeIn 0.3s ease-out;
+      }
+
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+          backdrop-filter: blur(0px);
+        }
+        to {
+          opacity: 1;
+          backdrop-filter: blur(8px);
+        }
+      }
+
+      /* Modal Content */
+      .modal-content {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-6);
+        width: 90%;
+        max-width: 480px;
+        box-shadow: var(--codeleaf-shadow-lg);
+        transform: translateY(20px);
+        opacity: 0;
+        animation: modalSlideIn 0.3s ease-out 0.1s forwards;
+        position: relative;
+        overflow: hidden;
+      }
+
+      @keyframes modalSlideIn {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Modal Header */
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--codeleaf-space-4);
+        padding-bottom: var(--codeleaf-space-3);
+        border-bottom: 2px solid var(--codeleaf-accent-muted);
+      }
+
+      .modal-title {
+        font-size: var(--codeleaf-font-xl);
+        font-weight: 700;
+        color: var(--codeleaf-text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .modal-title::before {
+        content: "";
+        width: 4px;
+        height: 24px;
+        background: var(--codeleaf-accent-primary);
+        border-radius: var(--codeleaf-radius-sm);
+      }
+
+      /* Close Button */
+      .close-modal {
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-md);
+        color: var(--codeleaf-text-secondary);
+        font-size: 1.5rem;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+      }
+
+      .close-modal:hover {
+        background: var(--codeleaf-bg-tertiary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-accent-primary);
+        transform: rotate(90deg);
+      }
+
+      /* Modal Body */
+      .modal-body {
+        margin-bottom: var(--codeleaf-space-5);
+      }
+
+      .modal-message {
+        color: var(--codeleaf-text-secondary);
+        line-height: 1.6;
+        margin-bottom: var(--codeleaf-space-4);
+        font-size: var(--codeleaf-font-base);
+      }
+
+      .modal-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-3);
+      }
+
+      .modal-label {
+        font-weight: 600;
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .modal-label::before {
+        content: "•";
+        color: var(--codeleaf-accent-primary);
+        font-size: 1.2rem;
+      }
+
+      .modal-input {
+        width: 100%;
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-4);
+        background: var(--codeleaf-bg-secondary);
+        border: 2px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-md);
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-base);
+        transition: all 0.3s ease;
+      }
+
+      .modal-input:focus {
+        outline: none;
+        border-color: var(--codeleaf-accent-primary);
+        box-shadow: 0 0 0 3px rgba(45, 122, 45, 0.1);
+        background: var(--codeleaf-bg-primary);
+      }
+
+      .modal-input::placeholder {
+        color: var(--codeleaf-text-tertiary);
+      }
+
+      /* Modal Buttons */
+      .modal-buttons {
+        display: flex;
+        gap: var(--codeleaf-space-3);
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .modal-btn {
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-5);
+        border: none;
+        border-radius: var(--codeleaf-radius-md);
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .modal-btn-primary {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        border: 2px solid var(--codeleaf-accent-primary);
+      }
+
+      .modal-btn-primary:hover {
+        background: var(--codeleaf-accent-secondary);
+        border-color: var(--codeleaf-accent-secondary);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .modal-btn-secondary {
+        background: transparent;
+        color: var(--codeleaf-text-secondary);
+        border: 2px solid var(--codeleaf-border-medium);
+      }
+
+      .modal-btn-secondary:hover {
+        background: var(--codeleaf-bg-secondary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-text-primary);
+        transform: translateY(-2px);
+      }
+
+      /* ===== DELETE MODAL - WARNING STYLE ===== */
+      .delete-modal .modal-content {
+        border-left: 6px solid var(--codeleaf-error);
+      }
+
+      .delete-modal .modal-title {
+        color: var(--codeleaf-error);
+      }
+
+      .delete-modal .modal-title::before {
+        background: var(--codeleaf-error);
+      }
+
+      .delete-modal .modal-header {
+        border-bottom-color: rgba(198, 69, 69, 0.3);
+      }
+
+      .delete-modal .modal-message {
+        background: rgba(198, 69, 69, 0.08);
+        border: 1px solid rgba(198, 69, 69, 0.2);
+        border-radius: var(--codeleaf-radius-md);
+        padding: var(--codeleaf-space-4);
+        margin-bottom: var(--codeleaf-space-4);
+      }
+
+      .delete-modal .warning-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: rgba(198, 69, 69, 0.1);
+        border: 2px solid var(--codeleaf-error);
+        border-radius: 50%;
+        margin: 0 auto var(--codeleaf-space-4);
+        font-size: 1.5rem;
+        color: var(--codeleaf-error);
+      }
+
+      .delete-modal .question-preview {
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        padding: var(--codeleaf-space-3);
+        margin: var(--codeleaf-space-3) 0;
+        font-style: italic;
+        color: var(--codeleaf-text-secondary);
+        text-align: center;
+      }
+
+      .delete-modal .modal-btn-primary {
+        background: var(--codeleaf-error);
+        border-color: var(--codeleaf-error);
+      }
+
+      .delete-modal .modal-btn-primary:hover {
+        background: #b33a3a;
+        border-color: #b33a3a;
+      }
+
+      /* ===== EDIT MODAL - PROFESSIONAL STYLE ===== */
+      .edit-modal .modal-content {
+        border-left: 6px solid var(--codeleaf-accent-primary);
+      }
+
+      .edit-modal .modal-title {
+        color: var(--codeleaf-accent-primary);
+      }
+
+      .edit-modal .help-text {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        margin-top: var(--codeleaf-space-1);
+        font-style: italic;
+      }
+
+      .edit-modal .input-hint {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        margin-top: var(--codeleaf-space-1);
+      }
+
+      .input-hint::before {
+        content: "💡";
+        font-size: 0.8rem;
+      }
+
+      /* ===== CONFIRMATION DIALOG ENHANCEMENTS ===== */
+      .confirm-dialog .confirm-content {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-lg);
+        border-left: 6px solid var(--codeleaf-warning);
+      }
+
+      .confirm-dialog .confirm-title {
+        color: var(--codeleaf-warning);
+        font-size: var(--codeleaf-font-xl);
+        font-weight: 700;
+        margin-bottom: var(--codeleaf-space-3);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .confirm-dialog .confirm-title::before {
+        content: "⚠️";
+        font-size: 1.2rem;
+      }
+
+      .confirm-dialog .confirm-message {
+        color: var(--codeleaf-text-secondary);
+        line-height: 1.6;
+        margin-bottom: var(--codeleaf-space-5);
+        font-size: var(--codeleaf-font-base);
+      }
+
+      .confirm-dialog .confirm-buttons {
+        display: flex;
+        gap: var(--codeleaf-space-3);
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .confirm-dialog .confirm-btn {
+        padding: var(--codeleaf-space-3) var(--codeleaf-space-5);
+        border: none;
+        border-radius: var(--codeleaf-radius-md);
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .confirm-dialog .confirm-btn.confirm {
+        background: var(--codeleaf-error);
+        color: white;
+        border: 2px solid var(--codeleaf-error);
+      }
+
+      .confirm-dialog .confirm-btn.confirm:hover {
+        background: #b33a3a;
+        border-color: #b33a3a;
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .confirm-dialog .confirm-btn.cancel {
+        background: transparent;
+        color: var(--codeleaf-text-secondary);
+        border: 2px solid var(--codeleaf-border-medium);
+      }
+
+      .confirm-dialog .confirm-btn.cancel:hover {
+        background: var(--codeleaf-bg-secondary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-text-primary);
+        transform: translateY(-2px);
+      }
+
+      /* ===== RESPONSIVE MODAL STYLES ===== */
+      @media (max-width: 768px) {
+        .modal {
+          padding: var(--codeleaf-space-2);
+        }
+
+        .modal-content {
+          padding: var(--codeleaf-space-4);
+          width: 95%;
+        }
+
+        .modal-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--codeleaf-space-2);
+        }
+
+        .modal-title {
+          font-size: var(--codeleaf-font-lg);
+        }
+
+        .modal-buttons {
+          flex-direction: column;
+        }
+
+        .modal-btn {
+          min-width: 100%;
+          justify-content: center;
+        }
+
+        .confirm-dialog .confirm-buttons {
+          flex-direction: column;
+        }
+
+        .confirm-dialog .confirm-btn {
+          min-width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .modal-content {
+          padding: var(--codeleaf-space-3);
+        }
+
+        .modal-title {
+          font-size: var(--codeleaf-font-base);
+        }
+
+        .modal-input {
+          padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+        }
+      }
+
+      /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+      .modal:focus-visible,
+      .modal-content:focus-visible {
+        outline: 2px solid var(--codeleaf-accent-primary);
+        outline-offset: 2px;
+      }
+
+      .close-modal:focus-visible,
+      .modal-btn:focus-visible,
+      .confirm-btn:focus-visible {
+        outline: 2px solid var(--codeleaf-accent-primary);
+        outline-offset: 2px;
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        .modal,
+        .modal-content,
+        .close-modal,
+        .modal-btn,
+        .confirm-btn {
+          animation: none;
+          transition: none;
+        }
+      }
+
+      /* ===== DIFFICULTY SELECTOR STYLES - CODELEAF THEME ===== */
+      .difficulty-selector {
+        display: flex;
+        gap: var(--codeleaf-space-2);
+        margin: var(--codeleaf-space-2) 0;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .difficulty-option {
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-3);
+        border: 2px solid var(--codeleaf-border-medium);
+        border-radius: var(--codeleaf-radius-md);
+        background: var(--codeleaf-bg-primary);
+        color: var(--codeleaf-text-secondary);
+        font-size: var(--codeleaf-font-xs);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .difficulty-option::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .difficulty-option:hover::before {
+        left: 100%;
+      }
+
+      .difficulty-option.selected {
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      /* Easy difficulty */
+      .difficulty-option[data-difficulty="Easy"] {
+        border-color: rgba(76, 175, 80, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgba(76, 175, 80, 0.1),
+          transparent
+        );
+        color: #2e7d32;
+      }
+
+      .difficulty-option[data-difficulty="Easy"].selected {
+        border-color: #4caf50;
+        background: linear-gradient(
+          135deg,
+          rgba(76, 175, 80, 0.2),
+          transparent
+        );
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        animation: pulseEasy 2s infinite;
+      }
+
+      @keyframes pulseEasy {
+        0%,
+        100% {
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        50% {
+          box-shadow: 0 2px 12px rgba(76, 175, 80, 0.5);
+        }
+      }
+
+      /* Medium difficulty */
+      .difficulty-option[data-difficulty="Medium"] {
+        border-color: rgba(255, 152, 0, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgba(255, 193, 7, 0.1),
+          rgba(0, 150, 136, 0.1)
+        );
+        color: #f57c00;
+      }
+
+      .difficulty-option[data-difficulty="Medium"].selected {
+        border-color: #ff9800;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 193, 7, 0.2),
+          rgba(0, 150, 136, 0.2)
+        );
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+        animation: pulseMedium 2s infinite;
+      }
+
+      @keyframes pulseMedium {
+        0%,
+        100% {
+          box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+        }
+        50% {
+          box-shadow: 0 2px 12px rgba(255, 152, 0, 0.5);
+        }
+      }
+
+      /* Hard difficulty */
+      .difficulty-option[data-difficulty="Hard"] {
+        border-color: rgba(244, 67, 54, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgba(244, 67, 54, 0.1),
+          rgba(156, 39, 176, 0.1)
+        );
+        color: #d32f2f;
+      }
+
+      .difficulty-option[data-difficulty="Hard"].selected {
+        border-color: #f44336;
+        background: linear-gradient(
+          135deg,
+          rgba(244, 67, 54, 0.2),
+          rgba(156, 39, 176, 0.2)
+        );
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        animation: shakeHard 0.5s ease-in-out;
+      }
+
+      @keyframes shakeHard {
+        0%,
+        100% {
+          transform: translateX(0) translateY(-2px);
+        }
+        25% {
+          transform: translateX(-2px) translateY(-2px);
+        }
+        75% {
+          transform: translateX(2px) translateY(-2px);
+        }
+      }
+
+      .difficulty-option[data-difficulty="Hard"].selected::after {
+        content: "💥";
+        margin-left: var(--codeleaf-space-1);
+        font-size: 0.8em;
+      }
+
+      /* Enhanced question text size */
+      .question-text {
+        font-size: var(--codeleaf-font-base) !important;
+        font-weight: 500 !important;
+        line-height: 1.5 !important;
+      }
+
+      /* Difficulty badge in question display */
+      .difficulty-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: var(--codeleaf-space-2);
+        border: 1px solid;
+      }
+
+      .difficulty-badge.easy {
+        background: rgba(76, 175, 80, 0.1);
+        border-color: rgba(76, 175, 80, 0.3);
+        color: #2e7d32;
+      }
+
+      .difficulty-badge.medium {
+        background: rgba(255, 152, 0, 0.1);
+        border-color: rgba(255, 152, 0, 0.3);
+        color: #f57c00;
+      }
+
+      .difficulty-badge.hard {
+        background: rgba(244, 67, 54, 0.1);
+        border-color: rgba(244, 67, 54, 0.3);
+        color: #d32f2f;
+      }
+
+      /* UI FIX: Improve linked question title readability */
+      /* MODIFY EXISTING STYLES FOR: Question links in table */
+      .question-text a.question-link {
+        font-size: var(--codeleaf-font-base) !important;
+        color: var(--accent-color) !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+        opacity: 1 !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .question-text a.question-link:hover {
+        color: var(--codeleaf-accent-secondary) !important;
+        text-decoration: underline !important;
+        opacity: 0.9 !important;
+      }
+
+      /* Ensure proper spacing with difficulty badge */
+      .question-text a.question-link + .difficulty-badge {
+        margin-left: var(--codeleaf-space-3) !important;
+      }
     </style>
   </head>
   <body>
@@ -2771,14 +4002,20 @@
       const SEARCH_DEBOUNCE_TIME = 300; // 300ms debounce
 
       const DEFAULT_QUESTIONS = [
-        { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
+        {
+          text: "Two Sum",
+          link: "https://leetcode.com/problems/two-sum/",
+          difficulty: "Easy",
+        },
         {
           text: "Reverse a Linked List",
           link: "https://leetcode.com/problems/reverse-linked-list/",
+          difficulty: "Medium",
         },
         {
           text: "Binary Search",
           link: "https://leetcode.com/problems/binary-search/",
+          difficulty: "Medium",
         },
       ];
 
@@ -2975,6 +4212,50 @@
             resultCount > 0 ? "var(--success-color)" : "var(--danger-color)";
         }
       }
+
+      // Add this function to enhance question buttons with CodeLeaf styling
+      function enhanceQuestionButtonsWithCodeLeaf() {
+        const questionItems = document.querySelectorAll(".question-item");
+
+        questionItems.forEach((item) => {
+          const questionText = item.querySelector(".question-text");
+          const editBtn = item.querySelector('button[title="Edit link"]');
+          const deleteBtn = item.querySelector(
+            'button[title="Delete question"]'
+          );
+
+          if (questionText && (editBtn || deleteBtn)) {
+            // Create actions container
+            const actionsContainer = document.createElement("div");
+            actionsContainer.className = "question-actions";
+
+            // Move buttons into the container with proper styling
+            if (editBtn) {
+              editBtn.className = "edit-link-btn";
+              editBtn.innerHTML = "🔗";
+              editBtn.title = "Edit question link";
+              actionsContainer.appendChild(editBtn);
+            }
+
+            if (deleteBtn) {
+              deleteBtn.className = "delete-question-btn";
+              deleteBtn.innerHTML = "🗑️";
+              deleteBtn.title = "Delete question";
+              actionsContainer.appendChild(deleteBtn);
+            }
+
+            // Add container to question text
+            questionText.appendChild(actionsContainer);
+          }
+        });
+      }
+
+      // Modify the renderTable function to call this after rendering
+      const originalRenderTable = renderTable;
+      renderTable = function () {
+        originalRenderTable();
+        setTimeout(enhanceQuestionButtonsWithCodeLeaf, 0);
+      };
 
       // Initialize the app
       async function initApp() {
@@ -5117,6 +6398,14 @@
               questionText.textContent = question.text;
             }
 
+            // Add difficulty badge
+            const difficulty = question.difficulty || "Medium";
+            const difficultyBadge = document.createElement("span");
+            difficultyBadge.className = `difficulty-badge ${difficulty.toLowerCase()}`;
+            difficultyBadge.textContent = difficulty;
+            questionText.appendChild(difficultyBadge);
+            // setupDifficultySelector();
+
             // Only make text editable for today
             if (isEditableDay) {
               questionText.addEventListener("click", (e) => {
@@ -5567,7 +6856,8 @@
         });
       }
 
-      // Add a new question to a day
+      // BUGFIX: Ensure new questions have default difficulty
+      // MODIFY AT addNewQuestion function
       function addNewQuestion(dayIndex) {
         if (!shouldAllowMutation(dayIndex)) return;
 
@@ -5575,11 +6865,11 @@
           text: "New Question",
           link: "",
           completed: false,
+          difficulty: "Medium", // Default difficulty
         });
         saveData();
         renderTable();
       }
-
       // Update status cell based on question completion
       function updateStatusCell(dayIndex) {
         // const statusCell =
@@ -5781,7 +7071,8 @@
         }
       }
 
-      // Open modal to edit question link
+      // BUGFIX: Improved openLinkModal function to handle difficulty selector properly
+      // MODIFY AT openLinkModal function
       function openLinkModal(dayIndex, questionIndex) {
         currentEditingQuestion = { dayIndex, questionIndex };
         const question = appData[dayIndex].questions[questionIndex];
@@ -5789,16 +7080,82 @@
         questionTextInput.value = question.text;
         questionLinkInput.value = question.link || "";
 
+        // Initialize difficulty selector and set current value
+        const difficultyContainer = setupDifficultySelector();
+        const currentDifficulty = question.difficulty || "Medium";
+        const difficultyOption = difficultyContainer.querySelector(
+          `[data-difficulty="${currentDifficulty}"]`
+        );
+        if (difficultyOption) {
+          const options =
+            difficultyContainer.querySelectorAll(".difficulty-option");
+          options.forEach((opt) => opt.classList.remove("selected"));
+          difficultyOption.classList.add("selected");
+        }
+
         linkModal.style.display = "flex";
         questionLinkInput.focus();
       }
 
-      // Close the modal
+      // BUGFIX: Fix multiple difficulty selectors issue in modal
+      // MODIFY AT setupDifficultySelector function
+      function setupDifficultySelector() {
+        // First, remove any existing difficulty selector to prevent duplicates
+        const existingSelector = document.querySelector(".difficulty-selector");
+        if (existingSelector) {
+          existingSelector.remove();
+        }
+
+        const difficultyContainer = document.createElement("div");
+        difficultyContainer.className = "difficulty-selector";
+        difficultyContainer.innerHTML = `
+    <span style="font-size: var(--codeleaf-font-sm); color: var(--codeleaf-text-secondary); margin-right: var(--codeleaf-space-2);">Difficulty:</span>
+    <div class="difficulty-option" data-difficulty="Easy">Easy 🌱</div>
+    <div class="difficulty-option" data-difficulty="Medium">Medium 🔥</div>
+    <div class="difficulty-option" data-difficulty="Hard">Hard 💀</div>
+  `;
+
+        // Insert after question text input in modal
+        const modalBody = document.querySelector(".modal-body");
+        const questionLinkInput = document.getElementById("questionLinkInput");
+        modalBody.insertBefore(difficultyContainer, questionLinkInput);
+
+        // Add event listeners for difficulty options
+        difficultyContainer.addEventListener("click", (e) => {
+          if (e.target.classList.contains("difficulty-option")) {
+            const options =
+              difficultyContainer.querySelectorAll(".difficulty-option");
+            options.forEach((opt) => opt.classList.remove("selected"));
+            e.target.classList.add("selected");
+          }
+        });
+
+        return difficultyContainer;
+      }
+
+      // BUGFIX: Get selected difficulty with proper fallback
+      function getSelectedDifficulty() {
+        const selectedOption = document.querySelector(
+          ".difficulty-option.selected"
+        );
+        return selectedOption ? selectedOption.dataset.difficulty : "Medium";
+      }
+
+      // BUGFIX: Also clean up difficulty selector when closing modal
+      // MODIFY AT closeLinkModal function
       function closeLinkModal() {
         linkModal.style.display = "none";
         currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
+
+        // Optional: Remove difficulty selector when modal closes to ensure clean state
+        const existingSelector = document.querySelector(".difficulty-selector");
+        if (existingSelector) {
+          existingSelector.remove();
+        }
       }
 
+      // BUGFIX: Save difficulty value when saving question
+      // MODIFY AT saveQuestionLink function
       function saveQuestionLink() {
         const { dayIndex, questionIndex } = currentEditingQuestion;
         if (dayIndex === -1 || questionIndex === -1) return;
@@ -5810,10 +7167,12 @@
 
         const newText = questionTextInput.value.trim();
         const newLink = questionLinkInput.value.trim();
+        const difficulty = getSelectedDifficulty();
 
         if (newText !== "") {
           appData[dayIndex].questions[questionIndex].text = newText;
           appData[dayIndex].questions[questionIndex].link = newLink;
+          appData[dayIndex].questions[questionIndex].difficulty = difficulty; // Save difficulty
           saveData();
           renderTable();
         }

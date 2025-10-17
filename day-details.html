@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/FocusFlow.ico" />
+    <link rel="stylesheet" href="/responsive.css" />
+    <title>Day Details - FocusFlow</title>
+    <style>
+      /* Enhanced CodeLeaf Theme Variables */
+      :root {
+        --codeleaf-bg-primary: #f8fbf8;
+        --codeleaf-bg-secondary: #f1f8f1;
+        --codeleaf-bg-tertiary: #eaf5ea;
+        --codeleaf-text-primary: #1a3a1a;
+        --codeleaf-text-secondary: #4a674a;
+        --codeleaf-text-tertiary: #6b856b;
+        --codeleaf-accent-primary: #2d7a2d;
+        --codeleaf-accent-secondary: #4ca64c;
+        --codeleaf-accent-muted: #a8d4a8;
+        --codeleaf-border-light: #e0ede0;
+        --codeleaf-border-medium: #c8e0c8;
+        --codeleaf-success: #2d7a2d;
+        --codeleaf-warning: #b38f2d;
+        --codeleaf-error: #c44545;
+        --codeleaf-info: #2d6b7a;
+
+        /* Enhanced Typography */
+        --codeleaf-font-xs: clamp(0.7rem, 2vw, 0.75rem);
+        --codeleaf-font-sm: clamp(0.8rem, 2.5vw, 0.875rem);
+        --codeleaf-font-base: clamp(0.9rem, 3vw, 1rem);
+        --codeleaf-font-lg: clamp(1rem, 3.5vw, 1.125rem);
+        --codeleaf-font-xl: clamp(1.125rem, 4vw, 1.25rem);
+        --codeleaf-font-2xl: clamp(1.25rem, 5vw, 1.5rem);
+        --codeleaf-font-3xl: clamp(1.5rem, 6vw, 1.875rem);
+
+        /* Enhanced Spacing */
+        --codeleaf-space-1: clamp(0.125rem, 1vw, 0.25rem);
+        --codeleaf-space-2: clamp(0.25rem, 1.5vw, 0.5rem);
+        --codeleaf-space-3: clamp(0.375rem, 2vw, 0.75rem);
+        --codeleaf-space-4: clamp(0.5rem, 2.5vw, 1rem);
+        --codeleaf-space-6: clamp(0.75rem, 3vw, 1.5rem);
+        --codeleaf-space-8: clamp(1rem, 4vw, 2rem);
+
+        /* Enhanced Border Radius */
+        --codeleaf-radius-sm: 6px;
+        --codeleaf-radius-md: 8px;
+        --codeleaf-radius-lg: 12px;
+        --codeleaf-radius-xl: 16px;
+
+        /* Enhanced Shadows */
+        --codeleaf-shadow-sm: 0 2px 8px rgba(45, 122, 45, 0.08);
+        --codeleaf-shadow-md: 0 4px 16px rgba(45, 122, 45, 0.12);
+        --codeleaf-shadow-lg: 0 8px 32px rgba(45, 122, 45, 0.16);
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --codeleaf-bg-primary: #0a1a0a;
+          --codeleaf-bg-secondary: #0f230f;
+          --codeleaf-bg-tertiary: #142d14;
+          --codeleaf-text-primary: #e8f5e8;
+          --codeleaf-text-secondary: #b8d4b8;
+          --codeleaf-text-tertiary: #88a488;
+          --codeleaf-accent-primary: #4ca64c;
+          --codeleaf-accent-secondary: #5cb85c;
+          --codeleaf-accent-muted: #2d5a2d;
+          --codeleaf-border-light: #1a3a1a;
+          --codeleaf-border-medium: #2d4a2d;
+        }
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, var(--codeleaf-bg-primary) 0%, var(--codeleaf-bg-secondary) 100%);
+        color: var(--codeleaf-text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        padding: var(--codeleaf-space-4);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* Enhanced Header */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--codeleaf-space-8);
+        padding: var(--codeleaf-space-4) 0;
+        border-bottom: 1px solid var(--codeleaf-border-light);
+      }
+
+      .site-logo {
+        font-size: var(--codeleaf-font-2xl);
+        color: var(--codeleaf-accent-primary);
+        font-weight: 800;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-3);
+      }
+
+      .site-logo::before {
+        content: "🌿";
+        font-size: var(--codeleaf-font-xl);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: var(--codeleaf-space-3);
+        align-items: center;
+      }
+
+      .nav-link {
+        color: var(--codeleaf-text-secondary);
+        text-decoration: none;
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
+        border-radius: var(--codeleaf-radius-lg);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: var(--codeleaf-bg-primary);
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 500;
+      }
+
+      .nav-link:hover {
+        background: var(--codeleaf-bg-tertiary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-accent-primary);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      /* Enhanced Main Layout */
+      .main-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--codeleaf-space-8);
+      }
+
+      @media (min-width: 1024px) {
+        .main-container {
+          grid-template-columns: 7fr 3fr;
+        }
+      }
+
+      /* Enhanced Day Header */
+      .day-header {
+        background: linear-gradient(135deg, var(--codeleaf-bg-primary), var(--codeleaf-bg-secondary));
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-xl);
+        padding: var(--codeleaf-space-8);
+        margin-bottom: var(--codeleaf-space-8);
+        box-shadow: var(--codeleaf-shadow-lg);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .day-header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+      }
+
+      .day-number {
+        font-size: var(--codeleaf-font-3xl);
+        color: var(--codeleaf-accent-primary);
+        margin-bottom: var(--codeleaf-space-2);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .day-date {
+        font-size: var(--codeleaf-font-lg);
+        color: var(--codeleaf-text-secondary);
+        margin-bottom: var(--codeleaf-space-6);
+        font-weight: 500;
+      }
+
+      .day-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--codeleaf-space-4);
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: var(--codeleaf-space-4);
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--codeleaf-accent-muted);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-item:hover::before {
+        transform: scaleX(1);
+      }
+
+      .stat-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--codeleaf-shadow-md);
+        border-color: var(--codeleaf-accent-muted);
+      }
+
+      .stat-value {
+        font-size: var(--codeleaf-font-2xl);
+        font-weight: 800;
+        color: var(--codeleaf-accent-primary);
+        margin-bottom: var(--codeleaf-space-1);
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      /* Enhanced Questions Section */
+      .questions-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-xl);
+        padding: var(--codeleaf-space-8);
+        margin-bottom: var(--codeleaf-space-8);
+        box-shadow: var(--codeleaf-shadow-lg);
+      }
+
+      .section-title {
+        font-size: var(--codeleaf-font-xl);
+        color: var(--codeleaf-accent-primary);
+        margin-bottom: var(--codeleaf-space-6);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-3);
+        padding-bottom: var(--codeleaf-space-3);
+        border-bottom: 2px solid var(--codeleaf-border-light);
+      }
+
+      .section-title::before {
+        font-size: var(--codeleaf-font-lg);
+      }
+
+      .questions-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-4);
+      }
+
+      .question-item {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--codeleaf-space-4);
+        padding: var(--codeleaf-space-4);
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .question-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--codeleaf-accent-muted);
+        border-radius: var(--codeleaf-radius-sm) 0 0 var(--codeleaf-radius-sm);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+      }
+
+      .question-item:hover::before {
+        transform: scaleY(1);
+      }
+
+      .question-item:hover {
+        border-color: var(--codeleaf-accent-muted);
+        transform: translateX(8px);
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .question-checkbox {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--codeleaf-accent-primary);
+        cursor: pointer;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+
+      .question-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .question-text {
+        font-weight: 600;
+        color: var(--codeleaf-text-primary);
+        line-height: 1.5;
+        font-size: var(--codeleaf-font-base);
+      }
+
+      .question-link {
+        color: var(--codeleaf-accent-primary);
+        text-decoration: none;
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--codeleaf-space-1);
+        transition: all 0.2s ease;
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-2);
+        border-radius: var(--codeleaf-radius-sm);
+        background: rgba(76, 166, 76, 0.1);
+        width: fit-content;
+      }
+
+      .question-link:hover {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      /* Fire Animation for 5+ completed questions */
+      .question-item.fire-celebration {
+        position: relative;
+        overflow: hidden;
+        border-color: rgba(255, 100, 0, 0.3);
+        animation: gentleFire 2s ease-in-out;
+      }
+
+      .question-item.fire-celebration::after {
+        content: "🔥 Amazing! 5+ questions completed!";
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: linear-gradient(45deg, #ff6b35, #ff8e00);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: var(--codeleaf-font-xs);
+        font-weight: 700;
+        animation: fireFlicker 2s ease-in-out infinite;
+        z-index: 2;
+      }
+
+      @keyframes gentleFire {
+        0%, 100% {
+          box-shadow: 0 0 0 rgba(255, 100, 0, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(255, 100, 0, 0.6);
+        }
+      }
+
+      @keyframes fireFlicker {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.1);
+        }
+      }
+
+      /* Enhanced Resources Section */
+      .resources-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-xl);
+        padding: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-lg);
+        margin-bottom: var(--codeleaf-space-6);
+      }
+
+      .resources-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--codeleaf-space-4);
+      }
+
+      @media (min-width: 768px) {
+        .resources-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .resource-item {
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .resource-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .resource-item:hover::before {
+        transform: scaleX(1);
+      }
+
+      .resource-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--codeleaf-shadow-md);
+        border-color: var(--codeleaf-accent-muted);
+      }
+
+      .resource-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--codeleaf-space-3);
+        display: block;
+        transition: transform 0.3s ease;
+      }
+
+      .resource-item:hover .resource-icon {
+        transform: scale(1.1);
+      }
+
+      .resource-title {
+        font-weight: 700;
+        color: var(--codeleaf-text-primary);
+        margin-bottom: var(--codeleaf-space-1);
+        font-size: var(--codeleaf-font-base);
+      }
+
+      .resource-description {
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-tertiary);
+        line-height: 1.4;
+      }
+
+      /* Enhanced Calendar Section */
+      .calendar-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-xl);
+        padding: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-lg);
+      }
+
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--codeleaf-space-4);
+      }
+
+      .calendar-month {
+        font-weight: 700;
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-lg);
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: var(--codeleaf-space-2);
+      }
+
+      .calendar-weekday {
+        text-align: center;
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: var(--codeleaf-space-1);
+      }
+
+      .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+      }
+
+      .calendar-day:hover {
+        transform: scale(1.1);
+        border-color: var(--codeleaf-accent-muted);
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      .calendar-day.active {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        border-color: var(--codeleaf-accent-primary);
+        transform: scale(1.05);
+      }
+
+      .calendar-day.current-day {
+        position: relative;
+        animation: pulseGlow 2s ease-in-out infinite;
+        border: 2px solid var(--codeleaf-accent-primary);
+      }
+
+      .calendar-day.current-day::before {
+        content: "📍";
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 0.6rem;
+      }
+
+      .calendar-day.highlight {
+        position: relative;
+        animation: gentleFire 3s ease-in-out infinite;
+      }
+
+      .calendar-day.highlight::after {
+        content: "🔥";
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        font-size: 0.7rem;
+        animation: fireFlicker 2s ease-in-out infinite;
+      }
+
+      @keyframes pulseGlow {
+        0%, 100% {
+          box-shadow: 0 0 0 rgba(76, 166, 76, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 15px rgba(76, 166, 76, 0.8);
+        }
+      }
+
+      /* Enhanced Loading States */
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: var(--codeleaf-space-12);
+        color: var(--codeleaf-text-tertiary);
+        flex-direction: column;
+        gap: var(--codeleaf-space-4);
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--codeleaf-border-light);
+        border-top: 3px solid var(--codeleaf-accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Enhanced Empty States */
+      .empty-state {
+        text-align: center;
+        padding: var(--codeleaf-space-8);
+        color: var(--codeleaf-text-tertiary);
+        font-style: italic;
+        background: var(--codeleaf-bg-secondary);
+        border-radius: var(--codeleaf-radius-lg);
+        border: 1px dashed var(--codeleaf-border-light);
+      }
+
+      /* Progress Bar */
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--codeleaf-border-light);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: var(--codeleaf-space-2) 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+        border-radius: 4px;
+        transition: width 0.8s ease;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .day-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .resources-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .calendar-grid {
+          gap: var(--codeleaf-space-1);
+        }
+
+        .calendar-day {
+          font-size: var(--codeleaf-font-xs);
+        }
+
+        .question-item {
+          padding: var(--codeleaf-space-3);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .day-stats {
+          grid-template-columns: 1fr;
+        }
+
+        .question-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--codeleaf-space-2);
+        }
+
+        .question-checkbox {
+          align-self: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <a href="/index.html" class="site-logo">FocusFlow</a>
+        <div class="nav-links">
+          <a href="/index.html" class="nav-link">← Back to Tracker</a>
+          <a href="/blogs.html" class="nav-link">📝 Blogs</a>
+          <a href="/profile.html" class="nav-link">👤 Profile</a>
+        </div>
+      </header>
+
+      <div class="main-container">
+        <!-- Left Column - Main Content -->
+        <div class="left-column">
+          <!-- Enhanced Day Header -->
+          <div class="day-header">
+            <div class="day-number" id="dayNumber">Day 1 </div>
+            <div class="day-date" id="dayDate">September 25, 2025</div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            
+            <!-- Enhanced Day Statistics -->
+            <div class="day-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="questionsSolved">0/0</div>
+                <div class="stat-label">Questions Solved</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="completionRate">0%</div>
+                <div class="stat-label">Completion Rate</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="resourcesCount">0</div>
+                <div class="stat-label">Resources</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="tagsCount">0</div>
+                <div class="stat-label">Tags</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enhanced Questions Section -->
+          <div class="questions-section">
+            <h2 class="section-title">📚 Daily Questions</h2>
+            <div class="questions-list" id="questionsList">
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading questions...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="right-column">
+          <!-- Enhanced Resources Section -->
+          <div class="resources-section">
+            <h2 class="section-title">🔗 Learning Resources</h2>
+            <div class="resources-grid" id="resourcesGrid">
+              <!-- Resources will be populated from API -->
+            </div>
+          </div>
+
+          <!-- Enhanced Calendar Section -->
+          <div class="calendar-section">
+            <div class="calendar-header">
+              <div class="calendar-month" id="calendarMonth">October 2025</div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+              <!-- Calendar will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // API Configuration
+      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+      let currentDayData = null;
+      let currentDayNumber = 1;
+      let userChecklistData = null;
+
+      // Initialize the page
+      document.addEventListener("DOMContentLoaded", function() {
+        // Get day number from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        currentDayNumber = parseInt(urlParams.get('day')) || 1;
+        
+        loadUserData();
+      });
+
+      // Load user data from API
+      async function loadUserData() {
+        try {
+          const token = localStorage.getItem("authToken");
+          if (!token) {
+            window.location.href = "/index.html";
+            return;
+          }
+
+          // Load user checklist data
+          const response = await fetch(`${API_BASE_URL}/data`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to load user data");
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            userChecklistData = result.data;
+            renderDayData();
+            renderCalendar();
+          } else {
+            throw new Error(result.error || "Failed to load user data");
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+          document.getElementById('questionsList').innerHTML = 
+            '<div class="empty-state">Failed to load data. Please try again.</div>';
+        }
+      }
+
+      // Render day data from real API data
+      function renderDayData() {
+        if (!userChecklistData || !Array.isArray(userChecklistData)) {
+          document.getElementById('questionsList').innerHTML = 
+            '<div class="empty-state">No data available for this day</div>';
+          return;
+        }
+
+        // Find the specific day data
+        const dayData = userChecklistData.find(day => day.day === currentDayNumber);
+
+        if (!dayData) {
+          document.getElementById('questionsList').innerHTML = 
+            '<div class="empty-state">No data available for this day</div>';
+          return;
+        }
+
+        // Update day header
+        document.getElementById('dayNumber').textContent = `Day ${currentDayNumber}🚧 This page is currently being updated. The full design and functionality will be available soon. `;
+        
+        // Calculate date based on app start date (September 25, 2025)
+        const startDate = new Date("2025-09-25");
+        const dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + (currentDayNumber - 1));
+        
+        const formattedDate = dayDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        document.getElementById('dayDate').textContent = formattedDate;
+
+        // Calculate statistics
+        const totalQuestions = dayData.questions?.length || 0;
+        const completedQuestions = dayData.questions?.filter(q => q.completed).length || 0;
+        const completionRate = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
+        const resourcesCount = dayData.linksArray?.length || 0;
+        const tagsCount = dayData.tags?.length || 0;
+
+        // Update statistics
+        document.getElementById('questionsSolved').textContent = `${completedQuestions}/${totalQuestions}`;
+        document.getElementById('completionRate').textContent = `${completionRate}%`;
+        document.getElementById('resourcesCount').textContent = resourcesCount;
+        document.getElementById('tagsCount').textContent = tagsCount;
+
+        // Update progress bar
+        document.getElementById('progressFill').style.width = `${completionRate}%`;
+
+        // Render questions
+        renderQuestions(dayData);
+
+        // Render resources from linksArray
+        renderResources(dayData.linksArray);
+      }
+
+      // Render questions from real data
+      function renderQuestions(dayData) {
+        const questionsList = document.getElementById('questionsList');
+        
+        if (!dayData.questions || dayData.questions.length === 0) {
+          questionsList.innerHTML = '<div class="empty-state">No questions for this day</div>';
+          return;
+        }
+
+        const completedCount = dayData.questions.filter(q => q.completed).length;
+        const hasFireCelebration = completedCount >= 5;
+
+        questionsList.innerHTML = dayData.questions.map((question, index) => {
+          const questionClass = hasFireCelebration && question.completed ? 'question-item fire-celebration' : 'question-item';
+          
+          return `
+            <div class="${questionClass}">
+              <input type="checkbox" class="question-checkbox" ${question.completed ? 'checked' : ''} disabled>
+              <div class="question-content">
+                <div class="question-text">${escapeHtml(question.text || 'Untitled Question')}</div>
+                <div style="display: flex; align-items: center; gap: var(--codeleaf-space-3); margin-top: var(--codeleaf-space-1);">
+                  <span style="font-size: var(--codeleaf-font-xs); color: ${getStatusColor(question.completed)}; font-weight: 600; padding: 2px 8px; background: ${getStatusBackground(question.completed)}; border-radius: 12px;">
+                    ${question.completed ? '✅ Completed' : '⏳ Pending'}
+                  </span>
+                  ${question.link ? `<a href="${question.link}" target="_blank" class="question-link">Solve Problem →</a>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Add celebration message if 5+ questions completed
+        if (hasFireCelebration) {
+          const celebrationMessage = document.createElement('div');
+          celebrationMessage.className = 'question-item fire-celebration';
+          celebrationMessage.style.background = 'linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 142, 0, 0.1))';
+          celebrationMessage.style.borderColor = 'rgba(255, 100, 0, 0.3)';
+          celebrationMessage.innerHTML = `
+            <div style="text-align: center; width: 100%; padding: var(--codeleaf-space-4);">
+              <div style="font-size: 1.5rem; margin-bottom: var(--codeleaf-space-2);">🎉</div>
+              <div style="font-weight: 700; color: var(--codeleaf-text-primary); margin-bottom: var(--codeleaf-space-1);">
+                Amazing Work!
+              </div>
+              <div style="font-size: var(--codeleaf-font-sm); color: var(--codeleaf-text-secondary);">
+                You've completed ${completedCount} questions today! Keep up the great progress! 🔥
+              </div>
+            </div>
+          `;
+          questionsList.insertBefore(celebrationMessage, questionsList.firstChild);
+        }
+      }
+
+      // Render resources from linksArray
+      function renderResources(linksArray) {
+        const resourcesGrid = document.getElementById('resourcesGrid');
+        
+        if (!linksArray || linksArray.length === 0) {
+          // Show default resources if no links available
+          resourcesGrid.innerHTML = `
+            <div class="resource-item">
+              <div class="resource-icon">🎥</div>
+              <div class="resource-title">Video Tutorials</div>
+              <div class="resource-description">Step-by-step visual guides</div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon">📚</div>
+              <div class="resource-title">Documentation</div>
+              <div class="resource-description">Official references & APIs</div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon">💻</div>
+              <div class="resource-title">Code Examples</div>
+              <div class="resource-description">Practical implementations</div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon">🎯</div>
+              <div class="resource-title">Best Practices</div>
+              <div class="resource-description">Industry standards & tips</div>
+            </div>
+          `;
+          return;
+        }
+
+        resourcesGrid.innerHTML = linksArray.map(link => {
+          const hostname = new URL(link.url).hostname;
+          const icon = getResourceIcon(hostname);
+          const title = link.text || hostname;
+          
+          return `
+            <div class="resource-item">
+              <div class="resource-icon">${icon}</div>
+              <div class="resource-title">${escapeHtml(title)}</div>
+              <div class="resource-description">${escapeHtml(hostname)}</div>
+              <a href="${link.url}" target="_blank" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></a>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Helper function for resource icons
+      function getResourceIcon(hostname) {
+        if (hostname.includes('leetcode')) return '💻';
+        if (hostname.includes('youtube') || hostname.includes('youtu.be')) return '🎥';
+        if (hostname.includes('github')) return '🔧';
+        if (hostname.includes('stackoverflow')) return '💬';
+        if (hostname.includes('medium')) return '📝';
+        return '🔗';
+      }
+
+      // Helper function for status colors
+      function getStatusColor(completed) {
+        return completed ? '#2d7a2d' : '#b38f2d';
+      }
+
+      function getStatusBackground(completed) {
+        return completed ? 'rgba(45, 122, 45, 0.1)' : 'rgba(179, 143, 45, 0.1)';
+      }
+
+      // Render enhanced calendar with current day highlighting
+      function renderCalendar() {
+        const calendarGrid = document.getElementById('calendarGrid');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        
+        // Update calendar month
+        document.getElementById('calendarMonth').textContent = today.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric'
+        });
+
+        // Weekday headers
+        const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        let calendarHTML = weekdays.map(day => `
+          <div class="calendar-weekday">${day}</div>
+        `).join('');
+        
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        
+        // Get day of week for first day (0 = Sunday, 1 = Monday, etc.)
+        const firstDayOfWeek = firstDay.getDay();
+        
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < firstDayOfWeek; i++) {
+          calendarHTML += '<div class="calendar-day"></div>';
+        }
+        
+        // Add cells for each day of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+          const isCurrentDay = isCurrentDayInCalendar(day, month, year);
+          const hasActivity = hasDayActivity(day, month, year);
+          const isHighlight = hasActivity && getCompletedCount(day, month, year) >= 5;
+          
+          let dayClass = 'calendar-day';
+          if (hasActivity) dayClass += ' active';
+          if (isHighlight) dayClass += ' highlight';
+          if (isCurrentDay) dayClass += ' current-day';
+          
+          const dayTitle = isCurrentDay ? 
+            `Current Day - ${getCompletedCount(day, month, year)} questions completed` : 
+            `Day ${day}`;
+          
+          calendarHTML += `<div class="${dayClass}" title="${dayTitle}">${day}</div>`;
+        }
+        
+        calendarGrid.innerHTML = calendarHTML;
+
+        // Add click handlers for calendar days
+        document.querySelectorAll('.calendar-day:not(:empty)').forEach(dayElement => {
+          dayElement.addEventListener('click', function() {
+            const dayNum = parseInt(this.textContent);
+            if (dayNum) {
+              window.location.href = `/day-details.html?day=${dayNum}`;
+            }
+          });
+        });
+      }
+
+      // Check if this day is the current day being viewed
+      function isCurrentDayInCalendar(day, month, year) {
+        const calendarDate = new Date(year, month, day);
+        const startDate = new Date("2025-09-25");
+        const dayDiff = Math.floor((calendarDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        return dayDiff === currentDayNumber;
+      }
+
+      // Check if day has activity
+      function hasDayActivity(day, month, year) {
+        if (!userChecklistData) return false;
+        
+        const calendarDate = new Date(year, month, day);
+        const startDate = new Date("2025-09-25");
+        const dayDiff = Math.floor((calendarDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        
+        const dayData = userChecklistData.find(d => d.day === dayDiff);
+        return dayData && dayData.questions && dayData.questions.some(q => q.completed);
+      }
+
+      // Get completed count for a day
+      function getCompletedCount(day, month, year) {
+        if (!userChecklistData) return 0;
+        
+        const calendarDate = new Date(year, month, day);
+        const startDate = new Date("2025-09-25");
+        const dayDiff = Math.floor((calendarDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        
+        const dayData = userChecklistData.find(d => d.day === dayDiff);
+        return dayData ? dayData.questions.filter(q => q.completed).length : 0;
+      }
+
+      // Utility function to escape HTML
+      function escapeHtml(unsafe) {
+        return unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
+</html>

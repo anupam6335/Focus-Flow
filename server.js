@@ -36,6 +36,17 @@ const checklistDataSchema = new mongoose.Schema({
   version: { type: Number, default: 1 }, // Add version for conflict resolution
 });
 
+// const questionSchema = new mongoose.Schema({
+//   text: { type: String, required: true },
+//   link: { type: String, default: "" },
+//   completed: { type: Boolean, default: false },
+//   difficulty: {
+//     type: String,
+//     enum: ["Easy", "Medium", "Hard"],
+//     default: "Medium",
+//   },
+// });
+
 // Add activity tracker schema
 const activityTrackerSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -591,6 +602,9 @@ app.get("/api/data", authenticateToken, async (req, res) => {
         data: defaultData,
         version: 1,
       });
+    } else {
+      // Ensure backward compatibility for existing data
+      data.data = ensureDifficultyField(data.data);
     }
 
     res.json({
@@ -1400,14 +1414,20 @@ function mergeDataIntelligently(serverData, clientData) {
 function generateDefaultData() {
   const TOTAL_DAYS = 1;
   const DEFAULT_QUESTIONS = [
-    { text: "Two Sum", link: "https://leetcode.com/problems/two-sum/" },
+    {
+      text: "Two Sum",
+      link: "https://leetcode.com/problems/two-sum/",
+      difficulty: "Easy",
+    },
     {
       text: "Reverse a Linked List",
       link: "https://leetcode.com/problems/reverse-linked-list/",
+      difficulty: "Medium",
     },
     {
       text: "Binary Search",
       link: "https://leetcode.com/problems/binary-search/",
+      difficulty: "Medium",
     },
   ];
 
@@ -1419,6 +1439,7 @@ function generateDefaultData() {
         text: q.text,
         link: q.link,
         completed: false,
+        difficulty: q.difficulty, // Include difficulty in default data
       })),
       tags: [],
       links: "",
@@ -1426,6 +1447,19 @@ function generateDefaultData() {
     });
   }
   return appData;
+}
+
+// Backward compatibility: Ensure existing questions without difficulty get default value
+function ensureDifficultyField(data) {
+  if (!Array.isArray(data)) return data;
+
+  return data.map((day) => ({
+    ...day,
+    questions: day.questions.map((question) => ({
+      ...question,
+      difficulty: question.difficulty || "Medium", // Default for existing questions
+    })),
+  }));
 }
 
 // ========== STATIC FILE ROUTES ==========
