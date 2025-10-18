@@ -50,7 +50,7 @@
         padding: 20px;
         transition: background-color 0.3s, color 0.3s;
         overflow-x: hidden;
-        padding-top: 80px !important;
+        padding-top: 20px !important;
       }
 
       .main-container {
@@ -3638,289 +3638,315 @@
         margin-left: var(--codeleaf-space-3) !important;
       }
 
-
       /* ============================== Animation ==================================== */
       /* 1. Page Load Animations */
       /* Add to existing CSS */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+      @keyframes slideInFromLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
 
-/* Apply animations to elements */
-.main-container {
-  animation: fadeInUp 0.8s ease-out;
-}
+      /* Apply animations to elements */
+      .main-container {
+        animation: fadeInUp 0.8s ease-out;
+      }
 
-header {
-  animation: slideInFromLeft 0.6s ease-out;
-}
+      header {
+        animation: slideInFromLeft 0.6s ease-out;
+      }
 
-.activity-tracker-container {
-  animation: scaleIn 0.7s ease-out 0.2s both;
-}
+      .activity-tracker-container {
+        animation: scaleIn 0.7s ease-out 0.2s both;
+      }
 
-.daily-progress-container {
-  animation: scaleIn 0.7s ease-out 0.3s both;
-}
+      .daily-progress-container {
+        animation: scaleIn 0.7s ease-out 0.3s both;
+      }
 
-  /* 2. Table Row Animations */
-  /* Enhanced table row animations */
-tbody tr {
-  animation: fadeInUp 0.5s ease-out both;
-}
+      /* 2. Table Row Animations */
+      /* Enhanced table row animations */
+      tbody tr {
+        animation: fadeInUp 0.5s ease-out both;
+      }
 
-/* Staggered animation for rows */
-tbody tr:nth-child(1) { animation-delay: 0.05s; }
-tbody tr:nth-child(2) { animation-delay: 0.1s; }
-tbody tr:nth-child(3) { animation-delay: 0.15s; }
-tbody tr:nth-child(4) { animation-delay: 0.2s; }
-tbody tr:nth-child(5) { animation-delay: 0.25s; }
-tbody tr:nth-child(6) { animation-delay: 0.3s; }
+      /* Staggered animation for rows */
+      tbody tr:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+      tbody tr:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      tbody tr:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+      tbody tr:nth-child(4) {
+        animation-delay: 0.2s;
+      }
+      tbody tr:nth-child(5) {
+        animation-delay: 0.25s;
+      }
+      tbody tr:nth-child(6) {
+        animation-delay: 0.3s;
+      }
 
-/* 3. Interactive Element Animations */
-/* Enhanced button animations */
-.add-question-btn, .add-day-btn, .sync-button {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+      /* 3. Interactive Element Animations */
+      /* Enhanced button animations */
+      .add-question-btn,
+      .add-day-btn,
+      .sync-button {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-.add-question-btn::before, .add-day-btn::before, .sync-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s ease;
-}
+      .add-question-btn::before,
+      .add-day-btn::before,
+      .sync-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
 
-.add-question-btn:hover::before, .add-day-btn:hover::before, .sync-button:hover::before {
-  left: 100%;
-}
+      .add-question-btn:hover::before,
+      .add-day-btn:hover::before,
+      .sync-button:hover::before {
+        left: 100%;
+      }
 
-/* Enhanced checkbox animations */
-.question-checkbox {
-  transition: all 0.3s ease;
-}
+      /* Enhanced checkbox animations */
+      .question-checkbox {
+        transition: all 0.3s ease;
+      }
 
-.question-checkbox:checked {
-  transform: scale(1.1);
-  animation: bounce 0.3s ease;
-}
+      .question-checkbox:checked {
+        transform: scale(1.1);
+        animation: bounce 0.3s ease;
+      }
 
-@keyframes bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
 
-/* 4. Status Cell Celebrations */
-/* Enhanced status animations */
-.status-cell {
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
+      /* 4. Status Cell Celebrations */
+      /* Enhanced status animations */
+      .status-cell {
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
 
-.status-cell.completed {
-  animation: celebrate 0.6s ease-in-out;
-}
+      .status-cell.completed {
+        animation: celebrate 0.6s ease-in-out;
+      }
 
-@keyframes celebrate {
-  0% {
-    transform: scale(1) rotate(0deg);
-  }
-  25% {
-    transform: scale(1.4) rotate(-5deg);
-  }
-  50% {
-    transform: scale(1.6) rotate(5deg);
-  }
-  75% {
-    transform: scale(1.4) rotate(-3deg);
-  }
-  100% {
-    transform: scale(1.2) rotate(0deg);
-  }
-}
+      @keyframes celebrate {
+        0% {
+          transform: scale(1) rotate(0deg);
+        }
+        25% {
+          transform: scale(1.4) rotate(-5deg);
+        }
+        50% {
+          transform: scale(1.6) rotate(5deg);
+        }
+        75% {
+          transform: scale(1.4) rotate(-3deg);
+        }
+        100% {
+          transform: scale(1.2) rotate(0deg);
+        }
+      }
 
-/* 5. Smooth Transitions for All Interactions */
+      /* 5. Smooth Transitions for All Interactions */
 
-/* Smooth transitions for all interactive elements */
-.question-item, .tag, .metric-card, .heatmap-cell {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+      /* Smooth transitions for all interactive elements */
+      .question-item,
+      .tag,
+      .metric-card,
+      .heatmap-cell {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-.question-item:hover {
-  transform: translateX(8px);
-}
+      .question-item:hover {
+        transform: translateX(8px);
+      }
 
-.tag:hover {
-  transform: translateY(-2px) scale(1.05);
-}
+      .tag:hover {
+        transform: translateY(-2px) scale(1.05);
+      }
 
-.metric-card:hover {
-  transform: translateY(-4px);
-}
+      .metric-card:hover {
+        transform: translateY(-4px);
+      }
 
-.heatmap-cell:hover {
-  transform: scale(1.4);
-  z-index: 2;
-}
+      .heatmap-cell:hover {
+        transform: scale(1.4);
+        z-index: 2;
+      }
 
+      /* 6. Search Bar Animations */
+      /* Enhanced search animations */
+      .search-bar {
+        transition: all 0.3s ease;
+      }
 
-/* 6. Search Bar Animations */
-/* Enhanced search animations */
-.search-bar {
-  transition: all 0.3s ease;
-}
+      .search-bar:focus {
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(88, 166, 255, 0.15);
+      }
 
-.search-bar:focus {
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(88, 166, 255, 0.15);
-}
+      .search-info {
+        animation: fadeInUp 0.5s ease-out 0.4s both;
+      }
 
-.search-info {
-  animation: fadeInUp 0.5s ease-out 0.4s both;
-}
+      /* 7. Sync Status Animations */
+      /* Enhanced sync animations */
+      .sync-dot.syncing {
+        animation: pulse 1.5s infinite, glow 2s infinite;
+      }
 
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 5px var(--warning-color);
+        }
+        50% {
+          box-shadow: 0 0 15px var(--warning-color);
+        }
+      }
 
-/* 7. Sync Status Animations */
-/* Enhanced sync animations */
-.sync-dot.syncing {
-  animation: pulse 1.5s infinite, glow 2s infinite;
-}
+      #syncStatus.syncing {
+        animation: gentlePulse 2s infinite;
+      }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 5px var(--warning-color);
-  }
-  50% {
-    box-shadow: 0 0 15px var(--warning-color);
-  }
-}
+      @keyframes gentlePulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.02);
+        }
+      }
 
-#syncStatus.syncing {
-  animation: gentlePulse 2s infinite;
-}
+      /* 8. Toast Notification Enhancements */
+      /* Enhanced toast animations */
+      .toast {
+        animation: toastSlideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+      }
 
-@keyframes gentlePulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
+      @keyframes toastSlideIn {
+        from {
+          transform: translateX(400px) rotate(5deg);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0) rotate(0deg);
+          opacity: 1;
+        }
+      }
 
+      .toast.hide {
+        animation: toastSlideOut 0.3s ease-in both;
+      }
 
-/* 8. Toast Notification Enhancements */
-/* Enhanced toast animations */
-.toast {
-  animation: toastSlideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
-}
+      @keyframes toastSlideOut {
+        to {
+          transform: translateX(400px) rotate(-5deg);
+          opacity: 0;
+        }
+      }
 
-@keyframes toastSlideIn {
-  from {
-    transform: translateX(400px) rotate(5deg);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0) rotate(0deg);
-    opacity: 1;
-  }
-}
+      /* 9. Modal Animations */
+      /* Enhanced modal animations */
+      .modal {
+        animation: modalFadeIn 0.3s ease-out;
+      }
 
-.toast.hide {
-  animation: toastSlideOut 0.3s ease-in both;
-}
+      .modal-content {
+        animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      }
 
-@keyframes toastSlideOut {
-  to {
-    transform: translateX(400px) rotate(-5deg);
-    opacity: 0;
-  }
-}
+      @keyframes modalSlideIn {
+        from {
+          transform: translateY(-50px) scale(0.9);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
 
+      /* 10. Scroll Animations */
+      /* Scroll-triggered animations */
+      .scroll-to-top {
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
 
-/* 9. Modal Animations */
-/* Enhanced modal animations */
-.modal {
-  animation: modalFadeIn 0.3s ease-out;
-}
+      .scroll-to-top.visible {
+        animation: bounceIn 0.6s ease;
+      }
 
-.modal-content {
-  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-@keyframes modalSlideIn {
-  from {
-    transform: translateY(-50px) scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-
-/* 10. Scroll Animations */
-/* Scroll-triggered animations */
-.scroll-to-top {
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.scroll-to-top.visible {
-  animation: bounceIn 0.6s ease;
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3) rotate(180deg);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1) rotate(-10deg);
-  }
-  70% {
-    transform: scale(0.9) rotate(5deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
+      @keyframes bounceIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.3) rotate(180deg);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.1) rotate(-10deg);
+        }
+        70% {
+          transform: scale(0.9) rotate(5deg);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
     </style>
   </head>
   <body>

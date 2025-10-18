@@ -244,6 +244,9 @@
         cursor: pointer;
         position: relative;
         box-shadow: var(--codeleaf-shadow-sm);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
 
       /* Big cards (2x2 grid items) */
@@ -256,7 +259,7 @@
         grid-column: span 1;
       }
 
-      /* Award-Winning Hover Animation */
+      /* FIXED: Award-Winning Hover Animation - Fixed visibility issue */
       .blog-card::before {
         content: "";
         position: absolute;
@@ -273,6 +276,7 @@
         opacity: 0;
         transition: opacity 0.4s ease;
         z-index: 1;
+        pointer-events: none; /* FIX: Added to prevent interference */
       }
 
       .blog-card:hover {
@@ -303,7 +307,8 @@
         border-radius: var(--codeleaf-radius-lg);
         opacity: 0;
         transition: opacity 0.4s ease;
-        z-index: -1;
+        z-index: -1; /* FIX: Ensure it stays behind content */
+        pointer-events: none; /* FIX: Added to prevent interference */
       }
 
       .blog-card:hover::after {
@@ -373,7 +378,7 @@
         padding: var(--codeleaf-space-4);
         flex: 1;
         position: relative;
-        z-index: 2;
+        z-index: 2; /* FIX: Ensure content stays above pseudo-elements */
         background: var(--codeleaf-bg-primary);
       }
 
@@ -990,7 +995,7 @@
         opacity: 0;
         transition: opacity 0.4s ease;
         z-index: 1;
-        pointer-events: none;
+        pointer-events: none; /* FIX: Added to prevent interference */
       }
 
       .blog-card:hover::before {
@@ -1065,7 +1070,7 @@
         flex-direction: column;
         gap: var(--codeleaf-space-3);
         position: relative;
-        z-index: 2;
+        z-index: 2; /* FIX: Ensure content stays above pseudo-elements */
         background: var(--codeleaf-bg-primary);
       }
 
@@ -1328,6 +1333,400 @@
           background: var(--codeleaf-bg-secondary);
         }
       }
+
+      /* =========================================== */
+      /* AWARD-WINNING ANIMATIONS SECTION */
+      /* =========================================== */
+
+      /* Award-Winning Page Load Animation */
+      @keyframes pageLoad {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .container {
+        animation: pageLoad 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+
+      /* Award-Winning Header Animation */
+      @keyframes headerSlideIn {
+        0% {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      header {
+        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          0.2s both;
+      }
+
+      /* Award-Winning Blog Header Animation */
+      .blog-header-compact {
+        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          0.3s both;
+      }
+
+      /* Award-Winning Tabs Animation */
+      @keyframes tabsFadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .tabs-container-compact {
+        animation: tabsFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s
+          both;
+      }
+
+      /* Award-Winning Blog Cards Staggered Animation */
+      @keyframes cardSlideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .blog-card {
+        animation: cardSlideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          forwards;
+        /* opacity: 0; */
+      }
+
+      /* Award-Winning Tab Switching Animation */
+      .blogs-grid {
+        transition: opacity 0.3s ease;
+      }
+
+      .blogs-grid.fade-out {
+        opacity: 0;
+      }
+
+      .blogs-grid.fade-in {
+        opacity: 1;
+      }
+
+      /* Award-Winning Button Ripple Effect */
+      .create-blog-btn-compact {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .create-blog-btn-compact::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .create-blog-btn-compact:active::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      /* Award-Winning Tab Switching Animation */
+      .tab-compact {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tab-compact::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--codeleaf-accent-primary);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+      }
+
+      .tab-compact.active::before {
+        transform: scaleX(1);
+      }
+
+      /* Award-Winning Modal Animation */
+      @keyframes modalSlideIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.8) translateY(-20px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .modal-content {
+        animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      /* Award-Winning Like Button Animation */
+      @keyframes heartBeat {
+        0% {
+          transform: scale(1);
+        }
+        25% {
+          transform: scale(1.3);
+        }
+        50% {
+          transform: scale(1);
+        }
+        75% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .blog-action-btn.liked .action-icon {
+        animation: heartBeat 0.6s ease;
+      }
+
+      /* Award-Winning Pagination Animation */
+      .pagination-btn {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pagination-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .pagination-btn:hover::before {
+        left: 100%;
+      }
+
+      /* Award-Winning Scroll to Top Animation */
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-5px);
+        }
+        60% {
+          transform: translateY(-3px);
+        }
+      }
+
+      .scroll-to-top:hover {
+        animation: bounce 1s;
+      }
+
+      /* Award-Winning Toast Animation Enhancement */
+      @keyframes toastSlideIn {
+        0% {
+          transform: translateX(400px) scale(0.8);
+          opacity: 0;
+        }
+        70% {
+          transform: translateX(-10px) scale(1.02);
+        }
+        100% {
+          transform: translateX(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .toast.show {
+        animation: toastSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      /* Award-Winning Empty State Animation */
+      @keyframes emptyStatePulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .empty-state {
+        animation: emptyStatePulse 2s ease-in-out infinite;
+      }
+
+      /* Award-Winning Blog Card Image Animation */
+      .blog-card-image::before {
+        transition: transform 0.5s ease, opacity 0.5s ease;
+      }
+
+      .blog-card:hover .blog-card-image::before {
+        transform: rotate(5deg) scale(1.1);
+        opacity: 1;
+      }
+
+      /* Award-Winning Text Reveal Animation */
+      @keyframes textReveal {
+        0% {
+          clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
+        }
+        100% {
+          clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+        }
+      }
+
+      .blog-card-title {
+        animation: textReveal 0.8s ease-out 0.5s both;
+      }
+
+      /* Award-Winning Stats Counter Animation */
+      @keyframes countUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .stat-count {
+        animation: countUp 0.6s ease-out;
+      }
+
+      /* Award-Winning Avatar Animation */
+      @keyframes avatarPulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(76, 166, 76, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(76, 166, 76, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(76, 166, 76, 0);
+        }
+      }
+
+      .blog-author-avatar {
+        animation: avatarPulse 2s infinite;
+      }
+
+      /* Award-Winning Loading Animation for Blog Cards */
+      @keyframes shimmer {
+        0% {
+          background-position: -468px 0;
+        }
+        100% {
+          background-position: 468px 0;
+        }
+      }
+
+      .blog-card.loading {
+        background: linear-gradient(
+          to right,
+          var(--codeleaf-bg-secondary) 8%,
+          var(--codeleaf-bg-tertiary) 18%,
+          var(--codeleaf-bg-secondary) 33%
+        );
+        background-size: 800px 104px;
+        animation: shimmer 1.5s infinite linear;
+      }
+
+      /* Award-Winning Focus Animation for Form Elements */
+      .form-input:focus,
+      .form-textarea:focus {
+        animation: inputFocus 0.3s ease;
+      }
+
+      @keyframes inputFocus {
+        0% {
+          box-shadow: 0 0 0 0 rgba(76, 166, 76, 0.4);
+        }
+        100% {
+          box-shadow: 0 0 0 3px rgba(76, 166, 76, 0.1);
+        }
+      }
+
+      /* Award-Winning Success Animation */
+      @keyframes successPulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(45, 122, 45, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(45, 122, 45, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(45, 122, 45, 0);
+        }
+      }
+
+      .btn-primary:active {
+        animation: successPulse 0.5s;
+      }
+
+      /* Award-Winning Gradient Border Animation */
+      @keyframes gradientBorder {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .blog-card:hover::after {
+        background: linear-gradient(
+          45deg,
+          rgba(76, 166, 76, 0.1),
+          rgba(168, 212, 168, 0.05),
+          rgba(76, 166, 76, 0.1)
+        );
+        background-size: 200% 200%;
+        animation: gradientBorder 3s ease infinite;
+      }
     </style>
   </head>
   <body>
@@ -1477,11 +1876,11 @@
       let totalPages = 1;
       let editingBlog = null;
       let currentTab = "all"; // 'all', 'my-blogs', 'popular'
-      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
-      const BASE_URL = "https://focus-flow-lopn.onrender.com";
+      const API_BASE_URL = "http://https://focus-flow-lopn.onrender.com/api";
+      const BASE_URL = "http://https://focus-flow-lopn.onrender.com";
 
       // URL Redirect
-      const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
+      const FRONTEND_URL = "http://https://focus-flow-lopn.onrender.com";
 
       document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
       document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;
@@ -1605,8 +2004,8 @@
         await updateTabCounts();
       }
 
-      // Switch between tabs
-      function switchTab(tabName) {
+      // Switch between tabs with smooth animation
+      async function switchTab(tabName) {
         currentTab = tabName;
         currentPage = 1;
 
@@ -1616,8 +2015,21 @@
         });
         document.getElementById(`tab-${tabName}`).classList.add("active");
 
-        // Load appropriate blogs
-        loadBlogs();
+        // Add fade animation
+        const blogsGrid = document.getElementById("blogsGrid");
+        blogsGrid.classList.add("fade-out");
+
+        // Load appropriate blogs after fade out
+        setTimeout(async () => {
+          await loadBlogs();
+          blogsGrid.classList.remove("fade-out");
+          blogsGrid.classList.add("fade-in");
+
+          // Remove fade-in class after animation completes
+          setTimeout(() => {
+            blogsGrid.classList.remove("fade-in");
+          }, 300);
+        }, 200);
       }
 
       // Load blogs based on current tab - UPDATED to fix popular tab
@@ -1848,7 +2260,7 @@
           .replace(/'/g, "&#039;");
       }
 
-      // Display blogs in Instagram-style grid with proper layout
+      // Display blogs in Instagram-style grid with proper layout and animations
       function displayBlogs(blogs) {
         const blogsGrid = document.getElementById("blogsGrid");
         const currentUser = localStorage.getItem("userId");
@@ -1887,13 +2299,18 @@
         const pageLayout = getCardLayoutForPage(blogs, currentPage - 1);
 
         blogsGrid.innerHTML = pageLayout
-          .map((item) => {
+          .map((item, index) => {
             const blog = item.blog;
             const cardType = item.type;
 
+            // Calculate animation delay for staggered effect
+            const animationDelay = `${0.1 * index}s`;
+
             return `
              <!-- Updated Blog Card HTML -->
-<div class="blog-card" onclick="viewBlog('${blog.slug}')">
+<div class="blog-card" onclick="viewBlog('${
+              blog.slug
+            }')" style="animation-delay: ${animationDelay}">
   <div class="blog-card-header">
     <div class="blog-card-image">
       <div class="blog-card-overlay"></div>
