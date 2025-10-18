@@ -4694,7 +4694,7 @@
         levelBadge.className = `user-level-badge ${userLevel.level.toLowerCase()}`;
 
         // Set user name and bio
-        document.getElementById("userName").textContent = user.username;
+        document.getElementById("userName").textContent = user.username.toUpperCase();
         document.getElementById("joinDate").textContent = formatDate(
           user.accountCreated
         );
@@ -5128,6 +5128,7 @@
 
           const result = await response.json();
 
+
           if (result.success && result.users) {
             // Filter out current user and render others
             const otherUsers = result.users.filter(
@@ -5167,7 +5168,7 @@
         <div class="user-item" onclick="viewUserProfile('${user.username}')">
             <div class="user-avatar">${generateUserAvatar(user.username)}</div>
             <div class="user-details">
-                <div class="user-name">${escapeHtml(user.username)}</div>
+                <div class="user-name">${escapeHtml(user.username.toUpperCase())}</div>
                 <div class="user-stats">
                     <span class="user-stat">${
                       user.totalSolved || 0
