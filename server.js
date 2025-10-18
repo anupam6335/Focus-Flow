@@ -589,6 +589,62 @@ app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
   }
 });
 
+// Add to server.js - New endpoint for progress statistics
+app.get("/api/progress-stats", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+
+    // Get checklist data
+    const checklistData = await ChecklistData.findOne({ userId });
+
+    if (!checklistData || !checklistData.data) {
+      return res.json({
+        success: true,
+        stats: {
+          total: 0,
+          easy: 0,
+          medium: 0,
+          hard: 0,
+        },
+      });
+    }
+
+    // Calculate solved counts by difficulty
+    const stats = {
+      total: 0,
+      easy: 0,
+      medium: 0,
+      hard: 0,
+    };
+
+    checklistData.data.forEach((day) => {
+      if (day.questions && Array.isArray(day.questions)) {
+        day.questions.forEach((question) => {
+          if (question.completed) {
+            stats.total++;
+            const difficulty = (question.difficulty || "medium").toLowerCase();
+            if (stats[difficulty] !== undefined) {
+              stats[difficulty]++;
+            } else {
+              stats.medium++; // Default to medium if invalid difficulty
+            }
+          }
+        });
+      }
+    });
+
+    console.log(`Progress stats for ${userId}:`, stats);
+
+    res.json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("Error fetching progress stats:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get user data (protected route) - UPDATED with version
 app.get("/api/data", authenticateToken, async (req, res) => {
   try {
