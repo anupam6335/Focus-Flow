@@ -1367,14 +1367,12 @@
       }
 
       header {
-        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-          0.2s both;
+        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
       }
 
       /* Award-Winning Blog Header Animation */
       .blog-header-compact {
-        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-          0.3s both;
+        animation: headerSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
       }
 
       /* Award-Winning Tabs Animation */
@@ -1390,8 +1388,7 @@
       }
 
       .tabs-container-compact {
-        animation: tabsFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s
-          both;
+        animation: tabsFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s both;
       }
 
       /* Award-Winning Blog Cards Staggered Animation */
@@ -1407,8 +1404,7 @@
       }
 
       .blog-card {
-        animation: cardSlideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-          forwards;
+        animation: cardSlideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         /* opacity: 0; */
       }
 
@@ -1432,7 +1428,7 @@
       }
 
       .create-blog-btn-compact::after {
-        content: "";
+        content: '';
         position: absolute;
         top: 50%;
         left: 50%;
@@ -1456,7 +1452,7 @@
       }
 
       .tab-compact::before {
-        content: "";
+        content: '';
         position: absolute;
         bottom: 0;
         left: 0;
@@ -1518,18 +1514,13 @@
       }
 
       .pagination-btn::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(76, 166, 76, 0.2),
-          transparent
-        );
+        background: linear-gradient(90deg, transparent, rgba(76, 166, 76, 0.2), transparent);
         transition: left 0.5s;
       }
 
@@ -1539,11 +1530,7 @@
 
       /* Award-Winning Scroll to Top Animation */
       @keyframes bounce {
-        0%,
-        20%,
-        50%,
-        80%,
-        100% {
+        0%, 20%, 50%, 80%, 100% {
           transform: translateY(0);
         }
         40% {
@@ -1662,19 +1649,13 @@
       }
 
       .blog-card.loading {
-        background: linear-gradient(
-          to right,
-          var(--codeleaf-bg-secondary) 8%,
-          var(--codeleaf-bg-tertiary) 18%,
-          var(--codeleaf-bg-secondary) 33%
-        );
+        background: linear-gradient(to right, var(--codeleaf-bg-secondary) 8%, var(--codeleaf-bg-tertiary) 18%, var(--codeleaf-bg-secondary) 33%);
         background-size: 800px 104px;
         animation: shimmer 1.5s infinite linear;
       }
 
       /* Award-Winning Focus Animation for Form Elements */
-      .form-input:focus,
-      .form-textarea:focus {
+      .form-input:focus, .form-textarea:focus {
         animation: inputFocus 0.3s ease;
       }
 
@@ -1718,12 +1699,10 @@
       }
 
       .blog-card:hover::after {
-        background: linear-gradient(
-          45deg,
-          rgba(76, 166, 76, 0.1),
-          rgba(168, 212, 168, 0.05),
-          rgba(76, 166, 76, 0.1)
-        );
+        background: linear-gradient(45deg, 
+          rgba(76, 166, 76, 0.1), 
+          rgba(168, 212, 168, 0.05), 
+          rgba(76, 166, 76, 0.1));
         background-size: 200% 200%;
         animation: gradientBorder 3s ease infinite;
       }
@@ -1876,11 +1855,11 @@
       let totalPages = 1;
       let editingBlog = null;
       let currentTab = "all"; // 'all', 'my-blogs', 'popular'
-      const API_BASE_URL = "http://https://focus-flow-lopn.onrender.com/api";
-      const BASE_URL = "http://https://focus-flow-lopn.onrender.com";
+      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+      const BASE_URL = "https://focus-flow-lopn.onrender.com";
 
       // URL Redirect
-      const FRONTEND_URL = "http://https://focus-flow-lopn.onrender.com";
+      const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
       document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
       document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;
@@ -2018,13 +1997,13 @@
         // Add fade animation
         const blogsGrid = document.getElementById("blogsGrid");
         blogsGrid.classList.add("fade-out");
-
+        
         // Load appropriate blogs after fade out
         setTimeout(async () => {
           await loadBlogs();
           blogsGrid.classList.remove("fade-out");
           blogsGrid.classList.add("fade-in");
-
+          
           // Remove fade-in class after animation completes
           setTimeout(() => {
             blogsGrid.classList.remove("fade-in");
@@ -2308,9 +2287,7 @@
 
             return `
              <!-- Updated Blog Card HTML -->
-<div class="blog-card" onclick="viewBlog('${
-              blog.slug
-            }')" style="animation-delay: ${animationDelay}">
+<div class="blog-card" onclick="viewBlog('${blog.slug}')" style="animation-delay: ${animationDelay}">
   <div class="blog-card-header">
     <div class="blog-card-image">
       <div class="blog-card-overlay"></div>
