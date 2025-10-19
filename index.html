@@ -5440,16 +5440,18 @@
       // NEW: Filter table data based on search input - IMPROVED VERSION
       function filterTableData() {
         if (!searchFilter) {
-          filteredData = [...appData]; // Show all data when no filter
+          filteredData = [...appData].sort((a, b) => a.day - b.day); // Show all data when no filter
           return;
         }
 
         // Filter by day number - support exact and partial matches
-        filteredData = appData.filter((dayData) => {
-          const dayString = dayData.day.toString();
-          // Return true if the search filter matches the day number
-          return dayString.includes(searchFilter);
-        });
+        filteredData = appData
+          .filter((dayData) => {
+            const dayString = dayData.day.toString();
+            // Return true if the search filter matches the day number
+            return dayString.includes(searchFilter);
+          }) // Sort the filtered results by day number
+          .sort((a, b) => a.day - b.day);
       }
 
       // NEW: Update search info text
