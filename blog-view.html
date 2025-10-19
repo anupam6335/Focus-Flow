@@ -1969,7 +1969,7 @@
       // Initialize toast manager
       const toastManager = new ToastManager();
 
-      // Completely Fixed Markdown Renderer with Mermaid Support
+      // Enhanced Markdown Renderer with Comprehensive Link Support
       class MarkdownRenderer {
         constructor() {
           this.isMermaidInitialized = false;
@@ -1978,7 +1978,7 @@
         }
 
         init() {
-          // Configure marked options with custom renderer for links
+          // Configure marked options with custom renderer for enhanced link support
           const renderer = new marked.Renderer();
 
           // Override link rendering to add target="_blank" and rel="noopener noreferrer"
@@ -2045,7 +2045,7 @@
           }
         }
 
-        // Enhanced render method with Mermaid support
+        // Enhanced render method with comprehensive link parsing
         async render(markdownText) {
           if (!markdownText) return "";
 
@@ -2053,8 +2053,12 @@
             // Pre-process mermaid diagrams to prevent markdown parsing
             const processedMarkdown = this.preprocessMermaid(markdownText);
 
+            // Enhanced: Parse plain URLs and Markdown links before markdown processing
+            const linkEnhancedMarkdown =
+              this.parseAllLinkTypes(processedMarkdown);
+
             // Render markdown to HTML
-            const rawHtml = marked.parse(processedMarkdown);
+            const rawHtml = marked.parse(linkEnhancedMarkdown);
 
             // Sanitize HTML while preserving mermaid containers
             const cleanHtml = DOMPurify.sanitize(rawHtml, {
@@ -2077,7 +2081,129 @@
           }
         }
 
-        // Enhanced Mermaid pre-processing with better error handling
+        // NEW: Comprehensive link parsing for all types of links
+        parseAllLinkTypes(text) {
+          if (!text) return text;
+
+          // Step 1: First, convert Markdown-style links [text](url) to HTML anchors
+          // This ensures they don't get processed again in later steps
+          let processedText = text.replace(
+            /\[([^\]]+)\]\(([^)]+)\)/g,
+            (match, linkText, url) => {
+              // Validate URL format
+              const cleanUrl = this.validateAndCleanUrl(url.trim());
+              if (!cleanUrl) return match; // Return original if invalid
+
+              return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+            }
+          );
+
+          // Step 2: Convert plain URLs to clickable links
+          // Enhanced URL regex that handles various URL formats
+          const urlRegex =
+            /(?:https?:\/\/|www\.)[^\s<>{}\[\]()|^`\\"']+[^\s<>{}\[\]()|^`\\"'.,;:!?]/gi;
+
+          processedText = processedText.replace(urlRegex, (url) => {
+            // Skip if already inside an anchor tag
+            if (this.isInsideAnchorTag(processedText, url)) {
+              return url;
+            }
+
+            let cleanUrl = url.trim();
+
+            // Add http:// prefix if it's a www URL
+            if (cleanUrl.startsWith("www.")) {
+              cleanUrl = "https://" + cleanUrl;
+            }
+
+            // Validate and clean the URL
+            cleanUrl = this.validateAndCleanUrl(cleanUrl);
+            if (!cleanUrl) return url;
+
+            const displayUrl =
+              url.length > 50 ? url.substring(0, 47) + "..." : url;
+
+            return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${displayUrl}</a>`;
+          });
+
+          // Step 3: Ensure existing anchor tags are preserved and properly formatted
+          processedText = this.ensureAnchorTags(processedText);
+
+          return processedText;
+        }
+
+        // NEW: Check if text is already inside an anchor tag
+        isInsideAnchorTag(text, url) {
+          const urlIndex = text.indexOf(url);
+          if (urlIndex === -1) return false;
+
+          // Look backwards for opening <a tag
+          const textBefore = text.substring(0, urlIndex);
+          const lastAnchorOpen = textBefore.lastIndexOf("<a ");
+          const lastAnchorClose = textBefore.lastIndexOf("</a>");
+
+          // If we found an opening <a tag and no closing tag after it, we're inside an anchor
+          if (lastAnchorOpen !== -1 && lastAnchorOpen > lastAnchorClose) {
+            return true;
+          }
+
+          return false;
+        }
+
+        // NEW: Ensure existing anchor tags have proper attributes
+        ensureAnchorTags(text) {
+          return text.replace(
+            /<a\s+([^>]*)href=(["'])([^"']+)\2([^>]*)>/gi,
+            (match, before, quote, href, after) => {
+              // Check if target and rel attributes already exist
+              const hasTarget = /target=(["'])([^"']+)\1/i.test(match);
+              const hasRel = /rel=(["'])([^"']+)\1/i.test(match);
+
+              let newAttributes = "";
+
+              if (!hasTarget) {
+                newAttributes += ' target="_blank"';
+              }
+
+              if (!hasRel) {
+                newAttributes += ' rel="noopener noreferrer"';
+              }
+
+              return `<a ${before}href=${quote}${href}${quote}${after}${newAttributes}>`;
+            }
+          );
+        }
+
+        // NEW: Validate and clean URLs
+        validateAndCleanUrl(url) {
+          if (!url) return null;
+
+          try {
+            // Basic URL validation
+            let cleanUrl = url.trim();
+
+            // Remove any trailing punctuation that might have been caught by regex
+            cleanUrl = cleanUrl.replace(/[.,;:!?]+$/, "");
+
+            // Ensure URL has a protocol
+            if (
+              !cleanUrl.startsWith("http://") &&
+              !cleanUrl.startsWith("https://")
+            ) {
+              cleanUrl = "https://" + cleanUrl;
+            }
+
+            // Basic URL format check using URL constructor
+            new URL(cleanUrl);
+
+            return cleanUrl;
+          } catch (error) {
+            console.warn("Invalid URL detected:", url, error);
+            return null;
+          }
+        }
+
+        // Rest of the existing methods remain unchanged...
         preprocessMermaid(text) {
           let diagramCount = 0;
 
@@ -2102,13 +2228,13 @@
               return `<div class="mermaid-container" data-mermaid-id="${id}" data-diagram="${this.escapeHtml(
                 cleanDiagram.substring(0, 50)
               )}...">
-            <div class="mermaid-loading">🔄 Rendering diagram...</div>
-            <div class="mermaid-error" style="display: none;"></div>
-            <div class="mermaid-content"></div>
-            <div class="mermaid-debug" style="font-size: 10px; color: #666; margin-top: 5px;">
-                Diagram ID: ${id}
-            </div>
-        </div>`;
+        <div class="mermaid-loading">🔄 Rendering diagram...</div>
+        <div class="mermaid-error" style="display: none;"></div>
+        <div class="mermaid-content"></div>
+        <div class="mermaid-debug" style="font-size: 10px; color: #666; margin-top: 5px;">
+            Diagram ID: ${id}
+        </div>
+    </div>`;
             }
           );
 
@@ -2246,14 +2372,14 @@
               const progressContainer = document.createElement("div");
               progressContainer.className = "checklist-progress";
               progressContainer.innerHTML = `
-        <div class="checklist-progress-text">
-          <span>Checklist Progress</span>
-          <span class="checklist-progress-percentage">0%</span>
-        </div>
-        <div class="checklist-progress-bar">
-          <div class="checklist-progress-fill" style="width: 0%"></div>
-        </div>
-      `;
+    <div class="checklist-progress-text">
+      <span>Checklist Progress</span>
+      <span class="checklist-progress-percentage">0%</span>
+    </div>
+    <div class="checklist-progress-bar">
+      <div class="checklist-progress-fill" style="width: 0%"></div>
+    </div>
+  `;
 
               // Insert before checklist
               checklist.parentNode.insertBefore(progressContainer, checklist);
@@ -2489,11 +2615,11 @@
           if (errorEl) {
             errorEl.style.display = "block";
             errorEl.innerHTML = `
-        <div style="padding: 10px; background: #fee; border: 1px solid #fcc; border-radius: 4px;">
-          <strong>Diagram Error:</strong> ${this.escapeHtml(error.message)}
-          <br><small>Check your Mermaid syntax and try again.</small>
-        </div>
-      `;
+    <div style="padding: 10px; background: #fee; border: 1px solid #fcc; border-radius: 4px;">
+      <strong>Diagram Error:</strong> ${this.escapeHtml(error.message)}
+      <br><small>Check your Mermaid syntax and try again.</small>
+    </div>
+  `;
           }
           if (contentEl) contentEl.style.display = "none";
 
@@ -2675,6 +2801,7 @@
           });
         }
       }
+
       // Initialize Markdown Renderer
       const markdownRenderer = new MarkdownRenderer();
 
