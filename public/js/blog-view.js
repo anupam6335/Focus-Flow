@@ -5,8 +5,8 @@ const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
-document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs.html`;
-document.getElementById("tracker-link").href = `${FRONTEND_URL}/index.html`;
+document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs`;
+document.getElementById("tracker-link").href = `${FRONTEND_URL}/index`;
 
 // Toast Notification System
 class ToastManager {
@@ -449,7 +449,7 @@ class MarkdownRenderer {
 
         if (content.length > 0) {
           const label = document.createElement("label");
-          label.htmlFor = checklistId;
+          labelFor = checklistId;
           label.style.flex = "1";
           label.style.cursor = "pointer";
           label.style.marginBottom = "0";
@@ -1256,6 +1256,9 @@ async function loadBlogWithMarkdown() {
 async function displayBlogWithMarkdown(blog) {
   document.getElementById("blogArticle").style.display = "block";
 
+    // Update SEO meta tags dynamically
+  updateSEOMetaTags(blog);
+
   // Set basic info
   document.getElementById("blogTitle").textContent = blog.title;
   document.getElementById("blogAuthor").textContent = `By ${blog.author}`;
@@ -1319,6 +1322,90 @@ async function displayBlogWithMarkdown(blog) {
   // Set up header actions
   setupBlogHeaderActions(blog);
 }
+
+
+// SIMPLIFIED SEO Optimization - Single Schema
+function updateSEOMetaTags(blog) {
+  const baseUrl = 'https://focus-flow-lopn.onrender.com';
+  const blogUrl = `${baseUrl}/blogs/${blog.slug}`;
+  
+  // Update document title
+  document.title = `${blog.title} - FocusFlow Blog | Productivity & Time Management`;
+  
+  // Update meta description
+  const description = blog.content 
+    ? blog.content.substring(0, 160).replace(/[#*`]/g, '') + '...'
+    : 'Read this article on FocusFlow Blog for productivity tips and time management strategies.';
+  
+  // Update meta tags
+  updateMetaTag('description', description);
+  updateMetaTag('og:title', blog.title);
+  updateMetaTag('og:description', description);
+  updateMetaTag('og:url', blogUrl);
+  updateMetaTag('twitter:title', blog.title);
+  updateMetaTag('twitter:description', description);
+  updateMetaTag('twitter:url', blogUrl);
+  
+  // Update canonical URL
+  const canonicalLink = document.querySelector('link[rel="canonical"]');
+  if (canonicalLink) {
+    canonicalLink.href = blogUrl;
+  }
+  
+  // Update SINGLE schema
+  updateSingleSchema(blog, blogUrl);
+}
+
+function updateMetaTag(property, content) {
+  let meta = document.querySelector(`meta[name="${property}"]`);
+  if (!meta) {
+    meta = document.querySelector(`meta[property="${property}"]`);
+  }
+  if (meta) {
+    meta.setAttribute('content', content);
+  }
+}
+
+// SINGLE Schema Update Function
+function updateSingleSchema(blog, blogUrl) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": blogUrl
+    },
+    "headline": blog.title,
+    "description": blog.content ? blog.content.substring(0, 160).replace(/[#*`]/g, '') + '...' : 'Productivity blog post',
+    "image": "https://focus-flow-lopn.onrender.com/assets/user-blog-app-screenshot.jpg",
+    "author": {
+      "@type": "Person",
+      "name": blog.author || "FocusFlow Team"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FocusFlow",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://focus-flow-lopn.onrender.com/assets/focusflow.png"
+      }
+    },
+    "datePublished": blog.createdAt || new Date().toISOString(),
+    "dateModified": blog.updatedAt || blog.createdAt || new Date().toISOString(),
+    "articleSection": "Productivity",
+    "keywords": blog.tags ? blog.tags.join(', ') : "productivity, time management, focus",
+    "inLanguage": "en-US",
+    "wordCount": blog.content ? blog.content.split(' ').length : 0
+  };
+
+  // Update the single schema script
+  const schemaScript = document.getElementById('blog-schema');
+  if (schemaScript) {
+    schemaScript.textContent = JSON.stringify(schema);
+  }
+}
+
+
 // Setup blog header actions
 function setupBlogHeaderActions(blog) {
   const headerActionsContainer = document.getElementById("blogHeaderActions");
@@ -1512,7 +1599,7 @@ async function deleteBlog(slug) {
     if (result.success) {
       toastManager.success("Blog deleted successfully!", "Blog Deleted");
       setTimeout(() => {
-        window.location.href = "https://focus-flow-lopn.onrender.com/blogs.html";
+        window.location.href = "https://focus-flow-lopn.onrender.com/blogs";
       }, 1500);
     } else {
       toastManager.error(result.error, "Delete Failed");

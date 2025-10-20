@@ -2478,7 +2478,7 @@ function renderTable() {
 
     // Add click event to redirect to day-details
     dayCell.addEventListener("click", () => {
-      window.location.href = `/day-details.html?day=${dayData.day}`;
+      window.location.href = `/day-details?day=${dayData.day}`;
     });
 
     // Add current day indicator

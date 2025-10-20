@@ -1,14 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
+    <!-- Essential Meta Tags -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary Meta Tags -->
+    <title>
+      FocusFlow – Track Your Progress, Master Your Journey | DSA Tracker
+    </title>
+    <meta
+      name="title"
+      content="FocusFlow – Track Your Progress, Master Your Journey | DSA Tracker"
+    />
+    <meta
+      name="description"
+      content="Track your DSA progress with FocusFlow. Monitor daily coding questions, analyze streaks, visualize consistency, and master your programming journey with our comprehensive progress tracker."
+    />
+    <meta
+      name="keywords"
+      content="DSA tracker, coding progress, programming journey, leetcode tracker, coding streak, algorithm practice, data structures, coding consistency, programming goals"
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://focus-flow-lopn.onrender.com/" />
+    <meta
+      property="og:title"
+      content="FocusFlow – Track Your Progress, Master Your Journey"
+    />
+    <meta
+      property="og:description"
+      content="Track your DSA progress with FocusFlow. Monitor daily coding questions, analyze streaks, and master your programming journey."
+    />
+    <meta
+      property="og:image"
+      content="https://focus-flow-lopn.onrender.com/assets/og-image.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="FocusFlow" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://focus-flow-lopn.onrender.com/" />
+    <meta
+      property="twitter:title"
+      content="FocusFlow – Track Your Progress, Master Your Journey"
+    />
+    <meta
+      property="twitter:description"
+      content="Track your DSA progress with FocusFlow. Monitor daily coding questions, analyze streaks, and master your programming journey."
+    />
+    <meta
+      property="twitter:image"
+      content="https://focus-flow-lopn.onrender.com/assets/twitter-image.jpg"
+    />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="author" content="FocusFlow" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="theme-color" content="#58A6FF" />
+    <meta name="msapplication-TileColor" content="#58A6FF" />
+
+    <!-- Structured Data / JSON-LD with Company Logo -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FocusFlow",
+        "description": "DSA Progress Tracker for monitoring coding questions, streaks, and programming journey",
+        "url": "https://focus-flow-lopn.onrender.com/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web Browser",
+        "permissions": "browser",
+        "image": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+        "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+        "screenshot": "https://focus-flow-lopn.onrender.com/assets/app-screenshot.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "FocusFlow",
+          "url": "https://focus-flow-lopn.onrender.com/",
+          "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+          "sameAs": [
+            "https://github.com/anupam6335/Focus-Flow",
+            "https://twitter.com/focusflow",
+            "https://linkedin.com/company/focusflow"
+          ]
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "FocusFlow",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+            "width": 300,
+            "height": 100
+          }
+        },
+        "featureList": [
+          "Daily Progress Tracking",
+          "Consistency Heatmap",
+          "Streak Analytics",
+          "Question Management",
+          "Progress Visualization"
+        ]
+      }
+    </script>
+
+    <!-- Additional Schema for Educational Purpose with Logo -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LearningResource",
+        "name": "FocusFlow DSA Tracker",
+        "description": "Track and master Data Structures and Algorithms with daily progress monitoring",
+        "learningResourceType": "Programming Tool",
+        "educationalLevel": "Beginner to Advanced",
+        "typicalAgeRange": "16-99",
+        "provider": {
+          "@type": "Organization",
+          "name": "FocusFlow",
+          "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png"
+        },
+        "image": "https://focus-flow-lopn.onrender.com/assets/learning-resource-image.jpg"
+      }
+    </script>
+
+    <!-- Organization Schema for Better Brand Recognition -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "FocusFlow",
+        "url": "https://focus-flow-lopn.onrender.com/",
+        "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+        "description": "Building tools to help developers track and master their programming journey",
+        "sameAs": [
+          "https://github.com/anupam6335/Focus-Flow",
+          "https://twitter.com/focusflow",
+          "https://linkedin.com/company/focusflow"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@notavailable.com",
+          "contactType": "customer support"
+        }
+      }
+    </script>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://focus-flow-lopn.onrender.com/" />
+
+    <!-- Favicon and App Icons -->
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/favicon-32x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/favicon-16x16.png"
+    />
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="css/theme.css" as="style" />
+    <link rel="preload" href="css/main.css" as="style" />
+    <link rel="preload" href="js/main.js" as="script" />
+
+    <!-- CSS Files -->
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/past-day.css" />
     <link rel="stylesheet" href="css/main.css" />
-    <title>FocusFlow – Track Your Progress, Master Your Journey</title>
   </head>
+
   <body>
     <!-- Main Container -->
     <div class="main-container">
@@ -19,9 +202,9 @@
             <div class="header-container">
               <h1 class="site-logo">FocusFlow</h1>
               <div class="header-controls">
-                <a href="/blogs.html" class="nav-link blog-link">📝 Blogs</a>
+                <a href="/blogs" class="nav-link blog-link">📝 Blogs</a>
 
-                <a href="/profile.html" class="nav-link profile-link"
+                <a href="/profile" class="nav-link profile-link"
                   >👤 Profile</a
                 >
                 <div id="syncStatus" class="sync-status">
@@ -250,7 +433,7 @@
                 <span
                   >Logged in as:
                   <a
-                    href="/profile.html"
+                    href="/profile"
                     style="
                       color: #d0d7de;
                       text-decoration: none;

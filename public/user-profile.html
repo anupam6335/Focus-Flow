@@ -1,13 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
+    <!-- Essential Meta Tags -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary Meta Tags -->
+    <title>
+      User Profile - FocusFlow | View Coding Progress & Achievements
+    </title>
+    <meta
+      name="title"
+      content="User Profile - FocusFlow | View Coding Progress & Achievements"
+    />
+    <meta
+      name="description"
+      content="View comprehensive coding profile on FocusFlow. Track achievements, progress analytics, consistency heatmap, and programming journey with detailed statistics."
+    />
+    <meta
+      name="keywords"
+      content="coding profile, programming achievements, DSA progress, coding statistics, programming journey, developer profile, coding streaks, problem solving tracker"
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="profile" />
+    <meta property="og:url" content="https://focus-flow-lopn.onrender.com/user-profile" />
+    <meta
+      property="og:title"
+      content="User Profile - FocusFlow | Coding Progress Tracker"
+    />
+    <meta
+      property="og:description"
+      content="View coding achievements, progress analytics, and programming journey with FocusFlow profile."
+    />
+    <meta
+      property="og:image"
+      content="https://focus-flow-lopn.onrender.com/assets/profile-og-image.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="FocusFlow" />
+    <meta
+      property="profile:username"
+      id="metaProfileUsername"
+      content="Loading..."
+    />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://focus-flow-lopn.onrender.com/user-profile" />
+    <meta
+      property="twitter:title"
+      content="User Profile - FocusFlow | Coding Progress Tracker"
+    />
+    <meta
+      property="twitter:description"
+      content="View coding achievements, progress analytics, and programming journey with FocusFlow profile."
+    />
+    <meta
+      property="twitter:image"
+      content="https://focus-flow-lopn.onrender.com/assets/profile-twitter-image.jpg"
+    />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="author" content="FocusFlow" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="theme-color" content="#58A6FF" />
+    <meta name="msapplication-TileColor" content="#58A6FF" />
+
+    <!-- Structured Data / JSON-LD for Profile Page -->
+    <script type="application/ld+json" id="profileSchema">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "name": "FocusFlow User Profile",
+        "description": "Comprehensive coding progress and achievement tracking profile",
+        "url": "https://focus-flow-lopn.onrender.com/user-profile",
+        "screenshot": "https://focus-flow-lopn.onrender.com/assets/user-profile-app-screenshot.png",
+        "mainEntity": {
+          "@type": "Person",
+          "name": "Loading...",
+          "description": "Active programmer tracking DSA progress and coding achievements",
+          "memberOf": {
+            "@type": "Organization",
+            "name": "FocusFlow Coding Community"
+          },
+          "knowsAbout": [
+            "Data Structures",
+            "Algorithms",
+            "Problem Solving",
+            "Programming",
+            "Coding Challenges"
+          ]
+        },
+        "isPartOf": {
+          "@type": "WebApplication",
+          "name": "FocusFlow",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web Browser",
+          "screenshot": "https://focus-flow-lopn.onrender.com/assets/user-profile-app-screenshot.png"
+        }
+      }
+    </script>
+
+    <!-- Additional Schema for Learning Resource -->
+    <script type="application/ld+json" id="learningResourceSchema">
+      {
+        "@context": "https://schema.org",
+        "@type": "LearningResource",
+        "name": "FocusFlow Profile Analytics",
+        "description": "Track and visualize coding progress, achievements, and consistency in programming journey",
+        "learningResourceType": "Progress Tracking Tool",
+        "educationalLevel": "Beginner to Advanced",
+        "typicalAgeRange": "16-99",
+        "assesses": "Programming Skills, Problem Solving, Consistency",
+        "competencyRequired": "Basic Programming Knowledge",
+        "screenshot": "https://focus-flow-lopn.onrender.com/assets/user-profile-app-screenshot.png",
+        "provider": {
+          "@type": "Organization",
+          "name": "FocusFlow",
+          "url": "https://focus-flow-lopn.onrender.com/"
+        },
+        "url": "https://focus-flow-lopn.onrender.com/user-profile"
+      }
+    </script>
+
+    <!-- Canonical URL - Will be updated dynamically -->
+    <link
+      rel="canonical"
+      id="canonicalUrl"
+      href="https://focus-flow-lopn.onrender.com/user-profile"
+    />
+
+    <!-- Favicon and App Icons -->
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/favicon-16x16.png"
+    />
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="css/theme.css" as="style" />
+    <link rel="preload" href="css/user-profile.css" as="style" />
+    <link rel="preload" href="js/user-profile.js" as="script" />
+
+    <!-- CSS Files -->
     <link rel="stylesheet" href="css/theme.css" />
     <title>User Profile - FocusFlow</title>
     <link rel="stylesheet" href="css/user-profile.css" />
   </head>
+
   <body>
     <div class="container">
       <header>
@@ -19,14 +178,14 @@
             >
           </h1>
           <div class="nav-links">
-            <a href="/index.html" class="nav-link">← Back to Tracker</a>
-            <a href="/blogs.html" class="nav-link">📝 Blogs</a>
-            <a href="/profile.html" class="nav-link">👤 My Profile</a>
+            <a href="/index" class="nav-link">← Back to Tracker</a>
+            <a href="/blogs" class="nav-link">📝 Blogs</a>
+            <a href="/profile" class="nav-link">👤 My Profile</a>
           </div>
         </div>
       </header>
 
-      <!-- Reuse the exact same structure as profile.html -->
+      <!-- Reuse the exact same structure as profile -->
       <div class="main-container">
         <!-- Left Column (70%) -->
         <div class="left-column">

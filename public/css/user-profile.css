@@ -1,4 +1,4 @@
-/* Reuse all the same styles from profile.html */
+/* Reuse all the same styles from profile */
 
 /* CodeLeaf Theme Variables - Consistent with existing system */
 :root {
@@ -130,7 +130,7 @@ h1 {
   border-color: var(--codeleaf-accent-primary);
 }
 
-/* Main Layout - 70/30 split like index.html */
+/* Main Layout - 70/30 split like index */
 .main-container {
   display: flex;
   gap: var(--codeleaf-space-8);
@@ -594,7 +594,7 @@ h1 {
   gap: 4px;
 }
 
-/* Consistency Map - Mirror from index.html */
+/* Consistency Map - Mirror from index */
 .consistency-map {
   background: var(--codeleaf-bg-primary);
   border: 1px solid var(--codeleaf-border-light);
