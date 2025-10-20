@@ -13,7 +13,7 @@ async function loadUserProfile() {
   const targetUsername = getTargetUsername();
   if (!targetUsername) {
     // Redirect to home if no user specified
-    window.location.href = "/index";
+    window.location.href = "/";
     return;
   }
 
@@ -50,7 +50,7 @@ async function loadUserProfile() {
     console.error("Error loading user profile:", error);
     showError("User not found. Redirecting to home...");
     setTimeout(() => {
-      window.location.href = "/index";
+      window.location.href = "/";
     }, 3000);
   }
 

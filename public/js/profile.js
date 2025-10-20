@@ -1368,7 +1368,7 @@ async function loadUserProfile() {
   try {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      window.location.href = "/index";
+      window.location.href = "/";
       return;
     }
 

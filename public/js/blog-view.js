@@ -6,7 +6,7 @@ const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
 document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs`;
-document.getElementById("tracker-link").href = `${FRONTEND_URL}/index`;
+document.getElementById("tracker-link").href = `${FRONTEND_URL}/`;
 
 // Toast Notification System
 class ToastManager {
