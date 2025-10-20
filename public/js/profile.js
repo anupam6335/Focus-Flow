@@ -1368,7 +1368,7 @@ async function loadUserProfile() {
   try {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      window.location.href = "/index.html";
+      window.location.href = "/index";
       return;
     }
 
@@ -1386,6 +1386,7 @@ async function loadUserProfile() {
 
     if (result.success) {
       currentUserData = result.user;
+      updateProfileMetaTags(currentUserData); // Add this line
       renderUserProfile();
       renderAchievements();
       renderQuestionHistory();
@@ -1406,7 +1407,218 @@ async function loadUserProfile() {
   }
 }
 
-// Enhanced render function with all new features - FIXED for profile.html
+// Enhanced function to update ALL meta tags and both schemas dynamically
+function updateProfileMetaTags(userData) {
+  if (!userData) return;
+
+  const username = userData.username || "Coding Enthusiast";
+  const totalSolved = userData.statistics?.totalProblemsSolved || 0;
+  const currentStreak = userData.statistics?.currentStreak || 0;
+  const totalBlogs = userData.statistics?.totalBlogsPublished || 0;
+  const blogLikes = userData.statistics?.totalBlogLikes || 0;
+  const activeDays = calculateActiveDays(userData);
+  const userLevel = calculateUserLevel(userData).level;
+  const totalXP = calculateTotalXP(userData);
+  const joinDate = userData.accountCreated
+    ? new Date(userData.accountCreated).getFullYear()
+    : new Date().getFullYear();
+
+  console.log("Updating meta tags for user:", username);
+
+  // Update Page Title
+  document.title = `${username} - ${userLevel} Level | FocusFlow Profile`;
+
+  // Update Meta Description
+  const metaDescription = `${username} is a ${userLevel} level programmer on FocusFlow with ${totalSolved} problems solved, ${currentStreak} day streak, and ${totalBlogs} blogs published. Track coding progress and achievements.`;
+  updateMetaTag("name", "description", metaDescription);
+
+  // Update Open Graph Tags
+  updateMetaTag(
+    "property",
+    "og:title",
+    `${username} - FocusFlow Coding Profile`
+  );
+  updateMetaTag(
+    "property",
+    "og:description",
+    `${username}'s coding journey: ${totalSolved} problems solved, ${currentStreak} day streak, ${userLevel} level`
+  );
+  updateMetaTag("property", "profile:username", username);
+
+  // Update Twitter Tags
+  updateMetaTag(
+    "property",
+    "twitter:title",
+    `${username} - FocusFlow Coding Profile`
+  );
+  updateMetaTag(
+    "property",
+    "twitter:description",
+    `${username}'s coding journey: ${totalSolved} problems solved, ${currentStreak} day streak`
+  );
+
+  // Update Both JSON-LD Schemas with screenshot
+  updateProfileSchema(
+    username,
+    totalSolved,
+    currentStreak,
+    totalBlogs,
+    blogLikes,
+    activeDays,
+    userLevel,
+    totalXP,
+    joinDate
+  );
+  updateLearningResourceSchema(username, totalSolved, currentStreak, userLevel);
+
+  // Update keywords with user-specific terms
+  updateMetaTag(
+    "name",
+    "keywords",
+    `coding profile, ${username}, ${userLevel} programmer, DSA progress, ${totalSolved} problems solved, coding achievements, ${currentStreak} day streak`
+  );
+}
+
+// Helper function to update meta tags
+function updateMetaTag(attribute, value, content) {
+  let meta = document.querySelector(`meta[${attribute}="${value}"]`);
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute(attribute, value);
+    document.head.appendChild(meta);
+  }
+  meta.content = content;
+}
+
+// Update Profile Schema with real user data and screenshot
+function updateProfileSchema(
+  username,
+  totalSolved,
+  currentStreak,
+  totalBlogs,
+  blogLikes,
+  activeDays,
+  userLevel,
+  totalXP,
+  joinDate
+) {
+  const schemaScript = document.getElementById("profileSchema");
+  if (!schemaScript) {
+    console.error("Profile schema script element not found");
+    return;
+  }
+
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    name: `${username}'s Coding Profile - FocusFlow`,
+    description: `Comprehensive coding progress tracking for ${username} with ${totalSolved} problems solved and ${currentStreak} day streak`,
+    url: `https://focus-flow-lopn.onrender.com/profile`,
+    screenshot: "https://focus-flow-lopn.onrender.com/assets/profile-app-screenshot.png",
+    mainEntity: {
+      "@type": "Person",
+      name: username,
+      description: `${userLevel} level programmer with ${totalSolved} coding problems solved and active since ${joinDate}`,
+      memberOf: {
+        "@type": "Organization",
+        name: "FocusFlow Coding Community",
+        url: "https://focus-flow-lopn.onrender.com",
+      },
+      knowsAbout: [
+        "Data Structures",
+        "Algorithms",
+        "Problem Solving",
+        "Programming",
+        "Coding Challenges",
+        "Software Development",
+      ],
+      hasCredential: {
+        "@type": "EducationalOccupationalCredential",
+        name: `${userLevel} Level Programmer`,
+        credentialCategory: "Skill Level",
+        competencyRequired: `${totalSolved}+ problems solved`,
+      },
+    },
+    isPartOf: {
+      "@type": "WebApplication",
+      name: "FocusFlow",
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "Web Browser",
+      description:
+        "Track your DSA progress and master your programming journey",
+      url: "https://focus-flow-lopn.onrender.com",
+      screenshot: "https://focus-flow-lopn.onrender.com/assets/profile-app-screenshot.png",
+    },
+  };
+
+  schemaScript.textContent = JSON.stringify(schemaData);
+  console.log("Updated Profile Schema for user:", username);
+}
+
+// Update Learning Resource Schema with real user data and screenshot
+function updateLearningResourceSchema(
+  username,
+  totalSolved,
+  currentStreak,
+  userLevel
+) {
+  const schemaScript = document.getElementById("learningResourceSchema");
+  if (!schemaScript) {
+    console.error("Learning Resource schema script element not found");
+    return;
+  }
+
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "LearningResource",
+    name: `${username}'s Progress Dashboard - FocusFlow`,
+    description: `${username}'s programming journey tracking: ${totalSolved} problems solved, ${currentStreak} day streak, ${userLevel} level achievement`,
+    learningResourceType: "Progress Tracking Dashboard",
+    educationalLevel: getUserEducationalLevel(totalSolved),
+    typicalAgeRange: "16-99",
+    assesses: [
+      "Programming Skills",
+      "Problem Solving Ability",
+      "Algorithm Knowledge",
+      "Data Structure Proficiency",
+      "Coding Consistency",
+    ],
+    competencyRequired: "Basic Programming Knowledge",
+    screenshot: "https://focus-flow-lopn.onrender.com/assets/profile-app-screenshot.png",
+    educationalAlignment: {
+      "@type": "AlignmentObject",
+      alignmentType: "teaches",
+      educationalFramework: "Computer Science Curriculum",
+      targetName: "Programming Proficiency",
+    },
+    provider: {
+      "@type": "Organization",
+      name: "FocusFlow",
+      url: "https://focus-flow-lopn.onrender.com/",
+    },
+    url: "https://focus-flow-lopn.onrender.com/profile",
+    timeRequired: `PT${Math.round(totalSolved * 30)}M`,
+    hasPart: {
+      "@type": "WebApplication",
+      name: "Progress Analytics",
+      description: "Interactive progress charts and consistency tracking",
+      screenshot: "https://focus-flow-lopn.onrender.com/assets/profile-app-screenshot.png",
+    },
+  };
+
+  schemaScript.textContent = JSON.stringify(schemaData);
+  console.log("Updated Learning Resource Schema for user:", username);
+}
+
+// Helper function to determine educational level based on problems solved
+function getUserEducationalLevel(totalSolved) {
+  if (totalSolved >= 100) return "Advanced";
+  if (totalSolved >= 50) return "Intermediate";
+  if (totalSolved >= 10) return "Beginner";
+  return "Novice";
+}
+
+// Enhanced render function with all new features - FIXED for profile
 function renderUserProfile() {
   if (!currentUserData) return; // Use currentUserData instead of currentViewingUser
 
@@ -1434,7 +1646,7 @@ function renderUserProfile() {
 
   // Update profile badge based on context
   const profileBadge = document.getElementById("profileOwnerBadge");
-  if (window.location.pathname.includes("user-profile.html")) {
+  if (window.location.pathname.includes("user-profile")) {
     profileBadge.textContent = "Viewing Profile";
   } else {
     profileBadge.textContent = "My Profile";
@@ -1669,7 +1881,7 @@ function renderConsistencyMap() {
   renderHeatmap(heatmapData, heatmapGrid, monthsRow);
 }
 
-// Heatmap rendering function (similar to index.html)
+// Heatmap rendering function (similar to index)
 function renderHeatmap(activityData, heatmapGrid, monthsRow) {
   heatmapGrid.innerHTML = "";
   monthsRow.innerHTML = "";
@@ -2088,7 +2300,7 @@ function generatePixelAvatar(username) {
 // View user profile - opens in new page
 function viewUserProfile(username) {
   // Navigate to profile page with user parameter
-  window.location.href = `/user-profile.html?user=${encodeURIComponent(
+  window.location.href = `/user-profile?user=${encodeURIComponent(
     username
   )}`;
 }
@@ -2107,7 +2319,7 @@ function escapeHtml(unsafe) {
 document.addEventListener("DOMContentLoaded", function () {
   const token = localStorage.getItem("authToken");
   if (!token) {
-    window.location.href = "/index.html";
+    window.location.href = "/index";
     return;
   }
   loadUserProfile();

@@ -1,10 +1,165 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
+    <!-- Essential Meta Tags -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blogs - FocusFlow</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary Meta Tags -->
+    <title>
+      Programming Blogs - FocusFlow | Coding Tutorials & DSA Insights
+    </title>
+    <meta
+      name="title"
+      content="Programming Blogs - FocusFlow | Coding Tutorials & DSA Insights"
+    />
+    <meta
+      name="description"
+      content="Explore programming blogs on FocusFlow. Read coding tutorials, DSA insights, algorithm explanations, and programming tips from the developer community."
+    />
+    <meta
+      name="keywords"
+      content="programming blogs, coding tutorials, DSA blogs, algorithm explanations, programming tips, coding community, software development blogs, programming insights"
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://focus-flow-lopn.onrender.com/blogs" />
+    <meta
+      property="og:title"
+      content="Programming Blogs - FocusFlow | Coding Tutorials & Community"
+    />
+    <meta
+      property="og:description"
+      content="Explore programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community."
+    />
+    <meta
+      property="og:image"
+      content="https://focus-flow-lopn.onrender.com/assets/blogs-og-image.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="FocusFlow" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://focus-flow-lopn.onrender.com/blogs" />
+    <meta
+      property="twitter:title"
+      content="Programming Blogs - FocusFlow | Coding Tutorials & Community"
+    />
+    <meta
+      property="twitter:description"
+      content="Explore programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community."
+    />
+    <meta
+      property="twitter:image"
+      content="https://focus-flow-lopn.onrender.com/assets/blogs-twitter-image.jpg"
+    />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="author" content="FocusFlow" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="theme-color" content="#58A6FF" />
+    <meta name="msapplication-TileColor" content="#58A6FF" />
+
+    <!-- Structured Data / JSON-LD for Blogs Page -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Blogs - FocusFlow",
+        "description": "A collection of programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community",
+        "url": "https://focus-flow-lopn.onrender.com/blogs",
+        "screenshot": "https://focus-flow-lopn.onrender.com/assets/blog-app-screenshot.png",
+        "isPartOf": {
+          "@type": "WebApplication",
+          "name": "FocusFlow",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web Browser"
+        },
+        "about": {
+          "@type": "Thing",
+          "name": "Computer Programming"
+        },
+        "mainEntity": {
+          "@type": "ItemList",
+          "numberOfItems": 0,
+          "itemListElement": []
+        }
+      }
+    </script>
+
+    <!-- Additional Schema for Blog Platform -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "FocusFlow Programming Blogs",
+        "description": "Community-driven programming blog platform featuring coding tutorials, DSA insights, and algorithm explanations",
+        "url": "https://focus-flow-lopn.onrender.com/blogs",
+        "publisher": {
+          "@type": "Organization",
+          "name": "FocusFlow",
+          "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png"
+        },
+        "blogPost": [],
+        "inLanguage": "en-US",
+        "isAccessibleForFree": true,
+        "keywords": "programming, coding, algorithms, data structures, tutorials, DSA"
+      }
+    </script>
+
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "FocusFlow",
+        "url": "https://focus-flow-lopn.onrender.com/",
+        "logo": "https://focus-flow-lopn.onrender.com/assets/focusflow.png",
+        "description": "Building tools to help developers track and master their programming journey",
+        "sameAs": [
+          "https://github.com/anupam6335/Focus-Flow",
+          "https://twitter.com/focusflow",
+          "https://linkedin.com/company/focusflow"
+        ]
+      }
+    </script>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://focus-flow-lopn.onrender.com/blogs" />
+
+    <!-- Favicon and App Icons -->
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/favicon-16x16.png"
+    />
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="css/theme.css" as="style" />
+    <link rel="preload" href="css/blogs.css" as="style" />
+    <link rel="preload" href="js/blogs.js" as="script" />
+
+    <!-- CSS Files -->
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/blogs.css" />
   </head>
@@ -15,7 +170,7 @@
           <h1 class="site-logo">FocusFlow Blogs</h1>
           <div class="nav-links">
             <a id="back-link" class="nav-link">← Back to Tracker</a>
-            <a href="/profile.html" class="nav-link profile-link">👤 Profile</a>
+            <a href="/profile" class="nav-link profile-link">👤 Profile</a>
             <a id="blog-link" class="nav-link active">Blogs</a>
           </div>
         </div>

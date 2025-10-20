@@ -1,24 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blog - FocusFlow</title>
-    <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
-    <link rel="stylesheet" href="/css/theme.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Primary Meta Tags -->
+  <title id="dynamic-title">FocusFlow Blog - Productivity Tips & Time Management Strategies</title>
+  <meta name="description" id="dynamic-description" content="Discover expert productivity tips, time management strategies, and workflow optimization techniques on FocusFlow Blog. Boost your efficiency and achieve more." />
+  <meta name="keywords" content="productivity, time management, focus, workflow, efficiency, task management, personal development" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article" />
+  <meta property="og:url" id="og-url" content="https://focus-flow-lopn.onrender.com/blogs/" />
+  <meta property="og:title" id="og-title" content="FocusFlow Blog - Productivity Tips & Time Management" />
+  <meta property="og:description" id="og-description" content="Discover expert productivity tips and time management strategies to boost your efficiency." />
+  <meta property="og:image" content="https://focus-flow-lopn.onrender.com/assets/user-blog-app-screenshot.jpg" />
+  <meta property="og:site_name" content="FocusFlow" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" id="twitter-url" content="https://focus-flow-lopn.onrender.com/blogs/" />
+  <meta property="twitter:title" id="twitter-title" content="FocusFlow Blog - Productivity Tips & Time Management" />
+  <meta property="twitter:description" id="twitter-description" content="Discover expert productivity tips and time management strategies to boost your efficiency." />
+  <meta property="twitter:image" content="https://focus-flow-lopn.onrender.com/assets/twitter-image.jpg" />
+  <meta property="twitter:creator" content="@focusflow" />
+  
+  <!-- Additional SEO Meta Tags -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="author" content="FocusFlow" />
+  <link rel="canonical" id="canonical-url" href="https://focus-flow-lopn.onrender.com/blogs/" />
+  <meta name="theme-color" content="#3b82f6" />
 
-    <!-- Markdown Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.7/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css"
-    />
+  <!-- SINGLE Schema - Will be updated dynamically -->
+  <script type="application/ld+json" id="blog-schema">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://focus-flow-lopn.onrender.com/blogs/"
+      },
+      "headline": "FocusFlow Blog - Productivity Tips",
+      "description": "Discover expert productivity tips and time management strategies",
+      "image": "https://focus-flow-lopn.onrender.com/assets/user-blog-app-screenshot.jpg",
+      "author": {
+        "@type": "Organization",
+        "name": "FocusFlow"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FocusFlow",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://focus-flow-lopn.onrender.com/assets/focusflow.png"
+        }
+      },
+      "datePublished": "2024-01-01T00:00:00+00:00",
+      "dateModified": "2024-01-01T00:00:00+00:00"
+    }
+  </script>
 
-    <link rel="stylesheet" href="/css/blog-view.css" />
-  </head>
+  <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+  <link rel="stylesheet" href="/css/theme.css" />
+  
+  <!-- Markdown Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.7/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
+  <link rel="stylesheet" href="/css/blog-view.css" />
+</head>
+
   <body>
     <div class="container">
       <header>
@@ -26,7 +78,7 @@
           <h1 class="site-logo">FocusFlow</h1>
           <div class="nav-links">
             <a id="back-to-blogs" class="nav-link">← Back to Blogs</a>
-            <a href="/profile.html" class="nav-link profile-link">👤 Profile</a>
+            <a href="/profile" class="nav-link profile-link">👤 Profile</a>
             <a id="tracker-link" class="nav-link">Tracker</a>
           </div>
         </div>
@@ -64,7 +116,7 @@
                 permission to view it.
               </p>
               <a
-                href="https://focus-flow-lopn.onrender.com/blogs.html"
+                href="https://focus-flow-lopn.onrender.com/blogs"
                 class="btn btn-primary"
                 style="margin-top: 15px"
                 >Back to Blogs</a
@@ -94,7 +146,7 @@
 
               <div class="blog-actions" id="blogActions">
                 <a
-                  href="https://focus-flow-lopn.onrender.com/blogs.html"
+                  href="https://focus-flow-lopn.onrender.com/blogs"
                   class="btn btn-secondary"
                   >← Back to Blogs</a
                 >

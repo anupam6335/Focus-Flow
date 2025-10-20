@@ -8,8 +8,8 @@ const BASE_URL = "https://focus-flow-lopn.onrender.com";
 // URL Redirect
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
-document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
-document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;
+document.getElementById("back-link").href = `${FRONTEND_URL}/index`;
+document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs`;
 
 // Toast Notification System
 class ToastManager {
@@ -200,6 +200,9 @@ async function loadBlogs(page = 1) {
     if (result.success) {
       displayBlogs(result.blogs);
 
+      // UPDATE: Call meta tag updater here
+      updateBlogsMetaTags(result);
+
       // Setup pagination only for tabs that support it
       if (currentTab !== "popular") {
         setupPagination(result.currentPage, result.totalPages, result.total);
@@ -273,12 +276,163 @@ async function updateTabCounts() {
     } else {
       document.getElementById("popular-blogs-count").textContent = "0";
     }
+
+    // UPDATE: Update meta tags with the latest counts
+    const blogsData = {
+      total: allBlogs.success ? allBlogs.total : 0,
+      popularCount: popularBlogs.success ? popularBlogs.blogs?.length : 0,
+      recentBlogs: allBlogs.success ? allBlogs.blogs || [] : [],
+    };
+
+    updateBlogsMetaTags(blogsData);
   } catch (error) {
     console.error("Error updating tab counts:", error);
     // Set fallback values
     document.getElementById("all-blogs-count").textContent = "0";
     document.getElementById("my-blogs-count").textContent = "0";
     document.getElementById("popular-blogs-count").textContent = "0";
+  }
+}
+
+// Enhanced function to update meta tags dynamically for blogs page
+function updateBlogsMetaTags(blogsData) {
+  if (!blogsData || !blogsData.blogs) return;
+
+  const totalBlogs = blogsData.total || 0;
+  const popularBlogs = blogsData.popularCount || 0;
+  const recentBlogs = blogsData.recentBlogs || [];
+
+  // console.log("Updating blogs meta tags with:", totalBlogs, "blogs");
+
+  // Update Page Title with dynamic count
+  document.title = `Programming Blogs (${totalBlogs}+) - FocusFlow | Coding Community`;
+
+  // Update Meta Description
+  const metaDescription = `Explore ${totalBlogs}+ programming blogs on FocusFlow. Read coding tutorials, DSA insights, algorithm explanations, and programming tips from our developer community.`;
+  updateMetaTag("name", "description", metaDescription);
+
+  // Update Open Graph Tags
+  updateMetaTag(
+    "property",
+    "og:title",
+    `Programming Blogs (${totalBlogs}+) - FocusFlow Coding Community`
+  );
+  updateMetaTag(
+    "property",
+    "og:description",
+    `Explore ${totalBlogs}+ programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community.`
+  );
+
+  // Update Twitter Tags
+  updateMetaTag(
+    "property",
+    "twitter:title",
+    `Programming Blogs (${totalBlogs}+) - FocusFlow Coding Community`
+  );
+  updateMetaTag(
+    "property",
+    "twitter:description",
+    `Explore ${totalBlogs}+ programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community.`
+  );
+
+  // Update Both JSON-LD Schemas
+  updateBlogsCollectionSchema(totalBlogs, recentBlogs);
+  updateBlogPlatformSchema(totalBlogs, popularBlogs);
+
+  // Update keywords with dynamic terms
+  updateMetaTag(
+    "name",
+    "keywords",
+    `programming blogs, ${totalBlogs}+ coding tutorials, DSA insights, algorithm explanations, programming tips, coding community, software development blogs`
+  );
+}
+
+// Helper function to update meta tags
+function updateMetaTag(attribute, value, content) {
+  let meta = document.querySelector(`meta[${attribute}="${value}"]`);
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute(attribute, value);
+    document.head.appendChild(meta);
+  }
+  meta.content = content;
+}
+
+// Update Blogs Collection Schema with real data
+function updateBlogsCollectionSchema(totalBlogs, recentBlogs) {
+  const schemaScript = document.querySelector(
+    'script[type="application/ld+json"]'
+  );
+  if (!schemaScript) return;
+
+  try {
+    const schemaData = JSON.parse(schemaScript.textContent);
+
+    // Update collection schema
+    schemaData.name = `Programming Blogs (${totalBlogs}+) - FocusFlow`;
+    schemaData.description = `A collection of ${totalBlogs}+ programming blogs, coding tutorials, and DSA insights from the FocusFlow developer community`;
+    schemaData.mainEntity.numberOfItems = totalBlogs;
+
+    // Add recent blog posts to item list
+    if (recentBlogs.length > 0) {
+      schemaData.mainEntity.itemListElement = recentBlogs
+        .slice(0, 10)
+        .map((blog, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "BlogPosting",
+            headline: blog.title,
+            description: blog.content
+              ? blog.content.substring(0, 200)
+              : "Programming blog post",
+            url: `https://focus-flow-lopn.onrender.com/blogs/${blog.slug}`,
+            datePublished: blog.createdAt,
+            author: {
+              "@type": "Person",
+              name: blog.author,
+            },
+            keywords: blog.tags ? blog.tags.join(", ") : "programming, coding",
+          },
+        }));
+    }
+
+    schemaScript.textContent = JSON.stringify(schemaData, null, 2);
+    // console.log("Updated Blogs Collection Schema");
+  } catch (error) {
+    console.error("Error updating blogs schema:", error);
+  }
+}
+
+// Update Blog Platform Schema with real data
+function updateBlogPlatformSchema(totalBlogs, popularBlogs) {
+  const schemaScripts = document.querySelectorAll(
+    'script[type="application/ld+json"]'
+  );
+  if (schemaScripts.length < 2) return;
+
+  try {
+    const schemaData = JSON.parse(schemaScripts[1].textContent);
+
+    // Update blog platform schema
+    schemaData.name = `FocusFlow Programming Blogs (${totalBlogs}+ Articles)`;
+    schemaData.description = `Community-driven programming blog platform featuring ${totalBlogs}+ coding tutorials, DSA insights, and algorithm explanations`;
+
+    // Add statistics
+    schemaData.statistics = {
+      "@type": " QuantitativeValue",
+      name: "Total Blog Posts",
+      value: totalBlogs,
+    };
+
+    if (popularBlogs > 0) {
+      schemaData.award = `Featured in ${popularBlogs}+ popular programming articles`;
+    }
+
+    schemaScripts[1].textContent = JSON.stringify(schemaData, null, 2);
+    // console.log("Updated Blog Platform Schema");
+  } catch (error) {
+    console.error("Error updating blog platform schema:", error);
   }
 }
 
