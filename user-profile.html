@@ -1908,6 +1908,679 @@
           align-self: flex-start;
         }
       }
+
+      /* Enhanced Social Links Section - View Only */
+      .social-links-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-4);
+        margin-bottom: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-sm);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .social-links-section:hover {
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .social-links-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.03),
+          transparent
+        );
+        transition: left 0.8s ease;
+      }
+
+      .social-links-section:hover::before {
+        left: 100%;
+      }
+
+      .social-links-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--codeleaf-space-3);
+      }
+
+      .social-links-title {
+        font-size: var(--codeleaf-font-lg);
+        color: var(--codeleaf-accent-primary);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      /* Social Links Display - Enhanced */
+      .social-links-display {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--codeleaf-space-3);
+      }
+
+      .social-link-display-item {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-3);
+        padding: var(--codeleaf-space-3);
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .social-link-display-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.05),
+          transparent
+        );
+        transition: left 0.6s ease;
+      }
+
+      .social-link-display-item:hover::before {
+        left: 100%;
+      }
+
+      .social-link-display-item:hover {
+        border-color: var(--codeleaf-accent-muted);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-sm);
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .social-link-icon {
+        font-size: var(--codeleaf-font-lg);
+        width: 24px;
+        text-align: center;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-icon {
+        transform: scale(1.1);
+      }
+
+      .social-link-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .social-link-platform {
+        font-weight: 600;
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-sm);
+        margin-bottom: 2px;
+        transition: color 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-platform {
+        color: var(--codeleaf-accent-primary);
+      }
+
+      .social-link-url {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: color 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-url {
+        color: var(--codeleaf-text-secondary);
+      }
+
+      .social-link-display-item:not([href]) {
+        cursor: default;
+        opacity: 0.7;
+      }
+
+      .social-link-display-item:not([href]):hover {
+        transform: none;
+        border-color: var(--codeleaf-border-light);
+      }
+
+      .social-link-display-item:not([href])::before {
+        display: none;
+      }
+
+      /* Platform-specific colors with subtle accents */
+      .social-link-display-item[data-platform="linkedin"] {
+        border-left: 3px solid rgba(0, 119, 181, 0.3);
+      }
+
+      .social-link-display-item[data-platform="github"] {
+        border-left: 3px solid rgba(51, 51, 51, 0.3);
+      }
+
+      .social-link-display-item[data-platform="leetcode"] {
+        border-left: 3px solid rgba(29, 161, 242, 0.3);
+      }
+
+      .social-link-display-item[data-platform="gfg"] {
+        border-left: 3px solid rgba(45, 122, 45, 0.3);
+      }
+
+      .social-link-display-item[data-platform="linkedin"]:hover {
+        border-left-color: #0077b5;
+      }
+
+      .social-link-display-item[data-platform="github"]:hover {
+        border-left-color: #333;
+      }
+
+      .social-link-display-item[data-platform="leetcode"]:hover {
+        border-left-color: #1da1f2;
+      }
+
+      .social-link-display-item[data-platform="gfg"]:hover {
+        border-left-color: #2d7a2d;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .social-links-display {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .social-links-section {
+          padding: var(--codeleaf-space-3);
+        }
+
+        .social-links-title {
+          font-size: var(--codeleaf-font-base);
+        }
+      }
+
+      /* Premium Progress Chart Styles */
+      .progress-chart-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-6);
+        margin-bottom: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-sm);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .progress-chart-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--codeleaf-accent-primary),
+          transparent
+        );
+      }
+
+      .progress-chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--codeleaf-space-6);
+      }
+
+      /* Unified Chart Wrapper */
+      .progress-chart-wrapper {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+        cursor: pointer;
+      }
+
+      .progress-chart-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+        transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      /* Single Continuous Circle - No Gaps */
+      .progress-circle {
+        fill: none;
+        stroke-linecap: butt;
+        transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        transform-origin: center;
+      }
+
+      .progress-circle.total {
+        stroke-width: 8;
+        stroke: var(--codeleaf-bg-tertiary);
+        opacity: 0.15;
+      }
+
+      .progress-circle.easy {
+        stroke-width: 8;
+        stroke: var(--codeleaf-success);
+      }
+
+      .progress-circle.medium {
+        stroke-width: 8;
+        stroke: var(--codeleaf-warning);
+      }
+
+      .progress-circle.hard {
+        stroke-width: 8;
+        stroke: var(--codeleaf-error);
+      }
+
+      /* Enhanced Center Content */
+      .progress-chart-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+        background: var(--codeleaf-bg-primary);
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--codeleaf-border-light);
+        transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      .progress-total {
+        font-size: var(--codeleaf-font-2xl);
+        font-weight: 800;
+        color: transparent;
+        line-height: 1;
+        margin-bottom: var(--codeleaf-space-1);
+        background: linear-gradient(
+          135deg,
+          var(--codeleaf-accent-primary),
+          var(--codeleaf-accent-secondary)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      .progress-label {
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-secondary);
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      /* Enhanced Legend - Clean & Interactive */
+      .progress-legend {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--codeleaf-space-3);
+        width: 100%;
+        max-width: 360px;
+      }
+
+      .legend-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+        padding: var(--codeleaf-space-3);
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        cursor: default;
+        transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .legend-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.1),
+          transparent
+        );
+        transition: left 0.6s ease;
+      }
+
+      .legend-item:hover::before {
+        left: 100%;
+      }
+
+      .legend-item:hover {
+        border-color: var(--codeleaf-accent-muted);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid var(--codeleaf-bg-primary);
+      }
+
+      .legend-color.easy {
+        background: var(--codeleaf-success);
+      }
+
+      .legend-color.medium {
+        background: var(--codeleaf-warning);
+      }
+
+      .legend-color.hard {
+        background: var(--codeleaf-error);
+      }
+
+      .legend-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .legend-difficulty {
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 700;
+        color: var(--codeleaf-text-primary);
+        letter-spacing: 0.3px;
+      }
+
+      .legend-count {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        font-weight: 600;
+      }
+
+      .legend-percentage {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-accent-primary);
+        font-weight: 700;
+        background: var(--codeleaf-bg-tertiary);
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+
+      /* Enhanced Tooltip */
+      .progress-tooltip {
+        position: absolute;
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        padding: var(--codeleaf-space-3);
+        box-shadow: var(--codeleaf-shadow-lg);
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-primary);
+        white-space: nowrap;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        pointer-events: none;
+        backdrop-filter: blur(10px);
+      }
+
+      .progress-tooltip::after {
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--codeleaf-bg-primary);
+      }
+
+      .progress-tooltip.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(-8px);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .progress-chart-wrapper {
+          width: 180px;
+          height: 180px;
+        }
+
+        .progress-chart-center {
+          width: 100px;
+          height: 100px;
+        }
+
+        .progress-total {
+          font-size: var(--codeleaf-font-xl);
+        }
+
+        .progress-label {
+          font-size: var(--codeleaf-font-xs);
+        }
+
+        .progress-legend {
+          grid-template-columns: 1fr;
+          gap: var(--codeleaf-space-2);
+        }
+
+        .legend-item {
+          flex-direction: row;
+          justify-content: flex-start;
+          padding: var(--codeleaf-space-2);
+        }
+
+        .legend-text {
+          align-items: flex-start;
+          flex: 1;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .progress-chart-wrapper {
+          width: 160px;
+          height: 160px;
+        }
+
+        .progress-chart-center {
+          width: 90px;
+          height: 90px;
+        }
+
+        .progress-total {
+          font-size: var(--codeleaf-font-lg);
+        }
+
+        .legend-color {
+          width: 14px;
+          height: 14px;
+        }
+
+        .legend-difficulty {
+          font-size: var(--codeleaf-font-xs);
+        }
+      }
+
+      /* Add these animations to the existing CSS */
+
+      /* Chart States */
+      .progress-chart-wrapper.filtered .progress-circle:not(.active) {
+        opacity: 0.3;
+      }
+
+      .progress-chart-wrapper.filtered .progress-circle.active {
+        stroke-width: 10;
+      }
+
+      /* Enhanced active states */
+      .legend-item.active {
+        background: var(--codeleaf-bg-primary);
+        border-color: var(--codeleaf-accent-primary);
+        box-shadow: var(--codeleaf-shadow-lg);
+        transform: translateY(-1px);
+      }
+
+      .legend-item.active .legend-color {
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .legend-item.active .legend-percentage {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+      }
+
+      /* Ripple effect for interactions */
+      .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(76, 166, 76, 0.3);
+        transform: scale(0);
+        animation: rippleEffect 0.6s linear;
+        pointer-events: none;
+      }
+
+      @keyframes rippleEffect {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(1.2);
+          opacity: 0;
+        }
+      }
+
+      /* Premium Animations */
+      @keyframes chartEntrance {
+        0% {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes segmentPulse {
+        0%,
+        100% {
+          stroke-width: 8;
+        }
+        50% {
+          stroke-width: 10;
+        }
+      }
+
+      @keyframes premiumPulse {
+        0%,
+        100% {
+          stroke-width: 8;
+        }
+        25% {
+          stroke-width: 9;
+        }
+        50% {
+          stroke-width: 10;
+        }
+        75% {
+          stroke-width: 9;
+        }
+      }
+
+      @keyframes countSpring {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.4);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .progress-total.animating {
+        animation: countSpring 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      /* Enhanced hover effects for legend */
+      .legend-item:hover:not(.active) {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: var(--codeleaf-shadow-lg);
+      }
+
+      /* Active segment highlighting */
+      .progress-circle.active {
+        animation: premiumPulse 2s ease-in-out infinite;
+        z-index: 2;
+      }
+
+      /* Enhanced transitions */
+      .progress-circle {
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .progress-chart-center {
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .legend-item {
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      /* Segment highlight on hover */
+      .progress-circle:hover {
+        animation: segmentPulse 1s ease-in-out;
+      }
     </style>
   </head>
   <body>
@@ -1993,6 +2666,23 @@
                   <span class="detail-value" id="maxStreak">0</span>
                 </div>
               </div>
+
+              <!-- Enhanced Social Links Section - View Only -->
+              <div
+                class="social-links-section"
+                id="socialLinksSection"
+                style="margin-top: 20px"
+              >
+                <div class="social-links-header">
+                  <h2 class="social-links-title">🔗 Social Links</h2>
+                </div>
+
+                <!-- Display View Only -->
+                <div class="social-links-display" id="socialLinksDisplay">
+                  <!-- Social links will be dynamically inserted here -->
+                  <div class="loading">Loading social links...</div>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Achievements Section -->
@@ -2022,6 +2712,58 @@
 
         <!-- Right Column (30%) -->
         <div class="right-column">
+          <!-- Premium Interactive Progress Chart -->
+          <div class="progress-chart-section">
+            <h2 class="section-title">🎯 Progress Overview</h2>
+            <div class="progress-chart-container" id="progressChartContainer">
+              <div
+                class="progress-chart-wrapper"
+                id="progressChartWrapper"
+                tabindex="0"
+                role="application"
+                aria-label="Progress chart showing solved problems by difficulty level"
+              >
+                <svg
+                  class="progress-chart-svg"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  <!-- Total background circle -->
+                  <circle
+                    class="progress-circle total"
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    data-difficulty="total"
+                    data-count="0"
+                  />
+
+                  <!-- Progress segments will be dynamically inserted here in order: Easy -> Medium -> Hard -->
+                </svg>
+
+                <!-- Center content -->
+                <div class="progress-chart-center" id="progressChartCenter">
+                  <div class="progress-total" id="progressTotal">0</div>
+                  <div class="progress-label" id="progressLabel">
+                    Total Solved
+                  </div>
+                </div>
+
+                <!-- Tooltip -->
+                <div class="progress-tooltip" id="progressTooltip"></div>
+              </div>
+
+              <!-- Enhanced Legend -->
+              <div
+                class="progress-legend"
+                id="progressLegend"
+                role="radiogroup"
+                aria-label="Filter by difficulty level"
+              >
+                <!-- Legend items will be dynamically inserted here -->
+              </div>
+            </div>
+          </div>
           <!-- Consistency Map -->
           <div class="consistency-map">
             <h2 class="section-title">📈 Consistency Map</h2>
@@ -2220,7 +2962,10 @@
             renderBlogs();
             renderConsistencyMap();
             renderProgressBars();
-            loadUserDirectory(); // ADD THIS LINE - IT WAS MISSING!
+            loadUserDirectory();
+            // Load the new sections
+            await loadSocialLinks();
+            initializeProgressChart(); // Add this line
           } else {
             throw new Error(result.error || "Failed to load user data");
           }
@@ -2234,6 +2979,763 @@
             window.location.href = "/profile.html";
           }, 3000);
         }
+      }
+
+      // Load social links for the viewed user
+      async function loadSocialLinks() {
+        const targetUsername = getTargetUsername();
+        if (!targetUsername) return;
+
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(
+            `${API_BASE_URL}/social-links/${encodeURIComponent(
+              targetUsername
+            )}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to load social links");
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            renderSocialLinks(result.socialLinks);
+          } else {
+            throw new Error(result.error || "Failed to load social links");
+          }
+        } catch (error) {
+          console.error("Error loading social links:", error);
+          // Initialize with empty data
+          renderSocialLinks({
+            linkedin: "",
+            github: "",
+            leetcode: "",
+            gfg: "",
+          });
+        }
+      }
+
+      // Enhanced render function for view-only social links
+      function renderSocialLinks(socialLinksData) {
+        const displayContainer = document.getElementById("socialLinksDisplay");
+
+        if (!displayContainer) return;
+
+        // Social platforms configuration
+        const platforms = [
+          {
+            key: "linkedin",
+            name: "LinkedIn",
+            icon: "💼",
+          },
+          {
+            key: "github",
+            name: "GitHub",
+            icon: "🐙",
+          },
+          {
+            key: "leetcode",
+            name: "LeetCode",
+            icon: "🐦",
+          },
+          {
+            key: "gfg",
+            name: "GeeksforGeeks",
+            icon: "🌐",
+          },
+        ];
+
+        // Render display view only
+        displayContainer.innerHTML = platforms
+          .map((platform) => {
+            const url = socialLinksData[platform.key];
+            const hasLink = url && url.trim() !== "";
+            const displayUrl = hasLink ? url : "Not set";
+
+            return `
+        <a href="${hasLink ? url : "#"}" 
+           class="social-link-display-item" 
+           data-platform="${platform.key}"
+           ${
+             hasLink
+               ? 'target="_blank" rel="noopener noreferrer"'
+               : 'onclick="return false;"'
+           }>
+          <div class="social-link-icon">${platform.icon}</div>
+          <div class="social-link-content">
+            <div class="social-link-platform">${platform.name}</div>
+            <div class="social-link-url" title="${displayUrl}">${displayUrl}</div>
+          </div>
+        </a>
+      `;
+          })
+          .join("");
+      }
+
+      // Enhanced Progress Chart for user-profile.html with full animations
+      class EnhancedProgressChart {
+        constructor() {
+          this.container = document.getElementById("progressChartContainer");
+          this.wrapper = document.getElementById("progressChartWrapper");
+          this.svg = document.querySelector(".progress-chart-svg");
+          this.center = document.getElementById("progressChartCenter");
+          this.totalElement = document.getElementById("progressTotal");
+          this.labelElement = document.getElementById("progressLabel");
+          this.tooltip = document.getElementById("progressTooltip");
+          this.legend = document.getElementById("progressLegend");
+
+          this.segments = new Map();
+          this.legendItems = new Map();
+          this.currentData = null;
+          this.activeFilter = null;
+          this.isAnimating = false;
+          this.originalSegments = new Map();
+
+          this.init();
+        }
+
+        async init() {
+          await this.loadData();
+          this.renderUnifiedChart();
+          this.bindEvents();
+        }
+
+        async loadData() {
+          try {
+            const targetUsername = getTargetUsername();
+            const token = localStorage.getItem("authToken");
+            const response = await fetch(
+              `${API_BASE_URL}/progress-stats/${encodeURIComponent(
+                targetUsername
+              )}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success) {
+                this.currentData = result.stats;
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Error loading progress data:", error);
+          }
+
+          // Fallback: Try to calculate from user data
+          if (currentViewingUser && currentViewingUser.consistency) {
+            this.currentData =
+              this.calculateStatsFromUserData(currentViewingUser);
+          } else {
+            // Final fallback
+            this.currentData = { total: 0, easy: 0, medium: 0, hard: 0 };
+          }
+        }
+
+        calculateStatsFromUserData(user) {
+          const totalSolved = user.statistics?.totalProblemsSolved || 0;
+
+          // For demo purposes, distribute among difficulties
+          return {
+            total: totalSolved,
+            easy: Math.floor(totalSolved * 0.4),
+            medium: Math.floor(totalSolved * 0.4),
+            hard: Math.floor(totalSolved * 0.2),
+          };
+        }
+
+        // Render unified circular progress chart with animations
+        renderUnifiedChart() {
+          if (!this.currentData) return;
+
+          // Clear existing segments (except total background)
+          this.svg
+            .querySelectorAll(".progress-circle:not(.total)")
+            .forEach((segment) => segment.remove());
+          this.segments.clear();
+          this.originalSegments.clear();
+
+          const total = this.currentData.total;
+          if (total === 0) {
+            this.showEmptyState();
+            return;
+          }
+
+          // Calculate percentages
+          const percentages = {
+            easy: (this.currentData.easy / total) * 100,
+            medium: (this.currentData.medium / total) * 100,
+            hard: (this.currentData.hard / total) * 100,
+          };
+
+          // Create seamless segments in correct order (Easy -> Medium -> Hard)
+          const segments = [
+            { key: "easy", percentage: percentages.easy, offset: 0 },
+            {
+              key: "medium",
+              percentage: percentages.medium,
+              offset: percentages.easy,
+            },
+            {
+              key: "hard",
+              percentage: percentages.hard,
+              offset: percentages.easy + percentages.medium,
+            },
+          ];
+
+          segments.forEach(({ key, percentage, offset }) => {
+            if (percentage === 0) return;
+
+            const segment = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "circle"
+            );
+            segment.classList.add("progress-circle", key);
+            segment.setAttribute("cx", "50");
+            segment.setAttribute("cy", "50");
+            segment.setAttribute("r", "44");
+            segment.setAttribute("data-difficulty", key);
+            segment.setAttribute(
+              "data-count",
+              this.currentData[key].toString()
+            );
+            segment.setAttribute("data-percentage", percentage.toFixed(1));
+            segment.setAttribute("data-offset", offset.toFixed(1));
+            segment.setAttribute("tabindex", "0");
+            segment.setAttribute("role", "button");
+            segment.setAttribute(
+              "aria-label",
+              `${this.capitalizeFirst(key)}: ${
+                this.currentData[key]
+              } problems (${percentage.toFixed(1)}%)`
+            );
+
+            // Calculate stroke dash for seamless continuous circle
+            const circumference = 2 * Math.PI * 44;
+            const dashLength = (percentage / 100) * circumference;
+            const gapLength = circumference - dashLength;
+            const dashOffset = -((offset / 100) * circumference);
+
+            segment.style.strokeDasharray = `${dashLength} ${gapLength}`;
+            segment.style.strokeDashoffset = dashOffset;
+            segment.style.opacity = "1";
+
+            // Store original values for smooth revert
+            this.originalSegments.set(key, {
+              dashArray: `${dashLength} ${gapLength}`,
+              dashOffset: dashOffset,
+              opacity: "1",
+            });
+
+            this.svg.appendChild(segment);
+            this.segments.set(key, segment);
+
+            this.addSegmentEventListeners(
+              segment,
+              key,
+              this.currentData[key],
+              percentage
+            );
+          });
+
+          this.renderLegend();
+          this.animateChartEntrance();
+        }
+
+        // Enhanced event listeners with better visual feedback
+        addSegmentEventListeners(segment, difficulty, count, percentage) {
+          const difficultyNames = {
+            easy: "Easy",
+            medium: "Medium",
+            hard: "Hard",
+          };
+
+          segment.addEventListener("mouseenter", (e) => {
+            if (this.isAnimating || this.activeFilter) return;
+            this.showTooltip(e, difficultyNames[difficulty], count, percentage);
+            this.highlightSegment(difficulty);
+
+            // Add micro-interaction
+            segment.style.transform = "scale(1.02)";
+            segment.style.transition = "transform 0.2s ease-out";
+          });
+
+          segment.addEventListener("mouseleave", () => {
+            if (this.isAnimating || this.activeFilter) return;
+            this.hideTooltip();
+            this.unhighlightSegments();
+
+            // Reset micro-interaction
+            segment.style.transform = "scale(1)";
+          });
+
+          segment.addEventListener("mousemove", (e) => {
+            if (this.isAnimating) return;
+            this.updateTooltipPosition(e);
+          });
+
+          segment.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (this.isAnimating) return;
+
+            // Add click feedback
+            segment.style.transform = "scale(0.98)";
+            setTimeout(() => {
+              segment.style.transform = "scale(1)";
+            }, 150);
+
+            this.toggleDifficultyFilter(difficulty);
+          });
+
+          segment.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (this.isAnimating) return;
+              this.toggleDifficultyFilter(difficulty);
+            }
+          });
+        }
+
+        // Enhanced toggle with smooth animations
+        async toggleDifficultyFilter(difficulty) {
+          if (this.isAnimating) return;
+
+          this.isAnimating = true;
+
+          if (this.activeFilter === difficulty) {
+            // Deselect - return to unified view with smooth animation
+            await this.animateToUnifiedView();
+            this.activeFilter = null;
+          } else {
+            // Select specific difficulty with premium animation
+            await this.animateToDifficultyView(difficulty);
+            this.activeFilter = difficulty;
+          }
+
+          this.updateActiveStates();
+          this.isAnimating = false;
+        }
+
+        // Smooth animation to unified view with enhanced effects
+        async animateToUnifiedView() {
+          this.wrapper.classList.remove("filtered");
+          this.center.classList.remove("filtered");
+          this.labelElement.classList.remove("filtered");
+          this.labelElement.textContent = "Total Solved";
+
+          // Create unified view ripple
+          this.createRippleEffect("total");
+
+          // Animate count back to total
+          await this.animateCount(
+            parseInt(this.totalElement.textContent),
+            this.currentData.total
+          );
+
+          // Smoothly revert all segments to original positions with sequenced animation
+          this.segments.forEach((segment, key) => {
+            const original = this.originalSegments.get(key);
+            if (original) {
+              const delay = key === "easy" ? 0 : key === "medium" ? 50 : 100;
+
+              setTimeout(() => {
+                segment.classList.remove("active");
+                segment.style.transition =
+                  "all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)";
+                segment.style.strokeDasharray = original.dashArray;
+                segment.style.strokeDashoffset = original.dashOffset;
+                segment.style.opacity = original.opacity;
+                segment.style.transform = "scale(1)";
+              }, delay);
+            }
+          });
+
+          // Wait for animations to complete
+          await new Promise((resolve) => setTimeout(resolve, 800));
+        }
+
+        // Premium animation to difficulty view
+        async animateToDifficultyView(difficulty) {
+          const count = this.currentData[difficulty];
+          const total = this.currentData.total;
+
+          this.wrapper.classList.add("filtered");
+          this.center.classList.add("filtered");
+          this.labelElement.classList.add("filtered");
+          this.labelElement.textContent = `${this.capitalizeFirst(
+            difficulty
+          )} Solved`;
+
+          // Create ripple effect
+          this.createRippleEffect(difficulty);
+
+          // Animate count to filtered value
+          await this.animateCount(
+            parseInt(this.totalElement.textContent),
+            count
+          );
+
+          // Premium animations for segments with sequenced timing
+          const circumference = 2 * Math.PI * 44;
+
+          this.segments.forEach((segment, key) => {
+            segment.style.transition =
+              "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+            if (key === difficulty) {
+              // Expand active segment to full circle with premium animation
+              setTimeout(() => {
+                segment.classList.add("active");
+                segment.style.strokeDasharray = `${circumference} 0`;
+                segment.style.strokeDashoffset = "0";
+                segment.style.opacity = "1";
+                segment.style.transform = "scale(1.03)";
+              }, 200);
+            } else {
+              // Fade out other segments with staggered timing
+              const delay = key === "easy" ? 100 : key === "medium" ? 150 : 200;
+              setTimeout(() => {
+                segment.style.opacity = "0.15";
+                segment.style.transform = "scale(0.95)";
+              }, delay);
+            }
+          });
+
+          // Wait for animations to complete
+          await new Promise((resolve) => setTimeout(resolve, 800));
+        }
+
+        // Enhanced smooth count animation with spring effect
+        animateCount(from, to) {
+          return new Promise((resolve) => {
+            const duration = 800;
+            const startTime = performance.now();
+            const startValue = from;
+
+            // Add spring animation to total element
+            this.totalElement.classList.add("animating");
+
+            const animate = (currentTime) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+
+              // Spring easing function for premium feel
+              const springProgress =
+                1 -
+                Math.pow(1 - progress, 3) *
+                  Math.cos(progress * Math.PI * 2) *
+                  0.2;
+              const currentValue = Math.floor(
+                startValue + (to - startValue) * springProgress
+              );
+
+              this.totalElement.textContent = currentValue.toString();
+
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              } else {
+                this.totalElement.textContent = to.toString();
+                setTimeout(() => {
+                  this.totalElement.classList.remove("animating");
+                }, 400);
+                resolve();
+              }
+            };
+
+            requestAnimationFrame(animate);
+          });
+        }
+
+        // Update active states with visual feedback
+        updateActiveStates() {
+          // Update segments
+          this.segments.forEach((segment, difficulty) => {
+            if (difficulty === this.activeFilter) {
+              segment.classList.add("active");
+              segment.setAttribute("aria-pressed", "true");
+            } else {
+              segment.classList.remove("active");
+              segment.setAttribute("aria-pressed", "false");
+            }
+          });
+
+          // Update legend items with smooth transitions
+          this.legendItems.forEach((item, difficulty) => {
+            if (difficulty === this.activeFilter) {
+              item.classList.add("active");
+              item.setAttribute("aria-checked", "true");
+              item.style.transform = "translateY(-2px)";
+            } else {
+              item.classList.remove("active");
+              item.setAttribute("aria-checked", "false");
+              item.style.transform = "translateY(0)";
+            }
+          });
+        }
+
+        // Enhanced legend rendering with click functionality
+        renderLegend() {
+          this.legend.innerHTML = "";
+          this.legendItems.clear();
+
+          const difficulties = [
+            { key: "easy", name: "Easy", icon: "🟢" },
+            { key: "medium", name: "Medium", icon: "🟡" },
+            { key: "hard", name: "Hard", icon: "🔴" },
+          ];
+
+          difficulties.forEach(({ key, name, icon }) => {
+            const count = this.currentData[key];
+            const percentage =
+              this.currentData.total > 0
+                ? (count / this.currentData.total) * 100
+                : 0;
+
+            const legendItem = document.createElement("div");
+            legendItem.className = "legend-item";
+            legendItem.setAttribute("data-difficulty", key);
+            legendItem.setAttribute("role", "radio");
+            legendItem.setAttribute("aria-checked", "false");
+            legendItem.setAttribute("tabindex", "0");
+            legendItem.setAttribute(
+              "aria-label",
+              `${name}: ${count} problems solved`
+            );
+            legendItem.style.transition =
+              "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+            legendItem.innerHTML = `
+        <div class="legend-color ${key}"></div>
+        <div class="legend-text">
+          <span class="legend-difficulty">${icon} ${name}</span>
+          <span class="legend-count">${count} solved</span>
+          <span class="legend-percentage">${percentage.toFixed(1)}%</span>
+        </div>
+      `;
+
+            legendItem.addEventListener("click", () => {
+              if (this.isAnimating) return;
+              this.toggleDifficultyFilter(key);
+            });
+
+            legendItem.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (this.isAnimating) return;
+                this.toggleDifficultyFilter(key);
+              }
+            });
+
+            // Add hover effects
+            legendItem.addEventListener("mouseenter", () => {
+              if (this.isAnimating || this.activeFilter) return;
+              this.highlightSegment(key);
+            });
+
+            legendItem.addEventListener("mouseleave", () => {
+              if (this.isAnimating || this.activeFilter) return;
+              this.unhighlightSegments();
+            });
+
+            this.legend.appendChild(legendItem);
+            this.legendItems.set(key, legendItem);
+          });
+        }
+
+        // Create ripple effect for interactions
+        createRippleEffect(difficulty) {
+          const segment = this.segments.get(difficulty);
+          if (!segment) return;
+
+          const rect = segment.getBoundingClientRect();
+          const wrapperRect = this.wrapper.getBoundingClientRect();
+
+          const ripple = document.createElement("div");
+          ripple.className = "ripple";
+
+          const size = Math.max(rect.width, rect.height) * 2;
+          const x = rect.left - wrapperRect.left + rect.width / 2 - size / 2;
+          const y = rect.top - wrapperRect.top + rect.height / 2 - size / 2;
+
+          ripple.style.width = ripple.style.height = size + "px";
+          ripple.style.left = x + "px";
+          ripple.style.top = y + "px";
+
+          // Set ripple color based on difficulty
+          const colors = {
+            easy: "rgba(45, 122, 45, 0.3)",
+            medium: "rgba(179, 143, 45, 0.3)",
+            hard: "rgba(196, 69, 69, 0.3)",
+            total: "rgba(76, 166, 76, 0.3)",
+          };
+
+          ripple.style.background = colors[difficulty] || colors.total;
+
+          this.wrapper.appendChild(ripple);
+
+          // Remove ripple after animation
+          setTimeout(() => {
+            if (ripple.parentNode) {
+              ripple.parentNode.removeChild(ripple);
+            }
+          }, 600);
+        }
+
+        // Enhanced chart entrance animation
+        animateChartEntrance() {
+          // Initial hidden state
+          this.segments.forEach((segment) => {
+            segment.style.opacity = "0";
+            segment.style.transform = "scale(0.8) rotate(-10deg)";
+          });
+
+          this.center.style.transform = "translate(-50%, -50%) scale(0)";
+          this.totalElement.style.opacity = "0";
+
+          // Staggered entrance animation
+          this.segments.forEach((segment, difficulty) => {
+            const delay =
+              difficulty === "easy" ? 200 : difficulty === "medium" ? 400 : 600;
+
+            setTimeout(() => {
+              segment.style.transition =
+                "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+              segment.style.opacity = "1";
+              segment.style.transform = "scale(1) rotate(0deg)";
+            }, delay);
+          });
+
+          // Center content animation
+          setTimeout(() => {
+            this.center.style.transition =
+              "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+            this.center.style.transform = "translate(-50%, -50%) scale(1)";
+            this.totalElement.style.transition = "all 0.5s ease-out";
+            this.totalElement.style.opacity = "1";
+          }, 800);
+
+          // Animate initial count with spring effect
+          setTimeout(() => {
+            this.animateCount(0, this.currentData.total);
+          }, 1200);
+        }
+
+        // Show enhanced tooltip
+        showTooltip(event, difficulty, count, percentage) {
+          this.tooltip.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <strong style="color: var(--codeleaf-text-primary);">${difficulty}</strong>
+      </div>
+      <div style="color: var(--codeleaf-text-secondary);">${count} problems solved</div>
+      <div style="color: var(--codeleaf-accent-primary); font-weight: 700; margin-top: 2px;">
+        ${percentage.toFixed(1)}% of total
+      </div>
+    `;
+          this.tooltip.classList.add("show");
+          this.updateTooltipPosition(event);
+        }
+
+        // Update tooltip position
+        updateTooltipPosition(event) {
+          const rect = this.wrapper.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+
+          this.tooltip.style.left = x + "px";
+          this.tooltip.style.top = y - 70 + "px";
+        }
+
+        // Hide tooltip
+        hideTooltip() {
+          this.tooltip.classList.remove("show");
+        }
+
+        // Highlight segment
+        highlightSegment(difficulty) {
+          this.segments.forEach((segment, key) => {
+            if (key === difficulty) {
+              segment.style.filter = "brightness(1.2)";
+            } else {
+              segment.style.opacity = "0.7";
+            }
+          });
+        }
+
+        // Unhighlight segments
+        unhighlightSegments() {
+          this.segments.forEach((segment) => {
+            segment.style.opacity = "1";
+            segment.style.filter = "";
+          });
+        }
+
+        // Enhanced event binding
+        bindEvents() {
+          // Click outside to reset filter
+          document.addEventListener("click", (e) => {
+            if (
+              this.activeFilter !== null &&
+              !this.wrapper.contains(e.target) &&
+              !this.legend.contains(e.target) &&
+              !this.isAnimating
+            ) {
+              this.toggleDifficultyFilter(this.activeFilter);
+            }
+          });
+
+          // Keyboard navigation
+          this.wrapper.addEventListener("keydown", (e) => {
+            if (
+              e.key === "Escape" &&
+              this.activeFilter !== null &&
+              !this.isAnimating
+            ) {
+              this.toggleDifficultyFilter(this.activeFilter);
+            }
+          });
+
+          // Prevent animations during resize
+          window.addEventListener("resize", () => {
+            this.isAnimating = true;
+            setTimeout(() => {
+              this.isAnimating = false;
+            }, 300);
+          });
+        }
+
+        // Utility function
+        capitalizeFirst(string) {
+          return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Show empty state
+        showEmptyState() {
+          this.container.innerHTML = `
+      <div class="empty-state">
+        <div>📊</div>
+        <div>No progress data yet</div>
+        <small>This user hasn't solved any problems yet</small>
+      </div>
+    `;
+        }
+      }
+
+      // Initialize the enhanced chart
+      let enhancedProgressChart;
+
+      function initializeProgressChart() {
+        enhancedProgressChart = new EnhancedProgressChart();
       }
 
       function showError(message) {
@@ -2273,7 +3775,8 @@
         levelBadge.className = `user-level-badge ${userLevel.level.toLowerCase()}`;
 
         // Set user name and bio
-        document.getElementById("userName").textContent = user.username.toUpperCase();
+        document.getElementById("userName").textContent =
+          user.username.toUpperCase();
         document.getElementById("joinDate").textContent = formatDate(
           user.accountCreated
         );
@@ -2542,7 +4045,9 @@
                   user.username
                 )}</div>
                 <div class="user-details">
-                    <div class="user-name">${escapeHtml(user.username.toUpperCase())}</div>
+                    <div class="user-name">${escapeHtml(
+                      user.username.toUpperCase()
+                    )}</div>
                     <div class="user-stats">
                         <span class="user-stat">${
                           user.totalSolved || 0

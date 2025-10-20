@@ -90,6 +90,20 @@ const ActivityTracker = mongoose.model(
   "ActivityTracker",
   activityTrackerSchema
 );
+
+// Social Links Schema
+const socialLinksSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  links: {
+    linkedin: { type: String, default: "" },
+    github: { type: String, default: "" },
+    leetcode: { type: String, default: "" },
+    gfg: { type: String, default: "" },
+  },
+  lastUpdated: { type: Date, default: Date.now },
+});
+
+const SocialLinks = mongoose.model("SocialLinks", socialLinksSchema);
 const PasswordReset = mongoose.model("PasswordReset", passwordResetSchema);
 const Blog = mongoose.model("Blog", blogSchema);
 
@@ -645,6 +659,65 @@ app.get("/api/progress-stats", authenticateToken, async (req, res) => {
   }
 });
 
+// Get progress stats for any user
+app.get(
+  "/api/progress-stats/:username",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const username = req.params.username;
+
+      // Get checklist data
+      const checklistData = await ChecklistData.findOne({ userId: username });
+
+      if (!checklistData || !checklistData.data) {
+        return res.json({
+          success: true,
+          stats: {
+            total: 0,
+            easy: 0,
+            medium: 0,
+            hard: 0,
+          },
+        });
+      }
+
+      // Calculate solved counts by difficulty
+      const stats = {
+        total: 0,
+        easy: 0,
+        medium: 0,
+        hard: 0,
+      };
+
+      checklistData.data.forEach((day) => {
+        if (day.questions && Array.isArray(day.questions)) {
+          day.questions.forEach((question) => {
+            if (question.completed) {
+              stats.total++;
+              const difficulty = (
+                question.difficulty || "medium"
+              ).toLowerCase();
+              if (stats[difficulty] !== undefined) {
+                stats[difficulty]++;
+              } else {
+                stats.medium++; // Default to medium if invalid difficulty
+              }
+            }
+          });
+        }
+      });
+
+      res.json({
+        success: true,
+        stats,
+      });
+    } catch (error) {
+      console.error("Error fetching progress stats:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
 // Get user data (protected route) - UPDATED with version
 app.get("/api/data", authenticateToken, async (req, res) => {
   try {
@@ -987,6 +1060,99 @@ app.post("/api/cleanup-reset-codes", async (req, res) => {
       expiresAt: { $lt: new Date() },
     });
     res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get social links
+app.get("/api/social-links", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+    let socialLinks = await SocialLinks.findOne({ userId });
+
+    if (!socialLinks) {
+      // Create default empty social links
+      socialLinks = await SocialLinks.create({
+        userId,
+        links: {
+          linkedin: "",
+          github: "",
+          leetcode: "",
+          gfg: "",
+        },
+      });
+    }
+
+    res.json({
+      success: true,
+      socialLinks: socialLinks.links,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update social links
+app.put("/api/social-links", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+    const { links } = req.body;
+
+    if (!links) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Links data is required" });
+    }
+
+    let socialLinks = await SocialLinks.findOne({ userId });
+
+    if (!socialLinks) {
+      socialLinks = new SocialLinks({ userId });
+    }
+
+    // Update only the provided links
+    socialLinks.links = {
+      ...socialLinks.links,
+      ...links,
+    };
+    socialLinks.lastUpdated = new Date();
+
+    await socialLinks.save();
+
+    res.json({
+      success: true,
+      socialLinks: socialLinks.links,
+      message: "Social links updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get social links for any user (public data)
+app.get("/api/social-links/:username", authenticateToken, async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    let socialLinks = await SocialLinks.findOne({ userId: username });
+
+    if (!socialLinks) {
+      // Return default empty social links
+      socialLinks = {
+        links: {
+          linkedin: "",
+          github: "",
+          leetcode: "",
+          gfg: "",
+        },
+      };
+    }
+
+    res.json({
+      success: true,
+      socialLinks: socialLinks.links,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -3149,6 +3149,485 @@
           transform: translateY(-8px) scale(1);
         }
       }
+
+      /* Enhanced Social Links Section */
+      .social-links-section {
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-lg);
+        padding: var(--codeleaf-space-4);
+        margin-bottom: var(--codeleaf-space-6);
+        box-shadow: var(--codeleaf-shadow-sm);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .social-links-section:hover {
+        box-shadow: var(--codeleaf-shadow-md);
+      }
+
+      .social-links-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.03),
+          transparent
+        );
+        transition: left 0.8s ease;
+      }
+
+      .social-links-section:hover::before {
+        left: 100%;
+      }
+
+      .social-links-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--codeleaf-space-3);
+      }
+
+      .social-links-title {
+        font-size: var(--codeleaf-font-lg);
+        color: var(--codeleaf-accent-primary);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .social-links-edit-btn {
+        padding: var(--codeleaf-space-1) var(--codeleaf-space-3);
+        background: var(--codeleaf-bg-secondary);
+        color: var(--codeleaf-text-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        cursor: pointer;
+        font-size: var(--codeleaf-font-xs);
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-1);
+        flex-shrink: 0;
+      }
+
+      .social-links-edit-btn:hover {
+        background: var(--codeleaf-bg-tertiary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-accent-primary);
+        transform: translateY(-1px);
+      }
+
+      .social-links-edit-btn:active {
+        transform: translateY(0);
+      }
+
+      .social-links-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--codeleaf-space-3);
+      }
+
+      .social-link-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .social-link-label {
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-secondary);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .social-link-input-group {
+        display: flex;
+        gap: var(--codeleaf-space-2);
+        position: relative;
+      }
+
+      .social-link-input {
+        flex: 1;
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        background: var(--codeleaf-bg-secondary);
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-sm);
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+
+      .social-link-input:focus {
+        outline: none;
+        border-color: var(--codeleaf-accent-primary);
+        box-shadow: 0 0 0 2px rgba(76, 166, 76, 0.1);
+        background: var(--codeleaf-bg-primary);
+        transform: translateY(-1px);
+      }
+
+      .social-link-input::placeholder {
+        color: var(--codeleaf-text-tertiary);
+        opacity: 0.7;
+      }
+
+      .social-link-test-btn {
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+        background: var(--codeleaf-bg-tertiary);
+        color: var(--codeleaf-text-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        cursor: pointer;
+        font-size: var(--codeleaf-font-xs);
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-1);
+        flex-shrink: 0;
+        min-width: 60px;
+        justify-content: center;
+      }
+
+      .social-link-test-btn:hover:not(:disabled) {
+        background: var(--codeleaf-accent-muted);
+        border-color: var(--codeleaf-accent-primary);
+        color: var(--codeleaf-accent-primary);
+        transform: translateY(-1px);
+      }
+
+      .social-link-test-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Social Links Display - Enhanced */
+      .social-links-display {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--codeleaf-space-3);
+      }
+
+      .social-link-display-item {
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-3);
+        padding: var(--codeleaf-space-3);
+        background: var(--codeleaf-bg-secondary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .social-link-display-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(76, 166, 76, 0.05),
+          transparent
+        );
+        transition: left 0.6s ease;
+      }
+
+      .social-link-display-item:hover::before {
+        left: 100%;
+      }
+
+      .social-link-display-item:hover {
+        border-color: var(--codeleaf-accent-muted);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-sm);
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .social-link-icon {
+        font-size: var(--codeleaf-font-lg);
+        width: 24px;
+        text-align: center;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-icon {
+        transform: scale(1.1);
+      }
+
+      .social-link-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .social-link-platform {
+        font-weight: 600;
+        color: var(--codeleaf-text-primary);
+        font-size: var(--codeleaf-font-sm);
+        margin-bottom: 2px;
+        transition: color 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-platform {
+        color: var(--codeleaf-accent-primary);
+      }
+
+      .social-link-url {
+        font-size: var(--codeleaf-font-xs);
+        color: var(--codeleaf-text-tertiary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: color 0.3s ease;
+      }
+
+      .social-link-display-item:hover .social-link-url {
+        color: var(--codeleaf-text-secondary);
+      }
+
+      .social-link-display-item:not([href]) {
+        cursor: default;
+        opacity: 0.7;
+      }
+
+      .social-link-display-item:not([href]):hover {
+        transform: none;
+        border-color: var(--codeleaf-border-light);
+      }
+
+      .social-link-display-item:not([href])::before {
+        display: none;
+      }
+
+      /* Edit Mode Actions */
+      .social-links-actions {
+        display: flex;
+        gap: var(--codeleaf-space-2);
+        margin-top: var(--codeleaf-space-4);
+        justify-content: flex-end;
+        padding-top: var(--codeleaf-space-3);
+        border-top: 1px solid var(--codeleaf-border-light);
+      }
+
+      .social-links-action-btn {
+        padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        cursor: pointer;
+        font-size: var(--codeleaf-font-sm);
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        align-items: center;
+        gap: var(--codeleaf-space-2);
+      }
+
+      .social-links-save-btn {
+        background: var(--codeleaf-accent-primary);
+        color: white;
+        border-color: var(--codeleaf-accent-primary);
+      }
+
+      .social-links-save-btn:hover {
+        background: var(--codeleaf-accent-secondary);
+        border-color: var(--codeleaf-accent-secondary);
+        transform: translateY(-2px);
+        box-shadow: var(--codeleaf-shadow-sm);
+      }
+
+      .social-links-cancel-btn {
+        background: var(--codeleaf-bg-secondary);
+        color: var(--codeleaf-text-secondary);
+      }
+
+      .social-links-cancel-btn:hover {
+        background: var(--codeleaf-bg-tertiary);
+        border-color: var(--codeleaf-accent-muted);
+        color: var(--codeleaf-text-primary);
+        transform: translateY(-2px);
+      }
+
+      /* Edit Mode States */
+      .social-links-section.editing .social-links-display {
+        display: none;
+      }
+
+      .social-links-section:not(.editing) .social-links-grid {
+        display: none;
+      }
+
+      .social-links-section:not(.editing) .social-links-actions {
+        display: none;
+      }
+
+      /* Platform-specific colors with subtle accents */
+      .social-link-display-item[data-platform="linkedin"] {
+        border-left: 3px solid rgba(0, 119, 181, 0.3);
+      }
+
+      .social-link-display-item[data-platform="github"] {
+        border-left: 3px solid rgba(51, 51, 51, 0.3);
+      }
+
+      .social-link-display-item[data-platform="leetcode"] {
+        border-left: 3px solid rgba(29, 161, 242, 0.3);
+      }
+
+      .social-link-display-item[data-platform="gfg"] {
+        border-left: 3px solid rgba(45, 122, 45, 0.3);
+      }
+
+      .social-link-display-item[data-platform="linkedin"]:hover {
+        border-left-color: #0077b5;
+      }
+
+      .social-link-display-item[data-platform="github"]:hover {
+        border-left-color: #333;
+      }
+
+      .social-link-display-item[data-platform="leetcode"]:hover {
+        border-left-color: #1da1f2;
+      }
+
+      .social-link-display-item[data-platform="gfg"]:hover {
+        border-left-color: #2d7a2d;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .social-links-grid,
+        .social-links-display {
+          grid-template-columns: 1fr;
+        }
+
+        .social-links-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--codeleaf-space-2);
+        }
+
+        .social-links-edit-btn {
+          align-self: flex-end;
+        }
+
+        .social-link-input-group {
+          flex-direction: column;
+        }
+
+        .social-link-test-btn {
+          width: 100%;
+          min-width: auto;
+        }
+
+        .social-links-actions {
+          flex-direction: column;
+        }
+
+        .social-links-action-btn {
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .social-links-section {
+          padding: var(--codeleaf-space-3);
+        }
+
+        .social-links-title {
+          font-size: var(--codeleaf-font-base);
+        }
+      }
+
+      /* Tooltip for achievements - ENHANCED VERSION */
+      .achievement-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        background: var(--codeleaf-bg-primary);
+        border: 1px solid var(--codeleaf-border-light);
+        border-radius: var(--codeleaf-radius-md);
+        padding: var(--codeleaf-space-3);
+        box-shadow: var(--codeleaf-shadow-lg);
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-primary);
+        white-space: nowrap;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+        min-width: 180px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+      }
+
+      .achievement-tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--codeleaf-bg-primary);
+      }
+
+      .achievement-card:hover .achievement-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-12px);
+      }
+
+      /* Lock icon for locked achievements */
+      .achievement-lock {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: var(--codeleaf-font-sm);
+        color: var(--codeleaf-text-tertiary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .achievement-card:not(.unlocked) .achievement-lock {
+        opacity: 1;
+      }
+
+      /* Enhanced tooltip content */
+      .achievement-tooltip strong {
+        display: block;
+        color: var(--codeleaf-accent-primary);
+        margin-bottom: 4px;
+        font-size: var(--codeleaf-font-sm);
+      }
+
+      .achievement-tooltip small {
+        display: block;
+        margin-top: 4px;
+        color: var(--codeleaf-text-tertiary);
+        font-size: var(--codeleaf-font-xs);
+      }
     </style>
   </head>
   <body>
@@ -3226,6 +3705,53 @@
                 <div class="detail-item">
                   <span class="detail-label">Max Streak</span>
                   <span class="detail-value" id="maxStreak">0</span>
+                </div>
+              </div>
+
+              <!-- Enhanced Social Links Section -->
+              <div
+                class="social-links-section"
+                id="socialLinksSection"
+                style="margin-top: 20px"
+              >
+                <div class="social-links-header">
+                  <h2 class="social-links-title">🔗 Social Links</h2>
+                  <button
+                    class="social-links-edit-btn"
+                    onclick="toggleSocialLinksEdit()"
+                    id="editSocialLinksBtn"
+                  >
+                    <span>✏️</span>
+                    <span>Edit Links</span>
+                  </button>
+                </div>
+
+                <!-- Display View -->
+                <div class="social-links-display" id="socialLinksDisplay">
+                  <!-- Social links will be dynamically inserted here -->
+                </div>
+
+                <!-- Edit View -->
+                <div class="social-links-grid" id="socialLinksGrid">
+                  <!-- Social link inputs will be dynamically inserted here -->
+                </div>
+
+                <!-- Edit Mode Actions -->
+                <div class="social-links-actions" id="socialLinksActions">
+                  <button
+                    class="social-links-action-btn social-links-save-btn"
+                    onclick="saveSocialLinks()"
+                  >
+                    <span>💾</span>
+                    <span>Save Changes</span>
+                  </button>
+                  <button
+                    class="social-links-action-btn social-links-cancel-btn"
+                    onclick="cancelSocialLinksEdit()"
+                  >
+                    <span>❌</span>
+                    <span>Close</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -4633,6 +5159,245 @@
           });
       }
 
+      // Social Links Management
+      let socialLinksData = {
+        linkedin: "",
+        github: "",
+        leetcode: "",
+        gfg: "",
+      };
+      let originalSocialLinksData = {};
+
+      // Load social links
+      async function loadSocialLinks() {
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(`${API_BASE_URL}/social-links`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to load social links");
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            socialLinksData = { ...socialLinksData, ...result.socialLinks };
+            originalSocialLinksData = { ...socialLinksData };
+            renderSocialLinks();
+          } else {
+            throw new Error(result.error || "Failed to load social links");
+          }
+        } catch (error) {
+          console.error("Error loading social links:", error);
+          // Initialize with empty data
+          originalSocialLinksData = { ...socialLinksData };
+          renderSocialLinks();
+        }
+      }
+
+      // Enhanced render function
+      function renderSocialLinks() {
+        const displayContainer = document.getElementById("socialLinksDisplay");
+        const gridContainer = document.getElementById("socialLinksGrid");
+
+        if (!displayContainer || !gridContainer) return;
+
+        // Social platforms configuration
+        const platforms = [
+          {
+            key: "linkedin",
+            name: "LinkedIn",
+            icon: "💼",
+            placeholder: "https://linkedin.com/in/yourname",
+          },
+          {
+            key: "github",
+            name: "GitHub",
+            icon: "🐙",
+            placeholder: "https://github.com/yourusername",
+          },
+          {
+            key: "leetcode",
+            name: "leetcode",
+            icon: "🐦",
+            placeholder: "https://leetcode.com/yourhandle",
+          },
+          {
+            key: "gfg",
+            name: "GFG",
+            icon: "🌐",
+            placeholder: "https://yourgfg.com",
+          },
+        ];
+
+        // Render display view
+        displayContainer.innerHTML = platforms
+          .map((platform) => {
+            const url = socialLinksData[platform.key];
+            const hasLink = url && url.trim() !== "";
+            const displayUrl = hasLink ? url : "Not set";
+
+            return `
+      <a href="${hasLink ? url : "#"}" 
+         class="social-link-display-item" 
+         data-platform="${platform.key}"
+         ${
+           hasLink
+             ? 'target="_blank" rel="noopener noreferrer"'
+             : 'onclick="return false;"'
+         }>
+        <div class="social-link-icon">${platform.icon}</div>
+        <div class="social-link-content">
+          <div class="social-link-platform">${platform.name}</div>
+          <div class="social-link-url" title="${displayUrl}">${displayUrl}</div>
+        </div>
+      </a>
+    `;
+          })
+          .join("");
+
+        // Render edit form
+        gridContainer.innerHTML = platforms
+          .map((platform) => {
+            const currentUrl = socialLinksData[platform.key] || "";
+
+            return `
+      <div class="social-link-item">
+        <label class="social-link-label">
+          ${platform.icon} ${platform.name}
+        </label>
+        <div class="social-link-input-group">
+          <input type="url" 
+                 class="social-link-input" 
+                 id="social-${platform.key}" 
+                 value="${currentUrl}" 
+                 placeholder="${platform.placeholder}"
+                 oninput="updateSocialLink('${platform.key}', this.value)">
+          <button type="button" 
+                  class="social-link-test-btn" 
+                  onclick="testSocialLink('${platform.key}')"
+                  ${!currentUrl ? "disabled" : ""}
+                  title="Test link">
+            🔗 Test
+          </button>
+        </div>
+      </div>
+    `;
+          })
+          .join("");
+      }
+
+      // Toggle edit mode
+      function toggleSocialLinksEdit() {
+        const section = document.getElementById("socialLinksSection");
+        const editBtn = document.getElementById("editSocialLinksBtn");
+
+        section.classList.add("editing");
+        editBtn.style.display = "none";
+
+        // Focus on first input
+        const firstInput = document.querySelector(".social-link-input");
+        if (firstInput) {
+          setTimeout(() => firstInput.focus(), 100);
+        }
+      }
+
+      // Cancel editing
+      function cancelSocialLinksEdit() {
+        const section = document.getElementById("socialLinksSection");
+        const editBtn = document.getElementById("editSocialLinksBtn");
+
+        // Revert to original data
+        socialLinksData = { ...originalSocialLinksData };
+        renderSocialLinks();
+
+        section.classList.remove("editing");
+        editBtn.style.display = "flex";
+      }
+
+      // Update social link in memory
+      function updateSocialLink(platform, value) {
+        socialLinksData[platform] = value.trim();
+
+        // Enable/disable test button
+        const testBtn = document.querySelector(
+          `[onclick="testSocialLink('${platform}')"]`
+        );
+        if (testBtn) {
+          testBtn.disabled = !value.trim();
+        }
+      }
+
+      // Test social link
+      function testSocialLink(platform) {
+        const url = socialLinksData[platform];
+        if (url && url.trim() !== "") {
+          // Add https if missing
+          let testUrl = url;
+          if (
+            !testUrl.startsWith("http://") &&
+            !testUrl.startsWith("https://")
+          ) {
+            testUrl = "https://" + testUrl;
+          }
+
+          window.open(testUrl, "_blank", "noopener,noreferrer");
+        }
+      }
+
+      // Save social links
+      async function saveSocialLinks() {
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(`${API_BASE_URL}/social-links`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              links: socialLinksData,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save social links");
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Update original data
+            originalSocialLinksData = { ...socialLinksData };
+
+            // Exit edit mode
+            const section = document.getElementById("socialLinksSection");
+            const editBtn = document.getElementById("editSocialLinksBtn");
+
+            section.classList.remove("editing");
+            editBtn.style.display = "flex";
+
+            // Show success message
+            toastManager.success(
+              "Social links updated successfully!",
+              "Links Saved"
+            );
+
+            // Re-render display
+            renderSocialLinks();
+          } else {
+            throw new Error(result.error || "Failed to save social links");
+          }
+        } catch (error) {
+          console.error("Error saving social links:", error);
+          toastManager.error("Failed to save social links", "Save Error");
+        }
+      }
+
       // Load user profile data
       async function loadUserProfile() {
         try {
@@ -4667,6 +5432,9 @@
           } else {
             throw new Error(result.error || "Failed to load user data");
           }
+
+          // Load social links
+          await loadSocialLinks();
         } catch (error) {
           console.error("Error loading user profile:", error);
           toastManager.error("Failed to load profile data", "Profile Error");
@@ -4694,7 +5462,8 @@
         levelBadge.className = `user-level-badge ${userLevel.level.toLowerCase()}`;
 
         // Set user name and bio
-        document.getElementById("userName").textContent = user.username.toUpperCase();
+        document.getElementById("userName").textContent =
+          user.username.toUpperCase();
         document.getElementById("joinDate").textContent = formatDate(
           user.accountCreated
         );
@@ -4875,6 +5644,7 @@
           },
         ];
       }
+
       // Switch between public and private blogs
       function switchBlogTab(tab) {
         currentBlogTab = tab;
@@ -5127,7 +5897,7 @@
           }
 
           const result = await response.json();
-
+          console.log("================= username : ", result.users);
 
           if (result.success && result.users) {
             // Filter out current user and render others
@@ -5168,7 +5938,9 @@
         <div class="user-item" onclick="viewUserProfile('${user.username}')">
             <div class="user-avatar">${generateUserAvatar(user.username)}</div>
             <div class="user-details">
-                <div class="user-name">${escapeHtml(user.username.toUpperCase())}</div>
+                <div class="user-name">${escapeHtml(
+                  user.username.toUpperCase()
+                )}</div>
                 <div class="user-stats">
                     <span class="user-stat">${
                       user.totalSolved || 0
