@@ -647,7 +647,7 @@ app.get("/api/progress-stats", authenticateToken, async (req, res) => {
       }
     });
 
-    console.log(`Progress stats for ${userId}:`, stats);
+    // console.log(`Progress stats for ${userId}:`, stats);
 
     res.json({
       success: true,
@@ -1685,29 +1685,40 @@ function ensureDifficultyField(data) {
 }
 
 // ========== STATIC FILE ROUTES ==========
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "js")));
+app.use(express.static(path.join(__dirname, "css")));
+app.use(express.static(path.join(__dirname, "assets")));
 
 // Serve index.html for root route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Serve blog pages
 app.get("/blogs", (req, res) => {
-  res.sendFile(path.join(__dirname, "blogs.html"));
+  res.sendFile(path.join(__dirname, "public", "blogs.html"));
 });
 
+// Route for the blog view
 app.get("/blogs/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "blog-view.html"));
+  res.sendFile(path.join(__dirname, "public", "blog-view.html"));
+});
+
+// Serve profile pages
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "profile.html"));
 });
 
 // Serve user profile pages (for future implementation)
 app.get("/user/:username", (req, res) => {
-  res.sendFile(path.join(__dirname, "user-profile.html"));
+  res.sendFile(path.join(__dirname, "public", "user-profile.html"));
 });
 
 // Serve index.html for all other routes (SPA support)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {

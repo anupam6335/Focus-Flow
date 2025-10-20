@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <title>User Profile - FocusFlow</title>
+    <link rel="stylesheet" href="css/user-profile.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-container">
+          <h1 class="site-logo">
+            FocusFlow
+            <span class="profile-owner-badge" id="profileOwnerBadge"
+              >User Profile</span
+            >
+          </h1>
+          <div class="nav-links">
+            <a href="/index.html" class="nav-link">← Back to Tracker</a>
+            <a href="/blogs.html" class="nav-link">📝 Blogs</a>
+            <a href="/profile.html" class="nav-link">👤 My Profile</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Reuse the exact same structure as profile.html -->
+      <div class="main-container">
+        <!-- Left Column (70%) -->
+        <div class="left-column">
+          <!-- Profile Header -->
+          <!-- Enhanced Profile Header -->
+          <div class="profile-header">
+            <div class="avatar-container">
+              <div class="pixel-avatar" id="userAvatar">👤</div>
+              <div class="user-level-badge" id="userLevelBadge">Noob</div>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name-container">
+                <h1 class="profile-name" id="userName">Loading...</h1>
+                <div class="profile-badge" id="profileOwnerBadge">
+                  My Profile
+                </div>
+              </div>
+              <p class="profile-bio" id="userBio">
+                Member since <span id="joinDate">...</span>
+              </p>
+
+              <!-- Enhanced Stats Grid -->
+              <div class="profile-stats">
+                <div class="stat-item">
+                  <div class="stat-value" id="totalSolved">0</div>
+                  <div class="stat-label">Problems Solved</div>
+                  <div class="stat-trend" id="solvedTrend">+0 today</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="totalBlogs">0</div>
+                  <div class="stat-label">Blogs Written</div>
+                  <div class="stat-trend" id="blogsTrend">+0 this week</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="currentStreak">0</div>
+                  <div class="stat-label">Day Streak</div>
+                  <div class="stat-trend" id="streakStatus">Keep going! 🔥</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="activeDays">0</div>
+                  <div class="stat-label">Active Days</div>
+                  <div class="stat-trend" id="activityTrend">Consistency</div>
+                </div>
+              </div>
+
+              <!-- Additional Profile Details -->
+              <div class="profile-details-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Current Level</span>
+                  <span class="detail-value" id="userLevel">Noob</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Total XP</span>
+                  <span class="detail-value" id="totalXP">0</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Avg. Daily</span>
+                  <span class="detail-value" id="avgDaily">0</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Max Streak</span>
+                  <span class="detail-value" id="maxStreak">0</span>
+                </div>
+              </div>
+
+              <!-- Enhanced Social Links Section - View Only -->
+              <div
+                class="social-links-section"
+                id="socialLinksSection"
+                style="margin-top: 20px"
+              >
+                <div class="social-links-header">
+                  <h2 class="social-links-title">🔗 Social Links</h2>
+                </div>
+
+                <!-- Display View Only -->
+                <div class="social-links-display" id="socialLinksDisplay">
+                  <!-- Social links will be dynamically inserted here -->
+                  <div class="loading">Loading social links...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Achievements Section -->
+          <div class="achievements-section">
+            <h2 class="section-title">🏆 Achievements</h2>
+            <div class="achievements-grid" id="achievementsGrid">
+              <div class="loading">Loading achievements...</div>
+            </div>
+          </div>
+
+          <!-- Question History -->
+          <div class="content-section">
+            <h2 class="section-title">📚 Question History</h2>
+            <div class="content-grid" id="questionHistory">
+              <div class="loading">Loading question history...</div>
+            </div>
+          </div>
+
+          <!-- Blogs Section -->
+          <div class="content-section">
+            <h2 class="section-title">✍️ Blogs</h2>
+            <div class="content-grid" id="blogsContent">
+              <div class="loading">Loading blogs...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column (30%) -->
+        <div class="right-column">
+          <!-- Premium Interactive Progress Chart -->
+          <div class="progress-chart-section">
+            <h2 class="section-title">🎯 Progress Overview</h2>
+            <div class="progress-chart-container" id="progressChartContainer">
+              <div
+                class="progress-chart-wrapper"
+                id="progressChartWrapper"
+                tabindex="0"
+                role="application"
+                aria-label="Progress chart showing solved problems by difficulty level"
+              >
+                <svg
+                  class="progress-chart-svg"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  <!-- Total background circle -->
+                  <circle
+                    class="progress-circle total"
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    data-difficulty="total"
+                    data-count="0"
+                  />
+
+                  <!-- Progress segments will be dynamically inserted here in order: Easy -> Medium -> Hard -->
+                </svg>
+
+                <!-- Center content -->
+                <div class="progress-chart-center" id="progressChartCenter">
+                  <div class="progress-total" id="progressTotal">0</div>
+                  <div class="progress-label" id="progressLabel">
+                    Total Solved
+                  </div>
+                </div>
+
+                <!-- Tooltip -->
+                <div class="progress-tooltip" id="progressTooltip"></div>
+              </div>
+
+              <!-- Enhanced Legend -->
+              <div
+                class="progress-legend"
+                id="progressLegend"
+                role="radiogroup"
+                aria-label="Filter by difficulty level"
+              >
+                <!-- Legend items will be dynamically inserted here -->
+              </div>
+            </div>
+          </div>
+          <!-- Consistency Map -->
+          <div class="consistency-map">
+            <h2 class="section-title">📈 Consistency Map</h2>
+            <div class="heatmap-container">
+              <div class="heatmap-header">
+                <div class="heatmap-title">Activity Heatmap</div>
+                <div class="heatmap-legend">
+                  <span>Less</span>
+                  <div class="legend-colors">
+                    <div class="legend-color level-0"></div>
+                    <div class="legend-color level-1"></div>
+                    <div class="legend-color level-2"></div>
+                    <div class="legend-color level-3"></div>
+                    <div class="legend-color level-4"></div>
+                  </div>
+                  <span>More</span>
+                </div>
+              </div>
+              <div class="heatmap-content">
+                <div class="months-row" id="heatmapMonths">
+                  <!-- Month labels will be generated by JavaScript -->
+                </div>
+                <div class="heatmap-grid" id="heatmapGrid">
+                  <!-- Heatmap cells will be generated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Visualization -->
+          <div class="progress-section">
+            <h2 class="section-title">📊 Progress Overview</h2>
+            <div class="progress-bars" id="progressBars">
+              <div class="loading">Loading progress data...</div>
+            </div>
+          </div>
+
+          <!-- User Directory - ADD THIS SECTION -->
+          <div class="user-directory">
+            <h2 class="section-title">👥 Community</h2>
+            <div class="user-grid" id="userDirectory">
+              <div class="loading">Loading community data...</div>
+            </div>
+          </div>
+
+          <!-- Level Up Guide Section -->
+          <div class="level-up-guide">
+            <h2 class="section-title">🚀 How to Level Up</h2>
+            <div class="guide-content">
+              <!-- Quick Tips -->
+              <div class="guide-tips">
+                <h3>💡 Quick Tips</h3>
+                <div class="tip-item">
+                  <span class="tip-icon">📚</span>
+                  <span class="tip-text"
+                    >Solve problems daily to build consistency</span
+                  >
+                </div>
+                <div class="tip-item">
+                  <span class="tip-icon">✍️</span>
+                  <span class="tip-text"
+                    >Write blogs to share knowledge (+25 XP each)</span
+                  >
+                </div>
+                <div class="tip-item">
+                  <span class="tip-icon">🔥</span>
+                  <span class="tip-text">Maintain streaks for bonus XP</span>
+                </div>
+                <div class="tip-item">
+                  <span class="tip-icon">💬</span>
+                  <span class="tip-text">Engage with community blogs</span>
+                </div>
+              </div>
+
+              <!-- XP Breakdown -->
+              <div class="xp-breakdown">
+                <h3>🏆 XP Breakdown</h3>
+                <div class="xp-item">
+                  <span class="xp-source">Problems Solved</span>
+                  <span class="xp-value">+10 XP each</span>
+                </div>
+                <div class="xp-item">
+                  <span class="xp-source">Blogs Published</span>
+                  <span class="xp-value">+25 XP each</span>
+                </div>
+                <div class="xp-item">
+                  <span class="xp-source">Daily Streak</span>
+                  <span class="xp-value">+5 XP per day</span>
+                </div>
+                <div class="xp-item">
+                  <span class="xp-source">Blog Likes Received</span>
+                  <span class="xp-value">+3 XP each</span>
+                </div>
+              </div>
+
+              <!-- Level Meanings -->
+              <div class="level-meanings">
+                <h3>📊 Level Guide</h3>
+                <div class="level-item">
+                  <span class="level-badge-small seedling">🌱</span>
+                  <div class="level-info">
+                    <strong>Seedling</strong>
+                    <small>Just starting your coding journey</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small sprout">🌿</span>
+                  <div class="level-info">
+                    <strong>Sprout</strong>
+                    <small>Growing your skills steadily</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small builder">🔨</span>
+                  <div class="level-info">
+                    <strong>Builder</strong>
+                    <small>Building solid foundations</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small explorer">🧭</span>
+                  <div class="level-info">
+                    <strong>Explorer</strong>
+                    <small>Exploring advanced concepts</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small sage">📚</span>
+                  <div class="level-info">
+                    <strong>Sage</strong>
+                    <small>Gaining deep knowledge</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small virtuoso">🎼</span>
+                  <div class="level-info">
+                    <strong>Virtuoso</strong>
+                    <small>Mastering the craft</small>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <span class="level-badge-small luminary">🌟</span>
+                  <div class="level-info">
+                    <strong>Luminary</strong>
+                    <small>Shining example to the community</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/user-profile.js"></script>
+  </body>
+</html>

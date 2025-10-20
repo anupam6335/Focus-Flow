@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blogs - FocusFlow</title>
+    <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/blogs.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-container">
+          <h1 class="site-logo">FocusFlow Blogs</h1>
+          <div class="nav-links">
+            <a id="back-link" class="nav-link">← Back to Tracker</a>
+            <a href="/profile.html" class="nav-link profile-link">👤 Profile</a>
+            <a id="blog-link" class="nav-link active">Blogs</a>
+          </div>
+        </div>
+      </header>
+
+      <div id="authSection" style="display: none">
+        <div class="auth-required">
+          <h3>Please log in to access blogs</h3>
+          <p>You need to be logged in to read and create blogs.</p>
+          <button class="login-btn" onclick="window.location.href='/'">
+            Go to Login
+          </button>
+        </div>
+      </div>
+
+      <div id="blogsContent" style="display: none">
+        <!-- NEW: Compact Blog Header with Integrated Tabs -->
+        <div class="blog-header-compact">
+          <h2>Community Blogs</h2>
+          <button class="create-blog-btn-compact" onclick="openCreateModal()">
+            <span>+</span>
+            <span>Create Blog</span>
+          </button>
+        </div>
+
+        <!-- NEW: Integrated Tabs Navigation -->
+        <div class="tabs-container-compact">
+          <div class="tabs-compact">
+            <button
+              class="tab-compact active"
+              onclick="switchTab('all')"
+              id="tab-all"
+            >
+              All Blogs
+              <span class="tab-badge-compact" id="all-blogs-count">0</span>
+            </button>
+            <button
+              class="tab-compact"
+              onclick="switchTab('my-blogs')"
+              id="tab-my-blogs"
+            >
+              My Blogs
+              <span class="tab-badge-compact" id="my-blogs-count">0</span>
+            </button>
+            <button
+              class="tab-compact"
+              onclick="switchTab('popular')"
+              id="tab-popular"
+            >
+              Popular
+              <span class="tab-badge-compact" id="popular-blogs-count">0</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="blogsContainer">
+          <div class="blogs-grid" id="blogsGrid">
+            <!-- Blogs will be loaded here -->
+          </div>
+        </div>
+
+        <div class="pagination" id="pagination">
+          <!-- Pagination will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Create/Edit Blog Modal -->
+      <div class="modal" id="blogModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Create New Blog</h3>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+          </div>
+          <form id="blogForm">
+            <div class="form-group">
+              <label class="form-label" for="blogTitle">Title</label>
+              <input type="text" id="blogTitle" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blogContent"
+                >Content (Markdown supported)</label
+              >
+              <textarea
+                id="blogContent"
+                class="form-textarea"
+                required
+              ></textarea>
+              <div class="markdown-help">
+                Supports Markdown: **bold**, *italic*, `code`, # headers, -
+                lists
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blogTags"
+                >Tags (comma separated)</label
+              >
+              <input
+                type="text"
+                id="blogTags"
+                class="form-input"
+                placeholder="coding, algorithms, tips"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="blogIsPublic"
+                  class="form-checkbox"
+                  checked
+                />
+                Make this blog public
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal()"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" id="modalSubmit">
+                Create Blog
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/blogs.js"></script>
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
+      ↑
+    </button>
+  </body>
+</html>

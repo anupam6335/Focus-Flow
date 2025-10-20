@@ -1,0 +1,147 @@
+/* ===== DAY EDITABILITY CONTROL ===== */
+
+/* Hide action buttons for non-editable days */
+.non-editable-day .edit-link-btn,
+.non-editable-day .delete-question-btn,
+.non-editable-day .add-question-btn {
+  display: none !important;
+}
+
+/* Ensure question links remain clickable in non-editable days */
+.non-editable-day .question-link {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+/* Make checkboxes appear disabled but still show completion state */
+.non-editable-day .question-checkbox {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Keep the visual styling for non-editable days subtle */
+.non-editable-day {
+  opacity: 0.9;
+}
+
+/* Ensure current day has full visibility */
+.current-day {
+  opacity: 1 !important;
+}
+
+/* Hide tag removal for non-editable days */
+.non-editable-day .tag-remove {
+  display: none !important;
+}
+
+/* Disable tag input for non-editable days */
+.non-editable-day .add-tag-input {
+  display: none !important;
+}
+
+/* Hide the add day button tooltip container when disabled */
+.non-editable-control + .tooltip-container {
+  display: none !important;
+}
+
+/* ===== HIDE EDIT & DELETE BUTTONS FOR PAST DAYS ===== */
+
+/* Hide Edit button for non-editable days */
+.non-editable-day button[title="Edit question link"],
+.non-editable-day button[title="Edit link"] {
+  display: none !important;
+}
+
+/* Hide Delete button for non-editable days */
+.non-editable-day button[title="Delete question"],
+.non-editable-day button[title="Delete question"] {
+  display: none !important;
+}
+
+/* Alternative selectors based on button content/attributes */
+.non-editable-day button:contains("🔗"),
+.non-editable-day button[onclick*="openLinkModal"],
+.non-editable-day button:contains("🗑️"),
+.non-editable-day button[onclick*="deleteQuestion"] {
+  display: none !important;
+}
+
+/* Target buttons by their inline styles and positioning */
+.non-editable-day .question-text button {
+  display: none !important;
+}
+
+/* Ensure question actions container is hidden for non-editable days */
+.non-editable-day .question-actions {
+  display: none !important;
+}
+
+/* Keep question links fully accessible */
+.non-editable-day .question-link {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  display: inline !important;
+}
+
+/* Make sure checkboxes remain visible but disabled-looking */
+.non-editable-day .question-checkbox {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  display: inline-block !important;
+}
+
+/* Ensure current day buttons remain visible */
+.current-day button[title="Edit question link"],
+.current-day button[title="Delete question"],
+.current-day .question-actions,
+.current-day .question-text button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ===== HIDE EMOJI FOR PAST DAYS ===== */
+
+/* Hide status emoji for non-editable days */
+.non-editable-day .status-cell {
+  visibility: hidden !important;
+}
+
+/* Alternative approach - make emoji transparent */
+.non-editable-day .status-cell {
+  opacity: 0 !important;
+}
+
+/* Or hide the content specifically */
+.non-editable-day .status-cell::before {
+  content: "" !important;
+}
+
+.non-editable-day .status-cell {
+  font-size: 0 !important;
+}
+
+/* Keep current day emoji fully visible */
+.current-day .status-cell {
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-size: 1.5rem !important;
+}
+
+/* Ensure current day emoji animations still work */
+.current-day .status-cell.completed,
+.current-day .status-cell.updating,
+.current-day .status-cell:hover {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ===== SMART HIDING: ONLY PAST EMPTY DAYS ===== */
+
+/* Hide past days (non-editable) that have no questions */
+/* Show current day always, and past days that have questions */
+tr.non-editable-day:not(:has(.question-item)) {
+  display: none !important;
+}
