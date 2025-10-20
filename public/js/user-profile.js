@@ -1538,7 +1538,7 @@ function generatePixelAvatar(username) {
 // View user profile - opens in new page (same as profile)
 function viewUserProfile(username) {
   // Navigate to profile page with user parameter
-  window.location.href = `/user-profile?user=${encodeURIComponent(username)}`;
+  window.location.href = `/user-profile.html?user=${encodeURIComponent(username)}`;
 }
 
 function renderAchievements() {
@@ -2117,4 +2117,5 @@ window.addEventListener("resize", function () {
     renderConsistencyMap();
   }
 });
+
 
