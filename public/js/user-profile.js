@@ -1,6 +1,6 @@
 
       // Modified version of profile.js that loads data for the specified user
-      const API_BASE_URL = "http://localhost:3000/api";
+      const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
       let currentViewingUser = null;
 
       // Get username from URL parameters

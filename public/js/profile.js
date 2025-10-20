@@ -1,6 +1,6 @@
 // API Configuration
-const API_BASE_URL = "http://localhost:3000/api";
-const FRONTEND_URL = "http://localhost:3000";
+const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 let currentUserData = null;
 let currentBlogTab = "public";
 

@@ -2,11 +2,11 @@ let currentPage = 1;
 let totalPages = 1;
 let editingBlog = null;
 let currentTab = "all"; // 'all', 'my-blogs', 'popular'
-const API_BASE_URL = "http://localhost:3000/api";
-const BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+const BASE_URL = "https://focus-flow-lopn.onrender.com";
 
 // URL Redirect
-const FRONTEND_URL = "http://localhost:3000";
+const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
 document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
 document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;

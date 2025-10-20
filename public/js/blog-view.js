@@ -1,9 +1,9 @@
 // Get blog slug from URL
 const pathSegments = window.location.pathname.split("/");
 const blogSlug = pathSegments[pathSegments.length - 1];
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 
-const FRONTEND_URL = "http://localhost:3000";
+const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
 document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs.html`;
 document.getElementById("tracker-link").href = `${FRONTEND_URL}/index.html`;
@@ -1512,7 +1512,7 @@ async function deleteBlog(slug) {
     if (result.success) {
       toastManager.success("Blog deleted successfully!", "Blog Deleted");
       setTimeout(() => {
-        window.location.href = "http://localhost:3000/blogs.html";
+        window.location.href = "https://focus-flow-lopn.onrender.com/blogs.html";
       }, 1500);
     } else {
       toastManager.error(result.error, "Delete Failed");
