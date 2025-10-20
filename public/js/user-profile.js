@@ -80,7 +80,7 @@ function updateUserProfileMetaTags(userData) {
   console.log("Updating meta tags for viewed user:", username);
 
   // Update Canonical URL with username parameter
-  const canonicalUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
+  const canonicalUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
     username
   )}`;
   updateCanonicalUrl(canonicalUrl);
@@ -2117,3 +2117,4 @@ window.addEventListener("resize", function () {
     renderConsistencyMap();
   }
 });
+
