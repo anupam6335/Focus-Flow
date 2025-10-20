@@ -13,7 +13,7 @@ async function loadUserProfile() {
   const targetUsername = getTargetUsername();
   if (!targetUsername) {
     // Redirect to home if no user specified
-    window.location.href = "/index.html";
+    window.location.href = "/";
     return;
   }
 
@@ -50,7 +50,7 @@ async function loadUserProfile() {
     console.error("Error loading user profile:", error);
     showError("User not found. Redirecting to home...");
     setTimeout(() => {
-      window.location.href = "/index.html";
+      window.location.href = "/";
     }, 3000);
   }
 
@@ -150,7 +150,7 @@ function renderSocialLinks(socialLinksData) {
     .join("");
 }
 
-// Enhanced Progress Chart for user-profile.html with full animations
+// Enhanced Progress Chart for user-profile with full animations
 class EnhancedProgressChart {
   constructor() {
     this.container = document.getElementById("progressChartContainer");
@@ -810,7 +810,7 @@ function showError(message) {
   container.insertBefore(errorDiv, container.firstChild);
 }
 
-// Enhanced render function with all new features - FIXED for user-profile.html
+// Enhanced render function with all new features - FIXED for user-profile
 function renderUserProfile() {
   if (!currentViewingUser) return;
 
@@ -838,7 +838,7 @@ function renderUserProfile() {
 
   // Update profile badge based on context
   const profileBadge = document.getElementById("profileOwnerBadge");
-  if (window.location.pathname.includes("user-profile.html")) {
+  if (window.location.pathname.includes("user-profile")) {
     profileBadge.textContent = "Viewing Profile";
   } else {
     profileBadge.textContent = "";
@@ -873,7 +873,7 @@ function renderUserProfile() {
   updateShareButton();
 }
 
-// Share Profile Functionality for user-profile.html
+// Share Profile Functionality for user-profile
 async function shareProfile() {
   try {
     const targetUsername = getTargetUsername();
@@ -883,7 +883,7 @@ async function shareProfile() {
     }
 
     // Construct the profile URL
-    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       targetUsername
     )}`;
 
@@ -910,7 +910,7 @@ async function shareProfile() {
 
     // Fallback for browsers that don't support Clipboard API
     const targetUsername = getTargetUsername();
-    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       targetUsername
     )}`;
 
@@ -937,7 +937,7 @@ async function shareProfile() {
   }
 }
 
-// Simple Toast Notification System for user-profile.html
+// Simple Toast Notification System for user-profile
 function showToast(message, type = "info", duration = 3000) {
   // Create toast container if it doesn't exist
   let toastContainer = document.getElementById("toastContainer");
@@ -983,7 +983,7 @@ function showToast(message, type = "info", duration = 3000) {
 // Enhanced function to handle social sharing if needed
 function shareProfileToSocial() {
   const targetUsername = getTargetUsername();
-  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
     targetUsername
   )}`;
   const shareText = `Check out ${targetUsername}'s FocusFlow profile`;
@@ -1027,7 +1027,7 @@ function updateShareButton() {
   }
 }
 
-// Reuse all other functions from profile.html (make sure these are included)
+// Reuse all other functions from profile (make sure these are included)
 // Pixel Avatar System
 function generatePixelAvatar(username) {
   const animals = [
@@ -1233,7 +1233,7 @@ function getStreakStatus(currentStreak) {
   return "Legendary streak! 🏆";
 }
 
-// Render user directory (same as profile.html)
+// Render user directory (same as profile)
 function renderUserDirectory(users, container) {
   if (!users || users.length === 0) {
     container.innerHTML = `
@@ -1277,7 +1277,7 @@ function renderUserDirectory(users, container) {
     .join("");
 }
 
-// Generate consistent avatar for any user (same as profile.html)
+// Generate consistent avatar for any user (same as profile)
 // Enhanced avatar system - unique, thematic, and expressive
 function generateUserAvatar(username) {
   // Theme-based avatar collections
@@ -1443,10 +1443,10 @@ function generatePixelAvatar(username) {
   const avatarIndex = Math.abs(hash) % profileAvatars.length;
   return profileAvatars[avatarIndex];
 }
-// View user profile - opens in new page (same as profile.html)
+// View user profile - opens in new page (same as profile)
 function viewUserProfile(username) {
   // Navigate to profile page with user parameter
-  window.location.href = `/user-profile.html?user=${encodeURIComponent(
+  window.location.href = `/user-profile?user=${encodeURIComponent(
     username
   )}`;
 }
@@ -1587,7 +1587,7 @@ function calculateAchievements(user) {
     },
   ];
 }
-// Render question history with expandable days (same as profile.html)
+// Render question history with expandable days (same as profile)
 function renderQuestionHistory() {
   const container = document.getElementById("questionHistory");
   if (!currentViewingUser) return;

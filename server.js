@@ -1730,6 +1730,15 @@ app.get("/profile", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "profile.html"));
 });
 
+// Serve user-profile with and without .html extension
+app.get("/user-profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "user-profile.html"));
+});
+
+app.get("/user-profile.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "user-profile.html"));
+});
+
 // Serve user profile pages (for future implementation)
 app.get("/user/:username", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "user-profile.html"));

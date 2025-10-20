@@ -8,8 +8,8 @@ const BASE_URL = "https://focus-flow-lopn.onrender.com";
 // URL Redirect
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
-document.getElementById("back-link").href = `${FRONTEND_URL}/index.html`;
-document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs.html`;
+document.getElementById("back-link").href = `${FRONTEND_URL}/`;
+document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs`;
 
 // Toast Notification System
 class ToastManager {
