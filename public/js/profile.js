@@ -1368,7 +1368,7 @@ async function loadUserProfile() {
   try {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      window.location.href = "/index.html";
+      window.location.href = "/index";
       return;
     }
 
@@ -1406,7 +1406,7 @@ async function loadUserProfile() {
   }
 }
 
-// Enhanced render function with all new features - FIXED for profile.html
+// Enhanced render function with all new features - FIXED for profile
 function renderUserProfile() {
   if (!currentUserData) return; // Use currentUserData instead of currentViewingUser
 
@@ -1434,7 +1434,7 @@ function renderUserProfile() {
 
   // Update profile badge based on context
   const profileBadge = document.getElementById("profileOwnerBadge");
-  if (window.location.pathname.includes("user-profile.html")) {
+  if (window.location.pathname.includes("user-profile")) {
     profileBadge.textContent = "Viewing Profile";
   } else {
     profileBadge.textContent = "My Profile";
@@ -1479,7 +1479,7 @@ async function shareProfile() {
     }
 
     // Construct the profile URL
-    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       username
     )}`;
 
@@ -1509,7 +1509,7 @@ async function shareProfile() {
 
     // Fallback for browsers that don't support Clipboard API
     const username = currentUserData?.username;
-    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       username
     )}`;
 
@@ -1547,7 +1547,7 @@ async function shareProfile() {
 // Enhanced function to handle social sharing if needed
 function shareProfileToSocial() {
   const username = currentUserData?.username;
-  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
     username
   )}`;
   const shareText = `Check out my FocusFlow profile: ${username}`;
@@ -1793,7 +1793,7 @@ function renderConsistencyMap() {
   renderHeatmap(heatmapData, heatmapGrid, monthsRow);
 }
 
-// Heatmap rendering function (similar to index.html)
+// Heatmap rendering function (similar to index)
 function renderHeatmap(activityData, heatmapGrid, monthsRow) {
   heatmapGrid.innerHTML = "";
   monthsRow.innerHTML = "";
@@ -2212,7 +2212,7 @@ function generatePixelAvatar(username) {
 // View user profile - opens in new page
 function viewUserProfile(username) {
   // Navigate to profile page with user parameter
-  window.location.href = `/user-profile.html?user=${encodeURIComponent(
+  window.location.href = `/user-profile?user=${encodeURIComponent(
     username
   )}`;
 }
@@ -2231,7 +2231,7 @@ function escapeHtml(unsafe) {
 document.addEventListener("DOMContentLoaded", function () {
   const token = localStorage.getItem("authToken");
   if (!token) {
-    window.location.href = "/index.html";
+    window.location.href = "/index";
     return;
   }
   loadUserProfile();

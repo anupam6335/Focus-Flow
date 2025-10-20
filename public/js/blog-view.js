@@ -5,8 +5,8 @@ const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 
-document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs.html`;
-document.getElementById("tracker-link").href = `${FRONTEND_URL}/index.html`;
+document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs`;
+document.getElementById("tracker-link").href = `${FRONTEND_URL}/index`;
 
 // Toast Notification System
 class ToastManager {
@@ -449,7 +449,7 @@ class MarkdownRenderer {
 
         if (content.length > 0) {
           const label = document.createElement("label");
-          label.htmlFor = checklistId;
+          labelFor = checklistId;
           label.style.flex = "1";
           label.style.cursor = "pointer";
           label.style.marginBottom = "0";
@@ -1512,7 +1512,7 @@ async function deleteBlog(slug) {
     if (result.success) {
       toastManager.success("Blog deleted successfully!", "Blog Deleted");
       setTimeout(() => {
-        window.location.href = "https://focus-flow-lopn.onrender.com/blogs.html";
+        window.location.href = "https://focus-flow-lopn.onrender.com/blogs";
       }, 1500);
     } else {
       toastManager.error(result.error, "Delete Failed");
