@@ -427,10 +427,30 @@ app.get("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
-// Get specific user's public data
-app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
+// Update the user-info endpoint to handle both authenticated and public access
+app.get("/api/user-info/:username", async (req, res) => {
   try {
     const username = req.params.username;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    
+    let isAuthenticated = false;
+    let currentUser = null;
+
+    // Verify token if provided, but don't require it
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findOne({ username: decoded.username });
+        if (user) {
+          isAuthenticated = true;
+          currentUser = user;
+        }
+      } catch (error) {
+        // Token is invalid, but we still allow public access
+        console.log("Invalid token, proceeding with public access");
+      }
+    }
 
     // Get user basic info
     const user = await User.findOne({ username }).select("-password -__v");
@@ -445,7 +465,7 @@ app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
     let solvedQuestions = 0;
     let totalQuestions = 0;
     let consistencyData = [];
-    let dailyQuestions = []; // This will store the actual questions data
+    let dailyQuestions = [];
 
     if (checklistData && checklistData.data) {
       // Enhanced consistency data with actual questions
@@ -495,15 +515,16 @@ app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
     // Get activity tracker stats
     const activityData = await ActivityTracker.findOne({ userId: username });
 
-    // Get user's blogs info (only public blogs for other users)
-    const userBlogs = await Blog.find({ author: username, isPublic: true })
+    // Get user's blogs info (only public blogs for public access)
+    const blogQuery = { author: username, isPublic: true };
+    const userBlogs = await Blog.find(blogQuery)
       .select("title slug isPublic tags likes views createdAt updatedAt")
       .sort({ createdAt: -1 });
 
     const blogStats = {
       total: userBlogs.length,
       public: userBlogs.filter((blog) => blog.isPublic).length,
-      private: 0, // Don't show private blogs for other users
+      private: 0, // Don't show private blogs for public access
       totalLikes: userBlogs.reduce((sum, blog) => sum + (blog.likes || 0), 0),
       totalViews: userBlogs.reduce((sum, blog) => sum + (blog.views || 0), 0),
       mostPopularBlog:
@@ -516,7 +537,7 @@ app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
           : null,
     };
 
-    // Compile user info (public data only for other users)
+    // Compile user info (public data only for non-authenticated users)
     const userInfo = {
       // Basic Info
       username: user.username,
@@ -591,11 +612,15 @@ app.get("/api/user-info/:username", authenticateToken, async (req, res) => {
           : 0,
         maxStreak: activityData ? activityData.activityData.maxStreak : 0,
       },
+
+      // Add access level info
+      accessLevel: isAuthenticated ? "authenticated" : "public"
     };
 
     res.json({
       success: true,
       user: userInfo,
+      accessLevel: isAuthenticated ? "authenticated" : "public"
     });
   } catch (error) {
     console.error("Error fetching user info:", error);
@@ -659,65 +684,59 @@ app.get("/api/progress-stats", authenticateToken, async (req, res) => {
   }
 });
 
-// Get progress stats for any user
-app.get(
-  "/api/progress-stats/:username",
-  authenticateToken,
-  async (req, res) => {
-    try {
-      const username = req.params.username;
+// Update progress stats to work without authentication
+app.get("/api/progress-stats/:username", async (req, res) => {
+  try {
+    const username = req.params.username;
 
-      // Get checklist data
-      const checklistData = await ChecklistData.findOne({ userId: username });
+    // Get checklist data
+    const checklistData = await ChecklistData.findOne({ userId: username });
 
-      if (!checklistData || !checklistData.data) {
-        return res.json({
-          success: true,
-          stats: {
-            total: 0,
-            easy: 0,
-            medium: 0,
-            hard: 0,
-          },
+    if (!checklistData || !checklistData.data) {
+      return res.json({
+        success: true,
+        stats: {
+          total: 0,
+          easy: 0,
+          medium: 0,
+          hard: 0,
+        },
+      });
+    }
+
+    // Calculate solved counts by difficulty
+    const stats = {
+      total: 0,
+      easy: 0,
+      medium: 0,
+      hard: 0,
+    };
+
+    checklistData.data.forEach((day) => {
+      if (day.questions && Array.isArray(day.questions)) {
+        day.questions.forEach((question) => {
+          if (question.completed) {
+            stats.total++;
+            const difficulty = (question.difficulty || "medium").toLowerCase();
+            if (stats[difficulty] !== undefined) {
+              stats[difficulty]++;
+            } else {
+              stats.medium++; // Default to medium if invalid difficulty
+            }
+          }
         });
       }
+    });
 
-      // Calculate solved counts by difficulty
-      const stats = {
-        total: 0,
-        easy: 0,
-        medium: 0,
-        hard: 0,
-      };
-
-      checklistData.data.forEach((day) => {
-        if (day.questions && Array.isArray(day.questions)) {
-          day.questions.forEach((question) => {
-            if (question.completed) {
-              stats.total++;
-              const difficulty = (
-                question.difficulty || "medium"
-              ).toLowerCase();
-              if (stats[difficulty] !== undefined) {
-                stats[difficulty]++;
-              } else {
-                stats.medium++; // Default to medium if invalid difficulty
-              }
-            }
-          });
-        }
-      });
-
-      res.json({
-        success: true,
-        stats,
-      });
-    } catch (error) {
-      console.error("Error fetching progress stats:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
+    res.json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("Error fetching progress stats:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
-);
+});
 // Get user data (protected route) - UPDATED with version
 app.get("/api/data", authenticateToken, async (req, res) => {
   try {
@@ -1130,8 +1149,8 @@ app.put("/api/social-links", authenticateToken, async (req, res) => {
   }
 });
 
-// Get social links for any user (public data)
-app.get("/api/social-links/:username", authenticateToken, async (req, res) => {
+// Update social links to work without authentication
+app.get("/api/social-links/:username", async (req, res) => {
   try {
     const username = req.params.username;
 

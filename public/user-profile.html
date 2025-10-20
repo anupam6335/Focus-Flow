@@ -18,11 +18,18 @@
               >User Profile</span
             >
           </h1>
-          <div class="nav-links">
-            <a href="/index.html" class="nav-link">← Back to Tracker</a>
-            <a href="/blogs.html" class="nav-link">📝 Blogs</a>
-            <a href="/profile.html" class="nav-link">👤 My Profile</a>
-          </div>
+         <div class="nav-links">
+  <a href="/index.html" class="nav-link">← Back to Tracker</a>
+  <a href="/blogs.html" class="nav-link">📝 Blogs</a>
+  <!-- Only show "My Profile" if user is logged in -->
+  <span id="myProfileLink" style="display: none;">
+    <a href="/profile.html" class="nav-link">👤 My Profile</a>
+  </span>
+  <!-- Show login link if not logged in -->
+  <span id="loginLink" style="display: none;">
+    <a href="/index.html" class="nav-link">🔑 Login</a>
+  </span>
+</div>
         </div>
       </header>
 
@@ -42,6 +49,14 @@
                 <h1 class="profile-name" id="userName">Loading...</h1>
                 <div class="profile-badge" id="profileOwnerBadge">
                   My Profile
+                </div>
+
+                <!-- Add this right after the profile-name-container div -->
+                <div class="profile-actions">
+                  <button class="share-profile-btn" onclick="shareProfile()">
+                    <span>🔗</span>
+                    <span>Share Profile</span>
+                  </button>
                 </div>
               </div>
               <p class="profile-bio" id="userBio">

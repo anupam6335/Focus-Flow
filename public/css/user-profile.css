@@ -2572,3 +2572,170 @@ h1 {
 .progress-circle:hover {
   animation: segmentPulse 1s ease-in-out;
 }
+
+/* ========================================= */
+/* Toast Notifications for user-profile.html */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.toast {
+    background: var(--codeleaf-bg-primary);
+    border: 1px solid var(--codeleaf-border-light);
+    border-left: 4px solid var(--codeleaf-accent-primary);
+    border-radius: var(--codeleaf-radius-md);
+    padding: var(--codeleaf-space-4);
+    box-shadow: var(--codeleaf-shadow-lg);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--codeleaf-space-3);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateX(400px);
+    opacity: 0;
+}
+
+.toast.success {
+    border-left-color: var(--codeleaf-success);
+}
+
+.toast.error {
+    border-left-color: var(--codeleaf-error);
+}
+
+.toast.info {
+    border-left-color: var(--codeleaf-info);
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-message {
+    color: var(--codeleaf-text-secondary);
+    font-size: var(--codeleaf-font-sm);
+    line-height: 1.4;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--codeleaf-text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+    color: var(--codeleaf-text-primary);
+    background: rgba(76, 166, 76, 0.1);
+}
+
+/* Share Profile Button Styles */
+.profile-actions {
+    margin: var(--codeleaf-space-3) 0;
+}
+
+.share-profile-btn {
+    background: var(--codeleaf-bg-secondary);
+    color: var(--codeleaf-text-primary);
+    border: 1px solid var(--codeleaf-border-light);
+    border-radius: var(--codeleaf-radius-md);
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
+    font-size: var(--codeleaf-font-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--codeleaf-space-2);
+    position: relative;
+    overflow: hidden;
+}
+
+.share-profile-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(76, 166, 76, 0.1),
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.share-profile-btn:hover::before {
+    left: 100%;
+}
+
+.share-profile-btn:hover {
+    background: var(--codeleaf-bg-tertiary);
+    border-color: var(--codeleaf-accent-muted);
+    color: var(--codeleaf-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--codeleaf-shadow-sm);
+}
+
+.share-profile-btn:active {
+    transform: translateY(0);
+}
+
+/* Success state when copied */
+.share-profile-btn.copied {
+    background: var(--codeleaf-success);
+    color: white;
+    border-color: var(--codeleaf-success);
+}
+
+.share-profile-btn.copied span:first-child {
+    content: "✓";
+}
+
+/* Responsive design for share button */
+@media (max-width: 768px) {
+    .share-profile-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .profile-actions {
+        width: 100%;
+    }
+    
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}

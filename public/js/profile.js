@@ -1465,6 +1465,130 @@ function renderUserProfile() {
   document.getElementById("totalXP").textContent = userLevel.xp;
   document.getElementById("avgDaily").textContent = avgDaily.toFixed(1);
   document.getElementById("maxStreak").textContent = maxStreak;
+
+  updateShareButton();
+}
+
+// Share Profile Functionality
+async function shareProfile() {
+  try {
+    const username = currentUserData?.username;
+    if (!username) {
+      toastManager.error("Unable to get user information", "Share Error");
+      return;
+    }
+
+    // Construct the profile URL
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+      username
+    )}`;
+
+    // Use the Clipboard API to copy the URL
+    await navigator.clipboard.writeText(profileUrl);
+
+    // Show success feedback
+    const shareBtn = document.querySelector(".share-profile-btn");
+    const originalText = shareBtn.innerHTML;
+
+    shareBtn.classList.add("copied");
+    shareBtn.innerHTML = "<span>✓</span><span>Copied!</span>";
+
+    toastManager.success(
+      "Profile link copied to clipboard!",
+      "Share Ready",
+      3000
+    );
+
+    // Revert button after 2 seconds
+    setTimeout(() => {
+      shareBtn.classList.remove("copied");
+      shareBtn.innerHTML = originalText;
+    }, 2000);
+  } catch (error) {
+    console.error("Error sharing profile:", error);
+
+    // Fallback for browsers that don't support Clipboard API
+    const username = currentUserData?.username;
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+      username
+    )}`;
+
+    // Create a temporary input element for fallback copy
+    const tempInput = document.createElement("input");
+    tempInput.value = profileUrl;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999); // For mobile devices
+
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(tempInput);
+
+      if (successful) {
+        toastManager.success(
+          "Profile link copied to clipboard!",
+          "Share Ready",
+          3000
+        );
+      } else {
+        throw new Error("execCommand failed");
+      }
+    } catch (fallbackError) {
+      // Last resort - show the URL to the user
+      toastManager.info(
+        `Share this link: ${profileUrl}`,
+        "Copy Manually",
+        5000
+      );
+    }
+  }
+}
+
+// Enhanced function to handle social sharing if needed
+function shareProfileToSocial() {
+  const username = currentUserData?.username;
+  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile.html?user=${encodeURIComponent(
+    username
+  )}`;
+  const shareText = `Check out my FocusFlow profile: ${username}`;
+
+  // Web Share API for native sharing
+  if (navigator.share) {
+    navigator
+      .share({
+        title: "My FocusFlow Profile",
+        text: shareText,
+        url: profileUrl,
+      })
+      .catch((error) => {
+        console.log("Error sharing:", error);
+        // Fallback to clipboard
+        shareProfile();
+      });
+  } else {
+    // Fallback to clipboard
+    shareProfile();
+  }
+}
+
+// Add keyboard event listener for sharing
+document.addEventListener("keydown", function (event) {
+  // Ctrl/Cmd + Shift + S to share profile
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "S") {
+    event.preventDefault();
+    shareProfile();
+  }
+});
+
+// Add this to the renderUserProfile function to update the share button state
+function updateShareButton() {
+  const shareBtn = document.querySelector(".share-profile-btn");
+  if (shareBtn) {
+    shareBtn.setAttribute(
+      "aria-label",
+      `Share ${currentUserData?.username}'s profile`
+    );
+  }
 }
 
 // Enhanced achievements rendering with tooltips
