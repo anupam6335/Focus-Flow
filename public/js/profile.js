@@ -2231,7 +2231,7 @@ function escapeHtml(unsafe) {
 document.addEventListener("DOMContentLoaded", function () {
   const token = localStorage.getItem("authToken");
   if (!token) {
-    window.location.href = "/index";
+    window.location.href = "/";
     return;
   }
   loadUserProfile();

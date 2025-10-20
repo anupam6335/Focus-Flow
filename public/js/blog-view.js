@@ -449,7 +449,7 @@ class MarkdownRenderer {
 
         if (content.length > 0) {
           const label = document.createElement("label");
-          labelFor = checklistId;
+          label.htmlFor= checklistId;
           label.style.flex = "1";
           label.style.cursor = "pointer";
           label.style.marginBottom = "0";
