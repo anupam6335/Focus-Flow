@@ -115,7 +115,7 @@ class ToastManager {
 // Initialize toast manager
 const toastManager = new ToastManager();
 
-// Check authentication and load blogs
+// Check authentication and load blogs - UPDATED
 async function initBlogs() {
   const token = localStorage.getItem("authToken");
   const userId = localStorage.getItem("userId");
@@ -126,11 +126,16 @@ async function initBlogs() {
   }
 
   document.getElementById("blogsContent").style.display = "block";
+
+  // Initialize search FIRST
+  initializeBlogsPageSearch();
+
+  // Then load blogs
   await loadBlogs();
   await updateTabCounts();
 }
 
-// Switch between tabs with smooth animation
+// Switch between tabs with smooth animation - UPDATED
 async function switchTab(tabName) {
   currentTab = tabName;
   currentPage = 1;
@@ -140,6 +145,11 @@ async function switchTab(tabName) {
     tab.classList.remove("active");
   });
   document.getElementById(`tab-${tabName}`).classList.add("active");
+
+  // Clear any active search when switching tabs
+  if (blogsPageSearch) {
+    blogsPageSearch.clearSearch();
+  }
 
   // Add fade animation
   const blogsGrid = document.getElementById("blogsGrid");
@@ -370,10 +380,538 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-// Display blogs in Instagram-style grid with proper layout and animations
+// Blog Search System for Blogs Page
+class BlogsPageSearch {
+  constructor() {
+    this.searchInput = document.getElementById("blogsPageSearch");
+    this.searchLoader = document.getElementById("blogsPageSearchLoader");
+    this.searchClear = document.getElementById("blogsPageSearchClear");
+    this.searchResultsInfo = document.getElementById(
+      "blogsPageSearchResultsInfo"
+    );
+    this.searchResultsCount = document.getElementById(
+      "blogsPageSearchResultsCount"
+    );
+    this.clearSearchBtn = document.getElementById("blogsPageClearSearchBtn");
+    this.blogsGrid = document.getElementById("blogsGrid");
+
+    this.debounceTimer = null;
+    this.searchDelay = 300; // ms
+    this.isSearching = false;
+    this.originalBlogsData = [];
+    this.filteredBlogsData = [];
+    this.currentSearchTerm = "";
+    this.currentTab = "all";
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // Input event with debounce
+    this.searchInput.addEventListener("input", (e) => {
+      this.handleSearchInput(e.target.value);
+    });
+
+    // Clear search button
+    this.searchClear.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Clear search from results info
+    this.clearSearchBtn.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Keyboard shortcuts
+    this.searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.clearSearch();
+      }
+    });
+
+    // Focus management
+    this.searchInput.addEventListener("focus", () => {
+      this.searchInput.parentElement.classList.add("focused");
+    });
+
+    this.searchInput.addEventListener("blur", () => {
+      this.searchInput.parentElement.classList.remove("focused");
+    });
+  }
+
+  // Set blog data based on current tab
+  setBlogData(blogData, tab = "all") {
+    console.log("BlogsPageSearch: Setting blog data for tab", tab, blogData);
+    this.originalBlogsData = Array.isArray(blogData) ? blogData : [];
+    this.currentTab = tab;
+    console.log(
+      "BlogsPageSearch: Now has",
+      this.originalBlogsData.length,
+      "blogs in",
+      tab,
+      "tab"
+    );
+  }
+
+  handleSearchInput(searchTerm) {
+    // Clear previous timer
+    clearTimeout(this.debounceTimer);
+
+    // Show/hide clear button based on input
+    this.toggleClearButton(searchTerm.length > 0);
+
+    if (searchTerm.length === 0) {
+      this.clearSearch();
+      return;
+    }
+
+    // Show loading state for better UX
+    this.setSearchingState(true);
+
+    // Debounce the search
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(searchTerm);
+    }, this.searchDelay);
+  }
+
+  performSearch(searchTerm) {
+    console.log("BlogsPageSearch: Performing search for:", searchTerm);
+    console.log("BlogsPageSearch: Available data:", this.originalBlogsData);
+
+    if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
+      console.warn("BlogsPageSearch: No blog data available for search");
+      this.setSearchingState(false);
+      return;
+    }
+
+    this.currentSearchTerm = searchTerm.toLowerCase().trim();
+
+    // Search through current tab's blogs
+    this.filteredBlogsData = this.originalBlogsData.filter((blog) => {
+      // Search by title
+      const titleMatch = blog.title
+        .toLowerCase()
+        .includes(this.currentSearchTerm);
+
+      // Search by content (if available)
+      const contentMatch = blog.content
+        ? blog.content.toLowerCase().includes(this.currentSearchTerm)
+        : false;
+
+      // Search by tags (if available)
+      const tagsMatch = blog.tags
+        ? blog.tags.some((tag) =>
+            tag.toLowerCase().includes(this.currentSearchTerm)
+          )
+        : false;
+
+      // Search by author (if available)
+      const authorMatch = blog.author
+        ? blog.author.toLowerCase().includes(this.currentSearchTerm)
+        : false;
+
+      console.log(
+        `Blog "${blog.title}": titleMatch=${titleMatch}, contentMatch=${contentMatch}, tagsMatch=${tagsMatch}, authorMatch=${authorMatch}`
+      );
+      return titleMatch || contentMatch || tagsMatch || authorMatch;
+    });
+
+    console.log(
+      "BlogsPageSearch: Found",
+      this.filteredBlogsData.length,
+      "results in",
+      this.currentTab,
+      "tab"
+    );
+
+    // Update UI with search results
+    this.displaySearchResults(this.filteredBlogsData, searchTerm);
+    this.setSearchingState(false);
+  }
+
+  displaySearchResults(filteredBlogs, searchTerm) {
+    const hasResults = filteredBlogs.length > 0;
+
+    // Update results count with tab info
+    const tabDisplayName = this.getTabDisplayName(this.currentTab);
+    this.searchResultsCount.textContent = `${filteredBlogs.length} ${
+      filteredBlogs.length === 1 ? "result" : "results"
+    } in ${tabDisplayName} for "${searchTerm}"`;
+
+    // Show/hide results info
+    if (hasResults) {
+      this.searchResultsInfo.style.display = "block";
+    } else {
+      this.searchResultsInfo.style.display = "block";
+      this.searchResultsCount.textContent = `No results found in ${tabDisplayName} for "${searchTerm}"`;
+    }
+
+    // Render filtered blogs with highlight animation
+    this.renderFilteredBlogs(filteredBlogs, searchTerm);
+
+    // Add premium animation for search results
+    this.triggerSearchAnimation(hasResults);
+  }
+
+  getTabDisplayName(tab) {
+    const tabNames = {
+      all: "All Blogs",
+      "my-blogs": "My Blogs",
+      popular: "Popular Blogs",
+    };
+    return tabNames[tab] || tab;
+  }
+
+  renderFilteredBlogs(filteredBlogs, searchTerm) {
+    if (filteredBlogs.length === 0) {
+      this.blogsGrid.innerHTML = `
+      <div class="empty-state blog-search-empty-state">
+        <div style="font-size: 3rem; margin-bottom: var(--codeleaf-space-2);">🔍</div>
+        <div>No ${this.getTabDisplayName(
+          this.currentTab
+        ).toLowerCase()} found matching "${searchTerm}"</div>
+        <small>Try searching by title, content, tags, or author</small>
+      </div>
+    `;
+      return;
+    }
+
+    // Use the existing displayBlogs function but with highlighted content
+    const currentUser = localStorage.getItem("userId");
+    const pageLayout = getCardLayoutForPage(filteredBlogs, 0); // Show all results on one page
+
+    this.blogsGrid.innerHTML = pageLayout
+      .map((item, index) => {
+        const blog = item.blog;
+        const cardType = item.type;
+        const animationDelay = `${0.1 * index}s`;
+
+        // Highlight search terms in title and content
+        const highlightedTitle = this.highlightSearchTerm(
+          blog.title,
+          searchTerm
+        );
+
+        // Create excerpt with highlighted content if available
+        let excerpt = blog.content
+          ? blog.content.substring(0, 120) + "..."
+          : "No content available";
+        if (
+          blog.content &&
+          blog.content.toLowerCase().includes(searchTerm.toLowerCase())
+        ) {
+          excerpt = this.highlightSearchTermInContent(excerpt, searchTerm);
+        } else {
+          excerpt = escapeHtml(excerpt);
+        }
+
+        // Highlight author if it matches search
+        const authorDisplay = blog.author
+          ? this.highlightSearchTerm(blog.author, searchTerm)
+          : escapeHtml(blog.author || "Unknown");
+
+        return `
+        <div class="blog-card ${cardType} blog-search-result-item" onclick="viewBlog('${
+          blog.slug
+        }')" style="animation-delay: ${animationDelay}">
+          <div class="blog-card-header">
+            <div class="blog-card-image">
+              <div class="blog-card-overlay"></div>
+              <div class="blog-card-category">${
+                blog.tags && blog.tags.length > 0
+                  ? this.highlightSearchTerm(blog.tags[0], searchTerm)
+                  : "General"
+              }</div>
+            </div>
+          </div>
+          
+          <div class="blog-card-body">
+            <div class="blog-card-meta">
+              <div class="blog-author-avatar">
+                <span class="avatar-icon">👤</span>
+              </div>
+              <div class="blog-meta-info">
+                <span class="blog-author">${authorDisplay}</span>
+                <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
+              </div>
+              <div class="blog-visibility-tag">
+                <span class="visibility-icon">${
+                  blog.isPublic ? "🌍" : "🔒"
+                }</span>
+                <span class="visibility-text">${
+                  blog.isPublic ? "Public" : "Private"
+                }</span>
+              </div>
+            </div>
+            
+            <h3 class="blog-card-title">${highlightedTitle}</h3>
+            
+            <div class="blog-card-excerpt">
+              ${excerpt}
+            </div>
+            
+            <div class="blog-card-footer">
+              <div class="blog-stats">
+                <div class="blog-stat">
+                  <span class="stat-icon">❤️</span>
+                  <span class="stat-count">${blog.likes || 0}</span>
+                </div>
+                <div class="blog-stat">
+                  <span class="stat-icon">👁️</span>
+                  <span class="stat-count">${blog.views || 0}</span>
+                </div>
+              </div>
+              
+              <div class="blog-actions">
+                ${
+                  blog.author === currentUser
+                    ? `
+                  <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
+                    <span class="action-icon">✏️</span>
+                  </button>
+                `
+                    : ""
+                }
+                <button class="blog-action-btn like-btn ${
+                  blog.likedBy &&
+                  blog.likedBy.includes(currentUser) &&
+                  blog.author !== currentUser
+                    ? "liked"
+                    : ""
+                } 
+                           ${blog.author === currentUser ? "disabled" : ""}" 
+                        onclick="event.stopPropagation(); ${
+                          blog.author !== currentUser
+                            ? `toggleLike('${blog.slug}', event)`
+                            : ""
+                        }"
+                        ${blog.author === currentUser ? "disabled" : ""}
+                        title="${
+                          blog.author === currentUser
+                            ? "Cannot like your own blog"
+                            : blog.likedBy && blog.likedBy.includes(currentUser)
+                            ? "Unlike blog"
+                            : "Like blog"
+                        }">
+                  <span class="action-icon">${
+                    blog.likedBy && blog.likedBy.includes(currentUser)
+                      ? "❤️"
+                      : "🤍"
+                  }</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    // Hide pagination during search
+    document.getElementById("pagination").style.display = "none";
+  }
+
+  highlightSearchTerm(text, searchTerm) {
+    if (!text) return "";
+
+    const searchLower = searchTerm.toLowerCase();
+    const textLower = text.toLowerCase();
+
+    // Escape HTML first
+    const escapedText = escapeHtml(text);
+
+    // Highlight matching parts
+    if (searchLower && textLower.includes(searchLower)) {
+      const matchIndex = textLower.indexOf(searchLower);
+      const beforeMatch = escapedText.substring(0, matchIndex);
+      const match = escapedText.substring(
+        matchIndex,
+        matchIndex + searchTerm.length
+      );
+      const afterMatch = escapedText.substring(matchIndex + searchTerm.length);
+
+      return `${beforeMatch}<span class="blog-search-highlight">${match}</span>${afterMatch}`;
+    }
+
+    return escapedText;
+  }
+
+  highlightSearchTermInContent(content, searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const contentLower = content.toLowerCase();
+    const escapedContent = escapeHtml(content);
+
+    if (searchLower && contentLower.includes(searchLower)) {
+      const matchIndex = contentLower.indexOf(searchLower);
+      const beforeMatch = escapedContent.substring(
+        0,
+        Math.max(0, matchIndex - 20)
+      );
+      const contextStart = Math.max(0, matchIndex - 20) > 0 ? "..." : "";
+      const match = escapedContent.substring(
+        matchIndex,
+        matchIndex + searchTerm.length
+      );
+      const afterMatch = escapedContent.substring(
+        matchIndex + searchTerm.length,
+        matchIndex + searchTerm.length + 100
+      );
+      const contextEnd = afterMatch.length === 100 ? "..." : "";
+
+      return `${contextStart}${beforeMatch}<span class="blog-search-highlight">${match}</span>${afterMatch}${contextEnd}`;
+    }
+
+    return escapedContent;
+  }
+
+  triggerSearchAnimation(hasResults) {
+    // Add shimmer effect to search container
+    const searchWrapper = this.searchInput.parentElement;
+    searchWrapper.classList.add("searching");
+
+    // Remove searching class after animation
+    setTimeout(() => {
+      searchWrapper.classList.remove("searching");
+    }, 1000);
+
+    // Trigger celebration for successful search
+    if (hasResults) {
+      this.triggerSearchCelebration();
+    }
+  }
+
+  triggerSearchCelebration() {
+    // Create floating particles effect
+    this.createFloatingParticles();
+
+    // Add success animation to the container
+    this.blogsGrid.classList.add("blog-search-success-animation");
+    setTimeout(() => {
+      this.blogsGrid.classList.remove("blog-search-success-animation");
+    }, 1000);
+  }
+
+  createFloatingParticles() {
+    const container = this.blogsGrid;
+    const particles = ["📝", "✨", "🔍", "💡", "📚"];
+
+    // Get container position for relative positioning
+    const containerRect = container.getBoundingClientRect();
+
+    for (let i = 0; i < 3; i++) {
+      const particle = document.createElement("div");
+      particle.className = "blog-search-particle";
+      particle.textContent =
+        particles[Math.floor(Math.random() * particles.length)];
+
+      // Calculate positions relative to viewport
+      const left = containerRect.left + Math.random() * containerRect.width;
+      const top = containerRect.top + Math.random() * containerRect.height;
+
+      particle.style.cssText = `
+        position: fixed;
+        font-size: 1.2rem;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0;
+        animation: blogSearchFloatParticle 1.2s ease-out forwards;
+        left: ${left}px;
+        top: ${top}px;
+        will-change: transform, opacity;
+      `;
+
+      document.body.appendChild(particle);
+
+      // Remove particle after animation
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 1200);
+    }
+  }
+
+  setSearchingState(searching) {
+    this.isSearching = searching;
+
+    if (searching) {
+      this.searchLoader.classList.add("show");
+      this.searchInput.parentElement.classList.add("searching");
+    } else {
+      this.searchLoader.classList.remove("show");
+      this.searchInput.parentElement.classList.remove("searching");
+    }
+  }
+
+  toggleClearButton(show) {
+    if (show) {
+      this.searchClear.classList.add("show");
+    } else {
+      this.searchClear.classList.remove("show");
+    }
+  }
+
+  clearSearch() {
+    // Clear input
+    this.searchInput.value = "";
+    this.currentSearchTerm = "";
+
+    // Hide clear button and results info
+    this.toggleClearButton(false);
+    this.searchResultsInfo.style.display = "none";
+
+    // Reset to original blog content
+    if (this.originalBlogsData.length > 0) {
+      this.renderOriginalBlogs();
+    }
+
+    // Show pagination again
+    document.getElementById("pagination").style.display = "flex";
+
+    // Focus back on input for better UX
+    this.searchInput.focus();
+  }
+
+  // Render original blogs for current tab
+  renderOriginalBlogs() {
+    // Reload blogs for current tab to reset to normal view
+    loadBlogs(currentPage);
+  }
+}
+
+// Initialize blog search functionality
+let blogsPageSearch;
+
+function initializeBlogsPageSearch() {
+  blogsPageSearch = new BlogsPageSearch();
+}
+
+// Display blogs in Instagram-style grid with proper layout and animations - FIXED
 function displayBlogs(blogs) {
   const blogsGrid = document.getElementById("blogsGrid");
   const currentUser = localStorage.getItem("userId");
+
+  // Store data in search system
+  if (blogsPageSearch) {
+    console.log(
+      "Setting blog data for search:",
+      blogs.length,
+      "blogs in",
+      currentTab,
+      "tab"
+    );
+    blogsPageSearch.setBlogData(blogs, currentTab);
+  }
+
+  // If there's an active search, let the search system handle rendering
+  if (blogsPageSearch && blogsPageSearch.currentSearchTerm) {
+    console.log("Active search term:", blogsPageSearch.currentSearchTerm);
+    return; // Search system will handle rendering
+  }
 
   if (blogs.length === 0) {
     let emptyMessage = "";
@@ -392,18 +930,21 @@ function displayBlogs(blogs) {
     }
 
     blogsGrid.innerHTML = `
-                <div class="empty-state">
-                    <h3>No blogs found</h3>
-                    <p>${emptyMessage}</p>
-                    ${
-                      currentTab === "my-blogs"
-                        ? '<button class="create-blog-btn-compact" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
-                        : ""
-                    }
-                </div>
-            `;
+      <div class="empty-state">
+        <h3>No blogs found</h3>
+        <p>${emptyMessage}</p>
+        ${
+          currentTab === "my-blogs"
+            ? '<button class="create-blog-btn-compact" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
+            : ""
+        }
+      </div>
+    `;
     return;
   }
+
+  // Show pagination (might be hidden from search)
+  document.getElementById("pagination").style.display = "flex";
 
   // Get the layout for current page
   const pageLayout = getCardLayoutForPage(blogs, currentPage - 1);
@@ -417,96 +958,103 @@ function displayBlogs(blogs) {
       const animationDelay = `${0.1 * index}s`;
 
       return `
-             <!-- Updated Blog Card HTML -->
-<div class="blog-card" onclick="viewBlog('${
+        <div class="blog-card ${cardType}" onclick="viewBlog('${
         blog.slug
       }')" style="animation-delay: ${animationDelay}">
-  <div class="blog-card-header">
-    <div class="blog-card-image">
-      <div class="blog-card-overlay"></div>
-      <div class="blog-card-category">${
-        blog.tags && blog.tags.length > 0 ? blog.tags[0] : "General"
-      }</div>
-    </div>
-  </div>
-  
-  <div class="blog-card-body">
-    <div class="blog-card-meta">
-      <div class="blog-author-avatar">
-        <span class="avatar-icon">👤</span>
-      </div>
-      <div class="blog-meta-info">
-        <span class="blog-author">${escapeHtml(blog.author)}</span>
-        <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
-      </div>
-      <div class="blog-visibility-tag">
-        <span class="visibility-icon">${blog.isPublic ? "🌍" : "🔒"}</span>
-        <span class="visibility-text">${
-          blog.isPublic ? "Public" : "Private"
-        }</span>
-      </div>
-    </div>
-    
-    <h3 class="blog-card-title">${escapeHtml(blog.title)}</h3>
-    
-    <div class="blog-card-excerpt">
-      ${escapeHtml(
-        blog.content ? blog.content.substring(0, 120) : "No content available"
-      )}${blog.content && blog.content.length > 120 ? "..." : ""}
-    </div>
-    
-    <div class="blog-card-footer">
-      <div class="blog-stats">
-        <div class="blog-stat">
-          <span class="stat-icon">❤️</span>
-          <span class="stat-count">${blog.likes || 0}</span>
-        </div>
-        <div class="blog-stat">
-          <span class="stat-icon">👁️</span>
-          <span class="stat-count">${blog.views || 0}</span>
-        </div>
-      </div>
-      
-      <div class="blog-actions">
-        ${
-          blog.author === currentUser
-            ? `
-          <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
-            <span class="action-icon">✏️</span>
-          </button>
-        `
-            : ""
-        }
-        <button class="blog-action-btn like-btn ${
-          blog.likedBy &&
-          blog.likedBy.includes(currentUser) &&
-          blog.author !== currentUser
-            ? "liked"
-            : ""
-        } 
-                   ${blog.author === currentUser ? "disabled" : ""}" 
-                onclick="event.stopPropagation(); ${
-                  blog.author !== currentUser
-                    ? `toggleLike('${blog.slug}', event)`
-                    : ""
-                }"
-                ${blog.author === currentUser ? "disabled" : ""}
-                title="${
+          <div class="blog-card-header">
+            <div class="blog-card-image">
+              <div class="blog-card-overlay"></div>
+              <div class="blog-card-category">${
+                blog.tags && blog.tags.length > 0 ? blog.tags[0] : "General"
+              }</div>
+            </div>
+          </div>
+          
+          <div class="blog-card-body">
+            <div class="blog-card-meta">
+              <div class="blog-author-avatar">
+                <span class="avatar-icon">👤</span>
+              </div>
+              <div class="blog-meta-info">
+                <span class="blog-author">${escapeHtml(
+                  blog.author || "Unknown"
+                )}</span>
+                <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
+              </div>
+              <div class="blog-visibility-tag">
+                <span class="visibility-icon">${
+                  blog.isPublic ? "🌍" : "🔒"
+                }</span>
+                <span class="visibility-text">${
+                  blog.isPublic ? "Public" : "Private"
+                }</span>
+              </div>
+            </div>
+            
+            <h3 class="blog-card-title">${escapeHtml(blog.title)}</h3>
+            
+            <div class="blog-card-excerpt">
+              ${escapeHtml(
+                blog.content
+                  ? blog.content.substring(0, 120)
+                  : "No content available"
+              )}${blog.content && blog.content.length > 120 ? "..." : ""}
+            </div>
+            
+            <div class="blog-card-footer">
+              <div class="blog-stats">
+                <div class="blog-stat">
+                  <span class="stat-icon">❤️</span>
+                  <span class="stat-count">${blog.likes || 0}</span>
+                </div>
+                <div class="blog-stat">
+                  <span class="stat-icon">👁️</span>
+                  <span class="stat-count">${blog.views || 0}</span>
+                </div>
+              </div>
+              
+              <div class="blog-actions">
+                ${
                   blog.author === currentUser
-                    ? "Cannot like your own blog"
-                    : blog.likedBy && blog.likedBy.includes(currentUser)
-                    ? "Unlike blog"
-                    : "Like blog"
-                }">
-          <span class="action-icon">${
-            blog.likedBy && blog.likedBy.includes(currentUser) ? "❤️" : "🤍"
-          }</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-            `;
+                    ? `
+                  <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
+                    <span class="action-icon">✏️</span>
+                  </button>
+                `
+                    : ""
+                }
+                <button class="blog-action-btn like-btn ${
+                  blog.likedBy &&
+                  blog.likedBy.includes(currentUser) &&
+                  blog.author !== currentUser
+                    ? "liked"
+                    : ""
+                } 
+                           ${blog.author === currentUser ? "disabled" : ""}" 
+                        onclick="event.stopPropagation(); ${
+                          blog.author !== currentUser
+                            ? `toggleLike('${blog.slug}', event)`
+                            : ""
+                        }"
+                        ${blog.author === currentUser ? "disabled" : ""}
+                        title="${
+                          blog.author === currentUser
+                            ? "Cannot like your own blog"
+                            : blog.likedBy && blog.likedBy.includes(currentUser)
+                            ? "Unlike blog"
+                            : "Like blog"
+                        }">
+                  <span class="action-icon">${
+                    blog.likedBy && blog.likedBy.includes(currentUser)
+                      ? "❤️"
+                      : "🤍"
+                  }</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     })
     .join("");
 }

@@ -6,7 +6,7 @@
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
     <link rel="stylesheet" href="css/theme.css" />
     <title>Profile - FocusFlow</title>
-    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/profile.css" />
   </head>
   <body>
     <div class="container">
@@ -39,12 +39,12 @@
                 </div>
 
                 <!-- Add this right after the profile-name-container div -->
-<div class="profile-actions">
-    <button class="share-profile-btn" onclick="shareProfile()">
-        <span>🔗</span>
-        <span>Share Profile</span>
-    </button>
-</div>
+                <div class="profile-actions">
+                  <button class="share-profile-btn" onclick="shareProfile()">
+                    <span>🔗</span>
+                    <span>Share Profile</span>
+                  </button>
+                </div>
               </div>
               <p class="profile-bio" id="userBio">
                 Member since <span id="joinDate">...</span>
@@ -154,6 +154,34 @@
           <!-- Question History -->
           <div class="content-section">
             <h2 class="section-title">📚 Question History</h2>
+
+            <!-- Add this search bar section -->
+            <div
+              class="search-container"
+              style="margin-bottom: var(--codeleaf-space-4)"
+            >
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  id="questionSearch"
+                  class="search-input"
+                  placeholder="Search by Day Number or Question Title..."
+                  aria-label="Search question history"
+                />
+                <div class="search-icon">🔍</div>
+                <div class="search-loader" id="questionSearchLoader">
+                  <div class="loader-spinner"></div>
+                </div>
+                <button
+                  class="search-clear"
+                  id="questionSearchClear"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
             <div class="content-grid" id="questionHistory">
               <div class="loading">Loading question history...</div>
             </div>
@@ -162,6 +190,48 @@
           <!-- Blogs Section -->
           <div class="content-section">
             <h2 class="section-title">✍️ My Blogs</h2>
+
+            <!-- Add this search bar section -->
+            <div
+              class="search-container"
+              style="margin-bottom: var(--codeleaf-space-4)"
+            >
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  id="blogsSearch"
+                  class="search-input"
+                  placeholder="Search blogs by title or content keywords..."
+                  aria-label="Search blogs"
+                />
+                <div class="search-icon">🔍</div>
+                <div class="search-loader" id="blogsSearchLoader">
+                  <div class="loader-spinner"></div>
+                </div>
+                <button
+                  class="search-clear"
+                  id="blogsSearchClear"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <!-- Search Results Info -->
+            <div
+              class="search-results-info"
+              id="blogsSearchResultsInfo"
+              style="display: none"
+            >
+              <div class="search-results-header">
+                <span id="blogsSearchResultsCount">0 results</span>
+                <button class="clear-search-btn" id="blogsClearSearchBtn">
+                  Clear search
+                </button>
+              </div>
+            </div>
+
             <div class="tabs" style="margin-bottom: var(--codeleaf-space-4)">
               <button class="tab active" onclick="switchBlogTab('public')">
                 Public Blogs
@@ -272,8 +342,47 @@
           <!-- User Directory -->
           <div class="user-directory">
             <h2 class="section-title">👥 Community</h2>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  id="userSearch"
+                  class="search-input"
+                  placeholder="Search community members by username..."
+                  aria-label="Search community members"
+                />
+                <div class="search-icon">🔍</div>
+                <div class="search-loader" id="searchLoader">
+                  <div class="loader-spinner"></div>
+                </div>
+                <button
+                  class="search-clear"
+                  id="searchClear"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
             <div class="user-grid" id="userDirectory">
               <div class="loading">Loading community data...</div>
+            </div>
+
+            <!-- Search Results State -->
+            <div
+              class="search-results-info"
+              id="searchResultsInfo"
+              style="display: none; margin-top: 10px"
+            >
+              <div class="search-results-header">
+                <span id="searchResultsCount">0 results</span>
+                <button class="clear-search-btn" id="clearSearchBtn">
+                  Clear search
+                </button>
+              </div>
             </div>
           </div>
 
@@ -389,6 +498,6 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
-   <script src="js/profile.js"></script>
+    <script src="js/profile.js"></script>
   </body>
 </html>

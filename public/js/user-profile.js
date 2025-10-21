@@ -34,6 +34,11 @@ async function loadUserProfile() {
 
     if (result.success) {
       currentViewingUser = result.user;
+
+      // Initialize search FIRST
+      initializeUserProfileQuestionHistorySearch();
+      initializeUserProfileBlogSearch();
+      
       renderUserProfile();
       renderAchievements();
       renderQuestionHistory();
@@ -1128,7 +1133,15 @@ async function loadUserDirectory() {
           user.username !== currentUsername &&
           user.username !== loggedInUsername
       );
-      renderUserDirectory(otherUsers, container);
+
+      // Initialize search if not already done
+      if (!userProfileCommunitySearch) {
+        initializeUserProfileCommunitySearch();
+      }
+
+      // Set users in search system and render
+      userProfileCommunitySearch.setAllUsers(otherUsers);
+      userProfileCommunitySearch.renderUserDirectory(otherUsers);
     } else {
       throw new Error(result.error || "No users found");
     }
@@ -1143,6 +1156,347 @@ async function loadUserDirectory() {
         `;
   }
 }
+
+// Search functionality for Community section in user-profile
+class UserProfileCommunitySearch {
+  constructor() {
+    this.searchInput = document.getElementById("userSearch");
+    this.searchLoader = document.getElementById("searchLoader");
+    this.searchClear = document.getElementById("searchClear");
+    this.searchResultsInfo = document.getElementById("searchResultsInfo");
+    this.searchResultsCount = document.getElementById("searchResultsCount");
+    this.clearSearchBtn = document.getElementById("clearSearchBtn");
+    this.userDirectory = document.getElementById("userDirectory");
+
+    this.debounceTimer = null;
+    this.searchDelay = 300; // ms
+    this.isSearching = false;
+    this.allUsers = [];
+    this.filteredUsers = [];
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // Input event with debounce
+    this.searchInput.addEventListener("input", (e) => {
+      this.handleSearchInput(e.target.value);
+    });
+
+    // Clear search button
+    this.searchClear.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Clear search from results info
+    this.clearSearchBtn.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Keyboard shortcuts
+    this.searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.clearSearch();
+      }
+    });
+
+    // Focus management
+    this.searchInput.addEventListener("focus", () => {
+      this.searchInput.parentElement.classList.add("focused");
+    });
+
+    this.searchInput.addEventListener("blur", () => {
+      this.searchInput.parentElement.classList.remove("focused");
+    });
+  }
+
+  handleSearchInput(searchTerm) {
+    // Clear previous timer
+    clearTimeout(this.debounceTimer);
+
+    // Show/hide clear button based on input
+    this.toggleClearButton(searchTerm.length > 0);
+
+    if (searchTerm.length === 0) {
+      this.clearSearch();
+      return;
+    }
+
+    // Show loading state for better UX
+    this.setSearchingState(true);
+
+    // Debounce the search
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(searchTerm);
+    }, this.searchDelay);
+  }
+
+  performSearch(searchTerm) {
+    if (!this.allUsers || this.allUsers.length === 0) {
+      console.warn("No users available for search");
+      this.setSearchingState(false);
+      return;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // Filter users based on username match
+    this.filteredUsers = this.allUsers.filter((user) =>
+      user.username.toLowerCase().includes(searchLower)
+    );
+
+    // Update UI with search results
+    this.displaySearchResults(this.filteredUsers, searchTerm);
+    this.setSearchingState(false);
+  }
+
+  displaySearchResults(users, searchTerm) {
+    const hasResults = users.length > 0;
+
+    // Update results count
+    this.searchResultsCount.textContent = `${users.length} ${
+      users.length === 1 ? "result" : "results"
+    } for "${searchTerm}"`;
+
+    // Show/hide results info
+    if (hasResults) {
+      this.searchResultsInfo.style.display = "block";
+    } else {
+      this.searchResultsInfo.style.display = "block";
+      this.searchResultsCount.textContent = `No results found for "${searchTerm}"`;
+    }
+
+    // Render filtered users with highlight animation
+    this.renderFilteredUsers(users, searchTerm);
+
+    // Add premium animation for search results
+    this.triggerSearchAnimation(hasResults);
+  }
+
+  renderFilteredUsers(users, searchTerm) {
+    if (users.length === 0) {
+      this.userDirectory.innerHTML = `
+                <div class="empty-state search-empty-state">
+                    <div style="font-size: 3rem; margin-bottom: var(--codeleaf-space-2);">🔍</div>
+                    <div>No users found matching "${searchTerm}"</div>
+                    <small>Try adjusting your search terms</small>
+                </div>
+            `;
+      return;
+    }
+
+    this.userDirectory.innerHTML = users
+      .map((user, index) => {
+        const delay = index * 100; // Stagger animation
+        return `
+                <div class="user-item search-result-item" 
+                     style="animation-delay: ${delay}ms;"
+                     onclick="viewUserProfile('${user.username}')">
+                    <div class="user-avatar">${generateUserAvatar(
+                      user.username
+                    )}</div>
+                    <div class="user-details">
+                        <div class="user-name">${this.highlightSearchTerm(
+                          user.username,
+                          searchTerm
+                        )}</div>
+                        <div class="user-stats">
+                            <span class="user-stat">${
+                              user.totalSolved || 0
+                            } solved</span>
+                            <span class="user-stat">${
+                              user.totalBlogs || 0
+                            } blogs</span>
+                            <span class="user-stat">${
+                              user.currentStreak || 0
+                            } day streak</span>
+                        </div>
+                    </div>
+                    <div class="user-action">View Profile →</div>
+                </div>
+            `;
+      })
+      .join("");
+  }
+
+  highlightSearchTerm(username, searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const usernameLower = username.toLowerCase();
+    const matchIndex = usernameLower.indexOf(searchLower);
+
+    if (matchIndex === -1) {
+      return escapeHtml(username.toUpperCase());
+    }
+
+    const beforeMatch = username.substring(0, matchIndex);
+    const match = username.substring(
+      matchIndex,
+      matchIndex + searchTerm.length
+    );
+    const afterMatch = username.substring(matchIndex + searchTerm.length);
+
+    return `${escapeHtml(
+      beforeMatch.toUpperCase()
+    )}<span class="search-highlight">${escapeHtml(
+      match.toUpperCase()
+    )}</span>${escapeHtml(afterMatch.toUpperCase())}`;
+  }
+
+  triggerSearchAnimation(hasResults) {
+    // Add shimmer effect to search container
+    const searchWrapper = this.searchInput.parentElement;
+    searchWrapper.classList.add("searching");
+
+    // Remove searching class after animation
+    setTimeout(() => {
+      searchWrapper.classList.remove("searching");
+    }, 1000);
+
+    // Trigger celebration for successful search
+    if (hasResults) {
+      this.triggerSearchCelebration();
+    }
+  }
+
+  triggerSearchCelebration() {
+    // Create floating particles effect
+    this.createFloatingParticles();
+
+    // Add subtle pulse to results count
+    this.searchResultsCount.style.animation = "highlightPulse 1s ease-in-out";
+    setTimeout(() => {
+      this.searchResultsCount.style.animation = "";
+    }, 1000);
+  }
+
+  createFloatingParticles() {
+    const container = this.userDirectory;
+    const particles = ["🌟", "✨", "⚡", "🎯", "💫"];
+
+    // Get container position for relative positioning
+    const containerRect = container.getBoundingClientRect();
+
+    for (let i = 0; i < 5; i++) {
+      const particle = document.createElement("div");
+      particle.className = "search-particle";
+      particle.textContent =
+        particles[Math.floor(Math.random() * particles.length)];
+
+      // Calculate positions relative to viewport
+      const left = containerRect.left + Math.random() * containerRect.width;
+      const top = containerRect.top + Math.random() * containerRect.height;
+
+      particle.style.cssText = `
+            position: fixed;
+            font-size: 1.5rem;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            animation: floatParticle 1.5s ease-out forwards;
+            left: ${left}px;
+            top: ${top}px;
+            will-change: transform, opacity;
+        `;
+
+      document.body.appendChild(particle); // Append to body instead of container
+
+      // Remove particle after animation
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 1500);
+    }
+  }
+
+  setSearchingState(searching) {
+    this.isSearching = searching;
+
+    if (searching) {
+      this.searchLoader.classList.add("show");
+      this.searchInput.parentElement.classList.add("searching");
+    } else {
+      this.searchLoader.classList.remove("show");
+      this.searchInput.parentElement.classList.remove("searching");
+    }
+  }
+
+  toggleClearButton(show) {
+    if (show) {
+      this.searchClear.classList.add("show");
+    } else {
+      this.searchClear.classList.remove("show");
+    }
+  }
+
+  clearSearch() {
+    // Clear input
+    this.searchInput.value = "";
+
+    // Hide clear button and results info
+    this.toggleClearButton(false);
+    this.searchResultsInfo.style.display = "none";
+
+    // Reset to original user directory
+    if (this.allUsers.length > 0) {
+      this.renderUserDirectory(this.allUsers);
+    }
+
+    // Focus back on input for better UX
+    this.searchInput.focus();
+  }
+
+  // Method to set all users (called from loadUserDirectory)
+  setAllUsers(users) {
+    this.allUsers = users;
+  }
+
+  // Enhanced render method that works with search
+  renderUserDirectory(users) {
+    this.userDirectory.innerHTML = users
+      .map(
+        (user) => `
+            <div class="user-item" onclick="viewUserProfile('${
+              user.username
+            }')">
+                <div class="user-avatar">${generateUserAvatar(
+                  user.username
+                )}</div>
+                <div class="user-details">
+                    <div class="user-name">${escapeHtml(
+                      user.username.toUpperCase()
+                    )}</div>
+                    <div class="user-stats">
+                        <span class="user-stat">${
+                          user.totalSolved || 0
+                        } solved</span>
+                        <span class="user-stat">${
+                          user.totalBlogs || 0
+                        } blogs</span>
+                        <span class="user-stat">${
+                          user.currentStreak || 0
+                        } day streak</span>
+                    </div>
+                </div>
+                <div class="user-action">View Profile →</div>
+            </div>
+        `
+      )
+      .join("");
+  }
+}
+
+// Initialize search functionality
+let userProfileCommunitySearch;
+
+function initializeUserProfileCommunitySearch() {
+  userProfileCommunitySearch = new UserProfileCommunitySearch();
+}
+
 // Get current logged in username
 async function getCurrentUsername() {
   try {
@@ -1446,9 +1800,7 @@ function generatePixelAvatar(username) {
 // View user profile - opens in new page (same as profile)
 function viewUserProfile(username) {
   // Navigate to profile page with user parameter
-  window.location.href = `/user-profile?user=${encodeURIComponent(
-    username
-  )}`;
+  window.location.href = `/user-profile?user=${encodeURIComponent(username)}`;
 }
 
 function renderAchievements() {
@@ -1587,28 +1939,517 @@ function calculateAchievements(user) {
     },
   ];
 }
-// Render question history with expandable days (same as profile)
+
+// Question History Search System for user-profile
+class UserProfileQuestionHistorySearch {
+  constructor() {
+    this.searchInput = document.getElementById("questionSearch");
+    this.searchLoader = document.getElementById("questionSearchLoader");
+    this.searchClear = document.getElementById("questionSearchClear");
+    this.questionHistoryContainer = document.getElementById("questionHistory");
+
+    this.debounceTimer = null;
+    this.searchDelay = 300; // ms
+    this.isSearching = false;
+    this.originalQuestionData = [];
+    this.filteredQuestionData = [];
+    this.currentSearchTerm = "";
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+    this.initializeSearchResultsInfo();
+  }
+
+  bindEvents() {
+    // Input event with debounce
+    this.searchInput.addEventListener("input", (e) => {
+      this.handleSearchInput(e.target.value);
+    });
+
+    // Clear search button
+    this.searchClear.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Keyboard shortcuts
+    this.searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.clearSearch();
+      }
+    });
+
+    // Focus management
+    this.searchInput.addEventListener("focus", () => {
+      this.searchInput.parentElement.classList.add("focused");
+    });
+
+    this.searchInput.addEventListener("blur", () => {
+      this.searchInput.parentElement.classList.remove("focused");
+    });
+  }
+
+  initializeSearchResultsInfo() {
+    // Create results info element if it doesn't exist
+    if (!document.getElementById("questionSearchResultsInfo")) {
+      const resultsInfo = document.createElement("div");
+      resultsInfo.id = "questionSearchResultsInfo";
+      resultsInfo.className = "question-search-results-info";
+      resultsInfo.style.display = "none";
+      resultsInfo.innerHTML = `
+                <div class="question-search-results-header">
+                    <span id="questionSearchResultsCount">0 results</span>
+                    <button class="clear-search-btn" id="questionClearSearchBtn">
+                        Clear search
+                    </button>
+                </div>
+            `;
+
+      // Insert after search container
+      const searchContainer = this.searchInput.closest(".search-container");
+      if (searchContainer) {
+        searchContainer.parentNode.insertBefore(
+          resultsInfo,
+          searchContainer.nextSibling
+        );
+
+        // Bind clear button
+        document
+          .getElementById("questionClearSearchBtn")
+          .addEventListener("click", () => {
+            this.clearSearch();
+          });
+      }
+    }
+  }
+
+  handleSearchInput(searchTerm) {
+    // Clear previous timer
+    clearTimeout(this.debounceTimer);
+
+    // Show/hide clear button based on input
+    this.toggleClearButton(searchTerm.length > 0);
+
+    if (searchTerm.length === 0) {
+      this.clearSearch();
+      return;
+    }
+
+    // Show loading state for better UX
+    this.setSearchingState(true);
+
+    // Debounce the search
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(searchTerm);
+    }, this.searchDelay);
+  }
+
+  performSearch(searchTerm) {
+    if (!this.originalQuestionData || this.originalQuestionData.length === 0) {
+      console.warn("No question data available for search");
+      this.setSearchingState(false);
+      return;
+    }
+
+    this.currentSearchTerm = searchTerm.toLowerCase().trim();
+
+    // Filter questions based on day number or question title
+    this.filteredQuestionData = this.originalQuestionData.filter((day) => {
+      // Search by day number
+      const dayMatch =
+        `day ${day.day}`.includes(this.currentSearchTerm) ||
+        day.day.toString().includes(this.currentSearchTerm);
+
+      // Search by question titles
+      const questionMatch = day.questions?.some(
+        (question) =>
+          question.text &&
+          question.text.toLowerCase().includes(this.currentSearchTerm)
+      );
+
+      return dayMatch || questionMatch;
+    });
+
+    // Update UI with search results
+    this.displaySearchResults(this.filteredQuestionData, searchTerm);
+    this.setSearchingState(false);
+  }
+
+  displaySearchResults(filteredDays, searchTerm) {
+    const hasResults = filteredDays.length > 0;
+    const resultsInfo = document.getElementById("questionSearchResultsInfo");
+    const resultsCount = document.getElementById("questionSearchResultsCount");
+
+    // Update results count
+    if (resultsCount) {
+      resultsCount.textContent = `${filteredDays.length} ${
+        filteredDays.length === 1 ? "result" : "results"
+      } for "${searchTerm}"`;
+    }
+
+    // Show/hide results info
+    if (resultsInfo) {
+      if (hasResults) {
+        resultsInfo.style.display = "block";
+      } else {
+        resultsInfo.style.display = "block";
+        if (resultsCount) {
+          resultsCount.textContent = `No results found for "${searchTerm}"`;
+        }
+      }
+    }
+
+    // Render filtered questions with highlight animation
+    this.renderFilteredQuestions(filteredDays, searchTerm);
+
+    // Add premium animation for search results
+    this.triggerSearchAnimation(hasResults);
+  }
+
+  renderFilteredQuestions(filteredDays, searchTerm) {
+    if (filteredDays.length === 0) {
+      this.questionHistoryContainer.innerHTML = `
+                <div class="empty-state question-search-empty-state">
+                    <div style="font-size: 3rem; margin-bottom: var(--codeleaf-space-2);">🔍</div>
+                    <div>No questions found matching "${searchTerm}"</div>
+                    <small>Try searching by day number or question title</small>
+                </div>
+            `;
+      return;
+    }
+
+    this.questionHistoryContainer.innerHTML = filteredDays
+      .map((day, index) => {
+        const delay = index * 100; // Stagger animation
+        const highlightedDay = this.highlightSearchTerm(
+          `Day ${day.day}`,
+          searchTerm
+        );
+        const matchingQuestions =
+          day.questions?.filter(
+            (q) =>
+              q.text && q.text.toLowerCase().includes(searchTerm.toLowerCase())
+          ) || [];
+
+        return `
+                    <div class="content-item question-day question-search-result-item" 
+                         data-day="${day.day}"
+                         style="animation-delay: ${delay}ms">
+                        <div class="question-day-header">
+                            <div class="question-day-info">
+                                <div class="question-title">${highlightedDay} Progress</div>
+                                <div class="question-date">${
+                                  day.date
+                                    ? formatDate(day.date)
+                                    : `Day ${day.day}`
+                                }</div>
+                            </div>
+                            <div class="question-day-stats">
+                                <span class="question-count">${day.solved}/${
+          day.total
+        } solved</span>
+                                ${
+                                  day.questions && day.questions.length > 0
+                                    ? `
+                                        <button class="toggle-day-btn" onclick="toggleDayDetails(${day.day})" aria-label="Toggle day details">
+                                            <span class="toggle-icon">▼</span>
+                                        </button>
+                                    `
+                                    : ""
+                                }
+                            </div>
+                        </div>
+                        ${
+                          day.questions && day.questions.length > 0
+                            ? `
+                                <div class="question-day-details" id="day-${
+                                  day.day
+                                }-details" style="display: none;">
+                                    <div class="solved-questions-list">
+                                        ${this.renderDayQuestionsWithHighlight(
+                                          day.questions,
+                                          searchTerm
+                                        )}
+                                    </div>
+                                </div>
+                            `
+                            : ""
+                        }
+                    </div>
+                `;
+      })
+      .join("");
+
+    // Auto-expand first result for better UX
+    if (
+      filteredDays.length > 0 &&
+      filteredDays[0].questions &&
+      filteredDays[0].questions.length > 0
+    ) {
+      setTimeout(() => {
+        toggleDayDetails(filteredDays[0].day);
+      }, 500);
+    }
+  }
+
+  renderDayQuestionsWithHighlight(questions, searchTerm) {
+    if (!questions || questions.length === 0) {
+      return '<div class="empty-day-state">No questions solved this day</div>';
+    }
+
+    return questions
+      .map((question, index) => {
+        const delay = index * 50;
+        const highlightedText = this.highlightSearchTerm(
+          question.text,
+          searchTerm
+        );
+
+        return `
+                    <div class="solved-question-item question-search-result-item" 
+                         style="animation-delay: ${delay}ms">
+                        <div class="question-text">${highlightedText}</div>
+                        ${
+                          question.link
+                            ? `
+                                <a href="${
+                                  question.link
+                                }" target="_blank" rel="noopener noreferrer" class="question-action-link">
+                                    ${
+                                      question.link.includes("leetcode.com")
+                                        ? "Solve this"
+                                        : "See this question"
+                                    } →
+                                </a>
+                            `
+                            : ""
+                        }
+                    </div>
+                `;
+      })
+      .join("");
+  }
+
+  highlightSearchTerm(text, searchTerm) {
+    if (!text) return "";
+
+    const searchLower = searchTerm.toLowerCase();
+    const textLower = text.toLowerCase();
+
+    // Escape HTML first
+    const escapedText = escapeHtml(text);
+
+    // Highlight matching parts
+    if (searchLower && textLower.includes(searchLower)) {
+      const matchIndex = textLower.indexOf(searchLower);
+      const beforeMatch = escapedText.substring(0, matchIndex);
+      const match = escapedText.substring(
+        matchIndex,
+        matchIndex + searchTerm.length
+      );
+      const afterMatch = escapedText.substring(matchIndex + searchTerm.length);
+
+      return `${beforeMatch}<span class="question-search-highlight">${match}</span>${afterMatch}`;
+    }
+
+    return escapedText;
+  }
+
+  triggerSearchAnimation(hasResults) {
+    // Add shimmer effect to search container
+    const searchWrapper = this.searchInput.parentElement;
+    searchWrapper.classList.add("searching");
+
+    // Remove searching class after animation
+    setTimeout(() => {
+      searchWrapper.classList.remove("searching");
+    }, 1000);
+
+    // Trigger celebration for successful search
+    if (hasResults) {
+      this.triggerSearchCelebration();
+    }
+  }
+
+  triggerSearchCelebration() {
+    // Create floating particles effect
+    this.createFloatingParticles();
+
+    // Add success animation to the container
+    this.questionHistoryContainer.classList.add("search-success-animation");
+    setTimeout(() => {
+      this.questionHistoryContainer.classList.remove(
+        "search-success-animation"
+      );
+    }, 1000);
+  }
+
+  createFloatingParticles() {
+    const container = this.questionHistoryContainer;
+    const particles = ["🔍", "✨", "🎯", "💡", "📚"];
+
+    // Get container position for relative positioning
+    const containerRect = container.getBoundingClientRect();
+
+    for (let i = 0; i < 3; i++) {
+      const particle = document.createElement("div");
+      particle.className = "search-particle";
+      particle.textContent =
+        particles[Math.floor(Math.random() * particles.length)];
+
+      // Calculate positions relative to viewport
+      const left = containerRect.left + Math.random() * containerRect.width;
+      const top = containerRect.top + Math.random() * containerRect.height;
+
+      particle.style.cssText = `
+                position: fixed;
+                font-size: 1.2rem;
+                pointer-events: none;
+                z-index: 9999;
+                opacity: 0;
+                animation: searchFloatParticle 1.2s ease-out forwards;
+                left: ${left}px;
+                top: ${top}px;
+                will-change: transform, opacity;
+            `;
+
+      document.body.appendChild(particle); // Append to body for proper positioning
+
+      // Remove particle after animation
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 1200);
+    }
+  }
+
+  setSearchingState(searching) {
+    this.isSearching = searching;
+
+    if (searching) {
+      if (this.searchLoader) this.searchLoader.classList.add("show");
+      if (this.searchInput.parentElement)
+        this.searchInput.parentElement.classList.add("searching");
+    } else {
+      if (this.searchLoader) this.searchLoader.classList.remove("show");
+      if (this.searchInput.parentElement)
+        this.searchInput.parentElement.classList.remove("searching");
+    }
+  }
+
+  toggleClearButton(show) {
+    if (this.searchClear) {
+      if (show) {
+        this.searchClear.classList.add("show");
+      } else {
+        this.searchClear.classList.remove("show");
+      }
+    }
+  }
+
+  clearSearch() {
+    // Clear input
+    if (this.searchInput) {
+      this.searchInput.value = "";
+    }
+    this.currentSearchTerm = "";
+
+    // Hide clear button and results info
+    this.toggleClearButton(false);
+    const resultsInfo = document.getElementById("questionSearchResultsInfo");
+    if (resultsInfo) {
+      resultsInfo.style.display = "none";
+    }
+
+    // Reset to original question history
+    if (this.originalQuestionData.length > 0) {
+      this.renderOriginalQuestionHistory();
+    }
+
+    // Focus back on input for better UX
+    if (this.searchInput) {
+      this.searchInput.focus();
+    }
+  }
+
+  // Method to set original question data
+  setQuestionData(questionData) {
+    this.originalQuestionData = questionData;
+  }
+
+  // Render original question history
+  renderOriginalQuestionHistory() {
+    renderQuestionHistory();
+  }
+}
+
+// Initialize question search functionality
+let userProfileQuestionHistorySearch;
+
+function initializeUserProfileQuestionHistorySearch() {
+  userProfileQuestionHistorySearch = new UserProfileQuestionHistorySearch();
+}
+
+// Updated renderQuestionHistory function - FIXED data passing
 function renderQuestionHistory() {
   const container = document.getElementById("questionHistory");
+
   if (!currentViewingUser) return;
 
-  const questions = currentViewingUser.questions?.dailyProgress || [];
+  const questions =
+    currentViewingUser.questions?.dailyProgress ||
+    currentViewingUser.consistency?.dailyProgress ||
+    [];
+  console.log("Raw questions data:", questions); // Debug log
+
   const solvedQuestions = questions
-    .flatMap((day) =>
-      day.completedQuestions > 0
+    .flatMap((day) => {
+      // Handle different data structures
+      const completedQuestions = day.completedQuestions || day.solved || 0;
+      const totalQuestions = day.totalQuestions || day.total || 0;
+      const dayQuestions = day.questions || [];
+
+      return completedQuestions > 0
         ? [
             {
               day: day.day,
               date: day.date,
-              solved: day.completedQuestions,
-              total: day.totalQuestions,
-              questions: day.questions || [], // Use the actual questions data
+              solved: completedQuestions,
+              total: totalQuestions,
+              questions: dayQuestions,
             },
           ]
-        : []
-    )
+        : [];
+    })
     .reverse()
     .slice(0, 10); // Show last 10 days with activity
+
+  console.log("Processed solved questions:", solvedQuestions); // Debug log
+
+  // Store data in search system - CRITICAL FIX
+  if (userProfileQuestionHistorySearch && solvedQuestions.length > 0) {
+    console.log("Setting question data in search system:", solvedQuestions);
+    userProfileQuestionHistorySearch.setQuestionData(solvedQuestions);
+  }
+
+  // If there's an active search, let the search system handle rendering
+  if (
+    userProfileQuestionHistorySearch &&
+    userProfileQuestionHistorySearch.currentSearchTerm
+  ) {
+    console.log(
+      "Active search term:",
+      userProfileQuestionHistorySearch.currentSearchTerm
+    );
+    userProfileQuestionHistorySearch.renderFilteredQuestions(
+      userProfileQuestionHistorySearch.filteredQuestionData,
+      userProfileQuestionHistorySearch.currentSearchTerm
+    );
+    return;
+  }
 
   if (solvedQuestions.length === 0) {
     container.innerHTML =
@@ -1616,51 +2457,87 @@ function renderQuestionHistory() {
     return;
   }
 
+  // Otherwise, render normally
   container.innerHTML = solvedQuestions
     .map(
       (day) => `
-            <div class="content-item question-day" data-day="${day.day}">
-                <div class="question-day-header">
-                    <div class="question-day-info">
-                        <div class="question-title">Day ${
-                          day.day
-                        } Progress</div>
-                        <div class="question-date">${
-                          day.date ? formatDate(day.date) : `Day ${day.day}`
-                        }</div>
-                    </div>
-                    <div class="question-day-stats">
-                        <span class="question-count">${day.solved}/${
+                <div class="content-item question-day" data-day="${day.day}">
+                    <div class="question-day-header">
+                        <div class="question-day-info">
+                            <div class="question-title">Day ${
+                              day.day
+                            } Progress</div>
+                            <div class="question-date">${
+                              day.date ? formatDate(day.date) : `Day ${day.day}`
+                            }</div>
+                        </div>
+                        <div class="question-day-stats">
+                            <span class="question-count">${day.solved}/${
         day.total
       } solved</span>
-                        ${
-                          day.questions && day.questions.length > 0
-                            ? `
-                            <button class="toggle-day-btn" onclick="toggleDayDetails(${day.day})" aria-label="Toggle day details">
-                                <span class="toggle-icon">▼</span>
-                            </button>
-                        `
-                            : ""
-                        }
-                    </div>
-                </div>
-                ${
-                  day.questions && day.questions.length > 0
-                    ? `
-                    <div class="question-day-details" id="day-${
-                      day.day
-                    }-details" style="display: none;">
-                        <div class="solved-questions-list">
-                            ${renderDayQuestions(day.questions)}
+                            ${
+                              day.questions && day.questions.length > 0
+                                ? `
+                                    <button class="toggle-day-btn" onclick="toggleDayDetails(${day.day})" aria-label="Toggle day details">
+                                        <span class="toggle-icon">▼</span>
+                                    </button>
+                                `
+                                : ""
+                            }
                         </div>
                     </div>
-                `
-                    : ""
-                }
-            </div>
-        `
+                    ${
+                      day.questions && day.questions.length > 0
+                        ? `
+                            <div class="question-day-details" id="day-${
+                              day.day
+                            }-details" style="display: none;">
+                                <div class="solved-questions-list">
+                                    ${renderDayQuestions(day.questions)}
+                                </div>
+                            </div>
+                        `
+                        : ""
+                    }
+                </div>
+            `
     )
     .join("");
+}
+
+// Helper function to get questions for a specific day
+function getQuestionsForDay(dayNumber) {
+  // This function needs access to the main checklist data
+  // You might need to load this separately or ensure it's included in user-info
+  const checklistData = window.checklistData || getChecklistDataFromStorage();
+
+  if (!checklistData || !Array.isArray(checklistData)) {
+    console.warn("Checklist data not available");
+    return [];
+  }
+
+  const dayData = checklistData.find((day) => day.day === dayNumber);
+  if (!dayData || !dayData.questions) return [];
+
+  // Return only completed questions
+  return dayData.questions
+    .filter((q) => q.completed)
+    .map((q) => ({
+      text: q.text || "Untitled Question",
+      link: q.link || "",
+      completed: true,
+    }));
+}
+
+// Helper to get checklist data from localStorage
+function getChecklistDataFromStorage() {
+  try {
+    const savedData = localStorage.getItem("dsaChecklistData");
+    return savedData ? JSON.parse(savedData) : null;
+  } catch (error) {
+    console.error("Error loading checklist data:", error);
+    return null;
+  }
 }
 
 // Render individual questions for a day
@@ -1806,37 +2683,455 @@ document.addEventListener("DOMContentLoaded", function () {
   enhanceKeyboardNavigation();
 });
 
-// Render blogs (only public blogs for other users)
+// Debug function to check if search elements exist
+function debugSearchFunctionality() {
+  console.log("=== DEBUG: Question Search Functionality ===");
+
+  // Check if search input exists
+  const searchInput = document.getElementById("questionSearch");
+  console.log("Search input element:", searchInput);
+
+  // Check if question history container exists
+  const questionHistory = document.getElementById("questionHistory");
+  console.log("Question history container:", questionHistory);
+
+  // Check if search class is initialized
+  console.log(
+    "User profile question search instance:",
+    userProfileQuestionHistorySearch
+  );
+
+  // Check if user data is loaded
+  console.log("Current viewing user:", currentViewingUser);
+
+  if (currentViewingUser) {
+    const questions =
+      currentViewingUser.questions?.dailyProgress ||
+      currentViewingUser.consistency?.dailyProgress ||
+      [];
+    console.log("Available questions data:", questions);
+  }
+
+  console.log("=== END DEBUG ===");
+}
+
+// Call this function after page loads to check what's happening
+setTimeout(() => {
+  debugSearchFunctionality();
+}, 2000);
+
+
+// User Profile Blog Search System - Only Public Blogs
+class UserProfileBlogSearch {
+  constructor() {
+    this.searchInput = document.getElementById("userProfileBlogsSearch");
+    this.searchLoader = document.getElementById("userProfileBlogsSearchLoader");
+    this.searchClear = document.getElementById("userProfileBlogsSearchClear");
+    this.searchResultsInfo = document.getElementById("userProfileBlogsSearchResultsInfo");
+    this.searchResultsCount = document.getElementById("userProfileBlogsSearchResultsCount");
+    this.clearSearchBtn = document.getElementById("userProfileBlogsClearSearchBtn");
+    this.blogsContent = document.getElementById("blogsContent");
+
+    this.debounceTimer = null;
+    this.searchDelay = 300; // ms
+    this.isSearching = false;
+    this.originalBlogsData = []; // Only public blogs
+    this.filteredBlogsData = [];
+    this.currentSearchTerm = "";
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // Input event with debounce
+    this.searchInput.addEventListener("input", (e) => {
+      this.handleSearchInput(e.target.value);
+    });
+
+    // Clear search button
+    this.searchClear.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Clear search from results info
+    this.clearSearchBtn.addEventListener("click", () => {
+      this.clearSearch();
+    });
+
+    // Keyboard shortcuts
+    this.searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.clearSearch();
+      }
+    });
+
+    // Focus management
+    this.searchInput.addEventListener("focus", () => {
+      this.searchInput.parentElement.classList.add("focused");
+    });
+
+    this.searchInput.addEventListener("blur", () => {
+      this.searchInput.parentElement.classList.remove("focused");
+    });
+  }
+
+  // Set blog data (only public blogs for user profiles)
+  setBlogData(blogData) {
+    console.log("UserProfileBlogSearch: Setting blog data", blogData);
+    this.originalBlogsData = Array.isArray(blogData) ? blogData : [];
+    console.log("UserProfileBlogSearch: Now has", this.originalBlogsData.length, "public blogs");
+  }
+
+  handleSearchInput(searchTerm) {
+    // Clear previous timer
+    clearTimeout(this.debounceTimer);
+
+    // Show/hide clear button based on input
+    this.toggleClearButton(searchTerm.length > 0);
+
+    if (searchTerm.length === 0) {
+      this.clearSearch();
+      return;
+    }
+
+    // Show loading state for better UX
+    this.setSearchingState(true);
+
+    // Debounce the search
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(searchTerm);
+    }, this.searchDelay);
+  }
+
+  performSearch(searchTerm) {
+    console.log("UserProfileBlogSearch: Performing search for:", searchTerm);
+    console.log("UserProfileBlogSearch: Available data:", this.originalBlogsData);
+    
+    if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
+      console.warn("UserProfileBlogSearch: No blog data available for search");
+      this.setSearchingState(false);
+      return;
+    }
+
+    this.currentSearchTerm = searchTerm.toLowerCase().trim();
+
+    // Search through public blogs only
+    this.filteredBlogsData = this.originalBlogsData.filter((blog) => {
+      // Search by title
+      const titleMatch = blog.title.toLowerCase().includes(this.currentSearchTerm);
+      
+      // Search by content (if available)
+      const contentMatch = blog.content ? 
+        blog.content.toLowerCase().includes(this.currentSearchTerm) : false;
+      
+      // Search by tags (if available)
+      const tagsMatch = blog.tags ? 
+        blog.tags.some(tag => tag.toLowerCase().includes(this.currentSearchTerm)) : false;
+
+      console.log(`Blog "${blog.title}": titleMatch=${titleMatch}, contentMatch=${contentMatch}, tagsMatch=${tagsMatch}`);
+      return titleMatch || contentMatch || tagsMatch;
+    });
+
+    console.log("UserProfileBlogSearch: Found", this.filteredBlogsData.length, "results in public blogs");
+    
+    // Update UI with search results
+    this.displaySearchResults(this.filteredBlogsData, searchTerm);
+    this.setSearchingState(false);
+  }
+
+  displaySearchResults(filteredBlogs, searchTerm) {
+    const hasResults = filteredBlogs.length > 0;
+
+    // Update results count
+    this.searchResultsCount.textContent = `${filteredBlogs.length} ${
+      filteredBlogs.length === 1 ? "result" : "results"
+    } in public blogs for "${searchTerm}"`;
+
+    // Show/hide results info
+    if (hasResults) {
+      this.searchResultsInfo.style.display = "block";
+    } else {
+      this.searchResultsInfo.style.display = "block";
+      this.searchResultsCount.textContent = `No results found in public blogs for "${searchTerm}"`;
+    }
+
+    // Render filtered blogs with highlight animation
+    this.renderFilteredBlogs(filteredBlogs, searchTerm);
+
+    // Add premium animation for search results
+    this.triggerSearchAnimation(hasResults);
+  }
+
+  renderFilteredBlogs(filteredBlogs, searchTerm) {
+    if (filteredBlogs.length === 0) {
+      this.blogsContent.innerHTML = `
+        <div class="empty-state user-profile-blog-search-empty-state">
+          <div style="font-size: 3rem; margin-bottom: var(--codeleaf-space-2);">📝</div>
+          <div>No public blogs found matching "${searchTerm}"</div>
+          <small>Try searching by title, content, or tags</small>
+        </div>
+      `;
+      return;
+    }
+
+    this.blogsContent.innerHTML = filteredBlogs
+      .map((blog, index) => {
+        const delay = index * 100; // Stagger animation
+        const highlightedTitle = this.highlightSearchTerm(blog.title, searchTerm);
+        
+        // Create excerpt with highlighted content if available
+        let excerpt = blog.excerpt || blog.content?.substring(0, 150) + '...' || '';
+        if (blog.content && blog.content.toLowerCase().includes(searchTerm.toLowerCase())) {
+          excerpt = this.highlightSearchTermInContent(excerpt, searchTerm);
+        }
+
+        return `
+          <div class="content-item blog-item user-profile-blog-search-result-item" 
+               style="animation-delay: ${delay}ms">
+            <div class="blog-info">
+              <div class="blog-title">${highlightedTitle}</div>
+              <div class="blog-date">${formatRelativeTime(blog.createdAt)} • ${
+                blog.views || 0
+              } views • ${blog.likes || 0} likes</div>
+              ${excerpt ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${excerpt}</div>` : ''}
+              ${blog.tags ? this.renderTags(blog.tags, searchTerm) : ''}
+            </div>
+            <a href="/blogs/${
+          blog.slug
+        }" class="blog-link">Read →</a>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  highlightSearchTerm(text, searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const textLower = text.toLowerCase();
+
+    // Escape HTML first
+    const escapedText = escapeHtml(text);
+
+    // Highlight matching parts
+    if (searchLower && textLower.includes(searchLower)) {
+      const matchIndex = textLower.indexOf(searchLower);
+      const beforeMatch = escapedText.substring(0, matchIndex);
+      const match = escapedText.substring(
+        matchIndex,
+        matchIndex + searchTerm.length
+      );
+      const afterMatch = escapedText.substring(matchIndex + searchTerm.length);
+
+      return `${beforeMatch}<span class="user-profile-blog-search-highlight">${match}</span>${afterMatch}`;
+    }
+
+    return escapedText;
+  }
+
+  highlightSearchTermInContent(content, searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const contentLower = content.toLowerCase();
+    const escapedContent = escapeHtml(content);
+
+    if (searchLower && contentLower.includes(searchLower)) {
+      const matchIndex = contentLower.indexOf(searchLower);
+      const beforeMatch = escapedContent.substring(0, Math.max(0, matchIndex - 20));
+      const contextStart = Math.max(0, matchIndex - 20) > 0 ? '...' : '';
+      const match = escapedContent.substring(
+        matchIndex,
+        matchIndex + searchTerm.length
+      );
+      const afterMatch = escapedContent.substring(
+        matchIndex + searchTerm.length,
+        matchIndex + searchTerm.length + 100
+      );
+      const contextEnd = afterMatch.length === 100 ? '...' : '';
+
+      return `${contextStart}${beforeMatch}<span class="user-profile-blog-search-highlight">${match}</span>${afterMatch}${contextEnd}`;
+    }
+
+    return escapedContent;
+  }
+
+  renderTags(tags, searchTerm) {
+    const highlightedTags = tags.map(tag => {
+      if (tag.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return `<span class="user-profile-blog-search-highlight">${escapeHtml(tag)}</span>`;
+      }
+      return escapeHtml(tag);
+    }).join(', ');
+
+    return `<div class="blog-tags" style="margin-top: 4px; font-size: 0.8em; color: var(--codeleaf-text-tertiary);">Tags: ${highlightedTags}</div>`;
+  }
+
+  triggerSearchAnimation(hasResults) {
+    // Add shimmer effect to search container
+    const searchWrapper = this.searchInput.parentElement;
+    searchWrapper.classList.add("searching");
+
+    // Remove searching class after animation
+    setTimeout(() => {
+      searchWrapper.classList.remove("searching");
+    }, 1000);
+
+    // Trigger celebration for successful search
+    if (hasResults) {
+      this.triggerSearchCelebration();
+    }
+  }
+
+  triggerSearchCelebration() {
+    // Create floating particles effect
+    this.createFloatingParticles();
+
+    // Add success animation to the container
+    this.blogsContent.classList.add("user-profile-blog-search-success-animation");
+    setTimeout(() => {
+      this.blogsContent.classList.remove("user-profile-blog-search-success-animation");
+    }, 1000);
+  }
+
+  createFloatingParticles() {
+    const container = this.blogsContent;
+    const particles = ["📝", "✨", "🔍", "💡", "📚"];
+
+    // Get container position for relative positioning
+    const containerRect = container.getBoundingClientRect();
+
+    for (let i = 0; i < 3; i++) {
+      const particle = document.createElement("div");
+      particle.className = "user-profile-blog-search-particle";
+      particle.textContent =
+        particles[Math.floor(Math.random() * particles.length)];
+
+      // Calculate positions relative to viewport
+      const left = containerRect.left + Math.random() * containerRect.width;
+      const top = containerRect.top + Math.random() * containerRect.height;
+
+      particle.style.cssText = `
+        position: fixed;
+        font-size: 1.2rem;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0;
+        animation: userProfileBlogSearchFloatParticle 1.2s ease-out forwards;
+        left: ${left}px;
+        top: ${top}px;
+        will-change: transform, opacity;
+      `;
+
+      document.body.appendChild(particle); // Append to body for proper positioning
+
+      // Remove particle after animation
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 1200);
+    }
+  }
+
+  setSearchingState(searching) {
+    this.isSearching = searching;
+
+    if (searching) {
+      this.searchLoader.classList.add("show");
+      this.searchInput.parentElement.classList.add("searching");
+    } else {
+      this.searchLoader.classList.remove("show");
+      this.searchInput.parentElement.classList.remove("searching");
+    }
+  }
+
+  toggleClearButton(show) {
+    if (show) {
+      this.searchClear.classList.add("show");
+    } else {
+      this.searchClear.classList.remove("show");
+    }
+  }
+
+  clearSearch() {
+    // Clear input
+    this.searchInput.value = "";
+    this.currentSearchTerm = "";
+
+    // Hide clear button and results info
+    this.toggleClearButton(false);
+    this.searchResultsInfo.style.display = "none";
+
+    // Reset to original blog content
+    if (this.originalBlogsData.length > 0) {
+      this.renderOriginalBlogs();
+    }
+
+    // Focus back on input for better UX
+    this.searchInput.focus();
+  }
+
+  // Render original blogs
+  renderOriginalBlogs() {
+    renderBlogs();
+  }
+}
+
+// Initialize user profile blog search functionality
+let userProfileBlogSearch;
+
+function initializeUserProfileBlogSearch() {
+  userProfileBlogSearch = new UserProfileBlogSearch();
+}
+
+// Render blogs (only public blogs for other users) - UPDATED
 function renderBlogs() {
   const container = document.getElementById("blogsContent");
   if (!currentViewingUser) return;
 
   const blogs = currentViewingUser.blogs?.recentBlogs || [];
+  const publicBlogs = blogs.filter(blog => blog.isPublic);
 
-  if (blogs.length === 0) {
+  console.log("User Profile - All blogs:", blogs.length);
+  console.log("User Profile - Public blogs:", publicBlogs.length);
+
+  // Store data in search system - CRITICAL
+  if (userProfileBlogSearch) {
+    console.log("Setting public blog data for search:", publicBlogs.length, "blogs");
+    userProfileBlogSearch.setBlogData(publicBlogs);
+  } else {
+    console.log("User profile blog search not initialized yet");
+  }
+
+  // If there's an active search, let the search system handle rendering
+  if (userProfileBlogSearch && userProfileBlogSearch.currentSearchTerm) {
+    console.log("Active search term:", userProfileBlogSearch.currentSearchTerm);
+    return; // Search system will handle rendering
+  }
+
+  if (publicBlogs.length === 0) {
     container.innerHTML = '<div class="empty-state">No public blogs yet.</div>';
     return;
   }
 
-  container.innerHTML = blogs
+  // Otherwise, render normally
+  container.innerHTML = publicBlogs
     .map(
       (blog) => `
-                    <div class="content-item blog-item">
-                        <div class="blog-info">
-                            <div class="blog-title">${escapeHtml(
-                              blog.title
-                            )}</div>
-                            <div class="blog-date">${formatRelativeTime(
-                              blog.createdAt
-                            )} • ${blog.views || 0} views • ${
+        <div class="content-item blog-item">
+          <div class="blog-info">
+            <div class="blog-title">${escapeHtml(blog.title)}</div>
+            <div class="blog-date">${formatRelativeTime(blog.createdAt)} • ${blog.views || 0} views • ${
         blog.likes || 0
       } likes</div>
-                        </div>
-                        <a href="/blogs/${
-                          blog.slug
-                        }" class="blog-link">Read →</a>
-                    </div>
-                `
+            ${blog.content ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${blog.content.substring(0, 100)}${blog.content.length > 100 ? '...' : ''}</div>` : ''}
+            ${blog.tags ? `<div class="blog-tags" style="margin-top: 4px; font-size: 0.8em; color: var(--codeleaf-text-tertiary);">Tags: ${blog.tags.join(', ')}</div>` : ''}
+          </div>
+          <a href="/blogs/${blog.slug}" class="blog-link">Read →</a>
+        </div>
+      `
     )
     .join("");
 }
