@@ -32,16 +32,66 @@
       </div>
 
       <div id="blogsContent" style="display: none">
-        <!-- NEW: Compact Blog Header with Integrated Tabs -->
-        <div class="blog-header-compact">
-          <h2>Community Blogs</h2>
-          <button class="create-blog-btn-compact" onclick="openCreateModal()">
-            <span>+</span>
-            <span>Create Blog</span>
-          </button>
+        <!-- UPDATED: Integrated Blog Header with Search -->
+        <div class="blog-header-integrated">
+          <div class="blog-header-main">
+            <div class="blog-header-title-section">
+              <h2>Community Blogs</h2>
+              <p class="blog-header-subtitle">
+                Discover, learn, and share knowledge with the community
+              </p>
+            </div>
+            <button
+              class="create-blog-btn-integrated"
+              onclick="openCreateModal()"
+            >
+              <span>+</span>
+              <span>Create Blog</span>
+            </button>
+          </div>
+
+          <!-- Search Bar Integrated in Header -->
+          <div class="blog-header-search-section">
+            <div class="search-container-integrated">
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  id="blogsPageSearch"
+                  class="search-input"
+                  placeholder="Search blogs by title, content, or tags..."
+                  aria-label="Search blogs"
+                />
+                <div class="search-icon">🔍</div>
+                <div class="search-loader" id="blogsPageSearchLoader">
+                  <div class="loader-spinner"></div>
+                </div>
+                <button
+                  class="search-clear"
+                  id="blogsPageSearchClear"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- NEW: Integrated Tabs Navigation -->
+        <!-- Search Results Info -->
+        <div
+          class="search-results-info"
+          id="blogsPageSearchResultsInfo"
+          style="display: none"
+        >
+          <div class="search-results-header">
+            <span id="blogsPageSearchResultsCount">0 results</span>
+            <button class="clear-search-btn" id="blogsPageClearSearchBtn">
+              Clear search
+            </button>
+          </div>
+        </div>
+
+        <!-- Integrated Tabs Navigation -->
         <div class="tabs-container-compact">
           <div class="tabs-compact">
             <button
