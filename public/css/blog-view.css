@@ -1600,4 +1600,97 @@
           width: 100%;
         }
       }
-   
+   /* Enhanced Markdown Image Styling */
+.markdown-image-container {
+  margin: var(--codeleaf-space-6) 0;
+  text-align: center;
+  border-radius: var(--codeleaf-radius-lg);
+  overflow: hidden;
+  background: var(--codeleaf-bg-secondary);
+  border: 1px solid var(--codeleaf-border-light);
+  transition: all 0.3s ease;
+}
+
+.markdown-image-container:hover {
+  border-color: var(--codeleaf-accent-muted);
+  box-shadow: var(--codeleaf-shadow-md);
+}
+
+.markdown-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+  cursor: zoom-in;
+  background: var(--codeleaf-bg-primary);
+}
+
+.markdown-image.zoomed {
+  cursor: zoom-out;
+  transform: scale(1.02);
+  box-shadow: var(--codeleaf-shadow-lg);
+}
+
+.markdown-image.loaded {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.image-caption {
+  padding: var(--codeleaf-space-3);
+  background: var(--codeleaf-bg-tertiary);
+  color: var(--codeleaf-text-secondary);
+  font-size: var(--codeleaf-font-sm);
+  font-style: italic;
+  border-top: 1px solid var(--codeleaf-border-light);
+  text-align: center;
+}
+
+.image-error {
+  padding: var(--codeleaf-space-4);
+  text-align: center;
+  background: var(--codeleaf-bg-secondary);
+  border-radius: var(--codeleaf-radius-md);
+}
+
+.image-error .error-message {
+  color: var(--codeleaf-text-tertiary);
+  font-size: var(--codeleaf-font-sm);
+}
+
+.image-error small {
+  color: var(--codeleaf-text-tertiary);
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+/* Responsive image adjustments */
+@media (max-width: 768px) {
+  .markdown-image-container {
+    margin: var(--codeleaf-space-4) 0;
+    border-radius: var(--codeleaf-radius-md);
+  }
+  
+  .markdown-image.zoomed {
+    transform: none; /* Disable zoom on mobile */
+    cursor: default;
+  }
+}
+
+/* Animation for image loading */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus styles for accessibility */
+.markdown-image:focus {
+  outline: 2px solid var(--codeleaf-accent-primary);
+  outline-offset: 2px;
+}

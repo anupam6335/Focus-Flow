@@ -109,7 +109,6 @@ class ToastManager {
 // Initialize toast manager
 const toastManager = new ToastManager();
 
-// Enhanced Markdown Renderer with Comprehensive Link Support
 class MarkdownRenderer {
   constructor() {
     this.isMermaidInitialized = false;
@@ -127,6 +126,34 @@ class MarkdownRenderer {
       return `<a href="${href}"${
         title ? ` title="${title}"` : ""
       } target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+
+    // NEW: Override image rendering to display images inline without modal
+    renderer.image = (href, title, text) => {
+      // Clean and validate the image URL
+      const cleanHref = this.validateAndCleanUrl(href);
+
+      // Create responsive image with proper styling
+      return `
+        <div class="markdown-image-container">
+          <img 
+            src="${cleanHref}" 
+            alt="${text || "Image"}" 
+            title="${title || ""}"
+            class="markdown-image"
+            loading="lazy"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+          />
+          <div class="image-error" style="display: none;">
+            <div class="error-message">
+              <span>⚠️ Failed to load image</span>
+              <br>
+              <small>URL: ${href}</small>
+            </div>
+          </div>
+          ${title ? `<div class="image-caption">${title}</div>` : ""}
+        </div>
+      `;
     };
 
     marked.setOptions({
@@ -394,6 +421,9 @@ class MarkdownRenderer {
     // Setup copy button event delegation
     this.setupCopyButtonEvents(container);
 
+    // NEW: Process and enhance images
+    this.enhanceImages(container);
+
     // Render mermaid diagrams
     await this.renderMermaidDiagrams(container);
 
@@ -408,6 +438,48 @@ class MarkdownRenderer {
 
     // Add progress tracking
     this.addChecklistProgress(container);
+  }
+
+  // NEW: Enhance images with additional functionality
+  enhanceImages(container) {
+    const images = container.querySelectorAll(".markdown-image");
+
+    images.forEach((img) => {
+      // Add loading state
+      img.addEventListener("load", () => {
+        img.classList.add("loaded");
+        // Remove any error messages if image loads successfully
+        const errorDiv = img.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains("image-error")) {
+          errorDiv.style.display = "none";
+        }
+      });
+
+      // Add click handler for basic zoom (optional - can be removed if not needed)
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        img.classList.toggle("zoomed");
+      });
+
+      // Add keyboard support
+      img.setAttribute("tabindex", "0");
+      img.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          img.classList.toggle("zoomed");
+        }
+      });
+    });
+
+    // Close zoomed images when clicking outside
+    container.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("markdown-image")) {
+        const zoomedImages = container.querySelectorAll(
+          ".markdown-image.zoomed"
+        );
+        zoomedImages.forEach((img) => img.classList.remove("zoomed"));
+      }
+    });
   }
 
   // Enhanced: Interactive checkboxes with persistence
@@ -449,7 +521,7 @@ class MarkdownRenderer {
 
         if (content.length > 0) {
           const label = document.createElement("label");
-          label.htmlFor= checklistId;
+          label.htmlFor = checklistId;
           label.style.flex = "1";
           label.style.cursor = "pointer";
           label.style.marginBottom = "0";
@@ -910,6 +982,17 @@ class MarkdownRenderer {
         anchor.style.opacity = "0";
       });
     });
+  }
+
+  showGlobalError(container, message) {
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "global-error";
+    errorDiv.innerHTML = `
+      <div style="padding: 15px; background: #fee; border: 1px solid #fcc; border-radius: 4px; margin: 10px 0;">
+        <strong>Rendering Error:</strong> ${message}
+      </div>
+    `;
+    container.appendChild(errorDiv);
   }
 }
 
@@ -1537,43 +1620,43 @@ function escapeHtml(unsafe) {
 }
 
 // Edit Blog Modal Functions
-function openEditModal() {
-  const blogTitle = document.getElementById("blogTitle").textContent;
-  const blogContentElement = document.getElementById("blogContentText");
+// Open edit blog modal - FIXED VERSION
+async function openEditModal() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  let markdownContent = "";
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = blogContentElement.innerHTML;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  markdownContent = tempDiv.innerHTML
-    .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1\n\n")
-    .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1\n\n")
-    .replace(/<h3[^>]*>(.*?)<\/h3>/g, "### $1\n\n")
-    .replace(/<strong[^>]*>(.*?)<\/strong>/g, "**$1**")
-    .replace(/<em[^>]*>(.*?)<\/em>/g, "*$1*")
-    .replace(/<code[^>]*>(.*?)<\/code>/g, "`$1`")
-    .replace(/<pre[^>]*>(.*?)<\/pre>/gs, "```\n$1\n```")
-    .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n\n")
-    .replace(/<br\s*\/?>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+    const result = await response.json();
 
-  const blogTags = Array.from(document.querySelectorAll(".blog-tag"))
-    .map((tag) => tag.textContent)
-    .join(", ");
+    if (result.success) {
+      const blog = result.blog;
 
-  const isPublic = document
-    .querySelector(".blog-visibility")
-    .textContent.includes("Public");
+      document.getElementById("editBlogTitle").value = blog.title;
 
-  document.getElementById("editBlogTitle").value = blogTitle;
-  document.getElementById("editBlogContent").value = markdownContent;
-  document.getElementById("editBlogTags").value = blogTags;
-  document.getElementById("editBlogIsPublic").checked = isPublic;
+      // CRITICAL FIX: Use the original Markdown content directly from the database
+      document.getElementById("editBlogContent").value = blog.content;
 
-  document.getElementById("editBlogModal").style.display = "flex";
+      document.getElementById("editBlogTags").value = blog.tags
+        ? blog.tags.join(", ")
+        : "";
+      document.getElementById("editBlogIsPublic").checked = blog.isPublic;
+      document.getElementById("editBlogModal").style.display = "flex";
+    } else {
+      toastManager.error(result.error, "Error Loading Blog");
+    }
+  } catch (error) {
+    console.error("Error loading blog for edit:", error);
+    toastManager.error("Failed to load blog for editing", "Network Error");
+  }
 }
-
 function closeEditModal() {
   document.getElementById("editBlogModal").style.display = "none";
 }
@@ -1586,6 +1669,7 @@ document
 
     const title = document.getElementById("editBlogTitle").value;
     const content = document.getElementById("editBlogContent").value;
+
     const tags = document
       .getElementById("editBlogTags")
       .value.split(",")

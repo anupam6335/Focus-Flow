@@ -1204,7 +1204,7 @@ function openCreateModal() {
   document.getElementById("blogModal").style.display = "flex";
 }
 
-// Open edit blog modal
+// Open edit blog modal - FIXED VERSION
 async function editBlog(slug) {
   try {
     const token = localStorage.getItem("authToken");
@@ -1225,7 +1225,10 @@ async function editBlog(slug) {
       document.getElementById("modalTitle").textContent = "Edit Blog";
       document.getElementById("modalSubmit").textContent = "Update Blog";
       document.getElementById("blogTitle").value = editingBlog.title;
+      
+      // CRITICAL FIX: Use the original Markdown content directly
       document.getElementById("blogContent").value = editingBlog.content;
+      
       document.getElementById("blogTags").value = editingBlog.tags
         ? editingBlog.tags.join(", ")
         : "";
