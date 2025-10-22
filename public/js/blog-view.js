@@ -449,7 +449,7 @@ class MarkdownRenderer {
 
         if (content.length > 0) {
           const label = document.createElement("label");
-          label.htmlFor= checklistId;
+          label.htmlFor = checklistId;
           label.style.flex = "1";
           label.style.cursor = "pointer";
           label.style.marginBottom = "0";
@@ -1537,43 +1537,43 @@ function escapeHtml(unsafe) {
 }
 
 // Edit Blog Modal Functions
-function openEditModal() {
-  const blogTitle = document.getElementById("blogTitle").textContent;
-  const blogContentElement = document.getElementById("blogContentText");
+// Open edit blog modal - FIXED VERSION
+async function openEditModal() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  let markdownContent = "";
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = blogContentElement.innerHTML;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  markdownContent = tempDiv.innerHTML
-    .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1\n\n")
-    .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1\n\n")
-    .replace(/<h3[^>]*>(.*?)<\/h3>/g, "### $1\n\n")
-    .replace(/<strong[^>]*>(.*?)<\/strong>/g, "**$1**")
-    .replace(/<em[^>]*>(.*?)<\/em>/g, "*$1*")
-    .replace(/<code[^>]*>(.*?)<\/code>/g, "`$1`")
-    .replace(/<pre[^>]*>(.*?)<\/pre>/gs, "```\n$1\n```")
-    .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n\n")
-    .replace(/<br\s*\/?>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+    const result = await response.json();
 
-  const blogTags = Array.from(document.querySelectorAll(".blog-tag"))
-    .map((tag) => tag.textContent)
-    .join(", ");
+    if (result.success) {
+      const blog = result.blog;
 
-  const isPublic = document
-    .querySelector(".blog-visibility")
-    .textContent.includes("Public");
+      document.getElementById("editBlogTitle").value = blog.title;
 
-  document.getElementById("editBlogTitle").value = blogTitle;
-  document.getElementById("editBlogContent").value = markdownContent;
-  document.getElementById("editBlogTags").value = blogTags;
-  document.getElementById("editBlogIsPublic").checked = isPublic;
+      // CRITICAL FIX: Use the original Markdown content directly from the database
+      document.getElementById("editBlogContent").value = blog.content;
 
-  document.getElementById("editBlogModal").style.display = "flex";
+      document.getElementById("editBlogTags").value = blog.tags
+        ? blog.tags.join(", ")
+        : "";
+      document.getElementById("editBlogIsPublic").checked = blog.isPublic;
+      document.getElementById("editBlogModal").style.display = "flex";
+    } else {
+      toastManager.error(result.error, "Error Loading Blog");
+    }
+  } catch (error) {
+    console.error("Error loading blog for edit:", error);
+    toastManager.error("Failed to load blog for editing", "Network Error");
+  }
 }
-
 function closeEditModal() {
   document.getElementById("editBlogModal").style.display = "none";
 }
@@ -1586,6 +1586,7 @@ document
 
     const title = document.getElementById("editBlogTitle").value;
     const content = document.getElementById("editBlogContent").value;
+
     const tags = document
       .getElementById("editBlogTags")
       .value.split(",")
