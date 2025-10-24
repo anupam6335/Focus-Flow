@@ -1240,13 +1240,14 @@ async function ensureUserDataLoaded() {
   if (!localStorage.getItem("username")) {
     try {
       const response = await fetch(`${API_BASE_URL}/verify-token`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
-
+      
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.user) {
           localStorage.setItem("username", result.user);
+          console.log("User data loaded:", result.user);
         }
       }
     } catch (error) {
@@ -1780,11 +1781,13 @@ class CommentsManager {
     this.comments = [];
     this.socket = null;
     this.blogSlug = window.blogSlug;
-
+    
     // FIX: Get current user directly from localStorage
     this.currentUser = localStorage.getItem("username");
     this.isBlogAuthor = false;
 
+    console.log("CommentsManager created with user:", this.currentUser);
+    
     this.init();
   }
 
@@ -1799,18 +1802,81 @@ class CommentsManager {
       }, 1000);
       return;
     }
-
+    
     await this.continueInit();
   }
 
-  async continueInit() {
-    await this.setupSocketConnection();
-    this.setupEventListeners();
-    await this.loadComments();
-    this.updateCommentsCount();
-    await this.checkBlogStats();
-    await this.checkRestrictionStatus();
+ // FIXED: Enhanced CommentsManager initialization
+async continueInit() {
+  console.log("🚀 Continuing CommentsManager init...");
+  
+  // FIX: Ensure currentUser is always set from localStorage
+  this.currentUser = localStorage.getItem("username");
+  
+  if (!this.currentUser) {
+    console.warn("⚠️ No user found in localStorage, attempting to verify token...");
+    await this.verifyAndSetUser();
   }
+  
+  console.log("✅ CommentsManager initialized with user:", this.currentUser);
+  
+  await this.setupSocketConnection();
+  this.setupEventListeners();
+  await this.loadComments();
+  this.updateCommentsCount();
+  await this.checkBlogStats();
+  await this.checkRestrictionStatus();
+}
+
+// NEW: Method to verify token and set user
+async verifyAndSetUser() {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.warn("No auth token found");
+      return;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/verify-token`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.user) {
+        this.currentUser = result.user;
+        localStorage.setItem("username", result.user);
+        console.log("✅ User verified and set:", result.user);
+      }
+    }
+  } catch (error) {
+    console.error("Error verifying user:", error);
+  }
+}
+
+async refreshUserData() {
+  const token = localStorage.getItem("authToken");
+  if (!token) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/verify-token`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.user) {
+        this.currentUser = result.user;
+        localStorage.setItem("username", result.user);
+        console.log("🔄 User data refreshed:", result.user);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error("Error refreshing user data:", error);
+  }
+  return false;
+}
 
   setupSocketConnection() {
     this.socket = io("https://focus-flow-lopn.onrender.com");
@@ -1848,57 +1914,68 @@ class CommentsManager {
     });
   }
 
-  async loadComments() {
-    try {
-      const token = localStorage.getItem("authToken");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+// Update the loadComments method to ensure blog author check completes
+async loadComments() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await fetch(
-        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
-        {
-          headers,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load comments");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        this.comments = result.comments;
-        // Ensure blog author check is complete before rendering
-        await this.checkBlogAuthor();
-        this.renderComments();
-      }
-    } catch (error) {
-      console.error("Error loading comments:", error);
-      toastManager.error("Failed to load comments", "Error");
-    }
-  }
-
-  async checkBlogAuthor() {
-    try {
-      const token = localStorage.getItem("authToken");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
+    const response = await fetch(
+      `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
+      {
         headers,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          this.isBlogAuthor = result.blog.author === this.currentUser;
-        }
-      } else {
-        console.error("Failed to fetch blog data:", response.status);
       }
-    } catch (error) {
-      console.error("Error checking blog author:", error);
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load comments");
     }
+
+    const result = await response.json();
+
+    if (result.success) {
+      this.comments = result.comments;
+      // Ensure blog author check is complete before rendering
+      await this.checkBlogAuthor();
+      this.renderComments();
+    }
+  } catch (error) {
+    console.error("Error loading comments:", error);
+    toastManager.error("Failed to load comments", "Error");
   }
+}
+
+async checkBlogAuthor() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    console.log("Checking blog author for slug:", this.blogSlug);
+    console.log("Current user from localStorage:", this.currentUser);
+
+    const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
+      headers,
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        this.isBlogAuthor = result.blog.author === this.currentUser;
+        console.log(`Blog author check: ${this.isBlogAuthor} (current user: ${this.currentUser}, blog author: ${result.blog.author})`);
+        
+        // If user is blog author, log which comments they can pin
+        if (this.isBlogAuthor) {
+          console.log("User is blog author, pin buttons should be visible on parent comments");
+        }
+      }
+    } else {
+      console.error("Failed to fetch blog data:", response.status);
+    }
+  } catch (error) {
+    console.error("Error checking blog author:", error);
+  }
+}
+
 
   setupEventListeners() {
     this.sortTabs.forEach((tab) => {
@@ -1983,18 +2060,18 @@ class CommentsManager {
     }, 2000);
   }
 
-  // ✏️ ENHANCED EDIT COMMENT FUNCTIONALITY
-  async editComment(commentId) {
-    const commentElement = document.querySelector(
-      `[data-comment-id="${commentId}"]`
-    );
-    const commentContent = commentElement.querySelector(".comment-content");
-    const currentContent = commentContent.textContent;
+ // ✏️ ENHANCED EDIT COMMENT FUNCTIONALITY
+async editComment(commentId) {
+  const commentElement = document.querySelector(
+    `[data-comment-id="${commentId}"]`
+  );
+  const commentContent = commentElement.querySelector(".comment-content");
+  const currentContent = commentContent.textContent;
 
-    // Create edit interface
-    const editContainer = document.createElement("div");
-    editContainer.className = "edit-comment-container";
-    editContainer.innerHTML = `
+  // Create edit interface
+  const editContainer = document.createElement("div");
+  editContainer.className = "edit-comment-container";
+  editContainer.innerHTML = `
     <textarea class="edit-comment-input" rows="3">${currentContent}</textarea>
     <div class="edit-actions">
       <button class="btn btn-secondary cancel-edit">Cancel</button>
@@ -2002,155 +2079,217 @@ class CommentsManager {
     </div>
   `;
 
-    // Replace content with edit interface
-    commentContent.style.display = "none";
-    commentContent.parentNode.insertBefore(editContainer, commentContent);
+  // Replace content with edit interface
+  commentContent.style.display = "none";
+  commentContent.parentNode.insertBefore(editContainer, commentContent);
 
-    // Focus and select the textarea
-    const textarea = editContainer.querySelector(".edit-comment-input");
-    textarea.focus();
-    textarea.select();
+  // Focus and select the textarea
+  const textarea = editContainer.querySelector(".edit-comment-input");
+  textarea.focus();
+  textarea.select();
 
-    // Event listeners
-    const cancelBtn = editContainer.querySelector(".cancel-edit");
-    const saveBtn = editContainer.querySelector(".save-edit");
+  // Event listeners
+  const cancelBtn = editContainer.querySelector(".cancel-edit");
+  const saveBtn = editContainer.querySelector(".save-edit");
 
-    const cancelEdit = () => {
-      editContainer.remove();
-      commentContent.style.display = "block";
-    };
+  const cancelEdit = () => {
+    editContainer.remove();
+    commentContent.style.display = "block";
+  };
 
-    const saveEdit = async () => {
-      const newContent = textarea.value.trim();
-      if (!newContent) {
-        toastManager.error(
-          "Comment content cannot be empty",
-          "Validation Error"
-        );
-        return;
-      }
+  const saveEdit = async () => {
+    const newContent = textarea.value.trim();
+    if (!newContent) {
+      toastManager.error(
+        "Comment content cannot be empty",
+        "Validation Error"
+      );
+      return;
+    }
 
-      if (newContent === currentContent) {
-        cancelEdit();
-        return;
-      }
+    if (newContent === currentContent) {
+      cancelEdit();
+      return;
+    }
 
-      try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(
-          `${API_BASE_URL}/comments/${commentId}/edit`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ content: newContent }),
-          }
-        );
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to update comment");
-        }
-
-        // Show success message - real-time update will handle the UI change
-        toastManager.success("Comment updated successfully", "Edit Successful");
-      } catch (error) {
-        console.error("Error editing comment:", error);
-        toastManager.error(error.message, "Edit Failed");
-      }
-    };
-
-    cancelBtn.addEventListener("click", cancelEdit);
-    saveBtn.addEventListener("click", saveEdit);
-
-    // Handle Enter key to save, Escape to cancel
-    textarea.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "Enter") {
-        saveBtn.click();
-      } else if (e.key === "Escape") {
-        cancelBtn.click();
-      }
-    });
-
-    // Close edit on outside click
-    const handleOutsideClick = (e) => {
-      if (!editContainer.contains(e.target)) {
-        cancelEdit();
-        document.removeEventListener("click", handleOutsideClick);
-      }
-    };
-
-    setTimeout(() => {
-      document.addEventListener("click", handleOutsideClick);
-    }, 100);
-  }
-
-  // 📌 ENHANCED PIN COMMENT FUNCTIONALITY
-  async pinComment(commentId) {
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) {
-        toastManager.error(
-          "Please log in to pin comments",
-          "Authentication Required"
-        );
-        return;
-      }
-
-      // Show loading state
-      const pinBtn = document.querySelector(
-        `[data-comment-id="${commentId}"] .comment-pin`
-      );
-      const originalHTML = pinBtn.innerHTML;
-      pinBtn.innerHTML = "⏳";
-      pinBtn.disabled = true;
-
       const response = await fetch(
-        `${API_BASE_URL}/comments/${commentId}/pin`,
+        `${API_BASE_URL}/comments/${commentId}/edit`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({ content: newContent }),
         }
       );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to pin comment");
+        throw new Error(error.error || "Failed to update comment");
       }
 
-      const result = await response.json();
-
-      // Show success message
-      toastManager.success(
-        result.message || "Comment pin status updated",
-        "Success"
-      );
+      // Show success message - real-time update will handle the UI change
+      toastManager.success("Comment updated successfully", "Edit Successful");
     } catch (error) {
-      console.error("Error pinning comment:", error);
+      console.error("Error editing comment:", error);
+      toastManager.error(error.message, "Edit Failed");
+    }
+  };
 
-      if (error.message.includes("only pin up to 2 comments")) {
+  cancelBtn.addEventListener("click", cancelEdit);
+  saveBtn.addEventListener("click", saveEdit);
+
+  // Handle Enter key to save, Escape to cancel
+  textarea.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      saveBtn.click();
+    } else if (e.key === "Escape") {
+      cancelBtn.click();
+    }
+  });
+
+  // Close edit on outside click
+  const handleOutsideClick = (e) => {
+    if (!editContainer.contains(e.target)) {
+      cancelEdit();
+      document.removeEventListener("click", handleOutsideClick);
+    }
+  };
+
+  setTimeout(() => {
+    document.addEventListener("click", handleOutsideClick);
+  }, 100);
+}
+
+  // Delete comment
+  async deleteComment(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
         toastManager.error(
-          "You can only pin up to 2 comments at a time",
-          "Pin Limit Reached"
+          "Please log in to delete comments",
+          "Authentication Required"
         );
-      } else {
-        toastManager.error(error.message, "Pin Failed");
+        return;
       }
-    } finally {
-      // Reset button state (real-time update will handle the actual state change)
-      const pinBtn = document.querySelector(
-        `[data-comment-id="${commentId}"] .comment-pin`
+
+      // Show confirmation dialog
+      const confirmed = await confirmationManager.show(
+        "Are you sure you want to delete this comment? This action cannot be undone."
       );
-      if (pinBtn) {
-        pinBtn.disabled = false;
+
+      if (!confirmed) {
+        return; // User cancelled the deletion
       }
+
+      // Show loading state
+      const commentElement = document.querySelector(
+        `[data-comment-id="${commentId}"]`
+      );
+      if (commentElement) {
+        commentElement.style.opacity = "0.5";
+        commentElement.style.pointerEvents = "none";
+      }
+
+      const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete comment");
+      }
+
+      // Show success message - real-time update will handle the UI change
+      toastManager.success("Comment deleted successfully", "Delete Successful");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+
+      // Reset loading state
+      const commentElement = document.querySelector(
+        `[data-comment-id="${commentId}"]`
+      );
+      if (commentElement) {
+        commentElement.style.opacity = "1";
+        commentElement.style.pointerEvents = "auto";
+      }
+
+      toastManager.error(error.message, "Delete Failed");
     }
   }
+
+// 📌 ENHANCED PIN COMMENT FUNCTIONALITY
+async pinComment(commentId) {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toastManager.error(
+        "Please log in to pin comments",
+        "Authentication Required"
+      );
+      return;
+    }
+
+    // Show loading state
+    const pinBtn = document.querySelector(
+      `[data-comment-id="${commentId}"] .comment-pin`
+    );
+    const originalHTML = pinBtn.innerHTML;
+    pinBtn.innerHTML = "⏳";
+    pinBtn.disabled = true;
+
+    const response = await fetch(
+      `${API_BASE_URL}/comments/${commentId}/pin`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to pin comment");
+    }
+
+    const result = await response.json();
+    
+    // Show success message
+    toastManager.success(
+      result.message || "Comment pin status updated",
+      "Success"
+    );
+
+  } catch (error) {
+    console.error("Error pinning comment:", error);
+    
+    if (error.message.includes("only pin up to 2 comments")) {
+      toastManager.error(
+        "You can only pin up to 2 comments at a time",
+        "Pin Limit Reached"
+      );
+    } else {
+      toastManager.error(error.message, "Pin Failed");
+    }
+  } finally {
+    // Reset button state (real-time update will handle the actual state change)
+    const pinBtn = document.querySelector(
+      `[data-comment-id="${commentId}"] .comment-pin`
+    );
+    if (pinBtn) {
+      pinBtn.disabled = false;
+    }
+  }
+}
 
   // Existing functionality (keep these as they are)
   async handleVote(commentId, voteType) {
@@ -2415,34 +2554,32 @@ class CommentsManager {
     this.attachCommentEventListeners();
   }
 
-  // In the renderComment method, update the isAuthor check:
-  renderComment(comment, depth = 0) {
-    const timeAgo = this.getTimeAgo(comment.createdAt);
-    const hasReplies = comment.replies && comment.replies.length > 0;
-    const isRestricted = comment.reports >= 3;
+// FIXED: Enhanced renderComment method with reliable user detection
+renderComment(comment, depth = 0) {
+  const timeAgo = this.getTimeAgo(comment.createdAt);
+  const hasReplies = comment.replies && comment.replies.length > 0;
+  const isRestricted = comment.reports >= 3;
+  
+  // FIX: Get current user directly from localStorage with fallback
+  const currentUser = localStorage.getItem("username") || this.currentUser;
+  
+  // FIX: Proper null/undefined check for isAuthor
+  const isAuthor = !!currentUser && comment.author === currentUser;
+  const isParentComment = depth === 0;
 
-    // FIX: Handle case where currentUser might be null
-    const isAuthor = this.currentUser && comment.author === this.currentUser;
-    const isParentComment = depth === 0;
+  console.log(`🔍 Rendering comment - Author: ${comment.author}, CurrentUser: ${currentUser}, IsAuthor: ${isAuthor}, IsBlogAuthor: ${this.isBlogAuthor}`);
 
-    // UPDATE: Determine profile link based on whether it's current user or other user
-    const profileLink = isAuthor
-      ? "/profile"
-      : `/user-profile?user=${comment.author}`;
-
-    return `
+  return `
     <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
-      isRestricted ? "reported" : ""
-    }" data-comment-id="${comment._id}">
+    isRestricted ? "reported" : ""
+  }" data-comment-id="${comment._id}">
       <div class="comment-header">
         <div class="comment-user">
           <div class="comment-avatar">${comment.author
             .charAt(0)
             .toUpperCase()}</div>
           <div class="comment-user-info">
-            <a href="${profileLink}" class="profile-link username-link">
-                ${comment.author.toUpperCase()}
-              </a>
+            <div class="comment-author">${comment.author}</div>
             <div class="comment-meta">
               <span class="comment-time">⏱️ ${timeAgo}</span>
               ${
@@ -2488,27 +2625,26 @@ class CommentsManager {
       <div class="comment-footer">
         <div class="comment-votes">
           <button class="vote-btn like-btn ${
-            comment.likedBy &&
-            this.currentUser &&
-            comment.likedBy.includes(this.currentUser)
+            comment.likedBy && currentUser && comment.likedBy.includes(currentUser)
               ? "liked"
               : ""
-          }" title="Like" ${!this.currentUser ? "disabled" : ""}>
+          }" title="Like" ${!currentUser ? 'disabled' : ''}>
             👍 <span class="vote-count like-count">${comment.likes}</span>
           </button>
           <button class="vote-btn dislike-btn ${
-            comment.dislikedBy &&
-            this.currentUser &&
-            comment.dislikedBy.includes(this.currentUser)
+            comment.dislikedBy && currentUser && comment.dislikedBy.includes(currentUser)
               ? "disliked"
               : ""
-          }" title="Dislike" ${!this.currentUser ? "disabled" : ""}>
-            👎 <span class="vote-count dislike-count">${comment.dislikes}</span>
+          }" title="Dislike" ${!currentUser ? 'disabled' : ''}>
+            👎 <span class="vote-count dislike-count">${
+              comment.dislikes
+            }</span>
           </button>
         </div>
         
         <div class="comment-actions-right">
           ${
+            // FIX: Consistent Edit button visibility check
             isAuthor
               ? `
             <button class="action-btn edit-btn" title="Edit comment">
@@ -2517,13 +2653,11 @@ class CommentsManager {
           `
               : ""
           }
-          <button class="action-btn reply-btn" title="Reply" ${
-            !this.currentUser ? "disabled" : ""
-          }>
+          <button class="action-btn reply-btn" title="Reply" ${!currentUser ? 'disabled' : ''}>
             💬 Reply
           </button>
           ${
-            !isAuthor && this.currentUser
+            !isAuthor && currentUser
               ? `
             <button class="action-btn report-btn" title="Report">
               🚩 Report
@@ -2560,8 +2694,7 @@ class CommentsManager {
       }
     </div>
   `;
-  }
-
+}
   attachCommentEventListeners() {
     // Vote buttons
     document.querySelectorAll(".like-btn").forEach((btn) => {
@@ -2828,20 +2961,22 @@ class CommentsManager {
   }
 }
 
-// Replace the current initialization in blog-view.js
+// FIXED: Enhanced initialization with retry mechanism
 document.addEventListener("DOMContentLoaded", () => {
   // Store blog slug globally
   window.blogSlug = blogSlug;
 
-  // Initialize comments manager after user data is available
-  const initializeCommentsManager = () => {
+  // Initialize comments manager with retry logic
+  const initializeCommentsManager = (retryCount = 0) => {
     const currentUser = localStorage.getItem("username");
-    if (!currentUser) {
-      // If user not loaded yet, wait and retry
-      setTimeout(initializeCommentsManager, 500);
+    
+    if (!currentUser && retryCount < 5) {
+      console.log(`🔄 Waiting for user data... (attempt ${retryCount + 1}/5)`);
+      setTimeout(() => initializeCommentsManager(retryCount + 1), 500);
       return;
     }
-
+    
+    console.log("🎯 Initializing CommentsManager with user:", currentUser);
     window.commentsManager = new CommentsManager();
   };
 
