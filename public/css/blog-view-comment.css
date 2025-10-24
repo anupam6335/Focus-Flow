@@ -1137,3 +1137,164 @@
     color: #ffffff !important;
   }
 }
+
+
+
+/* ===== ENHANCED DELETE BUTTON STYLES ===== */
+
+.delete-btn {
+  color: var(--codeleaf-error) !important;
+  transition: all 0.3s ease !important;
+}
+
+.delete-btn:hover {
+  background: rgba(196, 69, 69, 0.1) !important;
+  color: var(--codeleaf-error) !important;
+  transform: scale(1.05);
+}
+
+/* Delete confirmation overlay */
+.deleting-overlay {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Smooth delete animation */
+.comment-item.deleting {
+  animation: slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 200px;
+    margin-bottom: var(--codeleaf-space-4);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* Enhanced confirmation dialog styles */
+.confirmation-popup {
+  max-width: 500px !important;
+}
+
+.confirmation-message {
+  line-height: 1.6;
+}
+
+.comment-preview {
+  background: var(--codeleaf-bg-secondary);
+  padding: var(--codeleaf-space-3);
+  border-radius: var(--codeleaf-radius-md);
+  border-left: 3px solid var(--codeleaf-warning);
+  margin: var(--codeleaf-space-3) 0;
+  font-size: var(--codeleaf-font-sm);
+  line-height: 1.5;
+}
+
+/* Mobile responsiveness for delete button */
+@media (max-width: 768px) {
+  .delete-btn {
+    font-size: 0.7rem !important;
+    padding: 4px 6px !important;
+  }
+  
+  .comment-actions-right {
+    flex-wrap: wrap;
+    gap: 4px !important;
+  }
+  
+  .action-btn {
+    font-size: 0.7rem !important;
+    padding: 4px 6px !important;
+  }
+}
+
+/* Touch device enhancements */
+@media (hover: none) and (pointer: coarse) {
+  .delete-btn {
+    padding: 8px 12px !important;
+    min-height: 44px; /* Better touch target */
+  }
+}
+
+/* Dark mode enhancements for delete button */
+@media (prefers-color-scheme: dark) {
+  .delete-btn:hover {
+    background: rgba(196, 69, 69, 0.2) !important;
+  }
+  
+  .comment-preview {
+    background: var(--codeleaf-bg-tertiary);
+    border-left-color: var(--codeleaf-warning);
+  }
+}
+
+
+
+/* Enhanced Confirmation Dialog Styles */
+.confirmation-popup {
+  max-width: 450px;
+  text-align: center;
+}
+
+.confirmation-popup .btn-danger {
+  background: var(--codeleaf-error);
+  border-color: var(--codeleaf-error);
+}
+
+.confirmation-popup .btn-danger:hover {
+  background: var(--codeleaf-error-dark);
+  border-color: var(--codeleaf-error-dark);
+}
+
+.confirmation-content {
+  text-align: left;
+  line-height: 1.5;
+}
+
+.comment-preview-box {
+  background: var(--codeleaf-bg-secondary);
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--codeleaf-warning);
+  margin: 15px 0;
+}
+
+.comment-preview-label {
+  color: var(--codeleaf-text-secondary);
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.comment-preview-text {
+  color: var(--codeleaf-text-primary);
+  font-style: italic;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.warning-text {
+  color: var(--codeleaf-error);
+  font-size: 0.9em;
+  font-weight: 500;
+  margin-top: 10px;
+}
