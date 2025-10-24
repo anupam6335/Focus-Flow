@@ -1209,11 +1209,14 @@ window.shareBlog = async function () {
   }
 };
 
-// Enhanced blog content loader with Markdown support
+// Enhanced blog content loader with user detection
 async function loadBlogWithMarkdown() {
   try {
     const token = localStorage.getItem("authToken");
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // Ensure user data is loaded
+    await ensureUserDataLoaded();
 
     // Track view first
     await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
@@ -1252,13 +1255,53 @@ async function loadBlogWithMarkdown() {
   }
 }
 
+// Helper function to ensure user data is loaded
+async function ensureUserDataLoaded() {
+  const token = localStorage.getItem("authToken");
+  if (!token) return;
+
+  // If username is not in localStorage, verify token and get user info
+  if (!localStorage.getItem("username")) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-token`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.user) {
+          localStorage.setItem("username", result.user);
+          console.log("User data loaded:", result.user);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  }
+}
+
 // Fixed blog display with enhanced Markdown rendering including Mermaid
 async function displayBlogWithMarkdown(blog) {
   document.getElementById("blogArticle").style.display = "block";
 
   // Set basic info
   document.getElementById("blogTitle").textContent = blog.title;
-  document.getElementById("blogAuthor").textContent = `By ${blog.author}`;
+
+  // UPDATE: Blog author with profile link and uppercase
+  const blogAuthorElement = document.getElementById("blogAuthor");
+  const currentUser = localStorage.getItem("username");
+  const isCurrentUserBlogAuthor = currentUser === blog.author;
+
+  if (isCurrentUserBlogAuthor) {
+    // Link to own profile
+    blogAuthorElement.innerHTML = `By <a href="/profile" class="profile-link username-link">${blog.author.toUpperCase()}</a>`;
+  } else {
+    // Link to other user's profile
+    blogAuthorElement.innerHTML = `By <a href="/user-profile?user=${
+      blog.author
+    }" class="profile-link username-link">${blog.author.toUpperCase()}</a>`;
+  }
+
   document.getElementById("blogDate").textContent = new Date(
     blog.createdAt
   ).toLocaleDateString();
@@ -1389,6 +1432,7 @@ async function loadPopularBlogs(currentBlogTags) {
 
 function displayPopularBlogs(blogs) {
   const popularBlogsList = document.getElementById("popularBlogsList");
+  const currentUser = localStorage.getItem("username");
 
   if (!blogs || blogs.length === 0) {
     popularBlogsList.innerHTML = `
@@ -1410,7 +1454,13 @@ function displayPopularBlogs(blogs) {
             }'">
               <div class="popular-blog-title">${escapeHtml(blog.title)}</div>
               <div class="popular-blog-meta">
-                <span>By ${escapeHtml(blog.author)}</span>
+                <span>By ${
+                  blog.author === currentUser
+                    ? `<a href="/profile" class="profile-link username-link">${blog.author.toUpperCase()}</a>`
+                    : `<a href="/user-profile?user=${
+                        blog.author
+                      }" class="profile-link username-link">${blog.author.toUpperCase()}</a>`
+                }</span>
                 <span>👁️ ${blog.views || 0} views</span>
               </div>
             </div>
@@ -1741,6 +1791,1109 @@ function initScrollToTop() {
 
   toggleScrollToTop();
 }
+
+// ===== CORRECTED REAL-TIME COMMENTS MANAGER =====
+
+class CommentsManager {
+  constructor() {
+    this.commentsContainer = document.getElementById("commentsContainer");
+    this.commentsCount = document.querySelector(".comments-count");
+    this.sortTabs = document.querySelectorAll(".sort-tab");
+    this.commentInput = document.querySelector(".comment-input");
+    this.submitButton = document.querySelector(".submit-comment");
+    this.currentSort = "newest";
+    this.comments = [];
+    this.socket = null;
+    this.blogSlug = window.blogSlug;
+
+    // FIX: Get current user directly from localStorage
+    this.currentUser = localStorage.getItem("username");
+    this.isBlogAuthor = false;
+
+    console.log("CommentsManager created with user:", this.currentUser);
+    console.log("================ blog : ", this.blogSlug);
+    this.init();
+  }
+
+  async init() {
+    if (!this.currentUser) {
+      console.warn("No user found, retrying in 1 second...");
+      setTimeout(() => {
+        this.currentUser = localStorage.getItem("username");
+        if (this.currentUser) {
+          this.continueInit();
+        }
+      }, 1000);
+      return;
+    }
+
+    await this.continueInit();
+  }
+
+  async continueInit() {
+    console.log("Continuing CommentsManager init for user:", this.currentUser);
+    await this.setupSocketConnection();
+    this.setupEventListeners();
+    await this.loadComments();
+    this.updateCommentsCount();
+    await this.checkBlogStats();
+    await this.checkRestrictionStatus();
+  }
+
+  setupSocketConnection() {
+    this.socket = io("https://focus-flow-lopn.onrender.com");
+    this.socket.emit("join-blog", this.blogSlug);
+
+    // Real-time event listeners
+    this.socket.on("new-comment", (comment) => {
+      this.handleNewComment(comment);
+    });
+
+    this.socket.on("comment-updated", (comment) => {
+      this.handleCommentUpdated(comment);
+    });
+
+    this.socket.on("comment-deleted", (commentId) => {
+      this.handleCommentDeleted(commentId);
+    });
+
+    this.socket.on("comment-vote-updated", (data) => {
+      this.handleVoteUpdated(data);
+    });
+
+    this.socket.on("comment-reported", (data) => {
+      this.handleReportUpdated(data);
+    });
+
+    this.socket.on("comment-pin-updated", (comment) => {
+      this.handlePinUpdated(comment);
+    });
+
+    this.socket.on("user-restricted", (data) => {
+      if (data.username === this.currentUser) {
+        this.handleUserRestricted();
+      }
+    });
+  }
+
+  async loadComments() {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
+        {
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load comments");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.comments = result.comments;
+        // Ensure blog author check is complete before rendering
+        await this.checkBlogAuthor();
+        this.renderComments();
+      }
+    } catch (error) {
+      console.error("Error loading comments:", error);
+      toastManager.error("Failed to load comments", "Error");
+    }
+  }
+
+  async checkBlogAuthor() {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      console.log("Checking blog author for slug:", this.blogSlug);
+      console.log("Current user from localStorage:", this.currentUser);
+
+      const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.isBlogAuthor = result.blog.author === this.currentUser;
+          console.log(
+            `Blog author check: ${this.isBlogAuthor} (current user: ${this.currentUser}, blog author: ${result.blog.author})`
+          );
+
+          // If user is blog author, log which comments they can pin
+          if (this.isBlogAuthor) {
+            console.log(
+              "User is blog author, pin buttons should be visible on parent comments"
+            );
+          }
+        }
+      } else {
+        console.error("Failed to fetch blog data:", response.status);
+      }
+    } catch (error) {
+      console.error("Error checking blog author:", error);
+    }
+  }
+
+  setupEventListeners() {
+    this.sortTabs.forEach((tab) => {
+      tab.addEventListener("click", () => this.handleSortChange(tab));
+    });
+
+    this.submitButton.addEventListener("click", () => this.submitComment());
+    this.commentInput.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        this.submitComment();
+      }
+    });
+
+    // UPDATE: Set current user's avatar in comment input
+    this.updateCommentInputAvatar();
+  }
+
+  updateCommentInputAvatar() {
+    const avatarPlaceholder = document.querySelector(".avatar-placeholder");
+    if (avatarPlaceholder && this.currentUser) {
+      avatarPlaceholder.textContent = this.currentUser.charAt(0).toUpperCase();
+    }
+  }
+
+  async handleSortChange(clickedTab) {
+    this.sortTabs.forEach((tab) => tab.classList.remove("active"));
+    clickedTab.classList.add("active");
+
+    this.currentSort = clickedTab.dataset.sort;
+    await this.loadComments();
+  }
+
+  async submitComment() {
+    const content = this.commentInput.value.trim();
+    if (!content) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to comment",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to post comment");
+      }
+
+      this.commentInput.value = "";
+      this.showSubmissionSuccess();
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      toastManager.error(error.message, "Comment Failed");
+    }
+  }
+
+  showSubmissionSuccess() {
+    const submitBtn = this.submitButton;
+    const originalText = submitBtn.textContent;
+
+    submitBtn.textContent = "Posted!";
+    submitBtn.style.background = "var(--codeleaf-success)";
+
+    setTimeout(() => {
+      submitBtn.textContent = originalText;
+      submitBtn.style.background = "";
+    }, 2000);
+  }
+
+  // ✏️ ENHANCED EDIT COMMENT FUNCTIONALITY
+  async editComment(commentId) {
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
+    );
+    const commentContent = commentElement.querySelector(".comment-content");
+    const currentContent = commentContent.textContent;
+
+    // Create edit interface
+    const editContainer = document.createElement("div");
+    editContainer.className = "edit-comment-container";
+    editContainer.innerHTML = `
+    <textarea class="edit-comment-input" rows="3">${currentContent}</textarea>
+    <div class="edit-actions">
+      <button class="btn btn-secondary cancel-edit">Cancel</button>
+      <button class="btn btn-primary save-edit">Save Changes</button>
+    </div>
+  `;
+
+    // Replace content with edit interface
+    commentContent.style.display = "none";
+    commentContent.parentNode.insertBefore(editContainer, commentContent);
+
+    // Focus and select the textarea
+    const textarea = editContainer.querySelector(".edit-comment-input");
+    textarea.focus();
+    textarea.select();
+
+    // Event listeners
+    const cancelBtn = editContainer.querySelector(".cancel-edit");
+    const saveBtn = editContainer.querySelector(".save-edit");
+
+    const cancelEdit = () => {
+      editContainer.remove();
+      commentContent.style.display = "block";
+    };
+
+    const saveEdit = async () => {
+      const newContent = textarea.value.trim();
+      if (!newContent) {
+        toastManager.error(
+          "Comment content cannot be empty",
+          "Validation Error"
+        );
+        return;
+      }
+
+      if (newContent === currentContent) {
+        cancelEdit();
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(
+          `${API_BASE_URL}/comments/${commentId}/edit`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ content: newContent }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to update comment");
+        }
+
+        // Show success message - real-time update will handle the UI change
+        toastManager.success("Comment updated successfully", "Edit Successful");
+      } catch (error) {
+        console.error("Error editing comment:", error);
+        toastManager.error(error.message, "Edit Failed");
+      }
+    };
+
+    cancelBtn.addEventListener("click", cancelEdit);
+    saveBtn.addEventListener("click", saveEdit);
+
+    // Handle Enter key to save, Escape to cancel
+    textarea.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        saveBtn.click();
+      } else if (e.key === "Escape") {
+        cancelBtn.click();
+      }
+    });
+
+    // Close edit on outside click
+    const handleOutsideClick = (e) => {
+      if (!editContainer.contains(e.target)) {
+        cancelEdit();
+        document.removeEventListener("click", handleOutsideClick);
+      }
+    };
+
+    setTimeout(() => {
+      document.addEventListener("click", handleOutsideClick);
+    }, 100);
+  }
+
+  // 📌 ENHANCED PIN COMMENT FUNCTIONALITY
+  async pinComment(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to pin comments",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      // Show loading state
+      const pinBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .comment-pin`
+      );
+      const originalHTML = pinBtn.innerHTML;
+      pinBtn.innerHTML = "⏳";
+      pinBtn.disabled = true;
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/pin`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to pin comment");
+      }
+
+      const result = await response.json();
+
+      // Show success message
+      toastManager.success(
+        result.message || "Comment pin status updated",
+        "Success"
+      );
+    } catch (error) {
+      console.error("Error pinning comment:", error);
+
+      if (error.message.includes("only pin up to 2 comments")) {
+        toastManager.error(
+          "You can only pin up to 2 comments at a time",
+          "Pin Limit Reached"
+        );
+      } else {
+        toastManager.error(error.message, "Pin Failed");
+      }
+    } finally {
+      // Reset button state (real-time update will handle the actual state change)
+      const pinBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .comment-pin`
+      );
+      if (pinBtn) {
+        pinBtn.disabled = false;
+      }
+    }
+  }
+
+  // Existing functionality (keep these as they are)
+  async handleVote(commentId, voteType) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error("Please log in to vote", "Authentication Required");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/vote`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ voteType }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to vote");
+      }
+    } catch (error) {
+      console.error("Error voting:", error);
+      toastManager.error(error.message, "Vote Failed");
+    }
+  }
+
+  async toggleReply(commentId) {
+    const replyInput = document.querySelector(
+      `[data-comment-id="${commentId}"] .reply-input-container`
+    );
+    if (replyInput) {
+      replyInput.style.display =
+        replyInput.style.display === "none" ? "block" : "none";
+    } else {
+      this.createReplyInput(commentId);
+    }
+  }
+
+  createReplyInput(commentId) {
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
+    );
+    const replyInput = document.createElement("div");
+    replyInput.className = "reply-input-container";
+    replyInput.innerHTML = `
+      <textarea class="reply-input" placeholder="Write a reply..." rows="2"></textarea>
+      <div class="reply-actions">
+        <button class="btn btn-secondary cancel-reply">Cancel</button>
+        <button class="btn btn-primary submit-reply">Reply</button>
+      </div>
+    `;
+
+    commentElement.appendChild(replyInput);
+
+    const cancelBtn = replyInput.querySelector(".cancel-reply");
+    const submitBtn = replyInput.querySelector(".submit-reply");
+    const textarea = replyInput.querySelector(".reply-input");
+
+    cancelBtn.addEventListener("click", () => {
+      replyInput.remove();
+    });
+
+    submitBtn.addEventListener("click", () => {
+      this.submitReply(commentId, textarea.value);
+    });
+
+    textarea.focus();
+  }
+
+  async submitReply(commentId, content) {
+    if (!content.trim()) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error("Please log in to reply", "Authentication Required");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: content.trim(),
+            parentId: commentId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to post reply");
+      }
+
+      const replyInput = document.querySelector(
+        `[data-comment-id="${commentId}"] .reply-input-container`
+      );
+      if (replyInput) {
+        replyInput.remove();
+      }
+    } catch (error) {
+      console.error("Error submitting reply:", error);
+      toastManager.error(error.message, "Reply Failed");
+    }
+  }
+
+  async toggleReplies(commentId) {
+    const repliesContainer = document.querySelector(
+      `[data-comment-id="${commentId}"] .comment-replies`
+    );
+    const toggleBtn = document.querySelector(
+      `[data-comment-id="${commentId}"] .reply-toggle`
+    );
+
+    if (repliesContainer && toggleBtn) {
+      repliesContainer.classList.toggle("collapsed");
+      toggleBtn.classList.toggle("collapsed");
+
+      const isCollapsed = repliesContainer.classList.contains("collapsed");
+      toggleBtn.querySelector(".text").textContent = isCollapsed
+        ? "Show replies"
+        : "Hide replies";
+    }
+  }
+
+  async reportComment(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to report comments",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/report`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to report comment");
+      }
+
+      const result = await response.json();
+      toastManager.info(result.message, "Report Submitted");
+    } catch (error) {
+      console.error("Error reporting comment:", error);
+      toastManager.error(error.message, "Report Failed");
+    }
+  }
+
+  // 🧩 FIXED NESTED COMMENT DISPLAY - Real-time event handlers
+  handleNewComment(comment) {
+    if (comment.parentId) {
+      const parentComment = this.findCommentById(
+        comment.parentId,
+        this.comments
+      );
+      if (parentComment) {
+        if (!parentComment.replies) parentComment.replies = [];
+        parentComment.replies.unshift(comment);
+        this.renderComments();
+      }
+    } else {
+      this.comments.unshift(comment);
+      this.renderComments();
+    }
+
+    this.updateCommentsCount();
+    this.checkBlogStats();
+  }
+
+  handleCommentUpdated(updatedComment) {
+    const comment = this.findCommentById(updatedComment._id, this.comments);
+    if (comment) {
+      Object.assign(comment, updatedComment);
+      this.renderComments();
+    }
+  }
+
+  handleCommentDeleted(commentId) {
+    this.removeCommentById(commentId, this.comments);
+    this.renderComments();
+    this.updateCommentsCount();
+    this.checkBlogStats();
+  }
+
+  handleVoteUpdated(data) {
+    const comment = this.findCommentById(data.commentId, this.comments);
+    if (comment) {
+      comment.likes = data.likes;
+      comment.dislikes = data.dislikes;
+      this.updateCommentVotes(data.commentId);
+    }
+    this.checkBlogStats();
+  }
+
+  handleReportUpdated(data) {
+    const comment = this.findCommentById(data.commentId, this.comments);
+    if (comment) {
+      comment.reports = data.reports;
+      this.updateReportWarning(comment);
+    }
+  }
+
+  handlePinUpdated(updatedComment) {
+    const comment = this.findCommentById(updatedComment._id, this.comments);
+    if (comment) {
+      comment.isPinned = updatedComment.isPinned;
+      this.renderComments();
+    }
+  }
+
+  // 🧩 FIXED: Recursive comment rendering for all nested levels
+  renderComments() {
+    if (this.comments.length === 0) {
+      this.commentsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">💬</div>
+          <h3>No comments yet</h3>
+          <p>Be the first to share your thoughts!</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+
+    // 📌 Pinned comments always at top regardless of sorting
+    const pinnedComments = this.comments.filter((comment) => comment.isPinned);
+    const normalComments = this.comments.filter((comment) => !comment.isPinned);
+
+    pinnedComments.forEach((comment) => {
+      html += this.renderComment(comment, 0);
+    });
+
+    normalComments.forEach((comment) => {
+      html += this.renderComment(comment, 0);
+    });
+
+    this.commentsContainer.innerHTML = html;
+    this.attachCommentEventListeners();
+  }
+
+  // In the renderComment method, update the isAuthor check:
+  renderComment(comment, depth = 0) {
+    const timeAgo = this.getTimeAgo(comment.createdAt);
+    const hasReplies = comment.replies && comment.replies.length > 0;
+    const isRestricted = comment.reports >= 3;
+
+    // FIX: Handle case where currentUser might be null
+    const isAuthor = this.currentUser && comment.author === this.currentUser;
+    const isParentComment = depth === 0;
+
+    // UPDATE: Determine profile link based on whether it's current user or other user
+    const profileLink = isAuthor
+      ? "/profile"
+      : `/user-profile?user=${comment.author}`;
+
+    console.log(
+      `Rendering comment: author=${comment.author}, currentUser=${this.currentUser}, isAuthor=${isAuthor}, isBlogAuthor=${this.isBlogAuthor}`
+    );
+
+    return `
+    <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
+      isRestricted ? "reported" : ""
+    }" data-comment-id="${comment._id}">
+      <div class="comment-header">
+        <div class="comment-user">
+          <div class="comment-avatar">${comment.author
+            .charAt(0)
+            .toUpperCase()}</div>
+          <div class="comment-user-info">
+            <a href="${profileLink}" class="profile-link username-link">
+                ${comment.author.toUpperCase()}
+              </a>
+            <div class="comment-meta">
+              <span class="comment-time">⏱️ ${timeAgo}</span>
+              ${
+                comment.isEdited
+                  ? '<span class="comment-edited">Edited</span>'
+                  : ""
+              }
+              ${
+                comment.isPinned
+                  ? '<span class="comment-pinned-tag">📌 Pinned</span>'
+                  : ""
+              }
+            </div>
+          </div>
+        </div>
+        <div class="comment-actions">
+          ${
+            isParentComment && this.isBlogAuthor
+              ? `
+            <button class="comment-pin ${
+              comment.isPinned ? "pinned" : ""
+            }" title="${comment.isPinned ? "Unpin" : "Pin comment"}">
+              ${comment.isPinned ? "📌" : "📍"}
+            </button>
+          `
+              : ""
+          }
+        </div>
+      </div>
+      
+      <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+      
+      ${
+        isRestricted
+          ? `
+        <div class="report-warning">
+          ⚠️ This comment may not be helpful.
+        </div>
+      `
+          : ""
+      }
+      
+      <div class="comment-footer">
+        <div class="comment-votes">
+          <button class="vote-btn like-btn ${
+            comment.likedBy &&
+            this.currentUser &&
+            comment.likedBy.includes(this.currentUser)
+              ? "liked"
+              : ""
+          }" title="Like" ${!this.currentUser ? "disabled" : ""}>
+            👍 <span class="vote-count like-count">${comment.likes}</span>
+          </button>
+          <button class="vote-btn dislike-btn ${
+            comment.dislikedBy &&
+            this.currentUser &&
+            comment.dislikedBy.includes(this.currentUser)
+              ? "disliked"
+              : ""
+          }" title="Dislike" ${!this.currentUser ? "disabled" : ""}>
+            👎 <span class="vote-count dislike-count">${comment.dislikes}</span>
+          </button>
+        </div>
+        
+        <div class="comment-actions-right">
+          ${
+            isAuthor
+              ? `
+            <button class="action-btn edit-btn" title="Edit comment">
+              ✏️ Edit
+            </button>
+          `
+              : ""
+          }
+          <button class="action-btn reply-btn" title="Reply" ${
+            !this.currentUser ? "disabled" : ""
+          }>
+            💬 Reply
+          </button>
+          ${
+            !isAuthor && this.currentUser
+              ? `
+            <button class="action-btn report-btn" title="Report">
+              🚩 Report
+            </button>
+          `
+              : ""
+          }
+          ${
+            hasReplies
+              ? `
+            <button class="reply-toggle ${depth > 2 ? "collapsed" : ""}">
+              <span class="icon">▼</span>
+              <span class="text">${
+                depth > 2 ? "Show replies" : "Hide replies"
+              }</span>
+              <span class="reply-count">(${comment.replies.length})</span>
+            </button>
+          `
+              : ""
+          }
+        </div>
+      </div>
+      
+      ${
+        hasReplies
+          ? `
+        <div class="comment-replies ${depth > 2 ? "collapsed" : ""}">
+          ${comment.replies
+            .map((reply) => this.renderComment(reply, depth + 1))
+            .join("")}
+        </div>
+      `
+          : ""
+      }
+    </div>
+  `;
+  }
+
+  attachCommentEventListeners() {
+    // Vote buttons
+    document.querySelectorAll(".like-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.handleVote(commentId, "like");
+      });
+    });
+
+    document.querySelectorAll(".dislike-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.handleVote(commentId, "dislike");
+      });
+    });
+
+    // ✏️ Edit buttons (for both parent and nested comments)
+    document.querySelectorAll(".edit-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.editComment(commentId);
+      });
+    });
+
+    // 📌 Pin buttons (only for blog author on parent comments)
+    document.querySelectorAll(".comment-pin").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.pinComment(commentId);
+      });
+    });
+
+    // Reply buttons
+    document.querySelectorAll(".reply-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.toggleReply(commentId);
+      });
+    });
+
+    // Reply toggle buttons
+    document.querySelectorAll(".reply-toggle").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.toggleReplies(commentId);
+      });
+    });
+
+    // Report buttons
+    document.querySelectorAll(".report-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.reportComment(commentId);
+      });
+    });
+  }
+
+  // Helper methods
+  getCommentIdFromElement(element) {
+    return element.closest(".comment-item").dataset.commentId;
+  }
+
+  findCommentById(commentId, comments = this.comments) {
+    for (const comment of comments) {
+      if (comment._id === commentId) return comment;
+      if (comment.replies) {
+        const foundInReplies = this.findCommentById(commentId, comment.replies);
+        if (foundInReplies) return foundInReplies;
+      }
+    }
+    return null;
+  }
+
+  removeCommentById(commentId, comments) {
+    const index = comments.findIndex((comment) => comment._id === commentId);
+    if (index !== -1) {
+      comments.splice(index, 1);
+      return true;
+    }
+
+    for (const comment of comments) {
+      if (comment.replies) {
+        const removed = this.removeCommentById(commentId, comment.replies);
+        if (removed) return true;
+      }
+    }
+
+    return false;
+  }
+
+  getTimeAgo(timestamp) {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800)
+      return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  }
+
+  updateCommentsCount() {
+    const totalComments = this.countTotalComments(this.comments);
+    this.commentsCount.textContent = `${totalComments} Comment${
+      totalComments !== 1 ? "s" : ""
+    }`;
+  }
+
+  countTotalComments(comments) {
+    return comments.reduce((total, comment) => {
+      return (
+        total +
+        1 +
+        (comment.replies ? this.countTotalComments(comment.replies) : 0)
+      );
+    }, 0);
+  }
+
+  escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  async checkBlogStats() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/stats`
+      );
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.updateHelpfulLabel(result.stats);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking blog stats:", error);
+    }
+  }
+
+  updateHelpfulLabel(stats) {
+    const blogTitle = document.getElementById("blogTitle");
+    const existingLabel = blogTitle.querySelector(".helpful-label");
+
+    if (existingLabel) {
+      existingLabel.remove();
+    }
+
+    if (stats.totalLikes + stats.totalDislikes === 0) return;
+
+    const label = document.createElement("span");
+    label.className = "helpful-label";
+
+    // Set data attribute for styling
+    label.setAttribute("data-helpful", stats.isHelpful.toString());
+
+    // Add new class for animation
+    label.classList.add("new");
+
+    // FORCE WHITE TEXT via inline styles as backup
+    label.style.color = "#ffffff";
+    label.style.setProperty("color", "#ffffff", "important");
+
+    if (stats.isHelpful) {
+      label.textContent = "Helpful";
+      label.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    } else {
+      label.textContent = "Not Helpful";
+      label.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    }
+
+    // Add tooltip for more context
+    label.title = `Based on ${stats.totalLikes} likes and ${stats.totalDislikes} dislikes from comments`;
+
+    // Remove animation class after animation completes
+    setTimeout(() => {
+      label.classList.remove("new");
+    }, 2000);
+
+    blogTitle.appendChild(label);
+
+    // Double-check text color after appending
+    setTimeout(() => {
+      label.style.color = "#ffffff";
+      label.style.setProperty("color", "#ffffff", "important");
+    }, 100);
+  }
+
+  async checkRestrictionStatus() {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/restriction-check`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.isRestricted) {
+          this.handleUserRestricted();
+        }
+      }
+    } catch (error) {
+      console.error("Error checking restriction status:", error);
+    }
+  }
+
+  handleUserRestricted() {
+    this.commentInput.disabled = true;
+    this.commentInput.placeholder =
+      "You are restricted from commenting on this blog due to multiple reports";
+    this.submitButton.disabled = true;
+
+    toastManager.warning(
+      "You are restricted from commenting on this blog due to multiple reports",
+      "Commenting Restricted"
+    );
+  }
+
+  updateCommentVotes(commentId) {
+    const comment = this.findCommentById(commentId, this.comments);
+    const likeCount = document.querySelector(
+      `[data-comment-id="${commentId}"] .like-count`
+    );
+    const dislikeCount = document.querySelector(
+      `[data-comment-id="${commentId}"] .dislike-count`
+    );
+
+    if (likeCount && comment) likeCount.textContent = comment.likes;
+    if (dislikeCount && comment) dislikeCount.textContent = comment.dislikes;
+  }
+
+  updateReportWarning(comment) {
+    const commentElement = document.querySelector(
+      `[data-comment-id="${comment._id}"]`
+    );
+    if (!commentElement) return;
+
+    let warning = commentElement.querySelector(".report-warning");
+    if (comment.reports >= 3 && !warning) {
+      warning = document.createElement("div");
+      warning.className = "report-warning";
+      warning.innerHTML = "⚠️ This comment may not be helpful.";
+      commentElement.querySelector(".comment-content").appendChild(warning);
+    }
+  }
+}
+
+// Replace the current initialization in blog-view.js
+document.addEventListener("DOMContentLoaded", () => {
+  // Store blog slug globally
+  window.blogSlug = blogSlug;
+
+  // Initialize comments manager after user data is available
+  const initializeCommentsManager = () => {
+    const currentUser = localStorage.getItem("username");
+    if (!currentUser) {
+      // If user not loaded yet, wait and retry
+      setTimeout(initializeCommentsManager, 500);
+      return;
+    }
+
+    console.log("Initializing CommentsManager with user:", currentUser);
+    window.commentsManager = new CommentsManager();
+  };
+
+  // Start initialization
+  initializeCommentsManager();
+});
 
 // Replace the original loadBlog function
 async function loadBlog() {
