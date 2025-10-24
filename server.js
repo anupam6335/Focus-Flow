@@ -5,11 +5,21 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const path = require("path");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "https://focus-flow-lopn.onrender.com",
+    methods: ["GET", "POST"],
+  },
+});
 
 // Middleware
 app.use(cors());
@@ -35,17 +45,6 @@ const checklistDataSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now },
   version: { type: Number, default: 1 }, // Add version for conflict resolution
 });
-
-// const questionSchema = new mongoose.Schema({
-//   text: { type: String, required: true },
-//   link: { type: String, default: "" },
-//   completed: { type: Boolean, default: false },
-//   difficulty: {
-//     type: String,
-//     enum: ["Easy", "Medium", "Hard"],
-//     default: "Medium",
-//   },
-// });
 
 // Add activity tracker schema
 const activityTrackerSchema = new mongoose.Schema({
@@ -103,6 +102,52 @@ const socialLinksSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now },
 });
 
+// Comment Schema
+const commentSchema = new mongoose.Schema({
+  blogSlug: { type: String, required: true },
+  author: { type: String, required: true },
+  content: { type: String, required: true },
+  parentId: { type: mongoose.Schema.Types.ObjectId, default: null }, // For nested replies
+  likes: { type: Number, default: 0 },
+  dislikes: { type: Number, default: 0 },
+  likedBy: [{ type: String }], // Users who liked
+  dislikedBy: [{ type: String }], // Users who disliked
+  reports: { type: Number, default: 0 },
+  reportedBy: [{ type: String }], // Users who reported
+  isEdited: { type: Boolean, default: false },
+  isPinned: { type: Boolean, default: false },
+  isDeleted: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+// Blog stats schema for helpful/unhelpful tracking
+const blogStatsSchema = new mongoose.Schema({
+  blogSlug: { type: String, required: true, unique: true },
+  totalLikes: { type: Number, default: 0 },
+  totalDislikes: { type: Number, default: 0 },
+  userVotes: {
+    // Track individual user votes
+    username: String,
+    voteType: { type: String, enum: ["like", "dislike"], required: true },
+  },
+});
+
+// User restrictions schema
+const userRestrictionSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  blogSlug: { type: String, required: true },
+  restrictedAt: { type: Date, default: Date.now },
+  reason: { type: String, default: "Multiple reports" },
+});
+
+const Comment = mongoose.model("Comment", commentSchema);
+const BlogStats = mongoose.model("BlogStats", blogStatsSchema);
+const UserRestriction = mongoose.model(
+  "UserRestriction",
+  userRestrictionSchema
+);
+
 const SocialLinks = mongoose.model("SocialLinks", socialLinksSchema);
 const PasswordReset = mongoose.model("PasswordReset", passwordResetSchema);
 const Blog = mongoose.model("Blog", blogSchema);
@@ -130,6 +175,26 @@ const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ success: false, error: "Invalid token" });
   }
 };
+
+// Socket.io connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // Join blog room for real-time updates
+  socket.on("join-blog", (blogSlug) => {
+    socket.join(blogSlug);
+    console.log(`User joined blog: ${blogSlug}`);
+  });
+
+  // Leave blog room
+  socket.on("leave-blog", (blogSlug) => {
+    socket.leave(blogSlug);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
 
 // ========== API ROUTES ==========
 
@@ -433,7 +498,7 @@ app.get("/api/user-info/:username", async (req, res) => {
     const username = req.params.username;
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    
+
     let isAuthenticated = false;
     let currentUser = null;
 
@@ -614,13 +679,13 @@ app.get("/api/user-info/:username", async (req, res) => {
       },
 
       // Add access level info
-      accessLevel: isAuthenticated ? "authenticated" : "public"
+      accessLevel: isAuthenticated ? "authenticated" : "public",
     };
 
     res.json({
       success: true,
       user: userInfo,
-      accessLevel: isAuthenticated ? "authenticated" : "public"
+      accessLevel: isAuthenticated ? "authenticated" : "public",
     });
   } catch (error) {
     console.error("Error fetching user info:", error);
@@ -1572,6 +1637,562 @@ app.post("/api/blogs/:slug/like", authenticateToken, async (req, res) => {
   }
 });
 
+// ========== COMMENT API ROUTES ==========
+
+// Edit comment route
+app.put(
+  "/api/comments/:commentId/edit",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const { content } = req.body;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+        return res.status(404).json({
+          success: false,
+          error: "Comment not found",
+        });
+      }
+
+      // Check if user is the author
+      if (comment.author !== username) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only edit your own comments",
+        });
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Comment content is required",
+        });
+      }
+
+      comment.content = content.trim();
+      comment.isEdited = true;
+      comment.updatedAt = new Date();
+
+      await comment.save();
+
+      // Broadcast update to all users in real-time
+      io.to(comment.blogSlug).emit("comment-updated", comment);
+
+      res.json({
+        success: true,
+        comment,
+        message: "Comment updated successfully",
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Enhanced get comments with proper nested replies loading
+app.get("/api/blogs/:slug/comments", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { sort = "newest" } = req.query;
+
+    let sortCriteria = {};
+    switch (sort) {
+      case "newest":
+        sortCriteria = { createdAt: -1 };
+        break;
+      case "oldest":
+        sortCriteria = { createdAt: 1 };
+        break;
+      case "popular":
+        sortCriteria = { likes: -1 };
+        break;
+      default:
+        sortCriteria = { createdAt: -1 };
+    }
+
+    // Get all comments for this blog (both parent and nested)
+    const allComments = await Comment.find({
+      blogSlug: slug,
+      isDeleted: false,
+    });
+
+    // Build comment tree structure
+    const buildCommentTree = (parentId = null) => {
+      return allComments
+        .filter((comment) => {
+          if (parentId === null) {
+            return comment.parentId === null;
+          }
+          return (
+            comment.parentId &&
+            comment.parentId.toString() === parentId.toString()
+          );
+        })
+        .map((comment) => ({
+          ...comment.toObject(),
+          replies: buildCommentTree(comment._id),
+        }))
+        .sort((a, b) => {
+          // For top-level comments, apply sorting
+          if (parentId === null) {
+            switch (sort) {
+              case "newest":
+                return new Date(b.createdAt) - new Date(a.createdAt);
+              case "oldest":
+                return new Date(a.createdAt) - new Date(b.createdAt);
+              case "popular":
+                return b.likes - b.dislikes - (a.likes - a.dislikes);
+              default:
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            }
+          }
+          // For replies, always sort by oldest first
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        });
+    };
+
+    const comments = buildCommentTree();
+
+    // Separate pinned comments (only top-level can be pinned)
+    const pinnedComments = comments.filter((comment) => comment.isPinned);
+    const normalComments = comments.filter((comment) => !comment.isPinned);
+
+    // Apply sorting to normal comments only
+    let sortedNormalComments = [...normalComments];
+    if (sort === "popular") {
+      sortedNormalComments.sort(
+        (a, b) => b.likes - b.dislikes - (a.likes - a.dislikes)
+      );
+    }
+
+    res.json({
+      success: true,
+      comments: [...pinnedComments, ...sortedNormalComments],
+      pinnedCount: pinnedComments.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Create new comment
+app.post("/api/blogs/:slug/comments", authenticateToken, async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { content, parentId } = req.body;
+    const username = req.user.username;
+
+    // Check if user is restricted from commenting on this blog
+    const restriction = await UserRestriction.findOne({
+      username,
+      blogSlug: slug,
+    });
+
+    if (restriction) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "You are restricted from commenting on this blog due to multiple reports",
+      });
+    }
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Comment content is required",
+      });
+    }
+
+    const comment = new Comment({
+      blogSlug: slug,
+      author: username,
+      content: content.trim(),
+      parentId: parentId || null,
+    });
+
+    await comment.save();
+
+    // Populate the new comment with replies array for consistency
+    const commentWithReplies = {
+      ...comment.toObject(),
+      replies: [],
+    };
+
+    // Broadcast new comment to all users in the blog room
+    io.to(slug).emit("new-comment", commentWithReplies);
+
+    res.status(201).json({
+      success: true,
+      comment: commentWithReplies,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update comment
+app.put("/api/comments/:commentId", authenticateToken, async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    const username = req.user.username;
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        error: "Comment not found",
+      });
+    }
+
+    // Check if user is the author
+    if (comment.author !== username) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only edit your own comments",
+      });
+    }
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Comment content is required",
+      });
+    }
+
+    comment.content = content.trim();
+    comment.isEdited = true;
+    comment.updatedAt = new Date();
+
+    await comment.save();
+
+    // Broadcast update to all users
+    io.to(comment.blogSlug).emit("comment-updated", comment);
+
+    res.json({
+      success: true,
+      comment,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete comment (soft delete)
+app.delete("/api/comments/:commentId", authenticateToken, async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const username = req.user.username;
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        error: "Comment not found",
+      });
+    }
+
+    // Check if user is the author
+    if (comment.author !== username) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only delete your own comments",
+      });
+    }
+
+    comment.isDeleted = true;
+    comment.updatedAt = new Date();
+
+    await comment.save();
+
+    // Broadcast deletion to all users
+    io.to(comment.blogSlug).emit("comment-deleted", commentId);
+
+    res.json({
+      success: true,
+      message: "Comment deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Like/Dislike comment
+app.post(
+  "/api/comments/:commentId/vote",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const { voteType } = req.body; // 'like' or 'dislike'
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+        return res.status(404).json({
+          success: false,
+          error: "Comment not found",
+        });
+      }
+
+      const hasLiked = comment.likedBy.includes(username);
+      const hasDisliked = comment.dislikedBy.includes(username);
+
+      // Remove existing votes
+      if (hasLiked) {
+        comment.likes = Math.max(0, comment.likes - 1);
+        comment.likedBy = comment.likedBy.filter((user) => user !== username);
+      }
+
+      if (hasDisliked) {
+        comment.dislikes = Math.max(0, comment.dislikes - 1);
+        comment.dislikedBy = comment.dislikedBy.filter(
+          (user) => user !== username
+        );
+      }
+
+      // Add new vote
+      if (voteType === "like" && !hasLiked) {
+        comment.likes += 1;
+        comment.likedBy.push(username);
+      } else if (voteType === "dislike" && !hasDisliked) {
+        comment.dislikes += 1;
+        comment.dislikedBy.push(username);
+      }
+
+      await comment.save();
+
+      // Broadcast vote update
+      io.to(comment.blogSlug).emit("comment-vote-updated", {
+        commentId,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+      });
+
+      res.json({
+        success: true,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        userVote: voteType,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Report comment
+app.post(
+  "/api/comments/:commentId/report",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+        return res.status(404).json({
+          success: false,
+          error: "Comment not found",
+        });
+      }
+
+      // Check if user already reported
+      if (comment.reportedBy.includes(username)) {
+        return res.status(400).json({
+          success: false,
+          error: "You have already reported this comment",
+        });
+      }
+
+      comment.reports += 1;
+      comment.reportedBy.push(username);
+
+      // If multiple reports (3 or more), restrict the comment author
+      if (comment.reports >= 3) {
+        const restriction = new UserRestriction({
+          username: comment.author,
+          blogSlug: comment.blogSlug,
+          reason: "Multiple reports on comments",
+        });
+        await restriction.save();
+
+        // Notify about restriction
+        io.to(comment.blogSlug).emit("user-restricted", {
+          username: comment.author,
+          blogSlug: comment.blogSlug,
+        });
+      }
+
+      await comment.save();
+
+      // Broadcast report update
+      io.to(comment.blogSlug).emit("comment-reported", {
+        commentId,
+        reports: comment.reports,
+      });
+
+      res.json({
+        success: true,
+        reports: comment.reports,
+        message:
+          comment.reports >= 3
+            ? "Comment reported. User has been restricted due to multiple reports."
+            : "Comment reported successfully",
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Pin/Unpin comment (blog author only) - with 2 comment limit
+app.post(
+  "/api/comments/:commentId/pin",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+        return res.status(404).json({
+          success: false,
+          error: "Comment not found",
+        });
+      }
+
+      // Get blog to check if user is the author
+      const blog = await Blog.findOne({ slug: comment.blogSlug });
+
+      if (!blog) {
+        return res.status(404).json({
+          success: false,
+          error: "Blog not found",
+        });
+      }
+
+      // Check if user is the blog author
+      if (blog.author !== username) {
+        return res.status(403).json({
+          success: false,
+          error: "Only the blog author can pin comments",
+        });
+      }
+
+      // Check if trying to pin a reply (only parent comments can be pinned)
+      if (comment.parentId) {
+        return res.status(400).json({
+          success: false,
+          error: "Only top-level comments can be pinned",
+        });
+      }
+
+      // If unpinning, just update and return
+      if (comment.isPinned) {
+        comment.isPinned = false;
+      } else {
+        // Check current pinned count
+        const currentPinnedCount = await Comment.countDocuments({
+          blogSlug: comment.blogSlug,
+          isPinned: true,
+          parentId: null,
+        });
+
+        if (currentPinnedCount >= 2) {
+          return res.status(400).json({
+            success: false,
+            error: "You can only pin up to 2 comments",
+          });
+        }
+
+        comment.isPinned = true;
+      }
+
+      comment.updatedAt = new Date();
+      await comment.save();
+
+      // Broadcast pin update in real-time
+      io.to(comment.blogSlug).emit("comment-pin-updated", comment);
+
+      res.json({
+        success: true,
+        isPinned: comment.isPinned,
+        message: comment.isPinned ? "Comment pinned" : "Comment unpinned",
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Get blog stats (likes/dislikes for helpful/unhelpful label)
+app.get("/api/blogs/:slug/stats", async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Calculate total likes and dislikes from comments
+    const stats = await Comment.aggregate([
+      { $match: { blogSlug: slug, isDeleted: false } },
+      {
+        $group: {
+          _id: null,
+          totalLikes: { $sum: "$likes" },
+          totalDislikes: { $sum: "$dislikes" },
+        },
+      },
+    ]);
+
+    const result = stats[0] || { totalLikes: 0, totalDislikes: 0 };
+
+    res.json({
+      success: true,
+      stats: {
+        totalLikes: result.totalLikes,
+        totalDislikes: result.totalDislikes,
+        isHelpful: result.totalLikes > result.totalDislikes,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Check if user is restricted from commenting
+app.get(
+  "/api/blogs/:slug/restriction-check",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const username = req.user.username;
+
+      const restriction = await UserRestriction.findOne({
+        username,
+        blogSlug: slug,
+      });
+
+      res.json({
+        success: true,
+        isRestricted: !!restriction,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
 // Helper function to generate slug
 function generateSlug(title) {
   return title
@@ -1749,7 +2370,8 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`DB connected ${process.env.MONGODB_URI}`);
+  console.log(`🌐 Access your app at: http://localhost:${PORT}`);
 });

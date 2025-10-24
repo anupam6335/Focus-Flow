@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blog - FocusFlow</title>
-    <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link rel="icon" type="image/x-icon" href="/assets/FocusFlow.ico" />
     <link rel="stylesheet" href="/css/theme.css" />
 
     <!-- Markdown Dependencies -->
@@ -16,8 +16,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css"
     />
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
     <link rel="stylesheet" href="/css/blog-view.css" />
+    <link rel="stylesheet" href="/css/blog-view-comment.css" />
   </head>
   <body>
     <div class="container">
@@ -92,10 +94,61 @@
 
               <div class="blog-content" id="blogContentText"></div>
 
+              <!-- comment section will be here -->
+              <!-- Add this after the blog content section -->
+              <section class="comments-section" id="commentsSection">
+                <div class="comments-header">
+                  <h2 class="comments-title">Community Discussion</h2>
+                  <div class="comments-stats">
+                    <span class="comments-count">0 Comments</span>
+                  </div>
+                </div>
+
+                <!-- Comment Sorting Tabs -->
+                <div class="comments-sorting">
+                  <button class="sort-tab active" data-sort="newest">
+                    Newest Comments
+                  </button>
+                  <button class="sort-tab" data-sort="oldest">
+                    Oldest Comments
+                  </button>
+                  <button class="sort-tab" data-sort="popular">
+                    Popular Comments
+                  </button>
+                </div>
+
+                <!-- Comment Input Area -->
+                <div class="comment-input-container">
+                  <div class="user-avatar">
+                    <div class="avatar-placeholder">👤</div>
+                  </div>
+                  <div class="input-wrapper">
+                    <textarea
+                      class="comment-input"
+                      placeholder="Join the conversation..."
+                      rows="3"
+                    ></textarea>
+                    <div class="input-actions">
+                      <button class="btn btn-primary submit-comment">
+                        Post Comment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Comments Container -->
+                <div class="comments-container" id="commentsContainer">
+                  <!-- Comments will be dynamically inserted here -->
+                  <div class="empty-state">
+                    <div class="empty-icon">💬</div>
+                    <h3>No comments yet</h3>
+                    <p>Be the first to share your thoughts!</p>
+                  </div>
+                </div>
+              </section>
+
               <div class="blog-actions" id="blogActions">
-                <a
-                  href="https://focus-flow-lopn.onrender.com/blogs"
-                  class="btn btn-secondary"
+                <a href="https://focus-flow-lopn.onrender.com/blogs" class="btn btn-secondary"
                   >← Back to Blogs</a
                 >
               </div>
@@ -116,41 +169,6 @@
                   <span>👁️ 0 views</span>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Comments Section -->
-          <div class="sidebar-section">
-            <h3 class="sidebar-title">Comments</h3>
-            <div class="comments-list" id="commentsList">
-              <div class="comment-item">
-                <div class="comment-header">
-                  <span class="comment-author">John Doe</span>
-                  <span class="comment-date">2 hours ago</span>
-                </div>
-                <div class="comment-content">
-                  Great insights! This really helped me understand the concept
-                  better.
-                </div>
-              </div>
-              <div class="comment-item">
-                <div class="comment-header">
-                  <span class="comment-author">Jane Smith</span>
-                  <span class="comment-date">1 day ago</span>
-                </div>
-                <div class="comment-content">
-                  Thanks for sharing this valuable information. Looking forward
-                  to more posts!
-                </div>
-              </div>
-            </div>
-            <div class="comment-input-area">
-              <textarea
-                class="comment-input"
-                placeholder="Add a comment... (UI only - functionality coming soon)"
-                disabled
-              ></textarea>
-              <button class="comment-submit-btn" disabled>Post Comment</button>
             </div>
           </div>
         </div>
