@@ -1240,14 +1240,13 @@ async function ensureUserDataLoaded() {
   if (!localStorage.getItem("username")) {
     try {
       const response = await fetch(`${API_BASE_URL}/verify-token`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.user) {
           localStorage.setItem("username", result.user);
-          console.log("User data loaded:", result.user);
         }
       }
     } catch (error) {
@@ -1454,6 +1453,7 @@ function showError(message) {
 }
 
 // Custom Confirmation System
+// Enhanced ConfirmationManager 
 class ConfirmationManager {
   constructor() {
     this.overlay = document.getElementById("confirmationOverlay");
@@ -1487,10 +1487,24 @@ class ConfirmationManager {
     });
   }
 
-  show(
-    message = "Are you sure you want to delete this blog? This action cannot be undone."
-  ) {
-    this.message.textContent = message;
+  show(message = "Are you sure?", title = "Delete Blog", type = "default") {
+    // Update title based on type
+    if (type === "delete-comment") {
+      this.confirmBtn.textContent = "Delete Comment";
+      this.confirmBtn.className = "btn btn-danger";
+    } else {
+      this.confirmBtn.textContent = "Confirm";
+      this.confirmBtn.className = "btn btn-primary";
+    }
+
+     // Update the title in your confirmation dialog
+  const titleElement = this.overlay.querySelector('.confirmation-title');
+  if (titleElement) {
+    titleElement.textContent = title;
+  }
+
+    // Allow HTML content in message
+    this.message.innerHTML = message;
     this.overlay.style.display = "flex";
 
     // Focus the cancel button for accessibility
@@ -1781,13 +1795,12 @@ class CommentsManager {
     this.comments = [];
     this.socket = null;
     this.blogSlug = window.blogSlug;
-    
+
     // FIX: Get current user directly from localStorage
     this.currentUser = localStorage.getItem("username");
     this.isBlogAuthor = false;
 
-    console.log("CommentsManager created with user:", this.currentUser);
-    
+
     this.init();
   }
 
@@ -1802,81 +1815,82 @@ class CommentsManager {
       }, 1000);
       return;
     }
-    
+
     await this.continueInit();
   }
 
- // FIXED: Enhanced CommentsManager initialization
-async continueInit() {
-  console.log("🚀 Continuing CommentsManager init...");
-  
-  // FIX: Ensure currentUser is always set from localStorage
-  this.currentUser = localStorage.getItem("username");
-  
-  if (!this.currentUser) {
-    console.warn("⚠️ No user found in localStorage, attempting to verify token...");
-    await this.verifyAndSetUser();
-  }
-  
-  console.log("✅ CommentsManager initialized with user:", this.currentUser);
-  
-  await this.setupSocketConnection();
-  this.setupEventListeners();
-  await this.loadComments();
-  this.updateCommentsCount();
-  await this.checkBlogStats();
-  await this.checkRestrictionStatus();
-}
+  // FIXED: Enhanced CommentsManager initialization
+  async continueInit() {
+   
 
-// NEW: Method to verify token and set user
-async verifyAndSetUser() {
-  try {
+    // FIX: Ensure currentUser is always set from localStorage
+    this.currentUser = localStorage.getItem("username");
+
+    if (!this.currentUser) {
+      console.warn(
+        "⚠️ No user found in localStorage, attempting to verify token..."
+      );
+      await this.verifyAndSetUser();
+    }
+
+    
+    await this.setupSocketConnection();
+    this.setupEventListeners();
+    await this.loadComments();
+    this.updateCommentsCount();
+    await this.checkBlogStats();
+    await this.checkRestrictionStatus();
+  }
+
+  // NEW: Method to verify token and set user
+  async verifyAndSetUser() {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.warn("No auth token found");
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/verify-token`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.user) {
+          this.currentUser = result.user;
+          localStorage.setItem("username", result.user);
+          
+        }
+      }
+    } catch (error) {
+      console.error("Error verifying user:", error);
+    }
+  }
+
+  async refreshUserData() {
     const token = localStorage.getItem("authToken");
-    if (!token) {
-      console.warn("No auth token found");
-      return;
-    }
+    if (!token) return;
 
-    const response = await fetch(`${API_BASE_URL}/verify-token`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.user) {
-        this.currentUser = result.user;
-        localStorage.setItem("username", result.user);
-        console.log("✅ User verified and set:", result.user);
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-token`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.user) {
+          this.currentUser = result.user;
+          localStorage.setItem("username", result.user);
+          
+          return true;
+        }
       }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
     }
-  } catch (error) {
-    console.error("Error verifying user:", error);
+    return false;
   }
-}
-
-async refreshUserData() {
-  const token = localStorage.getItem("authToken");
-  if (!token) return;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/verify-token`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.user) {
-        this.currentUser = result.user;
-        localStorage.setItem("username", result.user);
-        console.log("🔄 User data refreshed:", result.user);
-        return true;
-      }
-    }
-  } catch (error) {
-    console.error("Error refreshing user data:", error);
-  }
-  return false;
-}
 
   setupSocketConnection() {
     this.socket = io("https://focus-flow-lopn.onrender.com");
@@ -1914,68 +1928,58 @@ async refreshUserData() {
     });
   }
 
-// Update the loadComments method to ensure blog author check completes
-async loadComments() {
-  try {
-    const token = localStorage.getItem("authToken");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  // Update the loadComments method to ensure blog author check completes
+  async loadComments() {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const response = await fetch(
-      `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
-      {
-        headers,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to load comments");
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      this.comments = result.comments;
-      // Ensure blog author check is complete before rendering
-      await this.checkBlogAuthor();
-      this.renderComments();
-    }
-  } catch (error) {
-    console.error("Error loading comments:", error);
-    toastManager.error("Failed to load comments", "Error");
-  }
-}
-
-async checkBlogAuthor() {
-  try {
-    const token = localStorage.getItem("authToken");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    console.log("Checking blog author for slug:", this.blogSlug);
-    console.log("Current user from localStorage:", this.currentUser);
-
-    const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
-      headers,
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        this.isBlogAuthor = result.blog.author === this.currentUser;
-        console.log(`Blog author check: ${this.isBlogAuthor} (current user: ${this.currentUser}, blog author: ${result.blog.author})`);
-        
-        // If user is blog author, log which comments they can pin
-        if (this.isBlogAuthor) {
-          console.log("User is blog author, pin buttons should be visible on parent comments");
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
+        {
+          headers,
         }
-      }
-    } else {
-      console.error("Failed to fetch blog data:", response.status);
-    }
-  } catch (error) {
-    console.error("Error checking blog author:", error);
-  }
-}
+      );
 
+      if (!response.ok) {
+        throw new Error("Failed to load comments");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.comments = result.comments;
+        // Ensure blog author check is complete before rendering
+        await this.checkBlogAuthor();
+        this.renderComments();
+      }
+    } catch (error) {
+      console.error("Error loading comments:", error);
+      toastManager.error("Failed to load comments", "Error");
+    }
+  }
+
+  async checkBlogAuthor() {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.isBlogAuthor = result.blog.author === this.currentUser;
+        }
+      } else {
+        console.error("Failed to fetch blog data:", response.status);
+      }
+    } catch (error) {
+      console.error("Error checking blog author:", error);
+    }
+  }
 
   setupEventListeners() {
     this.sortTabs.forEach((tab) => {
@@ -2060,18 +2064,18 @@ async checkBlogAuthor() {
     }, 2000);
   }
 
- // ✏️ ENHANCED EDIT COMMENT FUNCTIONALITY
-async editComment(commentId) {
-  const commentElement = document.querySelector(
-    `[data-comment-id="${commentId}"]`
-  );
-  const commentContent = commentElement.querySelector(".comment-content");
-  const currentContent = commentContent.textContent;
+  // ✏️ ENHANCED EDIT COMMENT FUNCTIONALITY
+  async editComment(commentId) {
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
+    );
+    const commentContent = commentElement.querySelector(".comment-content");
+    const currentContent = commentContent.textContent;
 
-  // Create edit interface
-  const editContainer = document.createElement("div");
-  editContainer.className = "edit-comment-container";
-  editContainer.innerHTML = `
+    // Create edit interface
+    const editContainer = document.createElement("div");
+    editContainer.className = "edit-comment-container";
+    editContainer.innerHTML = `
     <textarea class="edit-comment-input" rows="3">${currentContent}</textarea>
     <div class="edit-actions">
       <button class="btn btn-secondary cancel-edit">Cancel</button>
@@ -2079,217 +2083,305 @@ async editComment(commentId) {
     </div>
   `;
 
-  // Replace content with edit interface
-  commentContent.style.display = "none";
-  commentContent.parentNode.insertBefore(editContainer, commentContent);
+    // Replace content with edit interface
+    commentContent.style.display = "none";
+    commentContent.parentNode.insertBefore(editContainer, commentContent);
 
-  // Focus and select the textarea
-  const textarea = editContainer.querySelector(".edit-comment-input");
-  textarea.focus();
-  textarea.select();
+    // Focus and select the textarea
+    const textarea = editContainer.querySelector(".edit-comment-input");
+    textarea.focus();
+    textarea.select();
 
-  // Event listeners
-  const cancelBtn = editContainer.querySelector(".cancel-edit");
-  const saveBtn = editContainer.querySelector(".save-edit");
+    // Event listeners
+    const cancelBtn = editContainer.querySelector(".cancel-edit");
+    const saveBtn = editContainer.querySelector(".save-edit");
 
-  const cancelEdit = () => {
-    editContainer.remove();
-    commentContent.style.display = "block";
-  };
+    const cancelEdit = () => {
+      editContainer.remove();
+      commentContent.style.display = "block";
+    };
 
-  const saveEdit = async () => {
-    const newContent = textarea.value.trim();
-    if (!newContent) {
-      toastManager.error(
-        "Comment content cannot be empty",
-        "Validation Error"
-      );
-      return;
-    }
-
-    if (newContent === currentContent) {
-      cancelEdit();
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(
-        `${API_BASE_URL}/comments/${commentId}/edit`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content: newContent }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update comment");
-      }
-
-      // Show success message - real-time update will handle the UI change
-      toastManager.success("Comment updated successfully", "Edit Successful");
-    } catch (error) {
-      console.error("Error editing comment:", error);
-      toastManager.error(error.message, "Edit Failed");
-    }
-  };
-
-  cancelBtn.addEventListener("click", cancelEdit);
-  saveBtn.addEventListener("click", saveEdit);
-
-  // Handle Enter key to save, Escape to cancel
-  textarea.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "Enter") {
-      saveBtn.click();
-    } else if (e.key === "Escape") {
-      cancelBtn.click();
-    }
-  });
-
-  // Close edit on outside click
-  const handleOutsideClick = (e) => {
-    if (!editContainer.contains(e.target)) {
-      cancelEdit();
-      document.removeEventListener("click", handleOutsideClick);
-    }
-  };
-
-  setTimeout(() => {
-    document.addEventListener("click", handleOutsideClick);
-  }, 100);
-}
-
-  // Delete comment
-  async deleteComment(commentId) {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
+    const saveEdit = async () => {
+      const newContent = textarea.value.trim();
+      if (!newContent) {
         toastManager.error(
-          "Please log in to delete comments",
-          "Authentication Required"
+          "Comment content cannot be empty",
+          "Validation Error"
         );
         return;
       }
 
-      // Show confirmation dialog
-      const confirmed = await confirmationManager.show(
-        "Are you sure you want to delete this comment? This action cannot be undone."
-      );
-
-      if (!confirmed) {
-        return; // User cancelled the deletion
+      if (newContent === currentContent) {
+        cancelEdit();
+        return;
       }
 
-      // Show loading state
-      const commentElement = document.querySelector(
-        `[data-comment-id="${commentId}"]`
-      );
-      if (commentElement) {
-        commentElement.style.opacity = "0.5";
-        commentElement.style.pointerEvents = "none";
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(
+          `${API_BASE_URL}/comments/${commentId}/edit`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ content: newContent }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to update comment");
+        }
+
+        // Show success message - real-time update will handle the UI change
+        toastManager.success("Comment updated successfully", "Edit Successful");
+      } catch (error) {
+        console.error("Error editing comment:", error);
+        toastManager.error(error.message, "Edit Failed");
       }
+    };
 
-      const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    cancelBtn.addEventListener("click", cancelEdit);
+    saveBtn.addEventListener("click", saveEdit);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete comment");
+    // Handle Enter key to save, Escape to cancel
+    textarea.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        saveBtn.click();
+      } else if (e.key === "Escape") {
+        cancelBtn.click();
       }
+    });
 
-      // Show success message - real-time update will handle the UI change
-      toastManager.success("Comment deleted successfully", "Delete Successful");
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-
-      // Reset loading state
-      const commentElement = document.querySelector(
-        `[data-comment-id="${commentId}"]`
-      );
-      if (commentElement) {
-        commentElement.style.opacity = "1";
-        commentElement.style.pointerEvents = "auto";
+    // Close edit on outside click
+    const handleOutsideClick = (e) => {
+      if (!editContainer.contains(e.target)) {
+        cancelEdit();
+        document.removeEventListener("click", handleOutsideClick);
       }
+    };
 
-      toastManager.error(error.message, "Delete Failed");
-    }
+    setTimeout(() => {
+      document.addEventListener("click", handleOutsideClick);
+    }, 100);
   }
 
-// 📌 ENHANCED PIN COMMENT FUNCTIONALITY
-async pinComment(commentId) {
+  // ✨ FIXED: Comment Deletion Functionality with Proper Confirmation
+async deleteComment(commentId) {
   try {
     const token = localStorage.getItem("authToken");
     if (!token) {
       toastManager.error(
-        "Please log in to pin comments",
+        "Please log in to delete comments",
         "Authentication Required"
       );
       return;
     }
 
-    // Show loading state
-    const pinBtn = document.querySelector(
-      `[data-comment-id="${commentId}"] .comment-pin`
-    );
-    const originalHTML = pinBtn.innerHTML;
-    pinBtn.innerHTML = "⏳";
-    pinBtn.disabled = true;
+    // Get comment details for confirmation message
+    const comment = this.findCommentById(commentId, this.comments);
+    if (!comment) {
+      toastManager.error("Comment not found", "Error");
+      return;
+    }
 
-    const response = await fetch(
-      `${API_BASE_URL}/comments/${commentId}/pin`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    // FIX: Use enhanced confirmation with HTML
+    const commentPreview = comment.content.length > 50 
+      ? `"${comment.content.substring(0, 50)}..."`
+      : `"${comment.content}"`;
+    
+    const confirmationHTML = `
+      <div style="text-align: left;">
+        <p style="margin-bottom: 15px; font-weight: 500;">Are you sure you want to delete your comment?</p>
+        
+        <div style="background: var(--codeleaf-bg-secondary); padding: 12px; border-radius: 6px; border-left: 3px solid var(--codeleaf-warning); margin: 15px 0;">
+          <strong style="color: var(--codeleaf-text-secondary); font-size: 0.9em;">Your comment:</strong>
+          <div style="color: var(--codeleaf-text-primary); font-style: italic; margin-top: 5px; line-height: 1.4;">${this.escapeHtml(commentPreview)}</div>
+        </div>
+        
+        <p style="color: var(--codeleaf-error); font-size: 0.9em; font-weight: 500;">This action cannot be undone.</p>
+      </div>
+    `;
+
+    const confirmed = await confirmationManager.show(
+      confirmationHTML,
+      "Delete Comment",
+      "delete-comment"
     );
+
+    if (!confirmed) {
+      return;
+    }
+
+    // Show loading state with smooth animation
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
+    );
+    if (commentElement) {
+      commentElement.style.transition = 'all 0.3s ease';
+      commentElement.style.opacity = "0.6";
+      commentElement.style.pointerEvents = "none";
+      
+      // Add deleting indicator
+      const deletingOverlay = document.createElement('div');
+      deletingOverlay.className = 'deleting-overlay';
+      deletingOverlay.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--codeleaf-warning);">
+          <div class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid var(--codeleaf-warning); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          Deleting...
+        </div>
+      `;
+      deletingOverlay.style.cssText = `
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--codeleaf-radius-lg);
+        z-index: 10;
+      `;
+      commentElement.style.position = 'relative';
+      commentElement.appendChild(deletingOverlay);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Failed to pin comment");
+      throw new Error(error.error || "Failed to delete comment");
     }
 
-    const result = await response.json();
-    
     // Show success message
     toastManager.success(
-      result.message || "Comment pin status updated",
-      "Success"
+      "Comment deleted successfully",
+      "Comment Deleted"
     );
 
-  } catch (error) {
-    console.error("Error pinning comment:", error);
+    // Smooth removal animation
+    if (commentElement) {
+      commentElement.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      commentElement.style.opacity = "0";
+      commentElement.style.transform = "translateX(-100%)";
+      commentElement.style.maxHeight = "0";
+      commentElement.style.marginBottom = "0";
+      commentElement.style.paddingTop = "0";
+      commentElement.style.paddingBottom = "0";
+      commentElement.style.overflow = "hidden";
+      
+      setTimeout(() => {
+        if (commentElement.parentNode) {
+          commentElement.parentNode.removeChild(commentElement);
+        }
+      }, 400);
+    }
+
+    // Update comments count immediately
+    this.updateCommentsCount();
     
-    if (error.message.includes("only pin up to 2 comments")) {
-      toastManager.error(
-        "You can only pin up to 2 comments at a time",
-        "Pin Limit Reached"
-      );
-    } else {
-      toastManager.error(error.message, "Pin Failed");
-    }
-  } finally {
-    // Reset button state (real-time update will handle the actual state change)
-    const pinBtn = document.querySelector(
-      `[data-comment-id="${commentId}"] .comment-pin`
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+
+    // Reset loading state
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
     );
-    if (pinBtn) {
-      pinBtn.disabled = false;
+    if (commentElement) {
+      commentElement.style.opacity = "1";
+      commentElement.style.transform = "scale(1)";
+      commentElement.style.pointerEvents = "auto";
+      commentElement.style.maxHeight = "";
+      commentElement.style.marginBottom = "";
+      commentElement.style.paddingTop = "";
+      commentElement.style.paddingBottom = "";
+      
+      const deletingOverlay = commentElement.querySelector('.deleting-overlay');
+      if (deletingOverlay) {
+        deletingOverlay.remove();
+      }
     }
+
+    toastManager.error(
+      error.message.includes('network') 
+        ? "Network error. Please check your connection and try again."
+        : error.message, 
+      "Delete Failed"
+    );
   }
 }
+
+  // 📌 ENHANCED PIN COMMENT FUNCTIONALITY
+  async pinComment(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to pin comments",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      // Show loading state
+      const pinBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .comment-pin`
+      );
+      const originalHTML = pinBtn.innerHTML;
+      pinBtn.innerHTML = "⏳";
+      pinBtn.disabled = true;
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/pin`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to pin comment");
+      }
+
+      const result = await response.json();
+
+      // Show success message
+      toastManager.success(
+        result.message || "Comment pin status updated",
+        "Success"
+      );
+    } catch (error) {
+      console.error("Error pinning comment:", error);
+
+      if (error.message.includes("only pin up to 2 comments")) {
+        toastManager.error(
+          "You can only pin up to 2 comments at a time",
+          "Pin Limit Reached"
+        );
+      } else {
+        toastManager.error(error.message, "Pin Failed");
+      }
+    } finally {
+      // Reset button state (real-time update will handle the actual state change)
+      const pinBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .comment-pin`
+      );
+      if (pinBtn) {
+        pinBtn.disabled = false;
+      }
+    }
+  }
 
   // Existing functionality (keep these as they are)
   async handleVote(commentId, voteType) {
@@ -2554,210 +2646,233 @@ async pinComment(commentId) {
     this.attachCommentEventListeners();
   }
 
-// FIXED: Enhanced renderComment method with reliable user detection
-renderComment(comment, depth = 0) {
-  const timeAgo = this.getTimeAgo(comment.createdAt);
-  const hasReplies = comment.replies && comment.replies.length > 0;
-  const isRestricted = comment.reports >= 3;
-  
-  // FIX: Get current user directly from localStorage with fallback
-  const currentUser = localStorage.getItem("username") || this.currentUser;
-  
-  // FIX: Proper null/undefined check for isAuthor
-  const isAuthor = !!currentUser && comment.author === currentUser;
-  const isParentComment = depth === 0;
+  // ✨ NEW: Enhanced Comment Rendering with Delete Button
+  renderComment(comment, depth = 0) {
+    const timeAgo = this.getTimeAgo(comment.createdAt);
+    const hasReplies = comment.replies && comment.replies.length > 0;
+    const isRestricted = comment.reports >= 3;
 
-  console.log(`🔍 Rendering comment - Author: ${comment.author}, CurrentUser: ${currentUser}, IsAuthor: ${isAuthor}, IsBlogAuthor: ${this.isBlogAuthor}`);
+    // FIX: Get current user directly from localStorage with fallback
+    const currentUser = localStorage.getItem("username") || this.currentUser;
 
-  return `
-    <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
-    isRestricted ? "reported" : ""
-  }" data-comment-id="${comment._id}">
-      <div class="comment-header">
-        <div class="comment-user">
-          <div class="comment-avatar">${comment.author
-            .charAt(0)
-            .toUpperCase()}</div>
-          <div class="comment-user-info">
-            <div class="comment-author">${comment.author}</div>
-            <div class="comment-meta">
-              <span class="comment-time">⏱️ ${timeAgo}</span>
-              ${
-                comment.isEdited
-                  ? '<span class="comment-edited">Edited</span>'
-                  : ""
-              }
-              ${
-                comment.isPinned
-                  ? '<span class="comment-pinned-tag">📌 Pinned</span>'
-                  : ""
-              }
-            </div>
+    // FIX: Proper null/undefined check for isAuthor
+    const isAuthor = !!currentUser && comment.author === currentUser;
+    const isParentComment = depth === 0;
+
+    return `
+  <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
+      isRestricted ? "reported" : ""
+    }" data-comment-id="${comment._id}">
+    <div class="comment-header">
+      <div class="comment-user">
+        <div class="comment-avatar">${comment.author
+          .charAt(0)
+          .toUpperCase()}</div>
+        <div class="comment-user-info">
+          <div class="comment-author">${comment.author}</div>
+          <div class="comment-meta">
+            <span class="comment-time">⏱️ ${timeAgo}</span>
+            ${
+              comment.isEdited
+                ? '<span class="comment-edited">Edited</span>'
+                : ""
+            }
+            ${
+              comment.isPinned
+                ? '<span class="comment-pinned-tag">📌 Pinned</span>'
+                : ""
+            }
           </div>
         </div>
-        <div class="comment-actions">
-          ${
-            isParentComment && this.isBlogAuthor
-              ? `
-            <button class="comment-pin ${
-              comment.isPinned ? "pinned" : ""
-            }" title="${comment.isPinned ? "Unpin" : "Pin comment"}">
-              ${comment.isPinned ? "📌" : "📍"}
-            </button>
-          `
-              : ""
-          }
-        </div>
       </div>
-      
-      <div class="comment-content">${this.escapeHtml(comment.content)}</div>
-      
-      ${
-        isRestricted
-          ? `
-        <div class="report-warning">
-          ⚠️ This comment may not be helpful.
-        </div>
-      `
-          : ""
-      }
-      
-      <div class="comment-footer">
-        <div class="comment-votes">
-          <button class="vote-btn like-btn ${
-            comment.likedBy && currentUser && comment.likedBy.includes(currentUser)
-              ? "liked"
-              : ""
-          }" title="Like" ${!currentUser ? 'disabled' : ''}>
-            👍 <span class="vote-count like-count">${comment.likes}</span>
+      <div class="comment-actions">
+        ${
+          isParentComment && this.isBlogAuthor
+            ? `
+          <button class="comment-pin ${
+            comment.isPinned ? "pinned" : ""
+          }" title="${comment.isPinned ? "Unpin" : "Pin comment"}">
+            ${comment.isPinned ? "📌" : "📍"}
           </button>
-          <button class="vote-btn dislike-btn ${
-            comment.dislikedBy && currentUser && comment.dislikedBy.includes(currentUser)
-              ? "disliked"
-              : ""
-          }" title="Dislike" ${!currentUser ? 'disabled' : ''}>
-            👎 <span class="vote-count dislike-count">${
-              comment.dislikes
-            }</span>
-          </button>
-        </div>
-        
-        <div class="comment-actions-right">
-          ${
-            // FIX: Consistent Edit button visibility check
-            isAuthor
-              ? `
-            <button class="action-btn edit-btn" title="Edit comment">
-              ✏️ Edit
-            </button>
-          `
-              : ""
-          }
-          <button class="action-btn reply-btn" title="Reply" ${!currentUser ? 'disabled' : ''}>
-            💬 Reply
-          </button>
-          ${
-            !isAuthor && currentUser
-              ? `
-            <button class="action-btn report-btn" title="Report">
-              🚩 Report
-            </button>
-          `
-              : ""
-          }
-          ${
-            hasReplies
-              ? `
-            <button class="reply-toggle ${depth > 2 ? "collapsed" : ""}">
-              <span class="icon">▼</span>
-              <span class="text">${
-                depth > 2 ? "Show replies" : "Hide replies"
-              }</span>
-              <span class="reply-count">(${comment.replies.length})</span>
-            </button>
-          `
-              : ""
-          }
-        </div>
+        `
+            : ""
+        }
       </div>
-      
-      ${
-        hasReplies
-          ? `
-        <div class="comment-replies ${depth > 2 ? "collapsed" : ""}">
-          ${comment.replies
-            .map((reply) => this.renderComment(reply, depth + 1))
-            .join("")}
-        </div>
-      `
-          : ""
-      }
     </div>
-  `;
-}
-  attachCommentEventListeners() {
-    // Vote buttons
-    document.querySelectorAll(".like-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.handleVote(commentId, "like");
-      });
-    });
-
-    document.querySelectorAll(".dislike-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.handleVote(commentId, "dislike");
-      });
-    });
-
-    // ✏️ Edit buttons (for both parent and nested comments)
-    document.querySelectorAll(".edit-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.editComment(commentId);
-      });
-    });
-
-    // 📌 Pin buttons (only for blog author on parent comments)
-    document.querySelectorAll(".comment-pin").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.pinComment(commentId);
-      });
-    });
-
-    // Reply buttons
-    document.querySelectorAll(".reply-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.toggleReply(commentId);
-      });
-    });
-
-    // Reply toggle buttons
-    document.querySelectorAll(".reply-toggle").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.toggleReplies(commentId);
-      });
-    });
-
-    // Report buttons
-    document.querySelectorAll(".report-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const commentId = this.getCommentIdFromElement(btn);
-        this.reportComment(commentId);
-      });
-    });
+    
+    <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+    
+    ${
+      isRestricted
+        ? `
+      <div class="report-warning">
+        ⚠️ This comment may not be helpful.
+      </div>
+    `
+        : ""
+    }
+    
+    <div class="comment-footer">
+      <div class="comment-votes">
+        <button class="vote-btn like-btn ${
+          comment.likedBy &&
+          currentUser &&
+          comment.likedBy.includes(currentUser)
+            ? "liked"
+            : ""
+        }" title="Like" ${!currentUser ? "disabled" : ""}>
+          👍 <span class="vote-count like-count">${comment.likes}</span>
+        </button>
+        <button class="vote-btn dislike-btn ${
+          comment.dislikedBy &&
+          currentUser &&
+          comment.dislikedBy.includes(currentUser)
+            ? "disliked"
+            : ""
+        }" title="Dislike" ${!currentUser ? "disabled" : ""}>
+          👎 <span class="vote-count dislike-count">${comment.dislikes}</span>
+        </button>
+      </div>
+      
+      <div class="comment-actions-right">
+        ${
+          // ✨ DELETE BUTTON - Only show for comment author
+          isAuthor
+            ? `
+          <button class="action-btn delete-btn" title="Delete comment" style="color: var(--codeleaf-error);">
+            🗑️ Delete
+          </button>
+        `
+            : ""
+        }
+        ${
+          // FIX: Consistent Edit button visibility check
+          isAuthor
+            ? `
+          <button class="action-btn edit-btn" title="Edit comment">
+            ✏️ Edit
+          </button>
+        `
+            : ""
+        }
+        <button class="action-btn reply-btn" title="Reply" ${
+          !currentUser ? "disabled" : ""
+        }>
+          💬 Reply
+        </button>
+        ${
+          !isAuthor && currentUser
+            ? `
+          <button class="action-btn report-btn" title="Report">
+            🚩 Report
+          </button>
+        `
+            : ""
+        }
+        ${
+          hasReplies
+            ? `
+          <button class="reply-toggle ${depth > 2 ? "collapsed" : ""}">
+            <span class="icon">▼</span>
+            <span class="text">${
+              depth > 2 ? "Show replies" : "Hide replies"
+            }</span>
+            <span class="reply-count">(${comment.replies.length})</span>
+          </button>
+        `
+            : ""
+        }
+      </div>
+    </div>
+    
+    ${
+      hasReplies
+        ? `
+      <div class="comment-replies ${depth > 2 ? "collapsed" : ""}">
+        ${comment.replies
+          .map((reply) => this.renderComment(reply, depth + 1))
+          .join("")}
+      </div>
+    `
+        : ""
+    }
+  </div>
+`;
   }
+
+// ✨ UPDATE: Enhanced Event Listeners for Delete Buttons
+attachCommentEventListeners() {
+  // Vote buttons
+  document.querySelectorAll(".like-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.handleVote(commentId, "like");
+    });
+  });
+
+  document.querySelectorAll(".dislike-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.handleVote(commentId, "dislike");
+    });
+  });
+
+  // ✨ DELETE BUTTONS
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.deleteComment(commentId);
+    });
+  });
+
+  // ✏️ Edit buttons (for both parent and nested comments)
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.editComment(commentId);
+    });
+  });
+
+  // 📌 Pin buttons (only for blog author on parent comments)
+  document.querySelectorAll(".comment-pin").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.pinComment(commentId);
+    });
+  });
+
+  // Reply buttons
+  document.querySelectorAll(".reply-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.toggleReply(commentId);
+    });
+  });
+
+  // Reply toggle buttons
+  document.querySelectorAll(".reply-toggle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.toggleReplies(commentId);
+    });
+  });
+
+  // Report buttons
+  document.querySelectorAll(".report-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const commentId = this.getCommentIdFromElement(btn);
+      this.reportComment(commentId);
+    });
+  });
+}
 
   // Helper methods
   getCommentIdFromElement(element) {
@@ -2969,14 +3084,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize comments manager with retry logic
   const initializeCommentsManager = (retryCount = 0) => {
     const currentUser = localStorage.getItem("username");
-    
+
     if (!currentUser && retryCount < 5) {
-      console.log(`🔄 Waiting for user data... (attempt ${retryCount + 1}/5)`);
       setTimeout(() => initializeCommentsManager(retryCount + 1), 500);
       return;
     }
-    
-    console.log("🎯 Initializing CommentsManager with user:", currentUser);
     window.commentsManager = new CommentsManager();
   };
 
