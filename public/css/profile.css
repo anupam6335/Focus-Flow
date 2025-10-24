@@ -3930,7 +3930,6 @@ h1 {
   }
 }
 
-
 /* ==================================== */
 /* Question History Search Styles */
 .question-history-search-container {
@@ -4006,7 +4005,11 @@ h1 {
 
 /* Enhanced search highlight */
 .question-search-highlight {
-  background: linear-gradient(120deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+  background: linear-gradient(
+    120deg,
+    var(--codeleaf-accent-primary),
+    var(--codeleaf-accent-secondary)
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -4016,7 +4019,8 @@ h1 {
 }
 
 @keyframes textShimmer {
-  0%, 100% {
+  0%,
+  100% {
     background-position: -200% center;
   }
   50% {
@@ -4065,7 +4069,11 @@ h1 {
 /* =================================== */
 /* Blog Search Specific Styles */
 .blog-search-highlight {
-  background: linear-gradient(120deg, var(--codeleaf-accent-primary), var(--codeleaf-accent-secondary));
+  background: linear-gradient(
+    120deg,
+    var(--codeleaf-accent-primary),
+    var(--codeleaf-accent-secondary)
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -4139,4 +4147,52 @@ h1 {
   z-index: 1000;
   opacity: 0;
   animation: blogSearchFloatParticle 1.2s ease-out forwards;
+}
+
+/* Profile Status Styles */
+.profile-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 8px 12px;
+  background: var(--codeleaf-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--codeleaf-border);
+  font-size: 0.9em;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.online {
+  background: var(--codeleaf-success);
+  box-shadow: 0 0 8px var(--codeleaf-success);
+}
+
+.status-indicator.offline {
+  background: var(--codeleaf-text-tertiary);
+}
+
+.status-indicator.away {
+  background: var(--codeleaf-warning);
+  box-shadow: 0 0 8px var(--codeleaf-warning);
+}
+
+.status-text {
+  color: var(--codeleaf-text-secondary);
+  font-weight: 500;
+}
+
+/* Smooth status transitions */
+.profile-status {
+  transition: all 0.3s ease;
+}
+
+.profile-status.updating {
+  opacity: 0.7;
 }

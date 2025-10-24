@@ -1453,7 +1453,7 @@ function showError(message) {
 }
 
 // Custom Confirmation System
-// Enhanced ConfirmationManager 
+// Enhanced ConfirmationManager
 class ConfirmationManager {
   constructor() {
     this.overlay = document.getElementById("confirmationOverlay");
@@ -1497,11 +1497,11 @@ class ConfirmationManager {
       this.confirmBtn.className = "btn btn-primary";
     }
 
-     // Update the title in your confirmation dialog
-  const titleElement = this.overlay.querySelector('.confirmation-title');
-  if (titleElement) {
-    titleElement.textContent = title;
-  }
+    // Update the title in your confirmation dialog
+    const titleElement = this.overlay.querySelector(".confirmation-title");
+    if (titleElement) {
+      titleElement.textContent = title;
+    }
 
     // Allow HTML content in message
     this.message.innerHTML = message;
@@ -1800,7 +1800,6 @@ class CommentsManager {
     this.currentUser = localStorage.getItem("username");
     this.isBlogAuthor = false;
 
-
     this.init();
   }
 
@@ -1821,8 +1820,6 @@ class CommentsManager {
 
   // FIXED: Enhanced CommentsManager initialization
   async continueInit() {
-   
-
     // FIX: Ensure currentUser is always set from localStorage
     this.currentUser = localStorage.getItem("username");
 
@@ -1833,7 +1830,6 @@ class CommentsManager {
       await this.verifyAndSetUser();
     }
 
-    
     await this.setupSocketConnection();
     this.setupEventListeners();
     await this.loadComments();
@@ -1860,7 +1856,6 @@ class CommentsManager {
         if (result.success && result.user) {
           this.currentUser = result.user;
           localStorage.setItem("username", result.user);
-          
         }
       }
     } catch (error) {
@@ -1882,7 +1877,7 @@ class CommentsManager {
         if (result.success && result.user) {
           this.currentUser = result.user;
           localStorage.setItem("username", result.user);
-          
+
           return true;
         }
       }
@@ -2169,71 +2164,74 @@ class CommentsManager {
   }
 
   // ✨ FIXED: Comment Deletion Functionality with Proper Confirmation
-async deleteComment(commentId) {
-  try {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      toastManager.error(
-        "Please log in to delete comments",
-        "Authentication Required"
-      );
-      return;
-    }
+  async deleteComment(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to delete comments",
+          "Authentication Required"
+        );
+        return;
+      }
 
-    // Get comment details for confirmation message
-    const comment = this.findCommentById(commentId, this.comments);
-    if (!comment) {
-      toastManager.error("Comment not found", "Error");
-      return;
-    }
+      // Get comment details for confirmation message
+      const comment = this.findCommentById(commentId, this.comments);
+      if (!comment) {
+        toastManager.error("Comment not found", "Error");
+        return;
+      }
 
-    // FIX: Use enhanced confirmation with HTML
-    const commentPreview = comment.content.length > 50 
-      ? `"${comment.content.substring(0, 50)}..."`
-      : `"${comment.content}"`;
-    
-    const confirmationHTML = `
+      // FIX: Use enhanced confirmation with HTML
+      const commentPreview =
+        comment.content.length > 50
+          ? `"${comment.content.substring(0, 50)}..."`
+          : `"${comment.content}"`;
+
+      const confirmationHTML = `
       <div style="text-align: left;">
         <p style="margin-bottom: 15px; font-weight: 500;">Are you sure you want to delete your comment?</p>
         
         <div style="background: var(--codeleaf-bg-secondary); padding: 12px; border-radius: 6px; border-left: 3px solid var(--codeleaf-warning); margin: 15px 0;">
           <strong style="color: var(--codeleaf-text-secondary); font-size: 0.9em;">Your comment:</strong>
-          <div style="color: var(--codeleaf-text-primary); font-style: italic; margin-top: 5px; line-height: 1.4;">${this.escapeHtml(commentPreview)}</div>
+          <div style="color: var(--codeleaf-text-primary); font-style: italic; margin-top: 5px; line-height: 1.4;">${this.escapeHtml(
+            commentPreview
+          )}</div>
         </div>
         
         <p style="color: var(--codeleaf-error); font-size: 0.9em; font-weight: 500;">This action cannot be undone.</p>
       </div>
     `;
 
-    const confirmed = await confirmationManager.show(
-      confirmationHTML,
-      "Delete Comment",
-      "delete-comment"
-    );
+      const confirmed = await confirmationManager.show(
+        confirmationHTML,
+        "Delete Comment",
+        "delete-comment"
+      );
 
-    if (!confirmed) {
-      return;
-    }
+      if (!confirmed) {
+        return;
+      }
 
-    // Show loading state with smooth animation
-    const commentElement = document.querySelector(
-      `[data-comment-id="${commentId}"]`
-    );
-    if (commentElement) {
-      commentElement.style.transition = 'all 0.3s ease';
-      commentElement.style.opacity = "0.6";
-      commentElement.style.pointerEvents = "none";
-      
-      // Add deleting indicator
-      const deletingOverlay = document.createElement('div');
-      deletingOverlay.className = 'deleting-overlay';
-      deletingOverlay.innerHTML = `
+      // Show loading state with smooth animation
+      const commentElement = document.querySelector(
+        `[data-comment-id="${commentId}"]`
+      );
+      if (commentElement) {
+        commentElement.style.transition = "all 0.3s ease";
+        commentElement.style.opacity = "0.6";
+        commentElement.style.pointerEvents = "none";
+
+        // Add deleting indicator
+        const deletingOverlay = document.createElement("div");
+        deletingOverlay.className = "deleting-overlay";
+        deletingOverlay.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px; color: var(--codeleaf-warning);">
           <div class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid var(--codeleaf-warning); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
           Deleting...
         </div>
       `;
-      deletingOverlay.style.cssText = `
+        deletingOverlay.style.cssText = `
         position: absolute;
         top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.8);
@@ -2243,80 +2241,78 @@ async deleteComment(commentId) {
         border-radius: var(--codeleaf-radius-lg);
         z-index: 10;
       `;
-      commentElement.style.position = 'relative';
-      commentElement.appendChild(deletingOverlay);
-    }
-
-    const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to delete comment");
-    }
-
-    // Show success message
-    toastManager.success(
-      "Comment deleted successfully",
-      "Comment Deleted"
-    );
-
-    // Smooth removal animation
-    if (commentElement) {
-      commentElement.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      commentElement.style.opacity = "0";
-      commentElement.style.transform = "translateX(-100%)";
-      commentElement.style.maxHeight = "0";
-      commentElement.style.marginBottom = "0";
-      commentElement.style.paddingTop = "0";
-      commentElement.style.paddingBottom = "0";
-      commentElement.style.overflow = "hidden";
-      
-      setTimeout(() => {
-        if (commentElement.parentNode) {
-          commentElement.parentNode.removeChild(commentElement);
-        }
-      }, 400);
-    }
-
-    // Update comments count immediately
-    this.updateCommentsCount();
-    
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-
-    // Reset loading state
-    const commentElement = document.querySelector(
-      `[data-comment-id="${commentId}"]`
-    );
-    if (commentElement) {
-      commentElement.style.opacity = "1";
-      commentElement.style.transform = "scale(1)";
-      commentElement.style.pointerEvents = "auto";
-      commentElement.style.maxHeight = "";
-      commentElement.style.marginBottom = "";
-      commentElement.style.paddingTop = "";
-      commentElement.style.paddingBottom = "";
-      
-      const deletingOverlay = commentElement.querySelector('.deleting-overlay');
-      if (deletingOverlay) {
-        deletingOverlay.remove();
+        commentElement.style.position = "relative";
+        commentElement.appendChild(deletingOverlay);
       }
-    }
 
-    toastManager.error(
-      error.message.includes('network') 
-        ? "Network error. Please check your connection and try again."
-        : error.message, 
-      "Delete Failed"
-    );
+      const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete comment");
+      }
+
+      // Show success message
+      toastManager.success("Comment deleted successfully", "Comment Deleted");
+
+      // Smooth removal animation
+      if (commentElement) {
+        commentElement.style.transition =
+          "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+        commentElement.style.opacity = "0";
+        commentElement.style.transform = "translateX(-100%)";
+        commentElement.style.maxHeight = "0";
+        commentElement.style.marginBottom = "0";
+        commentElement.style.paddingTop = "0";
+        commentElement.style.paddingBottom = "0";
+        commentElement.style.overflow = "hidden";
+
+        setTimeout(() => {
+          if (commentElement.parentNode) {
+            commentElement.parentNode.removeChild(commentElement);
+          }
+        }, 400);
+      }
+
+      // Update comments count immediately
+      this.updateCommentsCount();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+
+      // Reset loading state
+      const commentElement = document.querySelector(
+        `[data-comment-id="${commentId}"]`
+      );
+      if (commentElement) {
+        commentElement.style.opacity = "1";
+        commentElement.style.transform = "scale(1)";
+        commentElement.style.pointerEvents = "auto";
+        commentElement.style.maxHeight = "";
+        commentElement.style.marginBottom = "";
+        commentElement.style.paddingTop = "";
+        commentElement.style.paddingBottom = "";
+
+        const deletingOverlay =
+          commentElement.querySelector(".deleting-overlay");
+        if (deletingOverlay) {
+          deletingOverlay.remove();
+        }
+      }
+
+      toastManager.error(
+        error.message.includes("network")
+          ? "Network error. Please check your connection and try again."
+          : error.message,
+        "Delete Failed"
+      );
+    }
   }
-}
 
   // 📌 ENHANCED PIN COMMENT FUNCTIONALITY
   async pinComment(commentId) {
@@ -2659,6 +2655,12 @@ async deleteComment(commentId) {
     const isAuthor = !!currentUser && comment.author === currentUser;
     const isParentComment = depth === 0;
 
+    // NEW: Determine profile link based on whether it's the current user
+    const profileLink =
+      comment.author === currentUser
+        ? "/profile"
+        : `/user-profile?user=${comment.author}`;
+
     return `
   <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
       isRestricted ? "reported" : ""
@@ -2669,7 +2671,10 @@ async deleteComment(commentId) {
           .charAt(0)
           .toUpperCase()}</div>
         <div class="comment-user-info">
-          <div class="comment-author">${comment.author}</div>
+           <!-- UPDATED: Username with profile link -->
+        <div class="comment-author">
+          <a href="${profileLink}" class="username-link">${comment.author.toUpperCase()}</a>
+        </div>
           <div class="comment-meta">
             <span class="comment-time">⏱️ ${timeAgo}</span>
             ${
@@ -2800,79 +2805,79 @@ async deleteComment(commentId) {
 `;
   }
 
-// ✨ UPDATE: Enhanced Event Listeners for Delete Buttons
-attachCommentEventListeners() {
-  // Vote buttons
-  document.querySelectorAll(".like-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.handleVote(commentId, "like");
+  // ✨ UPDATE: Enhanced Event Listeners for Delete Buttons
+  attachCommentEventListeners() {
+    // Vote buttons
+    document.querySelectorAll(".like-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.handleVote(commentId, "like");
+      });
     });
-  });
 
-  document.querySelectorAll(".dislike-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.handleVote(commentId, "dislike");
+    document.querySelectorAll(".dislike-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.handleVote(commentId, "dislike");
+      });
     });
-  });
 
-  // ✨ DELETE BUTTONS
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.deleteComment(commentId);
+    // ✨ DELETE BUTTONS
+    document.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.deleteComment(commentId);
+      });
     });
-  });
 
-  // ✏️ Edit buttons (for both parent and nested comments)
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.editComment(commentId);
+    // ✏️ Edit buttons (for both parent and nested comments)
+    document.querySelectorAll(".edit-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.editComment(commentId);
+      });
     });
-  });
 
-  // 📌 Pin buttons (only for blog author on parent comments)
-  document.querySelectorAll(".comment-pin").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.pinComment(commentId);
+    // 📌 Pin buttons (only for blog author on parent comments)
+    document.querySelectorAll(".comment-pin").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.pinComment(commentId);
+      });
     });
-  });
 
-  // Reply buttons
-  document.querySelectorAll(".reply-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.toggleReply(commentId);
+    // Reply buttons
+    document.querySelectorAll(".reply-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.toggleReply(commentId);
+      });
     });
-  });
 
-  // Reply toggle buttons
-  document.querySelectorAll(".reply-toggle").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.toggleReplies(commentId);
+    // Reply toggle buttons
+    document.querySelectorAll(".reply-toggle").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.toggleReplies(commentId);
+      });
     });
-  });
 
-  // Report buttons
-  document.querySelectorAll(".report-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const commentId = this.getCommentIdFromElement(btn);
-      this.reportComment(commentId);
+    // Report buttons
+    document.querySelectorAll(".report-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const commentId = this.getCommentIdFromElement(btn);
+        this.reportComment(commentId);
+      });
     });
-  });
-}
+  }
 
   // Helper methods
   getCommentIdFromElement(element) {

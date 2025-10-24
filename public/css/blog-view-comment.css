@@ -818,7 +818,6 @@
   cursor: not-allowed;
 }
 
-
 /* Edit Comment Styles */
 .edit-comment-container {
   margin: var(--codeleaf-space-3) 0;
@@ -904,7 +903,6 @@
   margin-left: var(--codeleaf-space-2);
 }
 
-
 /* Profile Link Styling */
 .profile-link {
   color: var(--codeleaf-accent-primary);
@@ -973,7 +971,6 @@
   font-weight: 700;
 }
 
-
 /* ===== ENHANCED HELPFUL/NOT HELPFUL LABELS ===== */
 
 .helpful-label {
@@ -994,7 +991,7 @@
   overflow: hidden;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  
+
   /* FORCE WHITE TEXT - Important rules */
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -1032,7 +1029,7 @@
   background-color: #10b981 !important;
   border-color: rgba(16, 185, 129, 0.3) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  
+
   /* Ensure text stays white */
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -1043,7 +1040,7 @@
   font-weight: 900;
   font-size: 0.9em;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
-  
+
   /* Ensure icon is white */
   color: #ffffff !important;
 }
@@ -1054,7 +1051,7 @@
   background-color: #ef4444 !important;
   border-color: rgba(239, 68, 68, 0.3) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  
+
   /* Ensure text stays white */
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -1065,7 +1062,7 @@
   font-weight: 900;
   font-size: 0.9em;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
-  
+
   /* Ensure icon is white */
   color: #ffffff !important;
 }
@@ -1102,17 +1099,17 @@
     background: linear-gradient(135deg, #10b981, #047857) !important;
     background-color: #10b981 !important;
     border-color: rgba(16, 185, 129, 0.4) !important;
-    
+
     /* Still white text in dark mode */
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
   }
-  
+
   .helpful-label[data-helpful="false"] {
     background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
     background-color: #ef4444 !important;
     border-color: rgba(239, 68, 68, 0.4) !important;
-    
+
     /* Still white text in dark mode */
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
@@ -1126,19 +1123,17 @@
     padding: 4px 10px;
     font-size: 0.65rem;
     gap: 4px;
-    
+
     /* Ensure white text on mobile */
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
   }
-  
+
   .helpful-label::after {
     font-size: 0.8em;
     color: #ffffff !important;
   }
 }
-
-
 
 /* ===== ENHANCED DELETE BUTTON STYLES ===== */
 
@@ -1159,13 +1154,21 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Smooth delete animation */
@@ -1215,12 +1218,12 @@
     font-size: 0.7rem !important;
     padding: 4px 6px !important;
   }
-  
+
   .comment-actions-right {
     flex-wrap: wrap;
     gap: 4px !important;
   }
-  
+
   .action-btn {
     font-size: 0.7rem !important;
     padding: 4px 6px !important;
@@ -1240,14 +1243,12 @@
   .delete-btn:hover {
     background: rgba(196, 69, 69, 0.2) !important;
   }
-  
+
   .comment-preview {
     background: var(--codeleaf-bg-tertiary);
     border-left-color: var(--codeleaf-warning);
   }
 }
-
-
 
 /* Enhanced Confirmation Dialog Styles */
 .confirmation-popup {
