@@ -170,7 +170,6 @@ class MarkdownRenderer {
           },
         });
         this.isMermaidInitialized = true;
-        console.log("Mermaid initialized successfully");
       } catch (error) {
         console.error("Mermaid initialization failed:", error);
       }
@@ -342,8 +341,6 @@ class MarkdownRenderer {
   preprocessMermaid(text) {
     let diagramCount = 0;
 
-    console.log("Preprocessing markdown for Mermaid diagrams...");
-
     // Process mermaid code blocks
     const processedText = text.replace(
       /```mermaid\s*([\s\S]*?)```/g,
@@ -351,11 +348,6 @@ class MarkdownRenderer {
         diagramCount++;
         const id = "mermaid-" + Date.now() + "-" + diagramCount;
         const cleanDiagram = diagram.trim();
-
-        console.log(
-          `Found Mermaid diagram ${id}:`,
-          cleanDiagram.substring(0, 100) + "..."
-        );
 
         // Store the diagram for later rendering
         this.mermaidDiagrams.set(id, cleanDiagram);
@@ -373,7 +365,6 @@ class MarkdownRenderer {
       }
     );
 
-    console.log(`Processed ${diagramCount} Mermaid diagrams`);
     return processedText;
   }
 
@@ -611,8 +602,6 @@ class MarkdownRenderer {
 
   // Enhanced Mermaid diagram rendering with detailed logging
   async renderMermaidDiagrams(container) {
-    console.log("Starting Mermaid diagram rendering...");
-
     if (!this.isMermaidInitialized) {
       console.error("Mermaid not initialized!");
       this.showGlobalError(container, "Mermaid library failed to initialize");
@@ -621,17 +610,13 @@ class MarkdownRenderer {
 
     const mermaidContainers = container.querySelectorAll(".mermaid-container");
 
-    console.log(`Found ${mermaidContainers.length} Mermaid containers`);
-
     if (mermaidContainers.length === 0) {
-      console.log("No Mermaid containers found");
       return;
     }
 
     for (const containerEl of mermaidContainers) {
       try {
         const mermaidId = containerEl.getAttribute("data-mermaid-id");
-        console.log(`Rendering diagram: ${mermaidId}`);
 
         let diagram = this.mermaidDiagrams.get(mermaidId);
 
@@ -653,10 +638,6 @@ class MarkdownRenderer {
         if (!diagram || diagram.trim().length === 0) {
           throw new Error("Empty diagram content");
         }
-
-        console.log(
-          `Rendering diagram content: ${diagram.substring(0, 100)}...`
-        );
 
         // Render the diagram with timeout
         const renderPromise = mermaid.render(mermaidId, diagram);
@@ -685,15 +666,11 @@ class MarkdownRenderer {
 
         // Mark as processed
         containerEl.setAttribute("data-processed", "true");
-
-        console.log(`✅ Successfully rendered Mermaid diagram: ${mermaidId}`);
       } catch (error) {
         console.error(`❌ Mermaid rendering error for ${mermaidId}:`, error);
         this.handleMermaidError(containerEl, error);
       }
     }
-
-    console.log("Mermaid diagram rendering completed");
   }
 
   // Validate basic Mermaid syntax
@@ -1166,7 +1143,6 @@ const miniMap = new MiniMap();
 window.shareBlog = async function () {
   try {
     const currentUrl = window.location.href;
-    console.log("Sharing URL:", currentUrl); // Debug log
 
     // Use modern Clipboard API if available
     if (navigator.clipboard && window.isSecureContext) {
@@ -1271,7 +1247,6 @@ async function ensureUserDataLoaded() {
         const result = await response.json();
         if (result.success && result.user) {
           localStorage.setItem("username", result.user);
-          console.log("User data loaded:", result.user);
         }
       }
     } catch (error) {
@@ -1810,8 +1785,6 @@ class CommentsManager {
     this.currentUser = localStorage.getItem("username");
     this.isBlogAuthor = false;
 
-    console.log("CommentsManager created with user:", this.currentUser);
-    console.log("================ blog : ", this.blogSlug);
     this.init();
   }
 
@@ -1831,7 +1804,6 @@ class CommentsManager {
   }
 
   async continueInit() {
-    console.log("Continuing CommentsManager init for user:", this.currentUser);
     await this.setupSocketConnection();
     this.setupEventListeners();
     await this.loadComments();
@@ -1911,9 +1883,6 @@ class CommentsManager {
       const token = localStorage.getItem("authToken");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      console.log("Checking blog author for slug:", this.blogSlug);
-      console.log("Current user from localStorage:", this.currentUser);
-
       const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
         headers,
       });
@@ -1922,16 +1891,6 @@ class CommentsManager {
         const result = await response.json();
         if (result.success) {
           this.isBlogAuthor = result.blog.author === this.currentUser;
-          console.log(
-            `Blog author check: ${this.isBlogAuthor} (current user: ${this.currentUser}, blog author: ${result.blog.author})`
-          );
-
-          // If user is blog author, log which comments they can pin
-          if (this.isBlogAuthor) {
-            console.log(
-              "User is blog author, pin buttons should be visible on parent comments"
-            );
-          }
         }
       } else {
         console.error("Failed to fetch blog data:", response.status);
@@ -2471,10 +2430,6 @@ class CommentsManager {
       ? "/profile"
       : `/user-profile?user=${comment.author}`;
 
-    console.log(
-      `Rendering comment: author=${comment.author}, currentUser=${this.currentUser}, isAuthor=${isAuthor}, isBlogAuthor=${this.isBlogAuthor}`
-    );
-
     return `
     <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
       isRestricted ? "reported" : ""
@@ -2887,7 +2842,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    console.log("Initializing CommentsManager with user:", currentUser);
     window.commentsManager = new CommentsManager();
   };
 
