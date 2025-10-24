@@ -6,6 +6,8 @@
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
     <link rel="stylesheet" href="css/theme.css" />
     <title>Profile - FocusFlow</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
     <link rel="stylesheet" href="css/profile.css" />
   </head>
   <body>
@@ -49,6 +51,14 @@
               <p class="profile-bio" id="userBio">
                 Member since <span id="joinDate">...</span>
               </p>
+
+              <!-- ADD THIS SECTION FOR STATUS DISPLAY -->
+              <div class="profile-status" id="profileStatus">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span class="status-text" id="statusText"
+                  >Loading status...</span
+                >
+              </div>
 
               <!-- Enhanced Stats Grid -->
               <div class="profile-stats">

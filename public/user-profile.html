@@ -6,6 +6,8 @@
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
     <link rel="stylesheet" href="css/theme.css" />
     <title>User Profile - FocusFlow</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
     <link rel="stylesheet" href="css/user-profile.css" />
   </head>
   <body>
@@ -62,6 +64,14 @@
               <p class="profile-bio" id="userBio">
                 Member since <span id="joinDate">...</span>
               </p>
+
+              <!-- ADD THIS SECTION FOR STATUS DISPLAY -->
+              <div class="profile-status" id="profileStatus">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span class="status-text" id="statusText"
+                  >Loading status...</span
+                >
+              </div>
 
               <!-- Enhanced Stats Grid -->
               <div class="profile-stats">
@@ -171,47 +181,57 @@
 
           <!-- Blogs Section -->
           <!-- Blogs Section -->
-<div class="content-section">
-  <h2 class="section-title">✍️ Blogs</h2>
-  
-  <!-- Add this search bar section -->
-  <div class="search-container" style="margin-bottom: var(--codeleaf-space-4);">
-    <div class="search-input-wrapper">
-      <input
-        type="text"
-        id="userProfileBlogsSearch"
-        class="search-input"
-        placeholder="Search blogs by title or content keywords..."
-        aria-label="Search blogs"
-      />
-      <div class="search-icon">🔍</div>
-      <div class="search-loader" id="userProfileBlogsSearchLoader">
-        <div class="loader-spinner"></div>
-      </div>
-      <button
-        class="search-clear"
-        id="userProfileBlogsSearchClear"
-        aria-label="Clear search"
-      >
-        ×
-      </button>
-    </div>
-  </div>
+          <div class="content-section">
+            <h2 class="section-title">✍️ Blogs</h2>
 
-  <!-- Search Results Info -->
-  <div class="search-results-info" id="userProfileBlogsSearchResultsInfo" style="display: none;">
-    <div class="search-results-header">
-      <span id="userProfileBlogsSearchResultsCount">0 results</span>
-      <button class="clear-search-btn" id="userProfileBlogsClearSearchBtn">
-        Clear search
-      </button>
-    </div>
-  </div>
+            <!-- Add this search bar section -->
+            <div
+              class="search-container"
+              style="margin-bottom: var(--codeleaf-space-4)"
+            >
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  id="userProfileBlogsSearch"
+                  class="search-input"
+                  placeholder="Search blogs by title or content keywords..."
+                  aria-label="Search blogs"
+                />
+                <div class="search-icon">🔍</div>
+                <div class="search-loader" id="userProfileBlogsSearchLoader">
+                  <div class="loader-spinner"></div>
+                </div>
+                <button
+                  class="search-clear"
+                  id="userProfileBlogsSearchClear"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
 
-  <div class="content-grid" id="blogsContent">
-    <div class="loading">Loading blogs...</div>
-  </div>
-</div>
+            <!-- Search Results Info -->
+            <div
+              class="search-results-info"
+              id="userProfileBlogsSearchResultsInfo"
+              style="display: none"
+            >
+              <div class="search-results-header">
+                <span id="userProfileBlogsSearchResultsCount">0 results</span>
+                <button
+                  class="clear-search-btn"
+                  id="userProfileBlogsClearSearchBtn"
+                >
+                  Clear search
+                </button>
+              </div>
+            </div>
+
+            <div class="content-grid" id="blogsContent">
+              <div class="loading">Loading blogs...</div>
+            </div>
+          </div>
         </div>
 
         <!-- Right Column (30%) -->

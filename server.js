@@ -37,6 +37,8 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
+   lastActive: { type: Date, default: Date.now }, // NEW: Add last active tracking
+  isOnline: { type: Boolean, default: false }, // NEW: Add online status
 });
 
 const checklistDataSchema = new mongoose.Schema({
@@ -176,9 +178,40 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Socket.io connection handling
+// Socket.io connection handling - UPDATE THIS SECTION
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
+
+  // Extract username from token (you'll need to implement this)
+  const token = socket.handshake.auth.token;
+  let username = null;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      username = decoded.username;
+      
+      // Update user as online
+      if (username) {
+        User.findOneAndUpdate(
+          { username: username },
+          { 
+            isOnline: true,
+            lastActive: new Date()
+          }
+        ).exec();
+        
+        // Broadcast online status to all clients
+        socket.broadcast.emit('user-status-changed', {
+          username: username,
+          isOnline: true,
+          lastActive: new Date()
+        });
+      }
+    } catch (error) {
+      console.log("Invalid token for socket connection");
+    }
+  }
 
   // Join blog room for real-time updates
   socket.on("join-blog", (blogSlug) => {
@@ -191,8 +224,36 @@ io.on("connection", (socket) => {
     socket.leave(blogSlug);
   });
 
+  // Heartbeat to keep connection alive and update lastActive
+  socket.on('heartbeat', () => {
+    if (username) {
+      User.findOneAndUpdate(
+        { username: username },
+        { lastActive: new Date() }
+      ).exec();
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    
+    // Update user as offline
+    if (username) {
+      User.findOneAndUpdate(
+        { username: username },
+        { 
+          isOnline: false,
+          lastActive: new Date()
+        }
+      ).exec();
+      
+      // Broadcast offline status to all clients
+      socket.broadcast.emit('user-status-changed', {
+        username: username,
+        isOnline: false,
+        lastActive: new Date()
+      });
+    }
   });
 });
 
@@ -2192,6 +2253,61 @@ app.get(
     }
   }
 );
+
+
+// Get user status (online/offline and last active)
+app.get("/api/user-status/:username", authenticateToken, async (req, res) => {
+  try {
+    const username = req.params.username;
+    
+    const user = await User.findOne({ username }).select('isOnline lastActive username');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      status: {
+        isOnline: user.isOnline,
+        lastActive: user.lastActive,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get multiple users status (for community directory)
+app.post("/api/users-status", authenticateToken, async (req, res) => {
+  try {
+    const { usernames } = req.body;
+    
+    if (!usernames || !Array.isArray(usernames)) {
+      return res.status(400).json({ success: false, error: "Usernames array is required" });
+    }
+
+    const users = await User.find({ 
+      username: { $in: usernames } 
+    }).select('isOnline lastActive username');
+
+    const statusMap = {};
+    users.forEach(user => {
+      statusMap[user.username] = {
+        isOnline: user.isOnline,
+        lastActive: user.lastActive
+      };
+    });
+
+    res.json({
+      success: true,
+      status: statusMap
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Helper function to generate slug
 function generateSlug(title) {

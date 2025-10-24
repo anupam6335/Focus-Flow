@@ -36,9 +36,10 @@ async function loadUserProfile() {
       currentViewingUser = result.user;
 
       // Initialize search FIRST
+      initializeUserProfileStatusManager();
       initializeUserProfileQuestionHistorySearch();
       initializeUserProfileBlogSearch();
-      
+
       renderUserProfile();
       renderAchievements();
       renderQuestionHistory();
@@ -1002,7 +1003,6 @@ function shareProfileToSocial() {
         url: profileUrl,
       })
       .catch((error) => {
-        console.log("Error sharing:", error);
         // Fallback to clipboard
         shareProfile();
       });
@@ -1321,6 +1321,57 @@ class UserProfileCommunitySearch {
             `;
       })
       .join("");
+
+    // Load status for all displayed users
+    this.loadCommunityUsersStatus(users.map((user) => user.username));
+  }
+
+  // Add this method to UserProfileCommunitySearch class
+  async loadCommunityUsersStatus(usernames) {
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token
+        ? {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          }
+        : { "Content-Type": "application/json" };
+
+      const response = await fetch(`${API_BASE_URL}/users-status`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ usernames }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch users status");
+
+      const result = await response.json();
+
+      if (result.success) {
+        Object.entries(result.status).forEach(([username, status]) => {
+          this.updateUserStatusElement(username, status);
+        });
+      }
+    } catch (error) {
+      console.error("Error loading community users status:", error);
+    }
+  }
+
+  // Add this method to update individual user status elements
+  updateUserStatusElement(username, status) {
+    const statusElement = document.getElementById(`user-status-${username}`);
+    if (!statusElement) return;
+
+    const timeAgo = userProfileStatusManager
+      ? userProfileStatusManager.getTimeAgo(status.lastActive)
+      : "some time ago";
+
+    if (status.isOnline) {
+      statusElement.innerHTML =
+        '<div class="status-indicator online"></div> Online now';
+    } else {
+      statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+    }
   }
 
   highlightSearchTerm(username, searchTerm) {
@@ -1487,6 +1538,9 @@ class UserProfileCommunitySearch {
         `
       )
       .join("");
+
+    // Load status for all users
+    this.loadCommunityUsersStatus(users.map((user) => user.username));
   }
 }
 
@@ -2403,7 +2457,6 @@ function renderQuestionHistory() {
     currentViewingUser.questions?.dailyProgress ||
     currentViewingUser.consistency?.dailyProgress ||
     [];
-  console.log("Raw questions data:", questions); // Debug log
 
   const solvedQuestions = questions
     .flatMap((day) => {
@@ -2427,11 +2480,8 @@ function renderQuestionHistory() {
     .reverse()
     .slice(0, 10); // Show last 10 days with activity
 
-  console.log("Processed solved questions:", solvedQuestions); // Debug log
-
   // Store data in search system - CRITICAL FIX
   if (userProfileQuestionHistorySearch && solvedQuestions.length > 0) {
-    console.log("Setting question data in search system:", solvedQuestions);
     userProfileQuestionHistorySearch.setQuestionData(solvedQuestions);
   }
 
@@ -2440,10 +2490,6 @@ function renderQuestionHistory() {
     userProfileQuestionHistorySearch &&
     userProfileQuestionHistorySearch.currentSearchTerm
   ) {
-    console.log(
-      "Active search term:",
-      userProfileQuestionHistorySearch.currentSearchTerm
-    );
     userProfileQuestionHistorySearch.renderFilteredQuestions(
       userProfileQuestionHistorySearch.filteredQuestionData,
       userProfileQuestionHistorySearch.currentSearchTerm
@@ -2683,53 +2729,21 @@ document.addEventListener("DOMContentLoaded", function () {
   enhanceKeyboardNavigation();
 });
 
-// Debug function to check if search elements exist
-function debugSearchFunctionality() {
-  console.log("=== DEBUG: Question Search Functionality ===");
-
-  // Check if search input exists
-  const searchInput = document.getElementById("questionSearch");
-  console.log("Search input element:", searchInput);
-
-  // Check if question history container exists
-  const questionHistory = document.getElementById("questionHistory");
-  console.log("Question history container:", questionHistory);
-
-  // Check if search class is initialized
-  console.log(
-    "User profile question search instance:",
-    userProfileQuestionHistorySearch
-  );
-
-  // Check if user data is loaded
-  console.log("Current viewing user:", currentViewingUser);
-
-  if (currentViewingUser) {
-    const questions =
-      currentViewingUser.questions?.dailyProgress ||
-      currentViewingUser.consistency?.dailyProgress ||
-      [];
-    console.log("Available questions data:", questions);
-  }
-
-  console.log("=== END DEBUG ===");
-}
-
-// Call this function after page loads to check what's happening
-setTimeout(() => {
-  debugSearchFunctionality();
-}, 2000);
-
-
 // User Profile Blog Search System - Only Public Blogs
 class UserProfileBlogSearch {
   constructor() {
     this.searchInput = document.getElementById("userProfileBlogsSearch");
     this.searchLoader = document.getElementById("userProfileBlogsSearchLoader");
     this.searchClear = document.getElementById("userProfileBlogsSearchClear");
-    this.searchResultsInfo = document.getElementById("userProfileBlogsSearchResultsInfo");
-    this.searchResultsCount = document.getElementById("userProfileBlogsSearchResultsCount");
-    this.clearSearchBtn = document.getElementById("userProfileBlogsClearSearchBtn");
+    this.searchResultsInfo = document.getElementById(
+      "userProfileBlogsSearchResultsInfo"
+    );
+    this.searchResultsCount = document.getElementById(
+      "userProfileBlogsSearchResultsCount"
+    );
+    this.clearSearchBtn = document.getElementById(
+      "userProfileBlogsClearSearchBtn"
+    );
     this.blogsContent = document.getElementById("blogsContent");
 
     this.debounceTimer = null;
@@ -2781,9 +2795,7 @@ class UserProfileBlogSearch {
 
   // Set blog data (only public blogs for user profiles)
   setBlogData(blogData) {
-    console.log("UserProfileBlogSearch: Setting blog data", blogData);
     this.originalBlogsData = Array.isArray(blogData) ? blogData : [];
-    console.log("UserProfileBlogSearch: Now has", this.originalBlogsData.length, "public blogs");
   }
 
   handleSearchInput(searchTerm) {
@@ -2808,9 +2820,6 @@ class UserProfileBlogSearch {
   }
 
   performSearch(searchTerm) {
-    console.log("UserProfileBlogSearch: Performing search for:", searchTerm);
-    console.log("UserProfileBlogSearch: Available data:", this.originalBlogsData);
-    
     if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
       console.warn("UserProfileBlogSearch: No blog data available for search");
       this.setSearchingState(false);
@@ -2822,22 +2831,25 @@ class UserProfileBlogSearch {
     // Search through public blogs only
     this.filteredBlogsData = this.originalBlogsData.filter((blog) => {
       // Search by title
-      const titleMatch = blog.title.toLowerCase().includes(this.currentSearchTerm);
-      
-      // Search by content (if available)
-      const contentMatch = blog.content ? 
-        blog.content.toLowerCase().includes(this.currentSearchTerm) : false;
-      
-      // Search by tags (if available)
-      const tagsMatch = blog.tags ? 
-        blog.tags.some(tag => tag.toLowerCase().includes(this.currentSearchTerm)) : false;
+      const titleMatch = blog.title
+        .toLowerCase()
+        .includes(this.currentSearchTerm);
 
-      console.log(`Blog "${blog.title}": titleMatch=${titleMatch}, contentMatch=${contentMatch}, tagsMatch=${tagsMatch}`);
+      // Search by content (if available)
+      const contentMatch = blog.content
+        ? blog.content.toLowerCase().includes(this.currentSearchTerm)
+        : false;
+
+      // Search by tags (if available)
+      const tagsMatch = blog.tags
+        ? blog.tags.some((tag) =>
+            tag.toLowerCase().includes(this.currentSearchTerm)
+          )
+        : false;
+
       return titleMatch || contentMatch || tagsMatch;
     });
 
-    console.log("UserProfileBlogSearch: Found", this.filteredBlogsData.length, "results in public blogs");
-    
     // Update UI with search results
     this.displaySearchResults(this.filteredBlogsData, searchTerm);
     this.setSearchingState(false);
@@ -2881,11 +2893,18 @@ class UserProfileBlogSearch {
     this.blogsContent.innerHTML = filteredBlogs
       .map((blog, index) => {
         const delay = index * 100; // Stagger animation
-        const highlightedTitle = this.highlightSearchTerm(blog.title, searchTerm);
-        
+        const highlightedTitle = this.highlightSearchTerm(
+          blog.title,
+          searchTerm
+        );
+
         // Create excerpt with highlighted content if available
-        let excerpt = blog.excerpt || blog.content?.substring(0, 150) + '...' || '';
-        if (blog.content && blog.content.toLowerCase().includes(searchTerm.toLowerCase())) {
+        let excerpt =
+          blog.excerpt || blog.content?.substring(0, 150) + "..." || "";
+        if (
+          blog.content &&
+          blog.content.toLowerCase().includes(searchTerm.toLowerCase())
+        ) {
           excerpt = this.highlightSearchTermInContent(excerpt, searchTerm);
         }
 
@@ -2895,14 +2914,16 @@ class UserProfileBlogSearch {
             <div class="blog-info">
               <div class="blog-title">${highlightedTitle}</div>
               <div class="blog-date">${formatRelativeTime(blog.createdAt)} • ${
-                blog.views || 0
-              } views • ${blog.likes || 0} likes</div>
-              ${excerpt ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${excerpt}</div>` : ''}
-              ${blog.tags ? this.renderTags(blog.tags, searchTerm) : ''}
+          blog.views || 0
+        } views • ${blog.likes || 0} likes</div>
+              ${
+                excerpt
+                  ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${excerpt}</div>`
+                  : ""
+              }
+              ${blog.tags ? this.renderTags(blog.tags, searchTerm) : ""}
             </div>
-            <a href="/blogs/${
-          blog.slug
-        }" class="blog-link">Read →</a>
+            <a href="/blogs/${blog.slug}" class="blog-link">Read →</a>
           </div>
         `;
       })
@@ -2939,8 +2960,11 @@ class UserProfileBlogSearch {
 
     if (searchLower && contentLower.includes(searchLower)) {
       const matchIndex = contentLower.indexOf(searchLower);
-      const beforeMatch = escapedContent.substring(0, Math.max(0, matchIndex - 20));
-      const contextStart = Math.max(0, matchIndex - 20) > 0 ? '...' : '';
+      const beforeMatch = escapedContent.substring(
+        0,
+        Math.max(0, matchIndex - 20)
+      );
+      const contextStart = Math.max(0, matchIndex - 20) > 0 ? "..." : "";
       const match = escapedContent.substring(
         matchIndex,
         matchIndex + searchTerm.length
@@ -2949,7 +2973,7 @@ class UserProfileBlogSearch {
         matchIndex + searchTerm.length,
         matchIndex + searchTerm.length + 100
       );
-      const contextEnd = afterMatch.length === 100 ? '...' : '';
+      const contextEnd = afterMatch.length === 100 ? "..." : "";
 
       return `${contextStart}${beforeMatch}<span class="user-profile-blog-search-highlight">${match}</span>${afterMatch}${contextEnd}`;
     }
@@ -2958,12 +2982,16 @@ class UserProfileBlogSearch {
   }
 
   renderTags(tags, searchTerm) {
-    const highlightedTags = tags.map(tag => {
-      if (tag.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return `<span class="user-profile-blog-search-highlight">${escapeHtml(tag)}</span>`;
-      }
-      return escapeHtml(tag);
-    }).join(', ');
+    const highlightedTags = tags
+      .map((tag) => {
+        if (tag.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return `<span class="user-profile-blog-search-highlight">${escapeHtml(
+            tag
+          )}</span>`;
+        }
+        return escapeHtml(tag);
+      })
+      .join(", ");
 
     return `<div class="blog-tags" style="margin-top: 4px; font-size: 0.8em; color: var(--codeleaf-text-tertiary);">Tags: ${highlightedTags}</div>`;
   }
@@ -2989,9 +3017,13 @@ class UserProfileBlogSearch {
     this.createFloatingParticles();
 
     // Add success animation to the container
-    this.blogsContent.classList.add("user-profile-blog-search-success-animation");
+    this.blogsContent.classList.add(
+      "user-profile-blog-search-success-animation"
+    );
     setTimeout(() => {
-      this.blogsContent.classList.remove("user-profile-blog-search-success-animation");
+      this.blogsContent.classList.remove(
+        "user-profile-blog-search-success-animation"
+      );
     }, 1000);
   }
 
@@ -3092,14 +3124,10 @@ function renderBlogs() {
   if (!currentViewingUser) return;
 
   const blogs = currentViewingUser.blogs?.recentBlogs || [];
-  const publicBlogs = blogs.filter(blog => blog.isPublic);
-
-  console.log("User Profile - All blogs:", blogs.length);
-  console.log("User Profile - Public blogs:", publicBlogs.length);
+  const publicBlogs = blogs.filter((blog) => blog.isPublic);
 
   // Store data in search system - CRITICAL
   if (userProfileBlogSearch) {
-    console.log("Setting public blog data for search:", publicBlogs.length, "blogs");
     userProfileBlogSearch.setBlogData(publicBlogs);
   } else {
     console.log("User profile blog search not initialized yet");
@@ -3107,7 +3135,6 @@ function renderBlogs() {
 
   // If there's an active search, let the search system handle rendering
   if (userProfileBlogSearch && userProfileBlogSearch.currentSearchTerm) {
-    console.log("Active search term:", userProfileBlogSearch.currentSearchTerm);
     return; // Search system will handle rendering
   }
 
@@ -3123,11 +3150,24 @@ function renderBlogs() {
         <div class="content-item blog-item">
           <div class="blog-info">
             <div class="blog-title">${escapeHtml(blog.title)}</div>
-            <div class="blog-date">${formatRelativeTime(blog.createdAt)} • ${blog.views || 0} views • ${
-        blog.likes || 0
-      } likes</div>
-            ${blog.content ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${blog.content.substring(0, 100)}${blog.content.length > 100 ? '...' : ''}</div>` : ''}
-            ${blog.tags ? `<div class="blog-tags" style="margin-top: 4px; font-size: 0.8em; color: var(--codeleaf-text-tertiary);">Tags: ${blog.tags.join(', ')}</div>` : ''}
+            <div class="blog-date">${formatRelativeTime(blog.createdAt)} • ${
+        blog.views || 0
+      } views • ${blog.likes || 0} likes</div>
+            ${
+              blog.content
+                ? `<div class="blog-excerpt" style="margin-top: 8px; font-size: 0.9em; color: var(--codeleaf-text-secondary);">${blog.content.substring(
+                    0,
+                    100
+                  )}${blog.content.length > 100 ? "..." : ""}</div>`
+                : ""
+            }
+            ${
+              blog.tags
+                ? `<div class="blog-tags" style="margin-top: 4px; font-size: 0.8em; color: var(--codeleaf-text-tertiary);">Tags: ${blog.tags.join(
+                    ", "
+                  )}</div>`
+                : ""
+            }
           </div>
           <a href="/blogs/${blog.slug}" class="blog-link">Read →</a>
         </div>
@@ -3306,6 +3346,241 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+// Real-time Status Management for User Profile
+class UserProfileStatusManager {
+  constructor() {
+    this.socket = null;
+    this.statusUpdateInterval = null;
+    this.currentViewingUsername = null;
+    this.currentLoggedInUsername = null;
+  }
+
+  async initialize() {
+    this.currentViewingUsername = getTargetUsername();
+    this.currentLoggedInUsername = await getCurrentUsername();
+
+    if (!this.currentViewingUsername) return;
+
+    this.connectSocket();
+    this.startStatusUpdates();
+    this.updateCommunityUsersStatus();
+  }
+
+  connectSocket() {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Only connect if user is logged in
+      if (!token) {
+        return;
+      }
+
+      this.socket = io("https://focus-flow-lopn.onrender.com", {
+        auth: { token },
+      });
+
+      // this.socket.on('connect', () => {
+      //   console.log('Connected for real-time status updates in user profile');
+      // });
+
+      this.socket.on("user-status-changed", (data) => {
+        this.handleStatusUpdate(data);
+      });
+
+      // this.socket.on('disconnect', () => {
+      //   console.log('Disconnected from status updates in user profile');
+      // });
+    } catch (error) {
+      console.error("Failed to connect to socket in user profile:", error);
+    }
+  }
+
+  startStatusUpdates() {
+    // Update status every 30 seconds
+    this.statusUpdateInterval = setInterval(() => {
+      this.updateStatusDisplay();
+    }, 30000);
+
+    // Initial update
+    this.updateStatusDisplay();
+  }
+
+  async updateStatusDisplay(username = null) {
+    const targetUsername = username || this.currentViewingUsername;
+    if (!targetUsername) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(
+        `${API_BASE_URL}/user-status/${targetUsername}`,
+        {
+          headers,
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch status");
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderStatus(result.status);
+      }
+    } catch (error) {
+      console.error("Error updating status in user profile:", error);
+      // Fallback to offline status
+      this.renderStatus({ isOnline: false, lastActive: new Date() });
+    }
+  }
+
+  renderStatus(status) {
+    const statusIndicator = document.getElementById("statusIndicator");
+    const statusText = document.getElementById("statusText");
+    const profileStatus = document.getElementById("profileStatus");
+
+    if (!statusIndicator || !statusText) return;
+
+    // Add updating state
+    if (profileStatus) {
+      profileStatus.classList.add("updating");
+    }
+
+    setTimeout(() => {
+      if (status.isOnline) {
+        statusIndicator.className = "status-indicator online";
+        statusText.textContent = "Online now";
+      } else {
+        statusIndicator.className = "status-indicator offline";
+        const timeAgo = this.getTimeAgo(status.lastActive);
+        statusText.textContent = `Last seen ${timeAgo}`;
+      }
+
+      if (profileStatus) {
+        profileStatus.classList.remove("updating");
+      }
+    }, 300);
+  }
+
+  getTimeAgo(lastActive) {
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const diffMs = now - lastActiveDate;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) {
+      return "just now";
+    } else if (diffMins < 60) {
+      return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+    } else {
+      return lastActiveDate.toLocaleDateString();
+    }
+  }
+
+  handleStatusUpdate(data) {
+    // Update status if it's for the current viewing user
+    if (data.username === this.currentViewingUsername) {
+      this.renderStatus(data);
+    }
+
+    // Update community directory status
+    this.updateCommunityUserStatus(data.username, data);
+  }
+
+  updateCommunityUserStatus(username, status) {
+    // Update status in community directory if user is visible
+    const userElement = document.querySelector(`[data-username="${username}"]`);
+    if (userElement) {
+      const statusElement = userElement.querySelector(".user-status");
+      if (statusElement) {
+        if (status.isOnline) {
+          statusElement.innerHTML =
+            '<div class="status-indicator online"></div> Online now';
+        } else {
+          const timeAgo = this.getTimeAgo(status.lastActive);
+          statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+        }
+      }
+    }
+  }
+
+  // Update community users status
+  async updateCommunityUsersStatus() {
+    if (!userProfileCommunitySearch || !userProfileCommunitySearch.allUsers)
+      return;
+
+    const usernames = userProfileCommunitySearch.allUsers.map(
+      (user) => user.username
+    );
+    if (usernames.length === 0) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token
+        ? {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          }
+        : { "Content-Type": "application/json" };
+
+      const response = await fetch(`${API_BASE_URL}/users-status`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ usernames }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch users status");
+
+      const result = await response.json();
+
+      if (result.success) {
+        Object.entries(result.status).forEach(([username, status]) => {
+          this.updateUserStatusElement(username, status);
+        });
+      }
+    } catch (error) {
+      console.error("Error loading community users status:", error);
+    }
+  }
+
+  updateUserStatusElement(username, status) {
+    const statusElement = document.getElementById(`user-status-${username}`);
+    if (!statusElement) return;
+
+    const timeAgo = this.getTimeAgo(status.lastActive);
+
+    if (status.isOnline) {
+      statusElement.innerHTML =
+        '<div class="status-indicator online"></div> Online now';
+    } else {
+      statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+    }
+  }
+
+  destroy() {
+    if (this.statusUpdateInterval) {
+      clearInterval(this.statusUpdateInterval);
+    }
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+}
+
+// Initialize status manager
+let userProfileStatusManager;
+
+function initializeUserProfileStatusManager() {
+  userProfileStatusManager = new UserProfileStatusManager();
+  userProfileStatusManager.initialize();
+}
+
 // Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
   updateNavigation();
@@ -3371,5 +3646,12 @@ function updateNavigation() {
 window.addEventListener("resize", function () {
   if (currentViewingUser) {
     renderConsistencyMap();
+  }
+});
+
+// Add to user-profile.js
+window.addEventListener("beforeunload", () => {
+  if (userProfileStatusManager) {
+    userProfileStatusManager.destroy();
   }
 });

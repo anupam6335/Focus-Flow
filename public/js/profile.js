@@ -1815,6 +1815,7 @@ async function loadUserProfile() {
     if (result.success) {
       currentUserData = result.user;
 
+      initializeUserStatusManager();
       // Initialize community search after directory is loaded
       initializeCommunitySearch();
       initializeQuestionHistorySearch();
@@ -1995,7 +1996,6 @@ function shareProfileToSocial() {
         url: profileUrl,
       })
       .catch((error) => {
-        console.log("Error sharing:", error);
         // Fallback to clipboard
         shareProfile();
       });
@@ -2229,10 +2229,8 @@ class BlogSearch {
 
   // Set ALL blog data (both public and private)
   setAllBlogsData(allBlogs) {
-    console.log("BlogSearch: Setting ALL blog data", allBlogs);
     this.allBlogsData = Array.isArray(allBlogs) ? allBlogs : [];
     this.updateCurrentBlogsData();
-    console.log("BlogSearch: Now has", this.allBlogsData.length, "total blogs");
   }
 
   // Update current tab's data based on active tab
@@ -2244,13 +2242,6 @@ class BlogSearch {
         (blog) => !blog.isPublic
       );
     }
-    console.log(
-      "BlogSearch: Current tab data updated -",
-      this.currentBlogsData.length,
-      "blogs in",
-      this.currentBlogTab,
-      "tab"
-    );
   }
 
   handleSearchInput(searchTerm) {
@@ -2275,9 +2266,6 @@ class BlogSearch {
   }
 
   performSearch(searchTerm) {
-    console.log("BlogSearch: Performing search for:", searchTerm);
-    console.log("BlogSearch: Available data:", this.currentBlogsData);
-
     if (!this.currentBlogsData || this.currentBlogsData.length === 0) {
       console.warn("BlogSearch: No blog data available for search");
       this.setSearchingState(false);
@@ -2305,21 +2293,8 @@ class BlogSearch {
           )
         : false;
 
-      console.log(
-        `Blog "${blog.title}" (${
-          blog.isPublic ? "public" : "private"
-        }): titleMatch=${titleMatch}, contentMatch=${contentMatch}, tagsMatch=${tagsMatch}`
-      );
       return titleMatch || contentMatch || tagsMatch;
     });
-
-    console.log(
-      "BlogSearch: Found",
-      this.filteredBlogsData.length,
-      "results in",
-      this.currentBlogTab,
-      "tab"
-    );
 
     // Update UI with search results
     this.displaySearchResults(this.filteredBlogsData, searchTerm);
@@ -2600,25 +2575,14 @@ function renderBlogs() {
   const container = document.getElementById("blogsContent");
   if (!currentUserData) return;
 
-  console.log("Current User Data:", currentUserData);
-  console.log("Blogs Data:", currentUserData.blogs);
-
   const allBlogs = currentUserData.blogs?.recentBlogs || [];
   const filteredBlogs =
     currentBlogTab === "public"
       ? allBlogs.filter((blog) => blog.isPublic)
       : allBlogs.filter((blog) => !blog.isPublic);
 
-  console.log("All Blogs:", allBlogs.length);
-  console.log("Filtered Blogs for", currentBlogTab + ":", filteredBlogs.length);
-
   // Store ALL blog data in search system (both public and private)
   if (blogSearch) {
-    console.log(
-      "Setting ALL blog data for search:",
-      allBlogs.length,
-      "total blogs"
-    );
     blogSearch.setAllBlogsData(allBlogs);
   } else {
     console.log("Blog search not initialized yet");
@@ -2626,7 +2590,6 @@ function renderBlogs() {
 
   // If there's an active search, let the search system handle rendering
   if (blogSearch && blogSearch.currentSearchTerm) {
-    console.log("Active search term:", blogSearch.currentSearchTerm);
     return; // Search system will handle rendering
   }
 
@@ -3141,6 +3104,52 @@ class CommunitySearch {
             `;
       })
       .join("");
+
+    // Load status for all displayed users
+    this.loadCommunityUsersStatus(users.map((user) => user.username));
+  }
+
+  // Add this method to CommunitySearch class
+  async loadCommunityUsersStatus(usernames) {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/users-status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ usernames }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch users status");
+
+      const result = await response.json();
+
+      if (result.success) {
+        Object.entries(result.status).forEach(([username, status]) => {
+          this.updateUserStatusElement(username, status);
+        });
+      }
+    } catch (error) {
+      console.error("Error loading community users status:", error);
+    }
+  }
+
+  updateUserStatusElement(username, status) {
+    const statusElement = document.getElementById(`user-status-${username}`);
+    if (!statusElement) return;
+
+    const timeAgo = userStatusManager
+      ? userStatusManager.getTimeAgo(status.lastActive)
+      : "some time ago";
+
+    if (status.isOnline) {
+      statusElement.innerHTML =
+        '<div class="status-indicator online"></div> Online now';
+    } else {
+      statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+    }
   }
 
   highlightSearchTerm(username, searchTerm) {
@@ -3529,6 +3538,190 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+// Real-time Status Management
+class UserStatusManager {
+  constructor() {
+    this.socket = null;
+    this.statusUpdateInterval = null;
+    this.heartbeatInterval = null;
+    this.currentUsername = null;
+  }
+
+  initialize() {
+    this.currentUsername = currentUserData?.username;
+    if (!this.currentUsername) return;
+
+    this.connectSocket();
+    this.startStatusUpdates();
+    this.startHeartbeat();
+  }
+
+  connectSocket() {
+    try {
+      // Connect to Socket.io
+      this.socket = io("https://focus-flow-lopn.onrender.com", {
+        auth: {
+          token: localStorage.getItem("authToken"),
+        },
+      });
+
+      // this.socket.on('connect', () => {
+      //   console.log('Connected for real-time status updates');
+      // });
+
+      this.socket.on("user-status-changed", (data) => {
+        this.handleStatusUpdate(data);
+      });
+
+      // this.socket.on('disconnect', () => {
+      //   console.log('Disconnected from status updates');
+      // });
+    } catch (error) {
+      console.error("Failed to connect to socket:", error);
+    }
+  }
+
+  startStatusUpdates() {
+    // Update status every 30 seconds
+    this.statusUpdateInterval = setInterval(() => {
+      this.updateStatusDisplay();
+    }, 30000);
+
+    // Initial update
+    this.updateStatusDisplay();
+  }
+
+  startHeartbeat() {
+    // Send heartbeat every 20 seconds to keep status fresh
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket && this.socket.connected) {
+        this.socket.emit("heartbeat");
+      }
+    }, 20000);
+  }
+
+  async updateStatusDisplay(username = null) {
+    const targetUsername = username || this.currentUsername;
+    if (!targetUsername) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `${API_BASE_URL}/user-status/${targetUsername}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch status");
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderStatus(result.status);
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      // Fallback to offline status
+      this.renderStatus({ isOnline: false, lastActive: new Date() });
+    }
+  }
+
+  renderStatus(status) {
+    const statusIndicator = document.getElementById("statusIndicator");
+    const statusText = document.getElementById("statusText");
+    const profileStatus = document.getElementById("profileStatus");
+
+    if (!statusIndicator || !statusText) return;
+
+    // Add updating state
+    profileStatus.classList.add("updating");
+
+    setTimeout(() => {
+      if (status.isOnline) {
+        statusIndicator.className = "status-indicator online";
+        statusText.textContent = "Online now";
+      } else {
+        statusIndicator.className = "status-indicator offline";
+        const timeAgo = this.getTimeAgo(status.lastActive);
+        statusText.textContent = `Last seen ${timeAgo}`;
+      }
+
+      profileStatus.classList.remove("updating");
+    }, 300);
+  }
+
+  getTimeAgo(lastActive) {
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const diffMs = now - lastActiveDate;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) {
+      return "just now";
+    } else if (diffMins < 60) {
+      return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+    } else {
+      return lastActiveDate.toLocaleDateString();
+    }
+  }
+
+  handleStatusUpdate(data) {
+    // Update status if it's for the current user or a user in the community directory
+    if (data.username === this.currentUsername) {
+      this.renderStatus(data);
+    }
+
+    // You can also update community directory status here if needed
+    this.updateCommunityUserStatus(data.username, data);
+  }
+
+  updateCommunityUserStatus(username, status) {
+    // Update status in community directory if user is visible
+    const userElement = document.querySelector(`[data-username="${username}"]`);
+    if (userElement) {
+      const statusElement = userElement.querySelector(".user-status");
+      if (statusElement) {
+        if (status.isOnline) {
+          statusElement.innerHTML =
+            '<div class="status-indicator online"></div> Online now';
+        } else {
+          const timeAgo = this.getTimeAgo(status.lastActive);
+          statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+        }
+      }
+    }
+  }
+
+  destroy() {
+    if (this.statusUpdateInterval) {
+      clearInterval(this.statusUpdateInterval);
+    }
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+}
+
+// Initialize status manager
+let userStatusManager;
+
+function initializeUserStatusManager() {
+  userStatusManager = new UserStatusManager();
+  userStatusManager.initialize();
+}
+
 // Initialize profile when page loads
 document.addEventListener("DOMContentLoaded", function () {
   const token = localStorage.getItem("authToken");
@@ -3547,5 +3740,12 @@ document.addEventListener("DOMContentLoaded", function () {
 window.addEventListener("resize", function () {
   if (currentUserData) {
     renderConsistencyMap();
+  }
+});
+
+// Add to profile.js
+window.addEventListener("beforeunload", () => {
+  if (userStatusManager) {
+    userStatusManager.destroy();
   }
 });
