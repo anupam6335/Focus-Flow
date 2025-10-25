@@ -1299,3 +1299,97 @@
   font-weight: 500;
   margin-top: 10px;
 }
+
+
+
+
+/* ===== GUEST COMMENT MESSAGE STYLES ===== */
+.guest-comment-message {
+  margin-bottom: var(--codeleaf-space-6);
+  padding: var(--codeleaf-space-4);
+  background: var(--codeleaf-bg-secondary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  border-left: 4px solid var(--codeleaf-accent-primary);
+}
+
+.guest-message-content {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-4);
+}
+
+.guest-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.guest-text {
+  flex: 1;
+}
+
+.guest-text p {
+  margin: 0 0 var(--codeleaf-space-3) 0;
+  color: var(--codeleaf-text-primary);
+  font-size: var(--codeleaf-font-base);
+  line-height: 1.5;
+}
+
+.guest-text .login-btn {
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
+  font-size: var(--codeleaf-font-sm);
+}
+
+/* Animation for guest message */
+.guest-comment-message {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness for guest message */
+@media (max-width: 768px) {
+  .guest-message-content {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--codeleaf-space-3);
+  }
+  
+  .guest-icon {
+    font-size: 1.5rem;
+  }
+}
+
+
+/* ===== ERROR STATE STYLES ===== */
+.error-state {
+  text-align: center;
+  padding: var(--codeleaf-space-8);
+  color: var(--codeleaf-text-tertiary);
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: var(--codeleaf-space-4);
+  color: var(--codeleaf-warning);
+}
+
+.error-state h3 {
+  font-size: var(--codeleaf-font-lg);
+  margin-bottom: var(--codeleaf-space-2);
+  color: var(--codeleaf-text-secondary);
+}
+
+.error-state p {
+  font-size: var(--codeleaf-font-sm);
+  margin-bottom: var(--codeleaf-space-4);
+}
