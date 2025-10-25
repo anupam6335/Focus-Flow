@@ -3183,7 +3183,237 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBlog(); // This now uses the enhanced version
 });
 
-// Global function for login redirection
-window.redirectToLogin = function () {
-  window.location.href = "/"; // Home page which includes login option
+// ===== ROBUST AUTO-REFRESH ON LOGIN =====
+class LoginStateManager {
+  constructor() {
+    this.isLoggedIn = !!localStorage.getItem("authToken");
+    this.currentUser = localStorage.getItem("username");
+    this.checkInterval = null;
+    this.init();
+  }
+
+  init() {
+    // Method 1: Storage events (for cross-tab changes)
+    window.addEventListener("storage", (e) => {
+      if (e.key === "authToken" || e.key === "username") {
+        this.handleAuthStateChange();
+      }
+    });
+
+    // Method 2: Polling (most reliable for incognito mode)
+    this.startPolling();
+
+    // Method 3: Listen for custom events
+    window.addEventListener("userLoggedIn", () => {
+      this.handleAuthStateChange();
+    });
+
+    // Initial UI setup
+    this.updateUI();
+  }
+
+  startPolling() {
+    // Check every 500ms for auth changes
+    this.checkInterval = setInterval(() => {
+      this.checkAuthState();
+    }, 500);
+  }
+
+  checkAuthState() {
+    const newLoggedInState = !!localStorage.getItem("authToken");
+    const newUser = localStorage.getItem("username");
+
+    if (newLoggedInState !== this.isLoggedIn || newUser !== this.currentUser) {
+      this.isLoggedIn = newLoggedInState;
+      this.currentUser = newUser;
+      this.performSoftRefresh();
+    }
+  }
+
+  handleAuthStateChange() {
+    this.isLoggedIn = !!localStorage.getItem("authToken");
+    this.currentUser = localStorage.getItem("username");
+    this.performSoftRefresh();
+  }
+
+  performSoftRefresh() {
+    // Update comment section
+    if (window.commentsManager) {
+      window.commentsManager.currentUser = this.currentUser;
+      window.commentsManager.updateCommentInputVisibility();
+      window.commentsManager.updateCommentInputAvatar();
+
+      // Re-check blog author status
+      setTimeout(() => {
+        window.commentsManager.checkBlogAuthor().then(() => {
+          window.commentsManager.renderComments();
+        });
+      }, 1000);
+    }
+
+    // Update blog header actions
+    this.updateBlogActions();
+
+    // Update profile links
+    this.updateProfileLinks();
+
+    // Show success message if user just logged in
+    if (this.isLoggedIn) {
+      setTimeout(() => {
+        if (window.toastManager) {
+          window.toastManager.success(
+            "Welcome back!",
+            "Login Successful",
+            3000
+          );
+        }
+      }, 500);
+    }
+  }
+
+  async updateBlogActions() {
+    const blogArticle = document.getElementById("blogArticle");
+    if (!blogArticle || blogArticle.style.display === "none") return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(`${API_BASE_URL}/blogs/${window.blogSlug}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.setupBlogHeaderActions(result.blog);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing blog data:", error);
+    }
+  }
+
+  setupBlogHeaderActions(blog) {
+    const headerActionsContainer = document.getElementById("blogHeaderActions");
+    const currentUser = localStorage.getItem("username");
+
+    if (!headerActionsContainer) return;
+
+    // Clear existing actions
+    headerActionsContainer.innerHTML = "";
+
+    // Add share button for ALL public blogs
+    if (blog.isPublic) {
+      const shareButton = document.createElement("button");
+      shareButton.className = "btn btn-primary";
+      shareButton.innerHTML = "📤 Share Blog";
+      shareButton.onclick = window.shareBlog;
+      shareButton.title = "Copy blog URL to clipboard";
+      headerActionsContainer.appendChild(shareButton);
+    }
+
+    // Add edit/delete buttons only for blog author
+    if (currentUser === blog.author) {
+      const editButton = document.createElement("button");
+      editButton.className = "btn btn-primary";
+      editButton.textContent = "✏️ Edit Blog";
+      editButton.onclick = openEditModal;
+      headerActionsContainer.appendChild(editButton);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "btn btn-danger";
+      deleteButton.textContent = "🗑️ Delete Blog";
+      deleteButton.onclick = () => deleteBlog(blog.slug);
+      headerActionsContainer.appendChild(deleteButton);
+    }
+
+    headerActionsContainer.style.display = "flex";
+    headerActionsContainer.style.gap = "10px";
+    headerActionsContainer.style.flexWrap = "wrap";
+  }
+
+  updateProfileLinks() {
+    const usernameLinks = document.querySelectorAll(".username-link");
+    const currentUser = localStorage.getItem("username");
+
+    usernameLinks.forEach((link) => {
+      const username = link.textContent.trim().toUpperCase();
+      if (username === currentUser?.toUpperCase()) {
+        link.href = "/profile";
+      } else {
+        link.href = `/user-profile?user=${username}`;
+      }
+    });
+  }
+
+  updateUI() {
+    if (window.commentsManager) {
+      window.commentsManager.updateCommentInputVisibility();
+      window.commentsManager.updateCommentInputAvatar();
+    }
+  }
+
+  // Cleanup
+  destroy() {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+    }
+  }
+}
+
+// Enhanced CommentsManager to handle auth changes better
+const originalCommentsManagerUpdateVisibility =
+  CommentsManager.prototype.updateCommentInputVisibility;
+CommentsManager.prototype.updateCommentInputVisibility = function () {
+  const token = localStorage.getItem("authToken");
+  const commentInputContainer = document.querySelector(
+    ".comment-input-container"
+  );
+  const guestMessage = document.getElementById("guestCommentMessage");
+
+  if (token && this.currentUser) {
+    // User is logged in
+    if (commentInputContainer) {
+      commentInputContainer.style.display = "flex";
+      commentInputContainer.style.opacity = "1";
+    }
+    if (guestMessage) {
+      guestMessage.style.display = "none";
+    }
+  } else {
+    // User is not logged in
+    if (commentInputContainer) {
+      commentInputContainer.style.display = "none";
+    }
+    if (guestMessage) {
+      guestMessage.style.display = "block";
+      guestMessage.style.opacity = "1";
+    }
+  }
 };
+
+// Override the redirectToLogin to trigger a refresh
+window.redirectToLogin = function () {
+  // Store current URL to return after login
+  localStorage.setItem("returnUrl", window.location.href);
+  window.location.href = "/";
+};
+
+// Initialize when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  // Initialize after components are loaded
+  setTimeout(() => {
+    window.loginStateManager = new LoginStateManager();
+
+    // Check if we just returned from login
+    const returnUrl = localStorage.getItem("returnUrl");
+    if (returnUrl && window.location.href === returnUrl) {
+      localStorage.removeItem("returnUrl");
+      // Force refresh UI
+      setTimeout(() => {
+        window.loginStateManager.performSoftRefresh();
+      }, 1000);
+    }
+  }, 2000);
+});
