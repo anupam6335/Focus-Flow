@@ -2225,3 +2225,55 @@ header {
   );
   pointer-events: none;
 }
+
+/* Unlogged User Message Styles */
+.unlogged-message {
+  text-align: center;
+  padding: var(--codeleaf-space-8);
+  background: var(--codeleaf-bg-secondary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  margin-bottom: var(--codeleaf-space-6);
+  animation: elegantFadeIn 0.8s ease-out;
+}
+
+.unlogged-message h3 {
+  color: var(--codeleaf-accent-primary);
+  margin-bottom: var(--codeleaf-space-3);
+  font-size: var(--codeleaf-font-xl);
+}
+
+.unlogged-message p {
+  color: var(--codeleaf-text-secondary);
+  margin-bottom: var(--codeleaf-space-4);
+  font-size: var(--codeleaf-font-base);
+  line-height: 1.6;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hide create blog button for unlogged users */
+.unlogged-user .create-blog-btn-integrated,
+.unlogged-user #tab-my-blogs {
+  display: none !important;
+}
+
+/* Adjust header for unlogged users */
+.unlogged-user .blog-header-main {
+  justify-content: center;
+}
+
+.unlogged-user .blog-header-title-section {
+  text-align: center;
+}
+
+/* Hide My Blogs tab for unlogged users */
+.unlogged-user #tab-my-blogs {
+  display: none !important;
+}
+
+/* Adjust tabs container when My Blogs is hidden */
+.unlogged-user .tabs-compact {
+  justify-content: center;
+}
