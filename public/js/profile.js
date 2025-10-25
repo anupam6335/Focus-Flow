@@ -3538,13 +3538,15 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-// Real-time Status Management
+// Enhanced User Status Manager with Stable Status Display
 class UserStatusManager {
   constructor() {
     this.socket = null;
     this.statusUpdateInterval = null;
     this.heartbeatInterval = null;
     this.currentUsername = null;
+    this.lastKnownStatus = null;
+    this.statusCheckTimeout = null;
   }
 
   initialize() {
@@ -3554,50 +3556,67 @@ class UserStatusManager {
     this.connectSocket();
     this.startStatusUpdates();
     this.startHeartbeat();
+    this.initializeStatusDisplay();
   }
 
   connectSocket() {
     try {
-      // Connect to Socket.io
       this.socket = io("https://focus-flow-lopn.onrender.com", {
         auth: {
           token: localStorage.getItem("authToken"),
         },
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000
       });
 
-      // this.socket.on('connect', () => {
-      //   console.log('Connected for real-time status updates');
-      // });
+      this.socket.on('connect', () => {
+        console.log('Connected for real-time status updates');
+        this.updateStatusDisplay();
+      });
 
       this.socket.on("user-status-changed", (data) => {
         this.handleStatusUpdate(data);
       });
 
-      // this.socket.on('disconnect', () => {
-      //   console.log('Disconnected from status updates');
-      // });
+      this.socket.on('disconnect', (reason) => {
+        console.log('Disconnected from status updates:', reason);
+        // Don't immediately update status - wait for reconnection
+      });
+
+      this.socket.on('reconnect', () => {
+        console.log('Reconnected to status updates');
+        this.updateStatusDisplay();
+      });
+
     } catch (error) {
       console.error("Failed to connect to socket:", error);
     }
   }
 
-  startStatusUpdates() {
-    // Update status every 30 seconds
-    this.statusUpdateInterval = setInterval(() => {
-      this.updateStatusDisplay();
-    }, 30000);
-
-    // Initial update
+  initializeStatusDisplay() {
+    // Set initial status to "Checking..." while we fetch actual status
+    this.renderStatus({ isOnline: null, lastActive: new Date() });
+    
+    // Initial status fetch
     this.updateStatusDisplay();
   }
 
+  startStatusUpdates() {
+    // Update status every 45 seconds (less frequent to reduce flicker)
+    this.statusUpdateInterval = setInterval(() => {
+      this.updateStatusDisplay();
+    }, 45000);
+  }
+
   startHeartbeat() {
-    // Send heartbeat every 20 seconds to keep status fresh
+    // Send heartbeat every 25 seconds
     this.heartbeatInterval = setInterval(() => {
       if (this.socket && this.socket.connected) {
         this.socket.emit("heartbeat");
       }
-    }, 20000);
+    }, 25000);
   }
 
   async updateStatusDisplay(username = null) {
@@ -3620,12 +3639,12 @@ class UserStatusManager {
       const result = await response.json();
 
       if (result.success) {
+        this.lastKnownStatus = result.status;
         this.renderStatus(result.status);
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      // Fallback to offline status
-      this.renderStatus({ isOnline: false, lastActive: new Date() });
+      // Don't change status on error - maintain last known status
     }
   }
 
@@ -3636,17 +3655,38 @@ class UserStatusManager {
 
     if (!statusIndicator || !statusText) return;
 
-    // Add updating state
+    // Clear any pending timeouts
+    if (this.statusCheckTimeout) {
+      clearTimeout(this.statusCheckTimeout);
+    }
+
+    // Add smooth transition
     profileStatus.classList.add("updating");
 
     setTimeout(() => {
-      if (status.isOnline) {
+      if (status.isOnline === null) {
+        // Status checking
+        statusIndicator.className = "status-indicator checking";
+        statusText.textContent = "Checking status...";
+      } else if (status.isOnline) {
+        // User is online
         statusIndicator.className = "status-indicator online";
         statusText.textContent = "Online now";
       } else {
+        // User is offline
         statusIndicator.className = "status-indicator offline";
         const timeAgo = this.getTimeAgo(status.lastActive);
-        statusText.textContent = `Last seen ${timeAgo}`;
+        
+        // Only show "Last seen just now" for very recent activity
+        if (timeAgo === "just now") {
+          statusText.textContent = "Online";
+          // Re-check in 10 seconds to update to "Last seen X ago"
+          this.statusCheckTimeout = setTimeout(() => {
+            this.updateStatusDisplay();
+          }, 10000);
+        } else {
+          statusText.textContent = `Last seen ${timeAgo}`;
+        }
       }
 
       profileStatus.classList.remove("updating");
@@ -3657,47 +3697,67 @@ class UserStatusManager {
     const now = new Date();
     const lastActiveDate = new Date(lastActive);
     const diffMs = now - lastActiveDate;
+    const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) {
+    if (diffSecs < 10) {
       return "just now";
+    } else if (diffSecs < 60) {
+      return `${diffSecs} seconds ago`;
+    } else if (diffMins < 2) {
+      return "1 minute ago";
     } else if (diffMins < 60) {
-      return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
+      return `${diffMins} minutes ago`;
+    } else if (diffHours < 2) {
+      return "1 hour ago";
     } else if (diffHours < 24) {
-      return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+      return `${diffHours} hours ago`;
+    } else if (diffDays < 2) {
+      return "1 day ago";
     } else if (diffDays < 7) {
-      return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+      return `${diffDays} days ago`;
     } else {
       return lastActiveDate.toLocaleDateString();
     }
   }
 
   handleStatusUpdate(data) {
-    // Update status if it's for the current user or a user in the community directory
+    // Only update if it's for the current user
     if (data.username === this.currentUsername) {
+      this.lastKnownStatus = data;
       this.renderStatus(data);
     }
 
-    // You can also update community directory status here if needed
+    // Update community directory status
     this.updateCommunityUserStatus(data.username, data);
   }
 
   updateCommunityUserStatus(username, status) {
-    // Update status in community directory if user is visible
     const userElement = document.querySelector(`[data-username="${username}"]`);
     if (userElement) {
       const statusElement = userElement.querySelector(".user-status");
       if (statusElement) {
         if (status.isOnline) {
-          statusElement.innerHTML =
-            '<div class="status-indicator online"></div> Online now';
+          statusElement.innerHTML = '<div class="status-indicator online"></div> Online now';
         } else {
           const timeAgo = this.getTimeAgo(status.lastActive);
-          statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+          // For community users, be more conservative with "just now"
+          if (timeAgo === "just now") {
+            statusElement.innerHTML = '<div class="status-indicator online"></div> Online';
+          } else {
+            statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
+          }
         }
       }
+    }
+  }
+
+  // Force logout/disconnect
+  forceOffline() {
+    if (this.socket) {
+      this.socket.emit('force-disconnect');
     }
   }
 
@@ -3707,6 +3767,9 @@ class UserStatusManager {
     }
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
+    }
+    if (this.statusCheckTimeout) {
+      clearTimeout(this.statusCheckTimeout);
     }
     if (this.socket) {
       this.socket.disconnect();

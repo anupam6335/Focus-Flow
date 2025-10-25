@@ -178,11 +178,12 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Socket.io connection handling - UPDATE THIS SECTION
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+// Enhanced Socket.io connection handling with stable online status
+const connectedUsers = new Map(); // Track connected users and their sockets
 
-  // Extract username from token (you'll need to implement this)
+io.on("connection", async(socket) => {
+
+  // Extract username from token
   const token = socket.handshake.auth.token;
   let username = null;
 
@@ -191,9 +192,16 @@ io.on("connection", (socket) => {
       const decoded = jwt.verify(token, JWT_SECRET);
       username = decoded.username;
       
-      // Update user as online
       if (username) {
-        User.findOneAndUpdate(
+        // Store user connection info
+        connectedUsers.set(username, {
+          socketId: socket.id,
+          lastHeartbeat: new Date(),
+          isOnline: true
+        });
+
+        // Update user as online with timestamp
+        await User.findOneAndUpdate(
           { username: username },
           { 
             isOnline: true,
@@ -205,7 +213,8 @@ io.on("connection", (socket) => {
         socket.broadcast.emit('user-status-changed', {
           username: username,
           isOnline: true,
-          lastActive: new Date()
+          lastActive: new Date(),
+          type: 'online'
         });
       }
     } catch (error) {
@@ -216,7 +225,6 @@ io.on("connection", (socket) => {
   // Join blog room for real-time updates
   socket.on("join-blog", (blogSlug) => {
     socket.join(blogSlug);
-    console.log(`User joined blog: ${blogSlug}`);
   });
 
   // Leave blog room
@@ -224,22 +232,62 @@ io.on("connection", (socket) => {
     socket.leave(blogSlug);
   });
 
-  // Heartbeat to keep connection alive and update lastActive
-  socket.on('heartbeat', () => {
+  // Enhanced Heartbeat with status maintenance
+  socket.on('heartbeat', async () => {
     if (username) {
-      User.findOneAndUpdate(
-        { username: username },
-        { lastActive: new Date() }
-      ).exec();
+      const userInfo = connectedUsers.get(username);
+      if (userInfo) {
+        userInfo.lastHeartbeat = new Date();
+        connectedUsers.set(username, userInfo);
+        
+        // Only update lastActive, maintain online status
+        await User.findOneAndUpdate(
+          { username: username },
+          { lastActive: new Date() }
+        ).exec();
+      }
     }
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+  // Handle graceful disconnect with delay
+  socket.on("disconnect", async (reason) => {
+    console.log("User disconnected:", socket.id, "Reason:", reason);
     
-    // Update user as offline
+    // Update user as offline only after a delay for page refreshes/navigation
     if (username) {
-      User.findOneAndUpdate(
+      setTimeout(async () => {
+        // Check if user reconnected in the meantime
+        const currentUserInfo = connectedUsers.get(username);
+        if (!currentUserInfo || currentUserInfo.socketId === socket.id) {
+          // User didn't reconnect, mark as offline
+          await User.findOneAndUpdate(
+            { username: username },
+            { 
+              isOnline: false,
+              lastActive: new Date()
+            }
+          ).exec();
+          
+          // Remove from connected users
+          connectedUsers.delete(username);
+          
+          // Broadcast offline status to all clients
+          socket.broadcast.emit('user-status-changed', {
+            username: username,
+            isOnline: false,
+            lastActive: new Date(),
+            type: 'offline'
+          });
+
+        }
+      }, 5000); // 5-second grace period for page refreshes
+    }
+  });
+
+  // Force disconnect (for logout)
+  socket.on('force-disconnect', async () => {
+    if (username) {
+      await User.findOneAndUpdate(
         { username: username },
         { 
           isOnline: false,
@@ -247,16 +295,45 @@ io.on("connection", (socket) => {
         }
       ).exec();
       
-      // Broadcast offline status to all clients
+      connectedUsers.delete(username);
+      
       socket.broadcast.emit('user-status-changed', {
         username: username,
         isOnline: false,
-        lastActive: new Date()
+        lastActive: new Date(),
+        type: 'offline'
       });
     }
   });
 });
 
+// Add periodic cleanup for stale connections
+setInterval(() => {
+  const now = new Date();
+  const STALE_THRESHOLD = 30000; // 30 seconds
+  
+  connectedUsers.forEach(async (userInfo, username) => {
+    if (now - userInfo.lastHeartbeat > STALE_THRESHOLD) {
+      
+      await User.findOneAndUpdate(
+        { username: username },
+        { 
+          isOnline: false,
+          lastActive: new Date()
+        }
+      ).exec();
+      
+      connectedUsers.delete(username);
+      
+      io.emit('user-status-changed', {
+        username: username,
+        isOnline: false,
+        lastActive: new Date(),
+        type: 'timeout'
+      });
+    }
+  });
+}, 30000); // Check every 30 seconds
 // ========== API ROUTES ==========
 
 // User registration
