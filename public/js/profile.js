@@ -1,6 +1,6 @@
 // API Configuration
-const API_BASE_URL = "http://localhost:3000/api";
-const FRONTEND_URL = "http://localhost:3000";
+const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 let currentUserData = null;
 let currentBlogTab = "public";
 
@@ -1914,7 +1914,7 @@ async function shareProfile() {
     }
 
     // Construct the profile URL
-    const profileUrl = `http://localhost:3000/user-profile?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       username
     )}`;
 
@@ -1944,7 +1944,7 @@ async function shareProfile() {
 
     // Fallback for browsers that don't support Clipboard API
     const username = currentUserData?.username;
-    const profileUrl = `http://localhost:3000/user-profile?user=${encodeURIComponent(
+    const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
       username
     )}`;
 
@@ -1982,7 +1982,7 @@ async function shareProfile() {
 // Enhanced function to handle social sharing if needed
 function shareProfileToSocial() {
   const username = currentUserData?.username;
-  const profileUrl = `http://localhost:3000/user-profile?user=${encodeURIComponent(
+  const profileUrl = `https://focus-flow-lopn.onrender.com/user-profile?user=${encodeURIComponent(
     username
   )}`;
   const shareText = `Check out my FocusFlow profile: ${username}`;
@@ -3561,7 +3561,7 @@ class UserStatusManager {
 
   connectSocket() {
     try {
-      this.socket = io("http://localhost:3000", {
+      this.socket = io("https://focus-flow-lopn.onrender.com", {
         auth: {
           token: localStorage.getItem("authToken"),
         },
