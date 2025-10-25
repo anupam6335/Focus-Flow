@@ -3183,40 +3183,40 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBlog(); // This now uses the enhanced version
 });
 
-// ===== ROBUST AUTO-REFRESH ON LOGIN =====
+// ===== FIXED LOGIN STATE MANAGER =====
 class LoginStateManager {
   constructor() {
     this.isLoggedIn = !!localStorage.getItem("authToken");
     this.currentUser = localStorage.getItem("username");
     this.checkInterval = null;
+    this.hasStorageListener = false; // Add missing property
+
     this.init();
   }
 
   init() {
     // Method 1: Storage events (for cross-tab changes)
-    window.addEventListener("storage", (e) => {
-      if (e.key === "authToken" || e.key === "username") {
-        this.handleAuthStateChange();
-      }
-    });
+    window.addEventListener("storage", this.handleStorageEvent.bind(this));
+    this.hasStorageListener = true;
 
     // Method 2: Polling (most reliable for incognito mode)
     this.startPolling();
 
     // Method 3: Listen for custom events
-    window.addEventListener("userLoggedIn", () => {
-      this.handleAuthStateChange();
-    });
+    window.addEventListener(
+      "userLoggedIn",
+      this.handleAuthStateChange.bind(this)
+    );
 
     // Initial UI setup
     this.updateUI();
   }
 
   startPolling() {
-    // Check every 500ms for auth changes
+    // Check every 1000ms for auth changes (reduced from 500ms for better performance)
     this.checkInterval = setInterval(() => {
       this.checkAuthState();
-    }, 500);
+    }, 1000);
   }
 
   checkAuthState() {
@@ -3230,9 +3230,18 @@ class LoginStateManager {
     }
   }
 
+  handleStorageEvent(e) {
+    if (e.key === "authToken" || e.key === "username") {
+      this.handleAuthStateChange();
+    }
+  }
+
   handleAuthStateChange() {
-    this.isLoggedIn = !!localStorage.getItem("authToken");
-    this.currentUser = localStorage.getItem("username");
+    const newLoggedInState = !!localStorage.getItem("authToken");
+    const newUser = localStorage.getItem("username");
+
+    this.isLoggedIn = newLoggedInState;
+    this.currentUser = newUser;
     this.performSoftRefresh();
   }
 
@@ -3245,10 +3254,20 @@ class LoginStateManager {
 
       // Re-check blog author status
       setTimeout(() => {
-        window.commentsManager.checkBlogAuthor().then(() => {
-          window.commentsManager.renderComments();
-        });
-      }, 1000);
+        if (window.commentsManager.checkBlogAuthor) {
+          window.commentsManager
+            .checkBlogAuthor()
+            .then(() => {
+              window.commentsManager.renderComments();
+            })
+            .catch((error) => {
+              console.warn("⚠️ Blog author check failed:", error);
+              window.commentsManager.renderComments();
+            });
+        }
+      }, 500);
+    } else {
+      console.warn("⚠️ CommentsManager not available");
     }
 
     // Update blog header actions
@@ -3260,20 +3279,31 @@ class LoginStateManager {
     // Show success message if user just logged in
     if (this.isLoggedIn) {
       setTimeout(() => {
-        if (window.toastManager) {
+        // FIX: Check if toastManager exists and is working
+        if (
+          window.toastManager &&
+          typeof window.toastManager.success === "function"
+        ) {
           window.toastManager.success(
             "Welcome back!",
             "Login Successful",
             3000
           );
+        } else {
+          console.warn("⚠️ ToastManager not available for login message");
+          // Fallback: show console message
         }
       }, 500);
+    } else {
+      console.log("👋 User logged out");
     }
   }
 
   async updateBlogActions() {
     const blogArticle = document.getElementById("blogArticle");
-    if (!blogArticle || blogArticle.style.display === "none") return;
+    if (!blogArticle || blogArticle.style.display === "none") {
+      return;
+    }
 
     try {
       const token = localStorage.getItem("authToken");
@@ -3288,9 +3318,11 @@ class LoginStateManager {
         if (result.success) {
           this.setupBlogHeaderActions(result.blog);
         }
+      } else {
+        console.warn("⚠️ Failed to fetch blog data for action update");
       }
     } catch (error) {
-      console.error("Error refreshing blog data:", error);
+      console.error("❌ Error refreshing blog data:", error);
     }
   }
 
@@ -3298,7 +3330,10 @@ class LoginStateManager {
     const headerActionsContainer = document.getElementById("blogHeaderActions");
     const currentUser = localStorage.getItem("username");
 
-    if (!headerActionsContainer) return;
+    if (!headerActionsContainer) {
+      console.warn("⚠️ Blog header actions container not found");
+      return;
+    }
 
     // Clear existing actions
     headerActionsContainer.innerHTML = "";
@@ -3337,6 +3372,10 @@ class LoginStateManager {
     const usernameLinks = document.querySelectorAll(".username-link");
     const currentUser = localStorage.getItem("username");
 
+    console.log(
+      `Found ${usernameLinks.length} username links, current user: ${currentUser}`
+    );
+
     usernameLinks.forEach((link) => {
       const username = link.textContent.trim().toUpperCase();
       if (username === currentUser?.toUpperCase()) {
@@ -3351,6 +3390,8 @@ class LoginStateManager {
     if (window.commentsManager) {
       window.commentsManager.updateCommentInputVisibility();
       window.commentsManager.updateCommentInputAvatar();
+    } else {
+      console.warn("⚠️ CommentsManager not available for UI update");
     }
   }
 
@@ -3358,6 +3399,7 @@ class LoginStateManager {
   destroy() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
+      this.checkInterval = null;
     }
   }
 }
@@ -3393,17 +3435,17 @@ CommentsManager.prototype.updateCommentInputVisibility = function () {
   }
 };
 
-// Override the redirectToLogin to trigger a refresh
+// SIMPLE FIX: Just modify the redirectToLogin function
 window.redirectToLogin = function () {
-  // Store current URL to return after login
+  // Store the current blog URL to return after login
   localStorage.setItem("returnUrl", window.location.href);
   window.location.href = "/";
 };
 
-// Initialize when page loads
+// Enhanced initialization with proper timing
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize after components are loaded
-  setTimeout(() => {
+  // Initialize immediately instead of waiting
+  try {
     window.loginStateManager = new LoginStateManager();
 
     // Check if we just returned from login
@@ -3413,7 +3455,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Force refresh UI
       setTimeout(() => {
         window.loginStateManager.performSoftRefresh();
-      }, 1000);
+      }, 1500);
     }
-  }, 2000);
+  } catch (error) {
+    console.error("❌ Failed to initialize LoginStateManager:", error);
+  }
+
+  // Then initialize other components
+  initScrollToTop();
+  loadBlog();
 });

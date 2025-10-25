@@ -432,10 +432,7 @@ function formatDateForDisplay(dateString) {
 
 // Add this function to verify the date change
 function verifyDateChange() {
-  console.log("🔍 Verifying date change:");
-  console.log("📅 Current APP_START_DATE:", APP_START_DATE);
-  console.log("📊 Current day number:", getCurrentDayNumber());
-  console.log("📈 Is today editable?", isEditable(getCurrentDayNumber()));
+  
 
   // Test with a specific day
   const testDay = 1;
@@ -802,10 +799,22 @@ async function handleLogin() {
       // Show immediate sync status
       updateSyncStatus("synced", "Data loaded successfully");
 
+        // NEW: Check if we have a return URL stored
+  const returnUrl = localStorage.getItem('returnUrl');
+  if (returnUrl && returnUrl !== window.location.href) {
+    localStorage.removeItem('returnUrl');
+    setTimeout(() => {
+      window.location.href = returnUrl;
+    }, 1000);
+    return; // Stop further execution
+  }
       // Force a sync to ensure we have the latest data
       setTimeout(() => {
         syncWithMongoDB();
       }, 1000);
+
+
+
     } else {
       toastManager.error(result.error || "Login failed", "Login Error");
     }
@@ -2018,7 +2027,7 @@ async function syncWithMongoDB() {
 
       // Check if server has newer data
       if (serverVersion > currentVersion) {
-        console.log("Server has newer data, updating local copy immediately");
+       
         appData = result.data;
         currentVersion = serverVersion;
         lastUpdated = serverLastUpdated;
@@ -2049,7 +2058,7 @@ async function syncWithMongoDB() {
       }
     }
   } catch (error) {
-    console.log("Background sync failed:", error);
+    
     updateSyncStatus("offline", "Working offline");
 
     if (!error.message.includes("Failed to fetch")) {
