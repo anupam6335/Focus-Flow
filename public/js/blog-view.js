@@ -1196,7 +1196,7 @@ async function loadBlogWithMarkdown() {
 
     // Track view first - works for all users
     await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
-      method: 'POST'
+      method: "POST",
     }).catch((err) => console.error("View tracking failed:", err));
 
     const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
@@ -1798,31 +1798,14 @@ class CommentsManager {
   }
 
   async init() {
-    if (!this.currentUser) {
-      console.warn("No user found, retrying in 1 second...");
-      setTimeout(() => {
-        this.currentUser = localStorage.getItem("username");
-        if (this.currentUser) {
-          this.continueInit();
-        }
-      }, 1000);
-      return;
-    }
-
+    // Always continue initialization for public access
     await this.continueInit();
   }
 
   // FIXED: Enhanced CommentsManager initialization
   async continueInit() {
-    // FIX: Ensure currentUser is always set from localStorage
+    // FIX: Ensure currentUser is always set from localStorage (can be null for guests)
     this.currentUser = localStorage.getItem("username");
-
-    if (!this.currentUser) {
-      console.warn(
-        "⚠️ No user found in localStorage, attempting to verify token..."
-      );
-      await this.verifyAndSetUser();
-    }
 
     await this.setupSocketConnection();
     this.setupEventListeners();
@@ -1830,6 +1813,9 @@ class CommentsManager {
     this.updateCommentsCount();
     await this.checkBlogStats();
     await this.checkRestrictionStatus();
+
+    // UPDATE: Always update comment input visibility
+    this.updateCommentInputVisibility();
   }
 
   // NEW: Method to verify token and set user
@@ -1920,39 +1906,53 @@ class CommentsManager {
   // Update the loadComments method to ensure blog author check completes
   async loadComments() {
     try {
-      const token = localStorage.getItem("authToken");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
       const response = await fetch(
-        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`,
-        {
-          headers,
-        }
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`
       );
 
       if (!response.ok) {
-        throw new Error("Failed to load comments");
+        throw new Error(`Failed to load comments: ${response.status}`);
       }
 
       const result = await response.json();
 
       if (result.success) {
-        this.comments = result.comments;
-        // Ensure blog author check is complete before rendering
-        await this.checkBlogAuthor();
-        this.renderComments();
+        // FIX: Ensure we have an array, even if empty
+        this.comments = result.comments || [];
+
+        // FIX: Don't wait for blog author check for public viewing
+        this.checkBlogAuthor()
+          .then(() => {
+            this.renderComments();
+          })
+          .catch((error) => {
+            console.warn(
+              "⚠️ Blog author check failed, rendering anyway:",
+              error
+            );
+            this.renderComments();
+          });
+      } else {
+        console.error("❌ API returned error:", result.error);
+        this.renderComments(); // Still render even if there's an error
       }
     } catch (error) {
-      console.error("Error loading comments:", error);
-      toastManager.error("Failed to load comments", "Error");
+      console.error("❌ Error loading comments:", error);
+      this.handleCommentsError(error);
     }
   }
 
   async checkBlogAuthor() {
     try {
       const token = localStorage.getItem("authToken");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+      // If no token, user is guest - not blog author
+      if (!token) {
+        this.isBlogAuthor = false;
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
       const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
         headers,
       });
@@ -1964,9 +1964,11 @@ class CommentsManager {
         }
       } else {
         console.error("Failed to fetch blog data:", response.status);
+        this.isBlogAuthor = false;
       }
     } catch (error) {
       console.error("Error checking blog author:", error);
+      this.isBlogAuthor = false;
     }
   }
 
@@ -1974,6 +1976,9 @@ class CommentsManager {
     this.sortTabs.forEach((tab) => {
       tab.addEventListener("click", () => this.handleSortChange(tab));
     });
+
+    // Show/hide comment input based on login status
+    this.updateCommentInputVisibility();
 
     this.submitButton.addEventListener("click", () => this.submitComment());
     this.commentInput.addEventListener("keydown", (e) => {
@@ -1986,10 +1991,73 @@ class CommentsManager {
     this.updateCommentInputAvatar();
   }
 
+  // NEW: Method to update comment input visibility based on login status
+  // NEW: Method to update comment input visibility based on login status
+  updateCommentInputVisibility() {
+    const token = localStorage.getItem("authToken");
+    const commentInputContainer = document.querySelector(
+      ".comment-input-container"
+    );
+    const guestMessage = document.getElementById("guestCommentMessage");
+
+    if (token && this.currentUser) {
+      // User is logged in - show comment input
+
+      if (commentInputContainer) commentInputContainer.style.display = "flex";
+      if (guestMessage) guestMessage.style.display = "none";
+
+      // Update avatar with current user
+      this.updateCommentInputAvatar();
+    } else {
+      // User is not logged in - show guest message
+
+      if (commentInputContainer) commentInputContainer.style.display = "none";
+      if (guestMessage) guestMessage.style.display = "block";
+    }
+  }
+
+  // NEW: Handle comment loading errors gracefully
+  handleCommentsError(error) {
+    console.error("❌ Comments loading error:", error);
+
+    this.commentsContainer.innerHTML = `
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Unable to load comments</h3>
+      <p>There was a problem loading the discussion. Please try refreshing the page.</p>
+      <button class="btn btn-secondary" onclick="window.commentsManager.loadComments()">
+        Retry
+      </button>
+    </div>
+  `;
+  }
+
+  // NEW: Redirect to login page
+  redirectToLogin() {
+    window.location.href = "/"; // Home page which includes login option
+  }
+
+  // NEW: Handle authentication state changes
+  handleAuthStateChange() {
+    this.currentUser = localStorage.getItem("username");
+    this.updateCommentInputVisibility();
+
+    // Re-attach event listeners for vote buttons, etc.
+    this.attachCommentEventListeners();
+  }
+
   updateCommentInputAvatar() {
     const avatarPlaceholder = document.querySelector(".avatar-placeholder");
-    if (avatarPlaceholder && this.currentUser) {
-      avatarPlaceholder.textContent = this.currentUser.charAt(0).toUpperCase();
+    if (avatarPlaceholder) {
+      if (this.currentUser) {
+        // User is logged in
+        avatarPlaceholder.textContent = this.currentUser
+          .charAt(0)
+          .toUpperCase();
+      } else {
+        // User is guest - show generic avatar
+        avatarPlaceholder.textContent = "👤";
+      }
     }
   }
 
@@ -2607,33 +2675,53 @@ class CommentsManager {
 
   // 🧩 FIXED: Recursive comment rendering for all nested levels
   renderComments() {
-    if (this.comments.length === 0) {
+    // FIX: Better null/undefined checking
+    if (
+      !this.comments ||
+      !Array.isArray(this.comments) ||
+      this.comments.length === 0
+    ) {
       this.commentsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">💬</div>
-          <h3>No comments yet</h3>
-          <p>Be the first to share your thoughts!</p>
-        </div>
-      `;
+      <div class="empty-state">
+        <div class="empty-icon">💬</div>
+        <h3>No comments yet</h3>
+        <p>Be the first to share your thoughts!</p>
+      </div>
+    `;
       return;
     }
 
     let html = "";
 
-    // 📌 Pinned comments always at top regardless of sorting
-    const pinnedComments = this.comments.filter((comment) => comment.isPinned);
-    const normalComments = this.comments.filter((comment) => !comment.isPinned);
+    try {
+      // 📌 Pinned comments always at top regardless of sorting
+      const pinnedComments = this.comments.filter(
+        (comment) => comment.isPinned
+      );
+      const normalComments = this.comments.filter(
+        (comment) => !comment.isPinned
+      );
 
-    pinnedComments.forEach((comment) => {
-      html += this.renderComment(comment, 0);
-    });
+      pinnedComments.forEach((comment) => {
+        html += this.renderComment(comment, 0);
+      });
 
-    normalComments.forEach((comment) => {
-      html += this.renderComment(comment, 0);
-    });
+      normalComments.forEach((comment) => {
+        html += this.renderComment(comment, 0);
+      });
 
-    this.commentsContainer.innerHTML = html;
-    this.attachCommentEventListeners();
+      this.commentsContainer.innerHTML = html;
+      this.attachCommentEventListeners();
+    } catch (error) {
+      console.error("❌ Error rendering comments:", error);
+      this.commentsContainer.innerHTML = `
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h3>Error displaying comments</h3>
+        <p>There was a problem rendering the comments.</p>
+      </div>
+    `;
+    }
   }
 
   // ✨ NEW: Enhanced Comment Rendering with Delete Button
@@ -3075,24 +3163,13 @@ class CommentsManager {
   }
 }
 
-// FIXED: Enhanced initialization with retry mechanism
+// FIXED: Simple initialization for public access
 document.addEventListener("DOMContentLoaded", () => {
   // Store blog slug globally
   window.blogSlug = blogSlug;
 
-  // Initialize comments manager with retry logic
-  const initializeCommentsManager = (retryCount = 0) => {
-    const currentUser = localStorage.getItem("username");
-
-    if (!currentUser && retryCount < 5) {
-      setTimeout(() => initializeCommentsManager(retryCount + 1), 500);
-      return;
-    }
-    window.commentsManager = new CommentsManager();
-  };
-
-  // Start initialization
-  initializeCommentsManager();
+  // Initialize comments manager immediately - no waiting for user
+  window.commentsManager = new CommentsManager();
 });
 
 // Replace the original loadBlog function
@@ -3105,3 +3182,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initScrollToTop();
   loadBlog(); // This now uses the enhanced version
 });
+
+// Global function for login redirection
+window.redirectToLogin = function () {
+  window.location.href = "/"; // Home page which includes login option
+};
