@@ -4197,21 +4197,6 @@ h1 {
   opacity: 0.7;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Enhanced Status Indicator Styles */
 .status-indicator {
   width: 8px;
@@ -4239,8 +4224,13 @@ h1 {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .profile-status.updating .status-text {

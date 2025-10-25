@@ -1196,7 +1196,7 @@ async function loadBlogWithMarkdown() {
 
     // Track view first - works for all users
     await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
-      method: 'POST'
+      method: "POST",
     }).catch((err) => console.error("View tracking failed:", err));
 
     const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
@@ -1797,33 +1797,26 @@ class CommentsManager {
     this.init();
   }
 
- async init() {
-  // FIX: Initialize immediately for public access - don't wait for user
-  console.log('🚀 CommentsManager init - Public access mode');
-  console.log('👤 Current user:', this.currentUser);
-  
-  // Always continue initialization for public access
-  await this.continueInit();
-}
+  async init() {
+    // Always continue initialization for public access
+    await this.continueInit();
+  }
 
   // FIXED: Enhanced CommentsManager initialization
-async continueInit() {
-  // FIX: Ensure currentUser is always set from localStorage (can be null for guests)
-  this.currentUser = localStorage.getItem("username");
+  async continueInit() {
+    // FIX: Ensure currentUser is always set from localStorage (can be null for guests)
+    this.currentUser = localStorage.getItem("username");
 
-  console.log('👤 Current user:', this.currentUser);
-  console.log('🔗 Blog slug:', this.blogSlug);
+    await this.setupSocketConnection();
+    this.setupEventListeners();
+    await this.loadComments();
+    this.updateCommentsCount();
+    await this.checkBlogStats();
+    await this.checkRestrictionStatus();
 
-  await this.setupSocketConnection();
-  this.setupEventListeners();
-  await this.loadComments();
-  this.updateCommentsCount();
-  await this.checkBlogStats();
-  await this.checkRestrictionStatus();
-  
-  // UPDATE: Always update comment input visibility
-  this.updateCommentInputVisibility();
-}
+    // UPDATE: Always update comment input visibility
+    this.updateCommentInputVisibility();
+  }
 
   // NEW: Method to verify token and set user
   async verifyAndSetUser() {
@@ -1911,129 +1904,123 @@ async continueInit() {
   }
 
   // Update the loadComments method to ensure blog author check completes
-async loadComments() {
-  try {
-    console.log('🔄 Loading comments for blog:', this.blogSlug);
-    
-    const response = await fetch(
-      `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`
-    );
+  async loadComments() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/blogs/${this.blogSlug}/comments?sort=${this.currentSort}`
+      );
 
-    console.log('📡 Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`Failed to load comments: ${response.status}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`Failed to load comments: ${response.status}`);
+      const result = await response.json();
+
+      if (result.success) {
+        // FIX: Ensure we have an array, even if empty
+        this.comments = result.comments || [];
+
+        // FIX: Don't wait for blog author check for public viewing
+        this.checkBlogAuthor()
+          .then(() => {
+            this.renderComments();
+          })
+          .catch((error) => {
+            console.warn(
+              "⚠️ Blog author check failed, rendering anyway:",
+              error
+            );
+            this.renderComments();
+          });
+      } else {
+        console.error("❌ API returned error:", result.error);
+        this.renderComments(); // Still render even if there's an error
+      }
+    } catch (error) {
+      console.error("❌ Error loading comments:", error);
+      this.handleCommentsError(error);
     }
-
-    const result = await response.json();
-    console.log('📦 API result:', result);
-
-    if (result.success) {
-      console.log('✅ Comments loaded successfully');
-      console.log('📊 Number of comments:', result.comments?.length);
-      
-      // FIX: Ensure we have an array, even if empty
-      this.comments = result.comments || [];
-      
-      // FIX: Don't wait for blog author check for public viewing
-      this.checkBlogAuthor().then(() => {
-        this.renderComments();
-      }).catch(error => {
-        console.warn('⚠️ Blog author check failed, rendering anyway:', error);
-        this.renderComments();
-      });
-      
-    } else {
-      console.error('❌ API returned error:', result.error);
-      this.renderComments(); // Still render even if there's an error
-    }
-  } catch (error) {
-    console.error("❌ Error loading comments:", error);
-    this.handleCommentsError(error);
   }
-}
 
-async checkBlogAuthor() {
-  try {
-    const token = localStorage.getItem("authToken");
-    
-    // If no token, user is guest - not blog author
-    if (!token) {
+  async checkBlogAuthor() {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // If no token, user is guest - not blog author
+      if (!token) {
+        this.isBlogAuthor = false;
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.isBlogAuthor = result.blog.author === this.currentUser;
+        }
+      } else {
+        console.error("Failed to fetch blog data:", response.status);
+        this.isBlogAuthor = false;
+      }
+    } catch (error) {
+      console.error("Error checking blog author:", error);
       this.isBlogAuthor = false;
-      return;
     }
+  }
 
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await fetch(`${API_BASE_URL}/blogs/${this.blogSlug}`, {
-      headers,
+  setupEventListeners() {
+    this.sortTabs.forEach((tab) => {
+      tab.addEventListener("click", () => this.handleSortChange(tab));
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        this.isBlogAuthor = result.blog.author === this.currentUser;
-        console.log('👑 Is blog author:', this.isBlogAuthor);
+    // Show/hide comment input based on login status
+    this.updateCommentInputVisibility();
+
+    this.submitButton.addEventListener("click", () => this.submitComment());
+    this.commentInput.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        this.submitComment();
       }
-    } else {
-      console.error("Failed to fetch blog data:", response.status);
-      this.isBlogAuthor = false;
-    }
-  } catch (error) {
-    console.error("Error checking blog author:", error);
-    this.isBlogAuthor = false;
-  }
-}
+    });
 
-setupEventListeners() {
-  this.sortTabs.forEach((tab) => {
-    tab.addEventListener("click", () => this.handleSortChange(tab));
-  });
-
-  // Show/hide comment input based on login status
-  this.updateCommentInputVisibility();
-
-  this.submitButton.addEventListener("click", () => this.submitComment());
-  this.commentInput.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "Enter") {
-      this.submitComment();
-    }
-  });
-
-  // UPDATE: Set current user's avatar in comment input
-  this.updateCommentInputAvatar();
-}
-
-// NEW: Method to update comment input visibility based on login status
-// NEW: Method to update comment input visibility based on login status
-updateCommentInputVisibility() {
-  const token = localStorage.getItem("authToken");
-  const commentInputContainer = document.querySelector('.comment-input-container');
-  const guestMessage = document.getElementById('guestCommentMessage');
-  
-  console.log('🔐 Auth token exists:', !!token);
-  console.log('👤 Current user:', this.currentUser);
-  
-  if (token && this.currentUser) {
-    // User is logged in - show comment input
-    console.log('✅ User is logged in, showing comment input');
-    if (commentInputContainer) commentInputContainer.style.display = 'flex';
-    if (guestMessage) guestMessage.style.display = 'none';
-    
-    // Update avatar with current user
+    // UPDATE: Set current user's avatar in comment input
     this.updateCommentInputAvatar();
-  } else {
-    // User is not logged in - show guest message
-    console.log('🚫 User is not logged in, showing guest message');
-    if (commentInputContainer) commentInputContainer.style.display = 'none';
-    if (guestMessage) guestMessage.style.display = 'block';
   }
-}
 
-// NEW: Handle comment loading errors gracefully
-handleCommentsError(error) {
-  console.error('❌ Comments loading error:', error);
-  
-  this.commentsContainer.innerHTML = `
+  // NEW: Method to update comment input visibility based on login status
+  // NEW: Method to update comment input visibility based on login status
+  updateCommentInputVisibility() {
+    const token = localStorage.getItem("authToken");
+    const commentInputContainer = document.querySelector(
+      ".comment-input-container"
+    );
+    const guestMessage = document.getElementById("guestCommentMessage");
+
+    if (token && this.currentUser) {
+      // User is logged in - show comment input
+
+      if (commentInputContainer) commentInputContainer.style.display = "flex";
+      if (guestMessage) guestMessage.style.display = "none";
+
+      // Update avatar with current user
+      this.updateCommentInputAvatar();
+    } else {
+      // User is not logged in - show guest message
+
+      if (commentInputContainer) commentInputContainer.style.display = "none";
+      if (guestMessage) guestMessage.style.display = "block";
+    }
+  }
+
+  // NEW: Handle comment loading errors gracefully
+  handleCommentsError(error) {
+    console.error("❌ Comments loading error:", error);
+
+    this.commentsContainer.innerHTML = `
     <div class="error-state">
       <div class="error-icon">⚠️</div>
       <h3>Unable to load comments</h3>
@@ -2043,34 +2030,36 @@ handleCommentsError(error) {
       </button>
     </div>
   `;
-}
+  }
 
-// NEW: Redirect to login page
-redirectToLogin() {
-  window.location.href = '/'; // Home page which includes login option
-}
+  // NEW: Redirect to login page
+  redirectToLogin() {
+    window.location.href = "/"; // Home page which includes login option
+  }
 
-// NEW: Handle authentication state changes
-handleAuthStateChange() {
-  this.currentUser = localStorage.getItem("username");
-  this.updateCommentInputVisibility();
-  
-  // Re-attach event listeners for vote buttons, etc.
-  this.attachCommentEventListeners();
-}
+  // NEW: Handle authentication state changes
+  handleAuthStateChange() {
+    this.currentUser = localStorage.getItem("username");
+    this.updateCommentInputVisibility();
 
- updateCommentInputAvatar() {
-  const avatarPlaceholder = document.querySelector(".avatar-placeholder");
-  if (avatarPlaceholder) {
-    if (this.currentUser) {
-      // User is logged in
-      avatarPlaceholder.textContent = this.currentUser.charAt(0).toUpperCase();
-    } else {
-      // User is guest - show generic avatar
-      avatarPlaceholder.textContent = "👤";
+    // Re-attach event listeners for vote buttons, etc.
+    this.attachCommentEventListeners();
+  }
+
+  updateCommentInputAvatar() {
+    const avatarPlaceholder = document.querySelector(".avatar-placeholder");
+    if (avatarPlaceholder) {
+      if (this.currentUser) {
+        // User is logged in
+        avatarPlaceholder.textContent = this.currentUser
+          .charAt(0)
+          .toUpperCase();
+      } else {
+        // User is guest - show generic avatar
+        avatarPlaceholder.textContent = "👤";
+      }
     }
   }
-}
 
   async handleSortChange(clickedTab) {
     this.sortTabs.forEach((tab) => tab.classList.remove("active"));
@@ -2685,56 +2674,55 @@ handleAuthStateChange() {
   }
 
   // 🧩 FIXED: Recursive comment rendering for all nested levels
-renderComments() {
-  console.log('🎨 Rendering comments:', this.comments);
-  
-  // FIX: Better null/undefined checking
-  if (!this.comments || !Array.isArray(this.comments) || this.comments.length === 0) {
-    console.log('📭 No comments to display');
-    this.commentsContainer.innerHTML = `
+  renderComments() {
+    // FIX: Better null/undefined checking
+    if (
+      !this.comments ||
+      !Array.isArray(this.comments) ||
+      this.comments.length === 0
+    ) {
+      this.commentsContainer.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">💬</div>
         <h3>No comments yet</h3>
         <p>Be the first to share your thoughts!</p>
       </div>
     `;
-    return;
-  }
+      return;
+    }
 
-  let html = "";
+    let html = "";
 
-  try {
-    // 📌 Pinned comments always at top regardless of sorting
-    const pinnedComments = this.comments.filter((comment) => comment.isPinned);
-    const normalComments = this.comments.filter((comment) => !comment.isPinned);
+    try {
+      // 📌 Pinned comments always at top regardless of sorting
+      const pinnedComments = this.comments.filter(
+        (comment) => comment.isPinned
+      );
+      const normalComments = this.comments.filter(
+        (comment) => !comment.isPinned
+      );
 
-    console.log('📌 Pinned comments:', pinnedComments.length);
-    console.log('📝 Normal comments:', normalComments.length);
+      pinnedComments.forEach((comment) => {
+        html += this.renderComment(comment, 0);
+      });
 
-    pinnedComments.forEach((comment) => {
-      html += this.renderComment(comment, 0);
-    });
+      normalComments.forEach((comment) => {
+        html += this.renderComment(comment, 0);
+      });
 
-    normalComments.forEach((comment) => {
-      html += this.renderComment(comment, 0);
-    });
-
-    this.commentsContainer.innerHTML = html;
-    this.attachCommentEventListeners();
-    
-    console.log('✅ Comments rendered successfully');
-    
-  } catch (error) {
-    console.error('❌ Error rendering comments:', error);
-    this.commentsContainer.innerHTML = `
+      this.commentsContainer.innerHTML = html;
+      this.attachCommentEventListeners();
+    } catch (error) {
+      console.error("❌ Error rendering comments:", error);
+      this.commentsContainer.innerHTML = `
       <div class="error-state">
         <div class="error-icon">⚠️</div>
         <h3>Error displaying comments</h3>
         <p>There was a problem rendering the comments.</p>
       </div>
     `;
+    }
   }
-}
 
   // ✨ NEW: Enhanced Comment Rendering with Delete Button
   renderComment(comment, depth = 0) {
@@ -3175,20 +3163,14 @@ renderComments() {
   }
 }
 
-
-
-
 // FIXED: Simple initialization for public access
 document.addEventListener("DOMContentLoaded", () => {
   // Store blog slug globally
   window.blogSlug = blogSlug;
-  console.log('🚀 Initializing blog view for:', window.blogSlug);
 
   // Initialize comments manager immediately - no waiting for user
-  console.log('✅ Initializing CommentsManager for public access...');
   window.commentsManager = new CommentsManager();
 });
-
 
 // Replace the original loadBlog function
 async function loadBlog() {
@@ -3202,6 +3184,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Global function for login redirection
-window.redirectToLogin = function() {
-  window.location.href = '/'; // Home page which includes login option
+window.redirectToLogin = function () {
+  window.location.href = "/"; // Home page which includes login option
 };

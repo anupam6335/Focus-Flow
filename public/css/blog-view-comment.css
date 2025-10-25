@@ -1300,9 +1300,6 @@
   margin-top: 10px;
 }
 
-
-
-
 /* ===== GUEST COMMENT MESSAGE STYLES ===== */
 .guest-comment-message {
   margin-bottom: var(--codeleaf-space-6);
@@ -1363,12 +1360,11 @@
     text-align: center;
     gap: var(--codeleaf-space-3);
   }
-  
+
   .guest-icon {
     font-size: 1.5rem;
   }
 }
-
 
 /* ===== ERROR STATE STYLES ===== */
 .error-state {

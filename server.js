@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-   lastActive: { type: Date, default: Date.now }, // NEW: Add last active tracking
+  lastActive: { type: Date, default: Date.now }, // NEW: Add last active tracking
   isOnline: { type: Boolean, default: false }, // NEW: Add online status
 });
 
@@ -181,8 +181,7 @@ const authenticateToken = async (req, res, next) => {
 // Enhanced Socket.io connection handling with stable online status
 const connectedUsers = new Map(); // Track connected users and their sockets
 
-io.on("connection", async(socket) => {
-
+io.on("connection", async (socket) => {
   // Extract username from token
   const token = socket.handshake.auth.token;
   let username = null;
@@ -191,30 +190,30 @@ io.on("connection", async(socket) => {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       username = decoded.username;
-      
+
       if (username) {
         // Store user connection info
         connectedUsers.set(username, {
           socketId: socket.id,
           lastHeartbeat: new Date(),
-          isOnline: true
+          isOnline: true,
         });
 
         // Update user as online with timestamp
         await User.findOneAndUpdate(
           { username: username },
-          { 
+          {
             isOnline: true,
-            lastActive: new Date()
+            lastActive: new Date(),
           }
         ).exec();
-        
+
         // Broadcast online status to all clients
-        socket.broadcast.emit('user-status-changed', {
+        socket.broadcast.emit("user-status-changed", {
           username: username,
           isOnline: true,
           lastActive: new Date(),
-          type: 'online'
+          type: "online",
         });
       }
     } catch (error) {
@@ -233,13 +232,13 @@ io.on("connection", async(socket) => {
   });
 
   // Enhanced Heartbeat with status maintenance
-  socket.on('heartbeat', async () => {
+  socket.on("heartbeat", async () => {
     if (username) {
       const userInfo = connectedUsers.get(username);
       if (userInfo) {
         userInfo.lastHeartbeat = new Date();
         connectedUsers.set(username, userInfo);
-        
+
         // Only update lastActive, maintain online status
         await User.findOneAndUpdate(
           { username: username },
@@ -252,7 +251,7 @@ io.on("connection", async(socket) => {
   // Handle graceful disconnect with delay
   socket.on("disconnect", async (reason) => {
     console.log("User disconnected:", socket.id, "Reason:", reason);
-    
+
     // Update user as offline only after a delay for page refreshes/navigation
     if (username) {
       setTimeout(async () => {
@@ -262,46 +261,45 @@ io.on("connection", async(socket) => {
           // User didn't reconnect, mark as offline
           await User.findOneAndUpdate(
             { username: username },
-            { 
+            {
               isOnline: false,
-              lastActive: new Date()
+              lastActive: new Date(),
             }
           ).exec();
-          
+
           // Remove from connected users
           connectedUsers.delete(username);
-          
+
           // Broadcast offline status to all clients
-          socket.broadcast.emit('user-status-changed', {
+          socket.broadcast.emit("user-status-changed", {
             username: username,
             isOnline: false,
             lastActive: new Date(),
-            type: 'offline'
+            type: "offline",
           });
-
         }
       }, 5000); // 5-second grace period for page refreshes
     }
   });
 
   // Force disconnect (for logout)
-  socket.on('force-disconnect', async () => {
+  socket.on("force-disconnect", async () => {
     if (username) {
       await User.findOneAndUpdate(
         { username: username },
-        { 
+        {
           isOnline: false,
-          lastActive: new Date()
+          lastActive: new Date(),
         }
       ).exec();
-      
+
       connectedUsers.delete(username);
-      
-      socket.broadcast.emit('user-status-changed', {
+
+      socket.broadcast.emit("user-status-changed", {
         username: username,
         isOnline: false,
         lastActive: new Date(),
-        type: 'offline'
+        type: "offline",
       });
     }
   });
@@ -311,25 +309,24 @@ io.on("connection", async(socket) => {
 setInterval(() => {
   const now = new Date();
   const STALE_THRESHOLD = 30000; // 30 seconds
-  
+
   connectedUsers.forEach(async (userInfo, username) => {
     if (now - userInfo.lastHeartbeat > STALE_THRESHOLD) {
-      
       await User.findOneAndUpdate(
         { username: username },
-        { 
+        {
           isOnline: false,
-          lastActive: new Date()
+          lastActive: new Date(),
         }
       ).exec();
-      
+
       connectedUsers.delete(username);
-      
-      io.emit('user-status-changed', {
+
+      io.emit("user-status-changed", {
         username: username,
         isOnline: false,
         lastActive: new Date(),
-        type: 'timeout'
+        type: "timeout",
       });
     }
   });
@@ -2331,14 +2328,15 @@ app.get(
   }
 );
 
-
 // Get user status (online/offline and last active)
 app.get("/api/user-status/:username", authenticateToken, async (req, res) => {
   try {
     const username = req.params.username;
-    
-    const user = await User.findOne({ username }).select('isOnline lastActive username');
-    
+
+    const user = await User.findOne({ username }).select(
+      "isOnline lastActive username"
+    );
+
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
@@ -2348,8 +2346,8 @@ app.get("/api/user-status/:username", authenticateToken, async (req, res) => {
       status: {
         isOnline: user.isOnline,
         lastActive: user.lastActive,
-        username: user.username
-      }
+        username: user.username,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -2360,26 +2358,28 @@ app.get("/api/user-status/:username", authenticateToken, async (req, res) => {
 app.post("/api/users-status", authenticateToken, async (req, res) => {
   try {
     const { usernames } = req.body;
-    
+
     if (!usernames || !Array.isArray(usernames)) {
-      return res.status(400).json({ success: false, error: "Usernames array is required" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Usernames array is required" });
     }
 
-    const users = await User.find({ 
-      username: { $in: usernames } 
-    }).select('isOnline lastActive username');
+    const users = await User.find({
+      username: { $in: usernames },
+    }).select("isOnline lastActive username");
 
     const statusMap = {};
-    users.forEach(user => {
+    users.forEach((user) => {
       statusMap[user.username] = {
         isOnline: user.isOnline,
-        lastActive: user.lastActive
+        lastActive: user.lastActive,
       };
     });
 
     res.json({
       success: true,
-      status: statusMap
+      status: statusMap,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
