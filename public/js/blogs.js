@@ -115,28 +115,87 @@ class ToastManager {
 // Initialize toast manager
 const toastManager = new ToastManager();
 
-// Check authentication and load blogs - UPDATED
+// Check authentication and load blogs - UPDATED for unlogged users
 async function initBlogs() {
   const token = localStorage.getItem("authToken");
   const userId = localStorage.getItem("userId");
 
   if (!token || !userId) {
-    document.getElementById("authSection").style.display = "block";
+    // Unlogged user - show public blogs only
+    document.getElementById("unloggedSection").style.display = "block";
+    document.getElementById("blogsContent").style.display = "block";
+    document.body.classList.add("unlogged-user");
+
+    // Initialize search for public blogs
+    initializeBlogsPageSearch();
+
+    // Load only public blogs for unlogged users and update counts
+    await loadPublicBlogs();
+    await updatePublicTabCounts(); // Add this line
     return;
   }
 
+  // Logged in user - show full functionality
   document.getElementById("blogsContent").style.display = "block";
 
-  // Initialize search FIRST
+  // Initialize search
   initializeBlogsPageSearch();
 
-  // Then load blogs
+  // Then load blogs and update counts
   await loadBlogs();
   await updateTabCounts();
 }
 
-// Switch between tabs with smooth animation - UPDATED
+// New function to load public blogs for unlogged users
+async function loadPublicBlogs(page = 1) {
+  try {
+    const url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      displayBlogs(result.blogs);
+      setupPagination(result.currentPage, result.totalPages, result.total);
+
+      // Update the popular count based on actual loaded data
+      const popularBlogsRes = await fetch(
+        `${API_BASE_URL}/blogs/popular?limit=100`
+      );
+      if (popularBlogsRes.ok) {
+        const popularResult = await popularBlogsRes.json();
+        if (popularResult.success) {
+          document.getElementById("popular-blogs-count").textContent =
+            popularResult.blogs?.length || 0;
+        }
+      }
+    } else {
+      console.error("Failed to load public blogs:", result.error);
+    }
+  } catch (error) {
+    console.error("Error loading public blogs:", error);
+  }
+}
+
+// Update switchTab function to handle unlogged users
 async function switchTab(tabName) {
+  const token = localStorage.getItem("authToken");
+  const userId = localStorage.getItem("userId");
+
+  // Unlogged users can only access "all" and "popular" tabs
+  if ((!token || !userId) && tabName === "my-blogs") {
+    toastManager.info(
+      "Please log in to access your personal blogs",
+      "Login Required"
+    );
+    return;
+  }
+
   currentTab = tabName;
   currentPage = 1;
 
@@ -157,7 +216,14 @@ async function switchTab(tabName) {
 
   // Load appropriate blogs after fade out
   setTimeout(async () => {
-    await loadBlogs();
+    if (!token || !userId) {
+      // Unlogged user - only load public blogs
+      await loadPublicBlogs();
+    } else {
+      // Logged in user - load normally
+      await loadBlogs();
+    }
+
     blogsGrid.classList.remove("fade-out");
     blogsGrid.classList.add("fade-in");
 
@@ -237,12 +303,19 @@ async function loadBlogs(page = 1) {
   }
 }
 
-// Update tab counts - FIXED for popular tab
 async function updateTabCounts() {
   try {
     const token = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId");
+    const isLoggedIn = token && userId;
 
-    // Get counts for all tabs
+    if (!isLoggedIn) {
+      // For unlogged users, only get public counts
+      await updatePublicTabCounts();
+      return;
+    }
+
+    // For logged-in users, get all counts as before
     const [allBlogsRes, myBlogsRes, popularBlogsRes] = await Promise.all([
       fetch(`${API_BASE_URL}/blogs/all?limit=1`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -251,7 +324,6 @@ async function updateTabCounts() {
         headers: { Authorization: `Bearer ${token}` },
       }),
       fetch(`${API_BASE_URL}/blogs/popular?limit=100`, {
-        // Increased limit to get accurate count
         headers: { Authorization: `Bearer ${token}` },
       }),
     ]);
@@ -289,6 +361,46 @@ async function updateTabCounts() {
     document.getElementById("all-blogs-count").textContent = "0";
     document.getElementById("my-blogs-count").textContent = "0";
     document.getElementById("popular-blogs-count").textContent = "0";
+  }
+}
+
+// New function to update counts for unlogged users
+async function updatePublicTabCounts() {
+  try {
+    // Get public blogs count
+    const allBlogsRes = await fetch(`${API_BASE_URL}/blogs/all?limit=1`);
+    const popularBlogsRes = await fetch(
+      `${API_BASE_URL}/blogs/popular?limit=100`
+    );
+
+    const [allBlogs, popularBlogs] = await Promise.all([
+      allBlogsRes.ok ? allBlogsRes.json() : { success: false },
+      popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
+    ]);
+
+    // Update public counts
+    if (allBlogs.success) {
+      document.getElementById("all-blogs-count").textContent =
+        allBlogs.total || 0;
+    } else {
+      document.getElementById("all-blogs-count").textContent = "0";
+    }
+
+    if (popularBlogs.success) {
+      document.getElementById("popular-blogs-count").textContent =
+        popularBlogs.blogs?.length || 0;
+    } else {
+      document.getElementById("popular-blogs-count").textContent = "0";
+    }
+
+    // Hide "My Blogs" count for unlogged users or show 0
+    document.getElementById("my-blogs-count").textContent = "0";
+  } catch (error) {
+    console.error("Error updating public tab counts:", error);
+    // Set fallback values
+    document.getElementById("all-blogs-count").textContent = "0";
+    document.getElementById("popular-blogs-count").textContent = "0";
+    document.getElementById("my-blogs-count").textContent = "0";
   }
 }
 
@@ -445,16 +557,8 @@ class BlogsPageSearch {
 
   // Set blog data based on current tab
   setBlogData(blogData, tab = "all") {
-    console.log("BlogsPageSearch: Setting blog data for tab", tab, blogData);
     this.originalBlogsData = Array.isArray(blogData) ? blogData : [];
     this.currentTab = tab;
-    console.log(
-      "BlogsPageSearch: Now has",
-      this.originalBlogsData.length,
-      "blogs in",
-      tab,
-      "tab"
-    );
   }
 
   handleSearchInput(searchTerm) {
@@ -479,9 +583,6 @@ class BlogsPageSearch {
   }
 
   performSearch(searchTerm) {
-    console.log("BlogsPageSearch: Performing search for:", searchTerm);
-    console.log("BlogsPageSearch: Available data:", this.originalBlogsData);
-
     if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
       console.warn("BlogsPageSearch: No blog data available for search");
       this.setSearchingState(false);
@@ -514,19 +615,8 @@ class BlogsPageSearch {
         ? blog.author.toLowerCase().includes(this.currentSearchTerm)
         : false;
 
-      console.log(
-        `Blog "${blog.title}": titleMatch=${titleMatch}, contentMatch=${contentMatch}, tagsMatch=${tagsMatch}, authorMatch=${authorMatch}`
-      );
       return titleMatch || contentMatch || tagsMatch || authorMatch;
     });
-
-    console.log(
-      "BlogsPageSearch: Found",
-      this.filteredBlogsData.length,
-      "results in",
-      this.currentTab,
-      "tab"
-    );
 
     // Update UI with search results
     this.displaySearchResults(this.filteredBlogsData, searchTerm);
@@ -890,26 +980,20 @@ function initializeBlogsPageSearch() {
   blogsPageSearch = new BlogsPageSearch();
 }
 
-// Display blogs in Instagram-style grid with proper layout and animations - FIXED
+// Update displayBlogs to handle unlogged users
 function displayBlogs(blogs) {
   const blogsGrid = document.getElementById("blogsGrid");
   const currentUser = localStorage.getItem("userId");
+  const token = localStorage.getItem("authToken");
+  const isLoggedIn = token && currentUser;
 
   // Store data in search system
   if (blogsPageSearch) {
-    console.log(
-      "Setting blog data for search:",
-      blogs.length,
-      "blogs in",
-      currentTab,
-      "tab"
-    );
     blogsPageSearch.setBlogData(blogs, currentTab);
   }
 
   // If there's an active search, let the search system handle rendering
   if (blogsPageSearch && blogsPageSearch.currentSearchTerm) {
-    console.log("Active search term:", blogsPageSearch.currentSearchTerm);
     return; // Search system will handle rendering
   }
 
@@ -920,7 +1004,9 @@ function displayBlogs(blogs) {
         emptyMessage = "No public blogs available yet.";
         break;
       case "my-blogs":
-        emptyMessage = "You haven't created any blogs yet.";
+        emptyMessage = isLoggedIn
+          ? "You haven't created any blogs yet."
+          : "Please log in to view your blogs.";
         break;
       case "popular":
         emptyMessage = "No popular blogs yet.";
@@ -934,7 +1020,7 @@ function displayBlogs(blogs) {
         <h3>No blogs found</h3>
         <p>${emptyMessage}</p>
         ${
-          currentTab === "my-blogs"
+          currentTab === "my-blogs" && isLoggedIn
             ? '<button class="create-blog-btn-compact" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
             : ""
         }
@@ -956,6 +1042,10 @@ function displayBlogs(blogs) {
 
       // Calculate animation delay for staggered effect
       const animationDelay = `${0.1 * index}s`;
+
+      // For unlogged users, don't show edit buttons and disable likes
+      const showEditButton = isLoggedIn && blog.author === currentUser;
+      const canLike = isLoggedIn && blog.author !== currentUser;
 
       return `
         <div class="blog-card ${cardType}" onclick="viewBlog('${
@@ -1015,7 +1105,7 @@ function displayBlogs(blogs) {
               
               <div class="blog-actions">
                 ${
-                  blog.author === currentUser
+                  showEditButton
                     ? `
                   <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
                     <span class="action-icon">✏️</span>
@@ -1024,21 +1114,21 @@ function displayBlogs(blogs) {
                     : ""
                 }
                 <button class="blog-action-btn like-btn ${
-                  blog.likedBy &&
-                  blog.likedBy.includes(currentUser) &&
-                  blog.author !== currentUser
+                  blog.likedBy && blog.likedBy.includes(currentUser) && canLike
                     ? "liked"
                     : ""
                 } 
-                           ${blog.author === currentUser ? "disabled" : ""}" 
+                           ${!canLike ? "disabled" : ""}" 
                         onclick="event.stopPropagation(); ${
-                          blog.author !== currentUser
+                          canLike
                             ? `toggleLike('${blog.slug}', event)`
-                            : ""
+                            : "void(0)"
                         }"
-                        ${blog.author === currentUser ? "disabled" : ""}
+                        ${!canLike ? "disabled" : ""}
                         title="${
-                          blog.author === currentUser
+                          !isLoggedIn
+                            ? "Please log in to like blogs"
+                            : !canLike
                             ? "Cannot like your own blog"
                             : blog.likedBy && blog.likedBy.includes(currentUser)
                             ? "Unlike blog"
@@ -1087,6 +1177,14 @@ function setupPagination(currentPage, totalPages, total) {
 
 // Toggle like on a blog - FIXED VERSION with proper pagination preservation
 async function toggleLike(slug, event) {
+  const token = localStorage.getItem("authToken");
+  const currentUser = localStorage.getItem("userId");
+
+  if (!token || !currentUser) {
+    toastManager.info("Please log in to like blogs", "Login Required");
+    return;
+  }
+
   // Ensure event is properly passed and prevent default behavior
   if (event) {
     event.preventDefault();
