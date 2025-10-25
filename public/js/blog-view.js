@@ -1,9 +1,9 @@
 // Get blog slug from URL
 const pathSegments = window.location.pathname.split("/");
 const blogSlug = pathSegments[pathSegments.length - 1];
-const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+const API_BASE_URL = "http://localhost:3000/api";
 
-const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
+const FRONTEND_URL = "http://localhost:3000";
 
 document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs`;
 document.getElementById("tracker-link").href = `${FRONTEND_URL}/`;
@@ -1185,7 +1185,7 @@ window.shareBlog = async function () {
   }
 };
 
-// Enhanced blog content loader with user detection
+// Enhanced blog content loader with user detection - UPDATED for public access
 async function loadBlogWithMarkdown() {
   try {
     const token = localStorage.getItem("authToken");
@@ -1194,10 +1194,9 @@ async function loadBlogWithMarkdown() {
     // Ensure user data is loaded
     await ensureUserDataLoaded();
 
-    // Track view first
+    // Track view first - works for all users
     await fetch(`${API_BASE_URL}/blogs/${blogSlug}/view`, {
-      method: "POST",
-      headers: headers,
+      method: 'POST'
     }).catch((err) => console.error("View tracking failed:", err));
 
     const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
@@ -1376,16 +1375,11 @@ function setupBlogHeaderActions(blog) {
   headerActionsContainer.style.flexWrap = "wrap";
 }
 
-// Load popular blogs based on current blog's tags
+// Load popular blogs based on current blog's tags - UPDATED for public access
 async function loadPopularBlogs(currentBlogTags) {
   try {
-    const token = localStorage.getItem("authToken");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    // Get popular blogs
-    const response = await fetch(`${API_BASE_URL}/blogs/popular?limit=5`, {
-      headers,
-    });
+    // Remove authentication requirement - call without headers
+    const response = await fetch(`${API_BASE_URL}/blogs/popular?limit=5`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1552,7 +1546,7 @@ async function deleteBlog(slug) {
     if (result.success) {
       toastManager.success("Blog deleted successfully!", "Blog Deleted");
       setTimeout(() => {
-        window.location.href = "https://focus-flow-lopn.onrender.com/blogs";
+        window.location.href = "http://localhost:3000/blogs";
       }, 1500);
     } else {
       toastManager.error(result.error, "Delete Failed");
@@ -1888,7 +1882,7 @@ class CommentsManager {
   }
 
   setupSocketConnection() {
-    this.socket = io("https://focus-flow-lopn.onrender.com");
+    this.socket = io("http://localhost:3000");
     this.socket.emit("join-blog", this.blogSlug);
 
     // Real-time event listeners

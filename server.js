@@ -16,7 +16,7 @@ const JWT_SECRET =
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://focus-flow-lopn.onrender.com",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
@@ -1382,7 +1382,7 @@ app.get("/api/social-links/:username", async (req, res) => {
 
 // ========== BLOG API ROUTES ==========
 // Get all public blogs (for "All Blogs" tab)
-// Track blog views - ADD THIS ROUTE
+// Track blog views - UPDATED for public access
 app.post("/api/blogs/:slug/view", async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug });
@@ -1391,7 +1391,7 @@ app.post("/api/blogs/:slug/view", async (req, res) => {
       return res.status(404).json({ success: false, error: "Blog not found" });
     }
 
-    // Increment view count
+    // Increment view count for all users
     blog.views = (blog.views || 0) + 1;
     await blog.save();
 
@@ -1405,7 +1405,7 @@ app.post("/api/blogs/:slug/view", async (req, res) => {
 });
 
 // Get popular blogs based on popularity score (likes + views) - MOVED HERE
-app.get("/api/blogs/popular", authenticateToken, async (req, res) => {
+app.get("/api/blogs/popular", async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
