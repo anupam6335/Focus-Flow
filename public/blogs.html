@@ -23,8 +23,27 @@
 
       <div id="authSection" style="display: none">
         <div class="auth-required">
-          <h3>Please log in to access blogs</h3>
-          <p>You need to be logged in to read and create blogs.</p>
+          <h3>Welcome to FocusFlow Blogs</h3>
+          <p>
+            You're viewing public blogs. Please log in to create your own blog
+            and share your knowledge with everyone, and to access advanced
+            features.
+          </p>
+          <button class="login-btn" onclick="window.location.href='/'">
+            Go to Login
+          </button>
+        </div>
+      </div>
+
+      <!-- Add this new section for unlogged users -->
+      <div id="unloggedSection" style="display: none">
+        <div class="unlogged-message">
+          <h3>Welcome to FocusFlow Blogs</h3>
+          <p>
+            You're viewing public blogs. Please log in to create your own blog
+            and share your knowledge with everyone, and to access advanced
+            features.
+          </p>
           <button class="login-btn" onclick="window.location.href='/'">
             Go to Login
           </button>
