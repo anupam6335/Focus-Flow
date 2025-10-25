@@ -1401,22 +1401,13 @@ app.post("/api/blogs/:slug/view", async (req, res) => {
   }
 });
 
-// Get popular blogs based on popularity score (likes + views) - MOVED HERE
+// Get popular blogs (works without authentication)
 app.get("/api/blogs/popular", async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
-    let query = { isPublic: true };
-
-    // If user is authenticated, also show their private blogs
-    if (req.user) {
-      query = {
-        $or: [
-          { isPublic: true },
-          { author: req.user.username, isPublic: false },
-        ],
-      };
-    }
+    // Only show public blogs for unauthenticated users
+    const query = { isPublic: true };
 
     const blogs = await Blog.find(query).select(
       "title slug author isPublic tags likes likedBy views createdAt updatedAt content"
@@ -1440,9 +1431,8 @@ app.get("/api/blogs/popular", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
-// Get all public blogs (for "All Blogs" tab) - UPDATED to include views
-app.get("/api/blogs/all", authenticateToken, async (req, res) => {
+// Get all public blogs (works without authentication)
+app.get("/api/blogs/all", async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
@@ -1455,7 +1445,7 @@ app.get("/api/blogs/all", authenticateToken, async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .select(
-        "title slug author isPublic tags createdAt updatedAt content likes likedBy views" // ADD views here
+        "title slug author isPublic tags createdAt updatedAt content likes likedBy views"
       );
 
     const total = await Blog.countDocuments(query);
