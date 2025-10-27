@@ -35,10 +35,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 // User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true }, // NEW: Email field
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  lastActive: { type: Date, default: Date.now }, // NEW: Add last active tracking
-  isOnline: { type: Boolean, default: false }, // NEW: Add online status
+  lastActive: { type: Date, default: Date.now },
+  isOnline: { type: Boolean, default: false },
+  emailVerified: { type: Boolean, default: false }, // NEW: Email verification status
 });
 
 const checklistDataSchema = new mongoose.Schema({
@@ -177,6 +179,34 @@ const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ success: false, error: "Invalid token" });
   }
 };
+
+// Add email service configuration at the top (after other requires)
+const nodemailer = require("nodemailer");
+
+// Enhanced Email Configuration with Better Gmail Settings
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  // Additional settings for better reliability
+  pool: true, // Use connection pooling
+  maxConnections: 1,
+  maxMessages: 10,
+  rateDelta: 1000,
+  rateLimit: 5,
+});
+
+// Enhanced email verification
+emailTransporter.verify((error, success) => {
+  if (error) {
+    console.log("❌ Email configuration error:", error.message);
+  } else {
+    console.log("✅ Email server is ready to send messages");
+    console.log("📧 Using email:", process.env.EMAIL_USER);
+  }
+});
 
 // Enhanced Socket.io connection handling with stable online status
 const connectedUsers = new Map(); // Track connected users and their sockets
@@ -333,15 +363,16 @@ setInterval(() => {
 }, 30000); // Check every 30 seconds
 // ========== API ROUTES ==========
 
-// User registration
+// User registration - UPDATED with email
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body; // NEW: Added email
 
-    if (!username || !password) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Username and password required" });
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Username, email and password required",
+      });
     }
 
     if (username.length < 3) {
@@ -358,12 +389,33 @@ app.post("/api/register", async (req, res) => {
       });
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: "Please enter a valid email address",
+      });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Username already exists" });
+      if (existingUser.username === username) {
+        return res.status(400).json({
+          success: false,
+          error: "Username already exists",
+        });
+      }
+      if (existingUser.email === email) {
+        return res.status(400).json({
+          success: false,
+          error: "Email already registered",
+        });
+      }
     }
 
     // Hash password
@@ -372,8 +424,9 @@ app.post("/api/register", async (req, res) => {
     // Create user
     const user = new User({
       username,
+      email, // NEW: Save email
       password: hashedPassword,
-      createdAt: new Date(), // Explicitly set creation timestamp
+      createdAt: new Date(),
     });
 
     await user.save();
@@ -386,11 +439,201 @@ app.post("/api/register", async (req, res) => {
       version: 1,
     });
 
-    res.json({ success: true, message: "User registered successfully" });
+    // Send welcome email (optional)
+    // Send enhanced welcome email (optional)
+    try {
+      await emailTransporter.sendMail({
+        from: {
+          name: "FocusFlow Team",
+          address: process.env.EMAIL_USER,
+        },
+        to: email,
+        subject: "🎉 Welcome to FocusFlow - Your Coding Journey Begins Here!",
+        html: createWelcomeEmailTemplate(username),
+      });
+    } catch (emailError) {
+      console.log("Welcome email failed to send:", emailError);
+      // Don't fail registration if email fails
+    }
+
+    res.json({
+      success: true,
+      message: "User registered successfully",
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Enhanced welcome email template
+const createWelcomeEmailTemplate = (username) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          line-height: 1.6; 
+          color: #333; 
+          max-width: 600px; 
+          margin: 0 auto; 
+          padding: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container { 
+          background: white; 
+          border-radius: 15px; 
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header { 
+          background: linear-gradient(135deg, #58a6ff, #1f6feb);
+          color: white; 
+          padding: 40px 30px; 
+          text-align: center; 
+        }
+        .header h1 { 
+          margin: 0; 
+          font-size: 2.5rem; 
+          font-weight: 300;
+        }
+        .header p { 
+          margin: 10px 0 0 0; 
+          font-size: 1.2rem;
+          opacity: 0.9;
+        }
+        .content { 
+          padding: 40px 30px; 
+          background: #f8f9fa;
+        }
+        .welcome-message {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          margin-bottom: 25px;
+          border-left: 4px solid #58a6ff;
+        }
+        .cta-section {
+          text-align: center;
+          margin: 30px 0;
+        }
+        .cta-button {
+          display: inline-block;
+          background: linear-gradient(135deg, #58a6ff, #1f6feb);
+          color: white;
+          padding: 15px 30px;
+          text-decoration: none;
+          border-radius: 25px;
+          font-weight: bold;
+          font-size: 1.1rem;
+          transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+          transform: translateY(-2px);
+        }
+        .features {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 15px;
+          margin: 25px 0;
+        }
+        .feature {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid #e1e4e8;
+        }
+        .feature-icon {
+          font-size: 2rem;
+          margin-bottom: 10px;
+        }
+        .inspiration {
+          background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+          padding: 25px;
+          border-radius: 10px;
+          margin: 25px 0;
+          text-align: center;
+          border-left: 4px solid #f0c33c;
+        }
+        .footer { 
+          text-align: center; 
+          margin-top: 30px; 
+          padding-top: 20px; 
+          border-top: 1px solid #ddd; 
+          font-size: 0.9rem; 
+          color: #666; 
+        }
+        .heart { color: #e25555; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎉 Welcome to FocusFlow!</h1>
+          <p>Your coding journey begins here</p>
+        </div>
+        
+        <div class="content">
+          <div class="welcome-message">
+            <h2>Hello <strong>${username}</strong>! 👋</h2>
+            <p>We're absolutely thrilled to welcome you to the <strong>FocusFlow</strong> community! This is more than just an app – it's your personal companion on the incredible journey of mastering Data Structures and Algorithms.</p>
+            
+            <p>Remember, every expert was once a beginner. Your decision to start this journey today is the first step toward becoming the developer you aspire to be. 🚀</p>
+          </div>
+
+          <div class="inspiration">
+            <h3>🌟 Words to Code By</h3>
+            <p><em>"The beautiful thing about learning is that no one can take it away from you."</em></p>
+            <p>Every problem you solve, every concept you master – it all adds up. You've got this! 💪</p>
+          </div>
+
+          <div class="features">
+            <div class="feature">
+              <div class="feature-icon">📈</div>
+              <h4>Track Progress</h4>
+              <p>Watch your skills grow day by day</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">🔥</div>
+              <h4>Build Streaks</h4>
+              <p>Stay consistent and motivated</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">📊</div>
+              <h4>Visual Analytics</h4>
+              <p>See your improvement in real-time</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">👥</div>
+              <h4>Join Community</h4>
+              <p>You're not alone in this journey</p>
+            </div>
+          </div>
+
+          <div class="cta-section">
+            <p>Ready to start your coding adventure?</p>
+            <a href="https://focus-flow-lopn.onrender.com" class="cta-button">Start Your Journey Now</a>
+          </div>
+
+          <div style="text-align: center; margin: 25px 0;">
+            <p><strong>Your first mission:</strong> Complete Day 1 and set the tone for your success! 🎯</p>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>With love and support, <span class="heart">❤️</span></p>
+          <p><strong>The FocusFlow Team</strong></p>
+          <p>P.S. Remember, consistency beats intensity. One problem a day keeps Imposter Syndrome away! 😊</p>
+          <p>&copy; 2024 FocusFlow. Empowering developers, one commit at a time.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
 
 // User login
 app.post("/api/login", async (req, res) => {
@@ -1160,24 +1403,28 @@ app.post("/api/activity-tracker", authenticateToken, async (req, res) => {
   }
 });
 
-// Forgot Password - Send Reset Code
+// Forgot Password - UPDATED to accept username OR email
 app.post("/api/forgot-password", async (req, res) => {
   try {
-    const { username } = req.body;
+    const { userInput } = req.body; // Changed from username to userInput
 
-    if (!username) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Username is required" });
+    if (!userInput) {
+      return res.status(400).json({
+        success: false,
+        error: "Username or email is required",
+      });
     }
 
-    // Check if user exists
-    const user = await User.findOne({ username });
+    // Check if user exists by username OR email
+    const user = await User.findOne({
+      $or: [{ username: userInput }, { email: userInput }],
+    });
+
     if (!user) {
       // Return success even if user doesn't exist for security
       return res.json({
         success: true,
-        message: "If the username exists, a reset code has been sent",
+        message: "If the username/email exists, a reset code has been sent",
       });
     }
 
@@ -1186,31 +1433,241 @@ app.post("/api/forgot-password", async (req, res) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Delete any existing reset codes for this user
-    await PasswordReset.deleteMany({ username });
+    await PasswordReset.deleteMany({ username: user.username });
 
     // Create new reset code
     await PasswordReset.create({
-      username,
+      username: user.username, // Always store by username
       resetCode,
       expiresAt,
     });
 
-    // console.log(`Password reset code for ${username}: ${resetCode}`);
+    // Create enhanced email content
+    const mailOptions = {
+      from: {
+        name: "FocusFlow Security",
+        address: process.env.EMAIL_USER,
+      },
+      to: user.email,
+      subject: "🔐 FocusFlow Password Reset - Your Security Code Inside",
+      html: createResetEmailTemplate(user.username, resetCode),
+      text: `FocusFlow Password Reset\n\nHello ${user.username},\n\nWe received a password reset request for your FocusFlow account.\n\nYour reset code is: ${resetCode}\n\nThis code expires in 15 minutes for security reasons.\n\nIf you didn't request this reset, please ignore this email - your account remains secure.\n\nBest regards,\nThe FocusFlow Security Team`,
+    };
 
-    res.json({
-      success: true,
-      message: "If the username exists, a reset code has been sent",
-      demoCode: resetCode, // Remove this in production
-    });
+    // Send email with detailed error handling
+    try {
+      const emailResponse = await emailTransporter.sendMail(mailOptions);
+
+      // Success response
+      // In the forgot password endpoint, update the success response:
+      res.json({
+        success: true,
+        message: "A reset code has been sent to your email",
+        emailSent: true,
+        username: user.username, // ADD THIS LINE - return the actual username
+        demoCode:
+          process.env.NODE_ENV === "development" ? resetCode : undefined,
+      });
+    } catch (emailError) {
+      console.error("❌ EMAIL SENDING FAILED:", emailError);
+
+      // Still return success but indicate email failed
+      res.json({
+        success: true,
+        message: "Reset code generated",
+        emailSent: false,
+        demoCode: resetCode, // Always return the code
+        error: "Email delivery failed - using demo mode",
+      });
+    }
   } catch (error) {
-    console.error("Forgot password error:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Failed to process request" });
+    console.error("💥 FORGOT PASSWORD ERROR:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
 });
 
-// Reset Password with Code
+// Enhanced password reset email template
+const createResetEmailTemplate = (username, resetCode) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          line-height: 1.6; 
+          color: #333; 
+          max-width: 600px; 
+          margin: 0 auto; 
+          padding: 20px;
+          background: #f5f5f5;
+        }
+        .container { 
+          background: white; 
+          border-radius: 12px; 
+          overflow: hidden;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .header { 
+          background: linear-gradient(135deg, #58a6ff, #1f6feb);
+          color: white; 
+          padding: 30px; 
+          text-align: center; 
+        }
+        .header h1 { 
+          margin: 0; 
+          font-size: 2rem; 
+          font-weight: 300;
+        }
+        .content { 
+          padding: 35px 30px; 
+        }
+        .security-notice {
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+          border-left: 4px solid #f0c33c;
+        }
+        .code-container {
+          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          padding: 25px;
+          text-align: center;
+          margin: 25px 0;
+          border-radius: 10px;
+          border: 2px dashed #58a6ff;
+        }
+        .reset-code {
+          font-size: 2.5rem;
+          font-weight: bold;
+          letter-spacing: 8px;
+          color: #1f6feb;
+          font-family: 'Courier New', monospace;
+          margin: 15px 0;
+        }
+        .instructions {
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .steps {
+          margin: 20px 0;
+        }
+        .step {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 15px;
+        }
+        .step-number {
+          background: #58a6ff;
+          color: white;
+          width: 25px;
+          height: 25px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 15px;
+          flex-shrink: 0;
+        }
+        .support-section {
+          text-align: center;
+          margin: 30px 0 20px 0;
+          padding: 20px;
+          background: #e7f3ff;
+          border-radius: 8px;
+        }
+        .footer { 
+          text-align: center; 
+          margin-top: 25px; 
+          padding-top: 20px; 
+          border-top: 1px solid #e1e4e8; 
+          font-size: 0.85rem; 
+          color: #666; 
+        }
+        .urgency {
+          color: #d73a49;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔐 Password Reset Request</h1>
+          <p>FocusFlow Account Security</p>
+        </div>
+        
+        <div class="content">
+          <h2>Hello ${username},</h2>
+          <p>We received a request to reset your FocusFlow account password. No worries – we're here to help you get back on track with your coding journey!</p>
+
+          <div class="security-notice">
+            <h3>🛡️ Security Notice</h3>
+            <p>For your protection, please verify that you initiated this request. If you didn't request a password reset, you can safely ignore this email – your account remains secure.</p>
+          </div>
+
+          <div class="code-container">
+            <h3 style="margin-top: 0; color: #1f6feb;">Your Reset Code</h3>
+            <div class="reset-code">${resetCode}</div>
+            <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: #666;">
+              Expires in <span class="urgency">15 minutes</span>
+            </p>
+          </div>
+
+          <div class="instructions">
+            <h3>📝 How to Reset Your Password</h3>
+            <div class="steps">
+              <div class="step">
+                <div class="step-number">1</div>
+                <div>Return to FocusFlow and navigate to the password reset page</div>
+              </div>
+              <div class="step">
+                <div class="step-number">2</div>
+                <div>Enter your username: <strong>${username}</strong></div>
+              </div>
+              <div class="step">
+                <div class="step-number">3</div>
+                <div>Enter the reset code above</div>
+              </div>
+              <div class="step">
+                <div class="step-number">4</div>
+                <div>Create your new password and you're all set!</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="support-section">
+            <h3>❓ Need Help?</h3>
+            <p>If you're having trouble or have any questions, our support team is here to help. Just reply to this email and we'll assist you promptly.</p>
+          </div>
+
+          <p style="text-align: center; margin: 25px 0;">
+            <strong>We're excited to have you continue your coding journey with us! 🚀</strong>
+          </p>
+        </div>
+
+        <div class="footer">
+          <p><strong>Best regards,</strong></p>
+          <p><strong>The FocusFlow Security Team</strong></p>
+          <p>&copy; 2024 FocusFlow. Keeping your coding journey secure and uninterrupted.</p>
+          <p style="font-size: 0.8rem; margin-top: 10px;">
+            This is an automated message. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Reset Password with Code - FIXED VERSION
 app.post("/api/reset-password", async (req, res) => {
   try {
     const { username, resetCode, newPassword } = req.body;
@@ -1222,32 +1679,48 @@ app.post("/api/reset-password", async (req, res) => {
       });
     }
 
-    if (newPassword.length < 4) {
-      return res.status(400).json({
-        success: false,
-        error: "Password must be at least 4 characters long",
-      });
-    }
-
     // Find valid reset code
     const resetRecord = await PasswordReset.findOne({
-      username,
-      resetCode,
+      username: username,
+      resetCode: resetCode.toString().trim(), // Ensure string comparison
       expiresAt: { $gt: new Date() },
       used: false,
     });
 
     if (!resetRecord) {
+      // Check what exactly is wrong
+      const expiredRecord = await PasswordReset.findOne({
+        username: username,
+        resetCode: resetCode.toString().trim(),
+      });
+
+      if (expiredRecord) {
+        if (expiredRecord.used) {
+          return res.status(400).json({
+            success: false,
+            error: "Reset code has already been used",
+          });
+        } else if (expiredRecord.expiresAt <= new Date()) {
+          return res.status(400).json({
+            success: false,
+            error: "Reset code has expired",
+          });
+        }
+      }
+
       return res.status(400).json({
         success: false,
-        error: "Invalid or expired reset code",
+        error: "Invalid reset code",
       });
     }
 
     // Find user
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).json({ success: false, error: "User not found" });
+      return res.status(400).json({
+        success: false,
+        error: "User not found",
+      });
     }
 
     // Hash new password
@@ -1267,8 +1740,11 @@ app.post("/api/reset-password", async (req, res) => {
       message: "Password reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ success: false, error: "Failed to reset password" });
+    console.error("💥 RESET PASSWORD ERROR:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to reset password",
+    });
   }
 });
 
@@ -2370,6 +2846,27 @@ app.post("/api/users-status", authenticateToken, async (req, res) => {
     res.json({
       success: true,
       status: statusMap,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Add this endpoint to check user data
+app.get("/api/debug-user/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.json({ success: false, error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        username: user.username,
+        email: user.email,
+        hasEmail: !!user.email,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

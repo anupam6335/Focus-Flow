@@ -432,8 +432,6 @@ function formatDateForDisplay(dateString) {
 
 // Add this function to verify the date change
 function verifyDateChange() {
-  
-
   // Test with a specific day
   const testDay = 1;
   console.log(`📊 Is day ${testDay} editable?`, isEditable(testDay));
@@ -799,22 +797,19 @@ async function handleLogin() {
       // Show immediate sync status
       updateSyncStatus("synced", "Data loaded successfully");
 
-        // NEW: Check if we have a return URL stored
-  const returnUrl = localStorage.getItem('returnUrl');
-  if (returnUrl && returnUrl !== window.location.href) {
-    localStorage.removeItem('returnUrl');
-    setTimeout(() => {
-      window.location.href = returnUrl;
-    }, 1000);
-    return; // Stop further execution
-  }
+      // NEW: Check if we have a return URL stored
+      const returnUrl = localStorage.getItem("returnUrl");
+      if (returnUrl && returnUrl !== window.location.href) {
+        localStorage.removeItem("returnUrl");
+        setTimeout(() => {
+          window.location.href = returnUrl;
+        }, 1000);
+        return; // Stop further execution
+      }
       // Force a sync to ensure we have the latest data
       setTimeout(() => {
         syncWithMongoDB();
       }, 1000);
-
-
-
     } else {
       toastManager.error(result.error || "Login failed", "Login Error");
     }
@@ -828,18 +823,25 @@ async function handleLogin() {
   }
 }
 
-// Handle user registration
+// Handle user registration - UPDATED with email
 async function handleRegister() {
   const username = regUsernameInput.value.trim();
+  const email = document.getElementById("regEmailInput").value.trim(); // NEW: Get email
   const password = regPasswordInput.value.trim();
   const confirmPassword = regConfirmPasswordInput.value.trim();
 
-  if (!username || !password) {
+  if (!username || !email || !password) {
     toastManager.warning(
-      "Please enter both username and password",
+      "Please enter username, email and password",
       "Registration"
     );
+    return;
+  }
 
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    toastManager.warning("Please enter a valid email address", "Invalid Email");
     return;
   }
 
@@ -853,17 +855,20 @@ async function handleRegister() {
       "Password must be at least 4 characters long",
       "Password Requirement"
     );
-
     return;
   }
 
   try {
+    // Show loading state
+    registerBtn.textContent = "Registering...";
+    registerBtn.disabled = true;
+
     const response = await fetch(`${API_BASE_URL}/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, email, password }), // NEW: Include email
     });
 
     const result = await response.json();
@@ -874,6 +879,7 @@ async function handleRegister() {
         "Welcome!"
       );
       regUsernameInput.value = "";
+      document.getElementById("regEmailInput").value = ""; // NEW: Clear email
       regPasswordInput.value = "";
       regConfirmPasswordInput.value = "";
       registerForm.style.display = "none";
@@ -890,6 +896,10 @@ async function handleRegister() {
       "Registration failed. Please try again.",
       "Network Error"
     );
+  } finally {
+    // Reset button state
+    registerBtn.textContent = "Register";
+    registerBtn.disabled = false;
   }
 }
 
@@ -936,12 +946,14 @@ function showForgotPasswordForm() {
   confirmNewPasswordInput.value = "";
 }
 
-// Handle send reset code
-async function handleSendResetCode() {
-  const username = forgotUsernameInput.value.trim();
+// Global variable to store the username for reset
+let resetUsername = "";
 
-  if (!username) {
-    toastManager.warning("Please enter your username", "Username Required");
+async function handleSendResetCode() {
+  const userInput = forgotUsernameInput.value.trim();
+
+  if (!userInput) {
+    toastManager.warning("Please enter your username or email", "Required");
     return;
   }
 
@@ -949,33 +961,50 @@ async function handleSendResetCode() {
     sendResetCodeBtn.textContent = "Sending...";
     sendResetCodeBtn.disabled = true;
 
+    console.log(`🔄 Sending reset code for: ${userInput}`);
+
     const response = await fetch(`${API_BASE_URL}/forgot-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ userInput }),
     });
 
     const result = await response.json();
+    console.log("📨 Server response:", result);
 
     if (result.success) {
-      toastManager.success(result.message, "Reset Code Sent", 5000);
+      // Store the username for later use in reset
+      resetUsername = result.username || userInput;
+      console.log(`💾 Stored username for reset: ${resetUsername}`);
+
+      let message = result.message || "Reset code processed";
+
+      if (result.emailSent) {
+        toastManager.success(
+          "Reset code sent to your email!",
+          "Check Your Email",
+          5000
+        );
+      } else if (result.demoCode) {
+        message = "Email delivery failed - use code below";
+        toastManager.info(
+          `Reset Code: ${result.demoCode}`,
+          "Use This Code",
+          15000
+        );
+      }
 
       // Show reset code section
       resetCodeSection.style.display = "block";
-
-      // For demo purposes - show the code (remove this in production)
-      if (result.demoCode) {
-        toastManager.info(`OTP reset code: ${result.demoCode}`, "OTP", 10000);
-      }
     } else {
-      toastManager.error(result.error, "Error");
+      toastManager.error(result.error || "Failed to send reset code", "Error");
     }
   } catch (error) {
     console.error("Send reset code error:", error);
     toastManager.error(
-      "Failed to send reset code. Please try again.",
+      "Network error. Please check connection.",
       "Network Error"
     );
   } finally {
@@ -984,14 +1013,24 @@ async function handleSendResetCode() {
   }
 }
 
-// Handle reset password - FIXED VERSION
 async function handleResetPassword() {
-  const username = forgotUsernameInput.value.trim();
   const resetCode = resetCodeInput.value.trim();
   const newPassword = newPasswordInput.value.trim();
   const confirmPassword = confirmNewPasswordInput.value.trim();
 
-  if (!username || !resetCode || !newPassword || !confirmPassword) {
+  console.log("🔄 Reset password attempt:", {
+    username: resetUsername, // Use the stored username
+    resetCode: resetCode,
+    newPasswordLength: newPassword.length,
+    confirmPasswordLength: confirmPassword.length,
+  });
+
+  if (!resetUsername) {
+    toastManager.warning("Please request a reset code first", "Reset Required");
+    return;
+  }
+
+  if (!resetCode || !newPassword || !confirmPassword) {
     toastManager.warning("Please fill in all fields", "All Fields Required");
     return;
   }
@@ -1019,13 +1058,14 @@ async function handleResetPassword() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username,
-        resetCode,
-        newPassword,
+        username: resetUsername, // Use the stored username, not the input field
+        resetCode: resetCode,
+        newPassword: newPassword,
       }),
     });
 
     const result = await response.json();
+    console.log("📨 Reset password response:", result);
 
     if (result.success) {
       toastManager.success(
@@ -1033,15 +1073,9 @@ async function handleResetPassword() {
         "Password Reset"
       );
 
-      // FIX: Automatically show login form and clear reset form
-      showLoginForm(); // This will hide the forgot password form
-
-      // Clear the reset form fields
-      forgotUsernameInput.value = "";
-      resetCodeInput.value = "";
-      newPasswordInput.value = "";
-      confirmNewPasswordInput.value = "";
-      resetCodeSection.style.display = "none";
+      // Clear everything and show login
+      showLoginForm();
+      resetUsername = ""; // Clear the stored username
     } else {
       toastManager.error(result.error, "Reset Failed");
     }
@@ -1056,7 +1090,6 @@ async function handleResetPassword() {
     resetPasswordBtn.disabled = false;
   }
 }
-
 // Load data from localStorage and MongoDB - OPTIMIZED VERSION
 async function loadData() {
   // Load sync state from localStorage
@@ -2027,7 +2060,6 @@ async function syncWithMongoDB() {
 
       // Check if server has newer data
       if (serverVersion > currentVersion) {
-       
         appData = result.data;
         currentVersion = serverVersion;
         lastUpdated = serverLastUpdated;
@@ -2058,7 +2090,6 @@ async function syncWithMongoDB() {
       }
     }
   } catch (error) {
-    
     updateSyncStatus("offline", "Working offline");
 
     if (!error.message.includes("Failed to fetch")) {
