@@ -183,31 +183,91 @@ const authenticateToken = async (req, res, next) => {
 // Add email service configuration at the top (after other requires)
 const nodemailer = require("nodemailer");
 
-// Enhanced Email Configuration with Better Gmail Settings
+// Enhanced Email Configuration for Production
 const emailTransporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS, // Use App Password, not regular password
   },
-  // Additional settings for better reliability
-  pool: true, // Use connection pooling
-  maxConnections: 1,
-  maxMessages: 10,
-  rateDelta: 1000,
-  rateLimit: 5,
+  // Production-specific settings
+  pool: true,
+  maxConnections: 3,
+  maxMessages: 50,
+  rateDelta: 2000,
+  rateLimit: 10,
+  // Enhanced security and timeout settings
+  secure: true,
+  requireTLS: true,
+  tls: {
+    rejectUnauthorized: false // Important for Render's network
+  },
+  connectionTimeout: 30000, // 30 seconds
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
+  debug: process.env.NODE_ENV === 'development', // Debug only in development
+  logger: process.env.NODE_ENV === 'development'
 });
 
-// Enhanced email verification
+// Enhanced email verification with better error handling
 emailTransporter.verify((error, success) => {
   if (error) {
-    console.log("❌ Email configuration error:", error.message);
+    console.log("❌ Email configuration error:", {
+      message: error.message,
+      code: error.code,
+      command: error.command
+    });
+    
+    // Check for common issues
+    if (error.code === 'EAUTH') {
+      console.log("🔐 Authentication failed - check email credentials");
+    } else if (error.code === 'ECONNECTION') {
+      console.log("🌐 Connection failed - check network/firewall settings");
+    }
   } else {
     console.log("✅ Email server is ready to send messages");
     console.log("📧 Using email:", process.env.EMAIL_USER);
   }
 });
 
+
+// Email error handling middleware
+const handleEmailError = (error, context) => {
+  console.error(`❌ Email ${context} failed:`, {
+    message: error.message,
+    code: error.code,
+    response: error.response,
+    command: error.command
+  });
+
+  // Don't crash the app on email errors
+  return {
+    success: false,
+    error: `Email ${context} failed`,
+    emailSent: false
+  };
+};
+
+// Email retry mechanism
+const sendEmailWithRetry = async (mailOptions, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`📧 Attempt ${attempt} to send email...`);
+      const result = await emailTransporter.sendMail(mailOptions);
+      console.log(`✅ Email sent successfully on attempt ${attempt}`);
+      return { success: true, emailSent: true, result };
+    } catch (error) {
+      console.log(`❌ Email attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === retries) {
+        return handleEmailError(error, 'send');
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+};
 // Enhanced Socket.io connection handling with stable online status
 const connectedUsers = new Map(); // Track connected users and their sockets
 
@@ -440,21 +500,35 @@ app.post("/api/register", async (req, res) => {
     });
 
     // Send welcome email (optional)
-    // Send enhanced welcome email (optional)
-    try {
-      await emailTransporter.sendMail({
-        from: {
-          name: "FocusFlow Team",
-          address: process.env.EMAIL_USER,
-        },
-        to: email,
-        subject: "🎉 Welcome to FocusFlow - Your Coding Journey Begins Here!",
-        html: createWelcomeEmailTemplate(username),
-      });
-    } catch (emailError) {
-      console.log("Welcome email failed to send:", emailError);
-      // Don't fail registration if email fails
+    // In the registration endpoint, replace the welcome email section with:
+try {
+  const welcomeMailOptions = {
+    from: {
+      name: "FocusFlow Team",
+      address: process.env.EMAIL_USER,
+    },
+    to: email,
+    subject: "🎉 Welcome to FocusFlow - Your Coding Journey Begins Here!",
+    html: createWelcomeEmailTemplate(username),
+    headers: {
+      'X-Priority': '1',
+      'X-MSMail-Priority': 'High',
+      'Importance': 'high'
     }
+  };
+
+  const emailResult = await sendEmailWithRetry(welcomeMailOptions);
+  
+  if (emailResult.success) {
+    console.log(`✅ Welcome email sent to ${email}`);
+  } else {
+    console.log(`❌ Welcome email failed for ${email}`);
+    // Don't fail registration if email fails
+  }
+} catch (emailError) {
+  console.log("Welcome email failed:", emailError);
+  // Don't fail registration if email fails
+}
 
     res.json({
       success: true,
@@ -1403,10 +1477,10 @@ app.post("/api/activity-tracker", authenticateToken, async (req, res) => {
   }
 });
 
-// Forgot Password - UPDATED to accept username OR email
+// Forgot Password - ENHANCED with better error handling
 app.post("/api/forgot-password", async (req, res) => {
   try {
-    const { userInput } = req.body; // Changed from username to userInput
+    const { userInput } = req.body;
 
     if (!userInput) {
       return res.status(400).json({
@@ -1415,6 +1489,8 @@ app.post("/api/forgot-password", async (req, res) => {
       });
     }
 
+    console.log(`🔄 Password reset requested for: ${userInput}`);
+
     // Check if user exists by username OR email
     const user = await User.findOne({
       $or: [{ username: userInput }, { email: userInput }],
@@ -1422,11 +1498,14 @@ app.post("/api/forgot-password", async (req, res) => {
 
     if (!user) {
       // Return success even if user doesn't exist for security
+      console.log(`👤 User not found: ${userInput}`);
       return res.json({
         success: true,
         message: "If the username/email exists, a reset code has been sent",
       });
     }
+
+    console.log(`👤 User found: ${user.username}, Email: ${user.email}`);
 
     // Generate 6-digit reset code
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -1437,10 +1516,12 @@ app.post("/api/forgot-password", async (req, res) => {
 
     // Create new reset code
     await PasswordReset.create({
-      username: user.username, // Always store by username
+      username: user.username,
       resetCode,
       expiresAt,
     });
+
+    console.log(`🔐 Reset code generated for ${user.username}: ${resetCode}`);
 
     // Create enhanced email content
     const mailOptions = {
@@ -1452,39 +1533,51 @@ app.post("/api/forgot-password", async (req, res) => {
       subject: "🔐 FocusFlow Password Reset - Your Security Code Inside",
       html: createResetEmailTemplate(user.username, resetCode),
       text: `FocusFlow Password Reset\n\nHello ${user.username},\n\nWe received a password reset request for your FocusFlow account.\n\nYour reset code is: ${resetCode}\n\nThis code expires in 15 minutes for security reasons.\n\nIf you didn't request this reset, please ignore this email - your account remains secure.\n\nBest regards,\nThe FocusFlow Security Team`,
+      // Add priority headers
+      headers: {
+        'X-Priority': '1',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'high'
+      }
     };
 
-    // Send email with detailed error handling
-    try {
-      const emailResponse = await emailTransporter.sendMail(mailOptions);
+    // Use retry mechanism for sending email
+    const emailResult = await sendEmailWithRetry(mailOptions);
 
-      // Success response
-      // In the forgot password endpoint, update the success response:
+    if (emailResult.success) {
+      console.log(`✅ Reset code email sent successfully to ${user.email}`);
+      
       res.json({
         success: true,
         message: "A reset code has been sent to your email",
         emailSent: true,
-        username: user.username, // ADD THIS LINE - return the actual username
-        demoCode:
-          process.env.NODE_ENV === "development" ? resetCode : undefined,
+        username: user.username,
+        demoCode: process.env.NODE_ENV === "development" ? resetCode : undefined,
       });
-    } catch (emailError) {
-      console.error("❌ EMAIL SENDING FAILED:", emailError);
-
+    } else {
+      console.log(`❌ Email delivery failed for ${user.email}`);
+      
       // Still return success but indicate email failed
       res.json({
         success: true,
-        message: "Reset code generated",
+        message: "Reset code generated but email delivery failed",
         emailSent: false,
-        demoCode: resetCode, // Always return the code
-        error: "Email delivery failed - using demo mode",
+        demoCode: resetCode, // Always return the code in demo mode
+        error: "Email delivery failed - please use the code below",
+        username: user.username,
       });
     }
+
   } catch (error) {
-    console.error("💥 FORGOT PASSWORD ERROR:", error);
+    console.error("💥 FORGOT PASSWORD ERROR:", {
+      message: error.message,
+      stack: error.stack,
+      userInput: req.body.userInput
+    });
+    
     res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: "Internal server error. Please try again.",
     });
   }
 });
@@ -2852,24 +2945,66 @@ app.post("/api/users-status", authenticateToken, async (req, res) => {
   }
 });
 
-// Add this endpoint to check user data
-app.get("/api/debug-user/:username", async (req, res) => {
+// Email health check endpoint
+app.get("/api/email-health", async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username });
-    if (!user) {
-      return res.json({ success: false, error: "User not found" });
-    }
-
+    // Test email configuration
+    await emailTransporter.verify();
+    
+    // Try to send a test email
+    const testMailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Send to yourself
+      subject: "FocusFlow Email Test",
+      text: "This is a test email from FocusFlow.",
+    };
+    
+    const testResult = await emailTransporter.sendMail(testMailOptions);
+    
     res.json({
       success: true,
-      user: {
-        username: user.username,
-        email: user.email,
-        hasEmail: !!user.email,
-      },
+      message: "Email service is working correctly",
+      testEmail: {
+        messageId: testResult.messageId,
+        response: testResult.response
+      }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: "Email service is not working",
+      details: {
+        message: error.message,
+        code: error.code
+      }
+    });
+  }
+});
+
+// Temporary debug endpoint
+app.post("/api/debug-email", async (req, res) => {
+  const { to, subject, text } = req.body;
+  
+  try {
+    const result = await emailTransporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: to || process.env.EMAIL_USER,
+      subject: subject || "Debug Email",
+      text: text || "This is a debug email",
+    });
+    
+    res.json({
+      success: true,
+      messageId: result.messageId,
+      response: result.response
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code,
+      command: error.command
+    });
   }
 });
 
