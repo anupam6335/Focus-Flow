@@ -184,6 +184,7 @@ const authenticateToken = async (req, res, next) => {
 const nodemailer = require("nodemailer");
 
 // Enhanced Email Configuration for Production with Render compatibility
+// Enhanced Email Configuration for Production (Render)
 const emailTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -192,17 +193,17 @@ const emailTransporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  // Production-specific settings for Render
+  // Render-specific settings
   pool: true,
-  maxConnections: 2, // Reduced for Render's limitations
+  maxConnections: 2, // Reduce connections for Render
   maxMessages: 10,
-  rateDelta: 5000, // Increased delay
+  rateDelta: 10000, // Increase delay between messages
   rateLimit: 5,
-  // Enhanced timeout settings for production
+  // Enhanced timeout settings for Render's network
   connectionTimeout: 60000, // 60 seconds
   greetingTimeout: 30000,
-  socketTimeout: 45000,
-  // TLS configuration for production
+  socketTimeout: 60000,
+  // TLS settings for Render
   requireTLS: true,
   tls: {
     rejectUnauthorized: false, // Important for Render's network
@@ -253,49 +254,66 @@ const handleEmailError = (error, context) => {
   };
 };
 
+
+// Enhanced network error handling for production
+const handleNetworkError = (error, context) => {
+  console.error(`🌐 Network ${context} error:`, {
+    message: error.message,
+    code: error.code,
+    syscall: error.syscall,
+    address: error.address,
+    port: error.port
+  });
+
+  // Specific handling for Render network issues
+  if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
+    console.log('🔧 Applying Render network fix...');
+    return {
+      success: false,
+      error: 'Email service temporarily unavailable',
+      emailSent: false,
+      retrySuggested: true
+    };
+  }
+
+  return handleEmailError(error, context);
+};
+
 // Production-optimized email retry with exponential backoff
-const sendEmailWithRetry = async (mailOptions, retries = 3) => {
+const sendEmailWithRetry = async (mailOptions, retries = 3, baseDelay = 5000) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`📧 Production Attempt ${attempt} to send email...`);
+      console.log(`📧 Production attempt ${attempt} to send email...`);
       
-      // Add production-specific headers
-      const productionMailOptions = {
-        ...mailOptions,
-        headers: {
-          ...mailOptions.headers,
-          'X-Environment': 'production',
-          'X-App': 'FocusFlow'
-        }
-      };
-
-      const result = await emailTransporter.sendMail(productionMailOptions);
-      console.log(`✅ Email sent successfully on attempt ${attempt}`);
-      return { success: true, emailSent: true, result };
-    } catch (error) {
-      console.log(`❌ Email attempt ${attempt} failed:`, {
-        message: error.message,
-        code: error.code,
-        attempt: attempt
+      // Add timeout for each attempt
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email timeout')), 45000);
       });
       
+      const sendPromise = emailTransporter.sendMail(mailOptions);
+      const result = await Promise.race([sendPromise, timeoutPromise]);
+      
+      console.log(`✅ Email sent successfully on attempt ${attempt}`);
+      return { 
+        success: true, 
+        emailSent: true, 
+        result,
+        attempt
+      };
+    } catch (error) {
+      console.log(`❌ Email attempt ${attempt} failed:`, error.message);
+      
       if (attempt === retries) {
-        return {
-          success: false,
-          error: `Email send failed after ${retries} attempts`,
-          emailSent: false,
-          lastError: error.message
-        };
+        return handleNetworkError(error, 'send');
       }
       
-      // Exponential backoff with jitter (2, 4, 8 seconds)
-      const backoffTime = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 10000);
-      console.log(`⏳ Waiting ${backoffTime}ms before retry...`);
-      await new Promise(resolve => setTimeout(resolve, backoffTime));
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
+      console.log(`⏳ Waiting ${Math.round(delay/1000)}s before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 };
-
 
 // Enhanced Socket.io connection handling with stable online status
 const connectedUsers = new Map(); // Track connected users and their sockets
@@ -530,6 +548,7 @@ app.post("/api/register", async (req, res) => {
 
     // Send welcome email (optional)
     // In the registration endpoint, replace the welcome email section with:
+// Send welcome email with production error handling
 try {
   const welcomeMailOptions = {
     from: {
@@ -539,23 +558,34 @@ try {
     to: email,
     subject: "🎉 Welcome to FocusFlow - Your Coding Journey Begins Here!",
     html: createWelcomeEmailTemplate(username),
+    // Production-optimized headers
     headers: {
-      'X-Priority': '1',
-      'X-MSMail-Priority': 'High',
-      'Importance': 'high'
-    }
+      'X-Priority': '3', // Lower priority for welcome emails
+      'X-MSMail-Priority': 'Normal',
+      'Importance': 'normal'
+    },
+    // Add delivery optimization
+    disableFileAccess: true,
+    disableUrlAccess: true
   };
 
-  const emailResult = await sendEmailWithRetry(welcomeMailOptions);
-  
-  if (emailResult.success) {
-    console.log(`✅ Welcome email sent to ${email}`);
-  } else {
-    console.log(`❌ Welcome email failed for ${email}`);
-    // Don't fail registration if email fails
-  }
+  // Don't await - send in background to avoid blocking registration
+  sendEmailWithRetry(welcomeMailOptions)
+    .then(result => {
+      if (result.success) {
+        console.log(`✅ Welcome email sent to ${email}`);
+      } else {
+        console.log(`⚠️ Welcome email delivery issue for ${email}:`, result.error);
+        // Don't fail registration if email fails
+      }
+    })
+    .catch(emailError => {
+      console.log("❌ Welcome email failed:", emailError.message);
+      // Don't fail registration if email fails
+    });
+
 } catch (emailError) {
-  console.log("Welcome email failed:", emailError);
+  console.log("❌ Welcome email setup failed:", emailError.message);
   // Don't fail registration if email fails
 }
 
@@ -3010,21 +3040,25 @@ app.get("/api/email-health", async (req, res) => {
   }
 });
 
-// Enhanced Email health check endpoint for production
+// Enhanced email health check
 app.get("/api/email-health-detailed", async (req, res) => {
   try {
     // Test basic connection
     await emailTransporter.verify();
     
+    // Test DNS resolution
+    const dns = require('dns').promises;
+    await dns.resolve4('smtp.gmail.com');
+    
     // Test actual email sending
     const testMailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // Send to yourself
-      subject: `FocusFlow Production Test - ${new Date().toISOString()}`,
-      text: `This is a test email from FocusFlow production environment.\nTimestamp: ${new Date().toISOString()}\nEnvironment: ${process.env.NODE_ENV}`,
+      to: process.env.EMAIL_USER,
+      subject: "FocusFlow Production Email Test",
+      text: `This is a test email sent from Render at ${new Date().toISOString()}`,
       headers: {
-        'X-Priority': '1',
-        'X-Environment': 'production'
+        'X-Priority': '3',
+        'X-MSMail-Priority': 'Normal'
       }
     };
     
@@ -3032,43 +3066,35 @@ app.get("/api/email-health-detailed", async (req, res) => {
     
     res.json({
       success: true,
-      message: "Email service is working correctly in production",
+      message: "Email service is working correctly",
       environment: process.env.NODE_ENV,
-      testEmail: {
-        messageId: testResult.messageId,
-        response: testResult.response,
-        accepted: testResult.accepted,
-        rejected: testResult.rejected
-      },
-      configuration: {
-        host: emailTransporter.options.host,
-        port: emailTransporter.options.port,
-        secure: emailTransporter.options.secure
+      details: {
+        smtpServer: "smtp.gmail.com",
+        port: 587,
+        tls: true,
+        testEmail: {
+          messageId: testResult.messageId,
+          response: testResult.response
+        },
+        dnsResolution: "successful"
       }
     });
   } catch (error) {
-    console.error("💥 Production Email Health Check Failed:", {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      environment: process.env.NODE_ENV
-    });
-    
     res.status(500).json({
       success: false,
-      error: "Production email service is not working",
+      error: "Email service check failed",
       environment: process.env.NODE_ENV,
       details: {
         message: error.message,
         code: error.code,
-        command: error.command
-      },
-      troubleshooting: [
-        "Check Render environment variables (EMAIL_USER, EMAIL_PASS)",
-        "Verify Gmail App Password is correct",
-        "Check Render's outbound network connections",
-        "Ensure EMAIL_USER is a valid Gmail address"
-      ]
+        stage: error.stage || 'unknown',
+        suggestions: [
+          "Check Render's outbound network connections",
+          "Verify Gmail App Password is correct",
+          "Check if port 587 is allowed in Render",
+          "Test DNS resolution for smtp.gmail.com"
+        ]
+      }
     });
   }
 });
