@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
     <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/notification.css" />
     <link rel="stylesheet" href="css/past-day.css" />
     <link rel="stylesheet" href="css/main.css" />
     <title>FocusFlow – Track Your Progress, Master Your Journey</title>
@@ -20,10 +21,53 @@
               <h1 class="site-logo">FocusFlow</h1>
               <div class="header-controls">
                 <a href="/blogs" class="nav-link blog-link">📝 Blogs</a>
+                <a href="/profile" class="nav-link profile-link">👤 Profile</a>
 
-                <a href="/profile" class="nav-link profile-link"
-                  >👤 Profile</a
-                >
+                <!-- NEW: Notification Bell -->
+                <div class="notification-container" style="position: relative">
+                  <button
+                    class="notification-bell"
+                    id="notificationBell"
+                    aria-label="Notifications"
+                  >
+                    🔔
+                    <span
+                      class="notification-badge"
+                      id="notificationBadge"
+                      style="display: none"
+                    ></span>
+                  </button>
+
+                  <!-- Notification Dropdown Panel -->
+                  <div class="notification-panel" id="notificationPanel">
+                    <div class="notification-header">
+                      <h3 class="notification-title">Notifications</h3>
+                      <div class="notification-actions">
+                        <button class="notification-clear" id="markAllRead">
+                          Mark all read
+                        </button>
+                        <button
+                          class="notification-clear"
+                          id="closeNotifications"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    <div class="notification-list" id="notificationList">
+                      <!-- Notifications will be loaded here -->
+                    </div>
+                    <div class="notification-footer">
+                      <button
+                        class="notification-view-all"
+                        id="viewAllNotifications"
+                      >
+                        View All Notifications
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div id="syncStatus" class="sync-status">
                   <div class="sync-dot synced"></div>
                   <span>Synced</span>
@@ -32,9 +76,6 @@
                   <button class="sync-button" id="syncButton">
                     🔄 Sync Now
                   </button>
-                  <!-- <button class="theme-toggle" id="themeToggle" style="display: none;">
-                    Switch to Light Theme
-                  </button> -->
                 </div>
               </div>
             </div>

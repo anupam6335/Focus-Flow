@@ -432,8 +432,6 @@ function formatDateForDisplay(dateString) {
 
 // Add this function to verify the date change
 function verifyDateChange() {
-  
-
   // Test with a specific day
   const testDay = 1;
   console.log(`📊 Is day ${testDay} editable?`, isEditable(testDay));
@@ -799,22 +797,19 @@ async function handleLogin() {
       // Show immediate sync status
       updateSyncStatus("synced", "Data loaded successfully");
 
-        // NEW: Check if we have a return URL stored
-  const returnUrl = localStorage.getItem('returnUrl');
-  if (returnUrl && returnUrl !== window.location.href) {
-    localStorage.removeItem('returnUrl');
-    setTimeout(() => {
-      window.location.href = returnUrl;
-    }, 1000);
-    return; // Stop further execution
-  }
+      // NEW: Check if we have a return URL stored
+      const returnUrl = localStorage.getItem("returnUrl");
+      if (returnUrl && returnUrl !== window.location.href) {
+        localStorage.removeItem("returnUrl");
+        setTimeout(() => {
+          window.location.href = returnUrl;
+        }, 1000);
+        return; // Stop further execution
+      }
       // Force a sync to ensure we have the latest data
       setTimeout(() => {
         syncWithMongoDB();
       }, 1000);
-
-
-
     } else {
       toastManager.error(result.error || "Login failed", "Login Error");
     }
@@ -827,6 +822,21 @@ async function handleLogin() {
     loginBtn.disabled = false;
   }
 }
+
+// the auth check to handle notifications
+const originalHandleLogin = handleLogin;
+handleLogin = async function () {
+  await originalHandleLogin();
+
+  // Initialize real-time notification manager after login
+  if (authToken) {
+    setTimeout(() => {
+      if (!window.notificationManager) {
+        window.notificationManager = new NotificationManager();
+      }
+    }, 1000);
+  }
+};
 
 // Handle user registration
 async function handleRegister() {
@@ -922,6 +932,16 @@ function handleLogout() {
   renderTable();
   renderEnhancedActivityTracker();
 }
+
+// Update logout to clean up notifications
+const originalHandleLogout = handleLogout;
+handleLogout = function () {
+  if (window.notificationManager) {
+    window.notificationManager.destroy();
+    window.notificationManager = null;
+  }
+  originalHandleLogout();
+};
 
 // Show forgot password form
 function showForgotPasswordForm() {
@@ -2027,7 +2047,6 @@ async function syncWithMongoDB() {
 
       // Check if server has newer data
       if (serverVersion > currentVersion) {
-       
         appData = result.data;
         currentVersion = serverVersion;
         lastUpdated = serverLastUpdated;
@@ -2058,7 +2077,6 @@ async function syncWithMongoDB() {
       }
     }
   } catch (error) {
-    
     updateSyncStatus("offline", "Working offline");
 
     if (!error.message.includes("Failed to fetch")) {
@@ -3693,6 +3711,657 @@ function setupDirectEventListeners() {
   // console.log("✅ Direct event listeners set up");
 }
 
+// ===== ENHANCED REAL-TIME NOTIFICATION SYSTEM =====
+
+class NotificationManager {
+  constructor() {
+    this.isOpen = false;
+    this.notifications = [];
+    this.unreadCount = 0;
+    this.pollingInterval = null;
+    this.socket = null;
+    this.isConnected = false;
+
+    this.initializeElements();
+    this.setupEventListeners();
+    this.initializeSocketConnection();
+    this.startPolling();
+  }
+
+  initializeElements() {
+    this.bell = document.getElementById("notificationBell");
+    this.badge = document.getElementById("notificationBadge");
+    this.panel = document.getElementById("notificationPanel");
+    this.list = document.getElementById("notificationList");
+    this.markAllReadBtn = document.getElementById("markAllRead");
+    this.closeBtn = document.getElementById("closeNotifications");
+    this.viewAllBtn = document.getElementById("viewAllNotifications");
+  }
+
+  setupEventListeners() {
+    // Toggle notification panel
+    this.bell.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.togglePanel();
+    });
+
+    // Mark all as read
+    this.markAllReadBtn.addEventListener("click", () => {
+      this.markAllAsRead();
+    });
+
+    // Close panel
+    this.closeBtn.addEventListener("click", () => {
+      this.closePanel();
+    });
+
+    // View all notifications
+    this.viewAllBtn.addEventListener("click", () => {
+      this.viewAllNotifications();
+    });
+
+    // Close panel when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!this.panel.contains(e.target) && e.target !== this.bell) {
+        this.closePanel();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isOpen) {
+        this.closePanel();
+      }
+    });
+  }
+
+  initializeSocketConnection() {
+    if (!authToken) {
+      console.log("No auth token, skipping socket connection");
+      return;
+    }
+
+    try {
+      // Connect to Socket.io
+      this.socket = io({
+        auth: {
+          token: authToken,
+        },
+      });
+
+      // Socket event handlers
+      this.socket.on("connect", () => {
+        console.log("🔌 Connected to real-time notifications");
+        this.isConnected = true;
+        this.updateConnectionStatus(true);
+      });
+
+      this.socket.on("disconnect", () => {
+        console.log("🔌 Disconnected from real-time notifications");
+        this.isConnected = false;
+        this.updateConnectionStatus(false);
+      });
+
+      this.socket.on("new-notification", (notification) => {
+        console.log("📢 Received real-time notification:", notification);
+        this.handleRealTimeNotification(notification);
+      });
+
+      this.socket.on("notification-count-updated", (data) => {
+        if (data.increment) {
+          this.unreadCount++;
+          this.updateBadge();
+          this.showNewNotificationAlert();
+        }
+      });
+
+      this.socket.on("user-status-changed", (data) => {
+        // Handle user online/offline status changes if needed
+        console.log("User status changed:", data);
+      });
+    } catch (error) {
+      console.error("Error initializing socket connection:", error);
+    }
+  }
+
+  updateConnectionStatus(connected) {
+    // Add visual indicator for connection status
+    if (connected) {
+      this.bell.title = "Notifications (Real-time)";
+      this.bell.style.color = "var(--codeleaf-accent-primary)";
+    } else {
+      this.bell.title = "Notifications (Offline)";
+      this.bell.style.color = "var(--codeleaf-text-tertiary)";
+    }
+  }
+
+  handleRealTimeNotification(notification) {
+    // Add new notification to the beginning of the list
+    this.notifications.unshift(notification);
+
+    // Increment unread count
+    this.unreadCount++;
+
+    // Update UI
+    this.updateBadge();
+
+    // Show visual alert
+    this.showRealTimeNotificationAlert(notification);
+
+    // If panel is open, update the list
+    if (this.isOpen) {
+      this.renderNotifications();
+    }
+
+    // Auto-close notification after 5 seconds
+    setTimeout(() => {
+      this.hideRealTimeNotificationAlert();
+    }, 5000);
+  }
+
+  showRealTimeNotificationAlert(notification) {
+    // Create floating notification alert
+    const alert = document.createElement("div");
+    alert.className = "real-time-notification-alert";
+    alert.innerHTML = `
+      <div class="notification-alert-content">
+        <div class="notification-alert-header">
+          <span class="notification-alert-type">${this.getTypeLabel(
+            notification.type
+          )}</span>
+          <button class="notification-alert-close">&times;</button>
+        </div>
+        <div class="notification-alert-message">${notification.message}</div>
+        <div class="notification-alert-time">Just now</div>
+      </div>
+    `;
+
+    // Add styles
+    alert.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 350px;
+      background: var(--codeleaf-bg-primary);
+      border: 1px solid var(--codeleaf-border-light);
+      border-left: 4px solid var(--codeleaf-accent-primary);
+      border-radius: var(--codeleaf-radius-lg);
+      box-shadow: var(--codeleaf-shadow-lg);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 4.7s forwards;
+      cursor: pointer;
+    `;
+
+    // Add close button handler
+    alert
+      .querySelector(".notification-alert-close")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        alert.remove();
+      });
+
+    // Add click handler to navigate to blog
+    alert.addEventListener("click", () => {
+      if (notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+      }
+      alert.remove();
+    });
+
+    document.body.appendChild(alert);
+
+    // Add CSS animations if not already added
+    this.addNotificationAlertStyles();
+  }
+
+  addNotificationAlertStyles() {
+    if (!document.getElementById("notification-alert-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "notification-alert-styles";
+      styles.textContent = `
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes slideOutRight {
+          from {
+            opacity: 1;
+            transform: translateX(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+        }
+        
+        .real-time-notification-alert {
+          transition: all 0.3s ease;
+        }
+        
+        .real-time-notification-alert:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--codeleaf-shadow-lg);
+        }
+        
+        .notification-alert-content {
+          padding: var(--codeleaf-space-4);
+        }
+        
+        .notification-alert-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: var(--codeleaf-space-2);
+        }
+        
+        .notification-alert-type {
+          font-size: var(--codeleaf-font-xs);
+          color: var(--codeleaf-accent-primary);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .notification-alert-close {
+          background: none;
+          border: none;
+          color: var(--codeleaf-text-tertiary);
+          cursor: pointer;
+          font-size: 1.2rem;
+          padding: 0;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+        
+        .notification-alert-close:hover {
+          background: var(--codeleaf-bg-tertiary);
+          color: var(--codeleaf-text-primary);
+        }
+        
+        .notification-alert-message {
+          font-size: var(--codeleaf-font-sm);
+          color: var(--codeleaf-text-primary);
+          line-height: 1.4;
+          margin-bottom: var(--codeleaf-space-2);
+        }
+        
+        .notification-alert-time {
+          font-size: var(--codeleaf-font-xs);
+          color: var(--codeleaf-text-tertiary);
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  hideRealTimeNotificationAlert() {
+    const alerts = document.querySelectorAll(".real-time-notification-alert");
+    alerts.forEach((alert) => {
+      alert.style.animation = "slideOutRight 0.3s ease forwards";
+      setTimeout(() => alert.remove(), 300);
+    });
+  }
+
+  async togglePanel() {
+    if (this.isOpen) {
+      this.closePanel();
+    } else {
+      await this.openPanel();
+    }
+  }
+
+  async openPanel() {
+    this.isOpen = true;
+    this.panel.classList.add("open");
+    await this.loadNotifications();
+  }
+
+  closePanel() {
+    this.isOpen = false;
+    this.panel.classList.remove("open");
+  }
+
+  async loadNotifications() {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.notifications = result.notifications;
+          this.unreadCount = result.unreadCount;
+          this.renderNotifications();
+          this.updateBadge();
+        }
+      }
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+    }
+  }
+
+  renderNotifications() {
+    if (this.notifications.length === 0) {
+      this.list.innerHTML = `
+        <div class="notification-empty">
+          <div class="notification-empty-icon">🔔</div>
+          <p>No notifications yet</p>
+          <p style="font-size: var(--codeleaf-font-sm); margin-top: var(--codeleaf-space-2);">
+            Follow users to see their activity here
+          </p>
+          ${
+            this.isConnected
+              ? '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-accent-primary);">🔗 Real-time notifications enabled</div>'
+              : '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-text-tertiary);">⚠️ Real-time notifications offline</div>'
+          }
+        </div>
+      `;
+      return;
+    }
+
+    this.list.innerHTML = this.notifications
+      .map(
+        (notification) => `
+      <div class="notification-item ${notification.isRead ? "" : "unread"} ${
+          notification.realTime ? "new" : ""
+        }" 
+           data-id="${notification._id}" 
+           data-type="${notification.type}">
+        <div class="notification-content">
+          <div class="notification-type">${this.getTypeLabel(
+            notification.type
+          )}</div>
+          <p class="notification-message">${notification.message}</p>
+          <div class="notification-meta">
+            <span class="notification-author">@${notification.author}</span>
+            <span class="notification-time">${this.formatTime(
+              notification.timestamp
+            )}</span>
+          </div>
+          ${
+            notification.realTime
+              ? '<div class="notification-live-indicator">🟢 Live</div>'
+              : ""
+          }
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Add click handlers
+    this.list.querySelectorAll(".notification-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        this.handleNotificationClick(item);
+      });
+    });
+  }
+
+  getTypeLabel(type) {
+    const labels = {
+      new_blog: "New Blog",
+      user_activity: "Activity",
+    };
+    return labels[type] || "Notification";
+  }
+
+  formatTime(timestamp) {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return time.toLocaleDateString();
+  }
+
+  async handleNotificationClick(notificationElement) {
+    const notificationId = notificationElement.dataset.id;
+    const notificationType = notificationElement.dataset.type;
+
+    // Mark as read
+    await this.markAsRead(notificationId);
+
+    // Handle navigation based on type
+    if (notificationType === "new_blog") {
+      const notification = this.notifications.find(
+        (n) => n._id === notificationId
+      );
+      if (notification && notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+      }
+    }
+
+    // Remove unread styling
+    notificationElement.classList.remove("unread");
+    notificationElement.classList.remove("new");
+    this.updateBadge();
+  }
+
+  async markAsRead(notificationId) {
+    if (!authToken) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }
+
+  async markAllAsRead() {
+    if (!authToken || this.unreadCount === 0) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        // Update local state
+        this.notifications.forEach((notification) => {
+          notification.isRead = true;
+        });
+        this.unreadCount = 0;
+
+        // Update UI
+        this.renderNotifications();
+        this.updateBadge();
+
+        toastManager.success(
+          "All notifications marked as read",
+          "Notifications"
+        );
+      }
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  }
+
+  viewAllNotifications() {
+    // For now, just close the panel
+    // In future, you could navigate to a dedicated notifications page
+    this.closePanel();
+    toastManager.info("Notifications page coming soon!", "Feature Preview");
+  }
+
+  updateBadge() {
+    if (this.unreadCount > 0) {
+      this.badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
+      this.badge.style.display = "flex";
+      this.bell.classList.add("has-unread");
+
+      // Add pulse animation for new notifications
+      if (this.unreadCount === 1) {
+        this.bell.style.animation = "bell-pulse 2s infinite";
+      }
+    } else {
+      this.badge.style.display = "none";
+      this.bell.classList.remove("has-unread");
+      this.bell.style.animation = "none";
+    }
+  }
+
+  showNewNotificationAlert() {
+    // Subtle animation to indicate new notifications
+    this.bell.style.animation = "none";
+    setTimeout(() => {
+      this.bell.style.animation = "bell-pulse 1s ease 2";
+    }, 10);
+  }
+
+  startPolling() {
+    // Poll for new notifications every 2 minutes as fallback
+    this.pollingInterval = setInterval(() => {
+      if (authToken && !this.isOpen && !this.isConnected) {
+        this.checkForNewNotifications();
+      }
+    }, 120000); // 2 minutes
+  }
+
+  async checkForNewNotifications() {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const previousCount = this.unreadCount;
+          this.unreadCount = result.unreadCount;
+
+          // Show subtle notification for new items
+          if (this.unreadCount > previousCount && previousCount > 0) {
+            this.showNewNotificationAlert();
+          }
+
+          this.updateBadge();
+        }
+      }
+    } catch (error) {
+      console.error("Error checking notifications:", error);
+    }
+  }
+
+  // Update following list for real-time notifications
+  // Add this method to your existing NotificationManager class in main.js
+  updateFollowingList(followingList) {
+    this.followingList = followingList || [];
+
+    // Update socket subscriptions if connected
+    if (this.socket && this.isConnected) {
+      this.socket.emit("update-following", this.followingList);
+      console.log(
+        `🔔 Updated real-time subscriptions for ${this.followingList.length} followed users`
+      );
+    }
+
+    // Show visual feedback
+    this.showSubscriptionUpdateFeedback(this.followingList.length);
+  }
+
+  // Add this helper method for visual feedback
+  showSubscriptionUpdateFeedback(followingCount) {
+    const feedback = document.createElement("div");
+    feedback.className = "subscription-update-feedback";
+    feedback.innerHTML = `
+    <div style="
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--codeleaf-accent-primary);
+      color: white;
+      padding: 12px 16px;
+      border-radius: var(--codeleaf-radius-md);
+      box-shadow: var(--codeleaf-shadow-lg);
+      z-index: 10001;
+      font-size: var(--codeleaf-font-sm);
+      animation: slideInUp 0.3s ease;
+    ">
+      🔔 Now receiving real-time updates from ${followingCount} users
+    </div>
+  `;
+
+    document.body.appendChild(feedback);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      if (feedback.parentNode) {
+        feedback.parentNode.removeChild(feedback);
+      }
+    }, 3000);
+
+    // Add CSS animation if not exists
+    this.addSubscriptionUpdateStyles();
+  }
+
+  addSubscriptionUpdateStyles() {
+    if (!document.getElementById("subscription-update-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "subscription-update-styles";
+      styles.textContent = `
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  destroy() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+}
+
+// Initialize notification manager when DOM is loaded
+let notificationManager;
+
 // Scroll to Top Functionality
 function initScrollToTop() {
   const scrollToTopBtn = document.getElementById("scrollToTop");
@@ -3756,4 +4425,44 @@ document.addEventListener("DOMContentLoaded", function () {
       renderActivityCalendar();
     }
   }, 500);
+
+  // Initialize notification manager after a short delay to ensure auth is checked
+  setTimeout(() => {
+    if (authToken && !window.notificationManager) {
+      window.notificationManager = new NotificationManager();
+
+      // Load initial following list and set up subscriptions
+      setTimeout(() => {
+        initializeNotificationSubscriptions();
+      }, 2000);
+    }
+  }, 1000);
 });
+
+// NEW: Initialize notification subscriptions with current following list
+async function initializeNotificationSubscriptions() {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token || !window.notificationManager) return;
+
+    const response = await fetch(`${API_BASE_URL}/user-info`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.user) {
+        const followingList = result.user.social?.following || [];
+        window.notificationManager.updateFollowingList(followingList);
+
+        console.log(
+          `🎯 Initialized real-time notifications for ${followingList.length} followed users`
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing notification subscriptions:", error);
+  }
+}
