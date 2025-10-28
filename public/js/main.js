@@ -3712,12 +3712,12 @@ function setupDirectEventListeners() {
 }
 
 // ===== ENHANCED REAL-TIME NOTIFICATION SYSTEM =====
-
 class NotificationManager {
   constructor() {
     this.isOpen = false;
     this.notifications = [];
     this.unreadCount = 0;
+    this.currentCategory = "all";
     this.pollingInterval = null;
     this.socket = null;
     this.isConnected = false;
@@ -3736,6 +3736,9 @@ class NotificationManager {
     this.markAllReadBtn = document.getElementById("markAllRead");
     this.closeBtn = document.getElementById("closeNotifications");
     this.viewAllBtn = document.getElementById("viewAllNotifications");
+
+    // Category elements
+    this.categoryTabs = document.querySelectorAll(".category-tab");
   }
 
   setupEventListeners() {
@@ -3760,9 +3763,22 @@ class NotificationManager {
       this.viewAllNotifications();
     });
 
+    // Category tab event listeners
+    this.categoryTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const category = e.currentTarget.dataset.category;
+        this.switchCategory(category);
+      });
+    });
+
     // Close panel when clicking outside
     document.addEventListener("click", (e) => {
-      if (!this.panel.contains(e.target) && e.target !== this.bell) {
+      if (
+        this.isOpen &&
+        !this.panel.contains(e.target) &&
+        e.target !== this.bell
+      ) {
         this.closePanel();
       }
     });
@@ -3775,67 +3791,300 @@ class NotificationManager {
     });
   }
 
-  initializeSocketConnection() {
-    if (!authToken) {
-      console.log("No auth token, skipping socket connection");
+  // Switch between notification categories
+  switchCategory(category) {
+    if (this.currentCategory === category) return;
+
+    console.log(`Switching to category: ${category}`);
+
+    // Update active tab
+    this.categoryTabs.forEach((tab) => {
+      tab.classList.remove("active");
+      if (tab.dataset.category === category) {
+        tab.classList.add("active");
+      }
+    });
+
+    this.currentCategory = category;
+
+    // Add switching animation
+    this.list.classList.add("switching");
+
+    // Re-render notifications for the selected category
+    setTimeout(() => {
+      this.renderNotifications();
+      this.list.classList.remove("switching");
+    }, 150);
+  }
+
+  // Render notifications with category filtering
+  renderNotifications() {
+    console.log(
+      `Rendering notifications for category: ${this.currentCategory}`
+    );
+
+    // Filter notifications based on current category
+    let filteredNotifications = [...this.notifications];
+
+    if (this.currentCategory === "unread") {
+      filteredNotifications = this.notifications.filter((n) => !n.isRead);
+    } else if (this.currentCategory === "read") {
+      filteredNotifications = this.notifications.filter((n) => n.isRead);
+    }
+
+    console.log(`Filtered notifications: ${filteredNotifications.length}`);
+
+    if (filteredNotifications.length === 0) {
+      this.renderEmptyState();
       return;
     }
 
+    this.list.innerHTML = filteredNotifications
+      .map((notification) => {
+        const isUnread = !notification.isRead;
+        return `
+        <div class="notification-item ${isUnread ? "unread" : "read"}" 
+             data-id="${notification._id}" 
+             data-type="${notification.type}">
+          <div class="notification-content">
+            <div class="notification-type">${this.getTypeLabel(
+              notification.type
+            )}</div>
+            <p class="notification-message">${notification.message}</p>
+            <div class="notification-meta">
+              <span class="notification-author">@${notification.author}</span>
+              <span class="notification-time">${this.formatTime(
+                notification.timestamp
+              )}</span>
+            </div>
+            ${
+              isUnread
+                ? '<div class="notification-live-indicator">🟢 Live</div>'
+                : ""
+            }
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    // Add click handlers
+    this.list.querySelectorAll(".notification-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        this.handleNotificationClick(item);
+      });
+    });
+  }
+
+  // Render empty state for categories
+  renderEmptyState() {
+    let emptyMessage = "";
+    let emptyIcon = "🔔";
+
+    switch (this.currentCategory) {
+      case "unread":
+        emptyMessage = "No unread notifications";
+        emptyIcon = "📭";
+        break;
+      case "read":
+        emptyMessage = "No read notifications";
+        emptyIcon = "📖";
+        break;
+      default:
+        emptyMessage = "No notifications yet";
+        emptyIcon = "🔔";
+    }
+
+    this.list.innerHTML = `
+      <div class="notification-empty">
+        <div class="notification-empty-icon">${emptyIcon}</div>
+        <p>${emptyMessage}</p>
+        <p style="font-size: var(--codeleaf-font-sm); margin-top: var(--codeleaf-space-2);">
+          ${
+            this.currentCategory === "all"
+              ? "Follow users to see their activity here"
+              : "Notifications will appear here"
+          }
+        </p>
+        ${
+          this.isConnected
+            ? '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-accent-primary);">🔗 Real-time notifications enabled</div>'
+            : ""
+        }
+      </div>
+    `;
+  }
+
+  // Update badge and category counters
+  updateBadge() {
+    // Update main badge
+    if (this.unreadCount > 0) {
+      this.badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
+      this.badge.style.display = "flex";
+      this.bell.classList.add("has-unread");
+
+      if (this.unreadCount === 1) {
+        this.bell.style.animation = "bell-pulse 2s infinite";
+      }
+    } else {
+      this.badge.style.display = "none";
+      this.bell.classList.remove("has-unread");
+      this.bell.style.animation = "none";
+    }
+
+    // Update category counters
+    this.updateCategoryCounters();
+  }
+
+  // Update counters on category tabs
+  updateCategoryCounters() {
+    const totalCount = this.notifications.length;
+    const unreadCount = this.notifications.filter((n) => !n.isRead).length;
+    const readCount = totalCount - unreadCount;
+
+    console.log(
+      `Updating counters - Total: ${totalCount}, Unread: ${unreadCount}, Read: ${readCount}`
+    );
+
+    // Update counters for each category
+    this.updateCategoryCounter("all", totalCount);
+    this.updateCategoryCounter("unread", unreadCount);
+    this.updateCategoryCounter("read", readCount);
+
+    // Add/remove unread indicator from unread tab
+    const unreadTab = document.querySelector('[data-category="unread"]');
+    if (unreadCount > 0) {
+      unreadTab.classList.add("has-unread");
+    } else {
+      unreadTab.classList.remove("has-unread");
+    }
+  }
+
+  // Helper to update category counter
+  updateCategoryCounter(category, count) {
+    const tab = document.querySelector(`[data-category="${category}"]`);
+    if (!tab) {
+      console.error(`Tab for category ${category} not found`);
+      return;
+    }
+
+    let counter = tab.querySelector(".category-counter");
+
+    if (count > 0) {
+      if (!counter) {
+        counter = document.createElement("span");
+        counter.className = "category-counter";
+        tab.appendChild(counter);
+      }
+      counter.textContent = count;
+    } else if (counter) {
+      counter.remove();
+    }
+  }
+
+  // FIXED: Handle notification click with proper real-time category switching
+  async handleNotificationClick(notificationElement) {
+    const notificationId = notificationElement.dataset.id;
+    const notificationType = notificationElement.dataset.type;
+
+    console.log(`Handling click for notification: ${notificationId}`);
+
+    // Mark as read on server
+    await this.markAsRead(notificationId);
+
+    // Update local state
+    const notificationIndex = this.notifications.findIndex(
+      (n) => n._id === notificationId
+    );
+    if (notificationIndex !== -1) {
+      this.notifications[notificationIndex].isRead = true;
+      this.unreadCount = Math.max(0, this.unreadCount - 1);
+
+      console.log(
+        `Notification marked as read. Unread count: ${this.unreadCount}`
+      );
+    }
+
+    // Handle navigation based on type
+    if (notificationType === "new_blog") {
+      const notification = this.notifications.find(
+        (n) => n._id === notificationId
+      );
+      if (notification && notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+        return; // Don't update UI since we're navigating away
+      }
+    }
+
+    // Update UI immediately
+    this.updateBadge();
+
+    // FIXED: Real-time category handling
+    if (this.currentCategory === "unread") {
+      // If we're in unread category, the notification should disappear immediately
+      // Check if this was the last unread notification
+      if (this.unreadCount === 0) {
+        // No more unread notifications, switch to all category
+        this.switchCategory("all");
+      } else {
+        // Still have unread notifications, re-render the unread list
+        this.renderNotifications();
+      }
+    } else if (this.currentCategory === "all") {
+      // In all category, just re-render to update the read status
+      this.renderNotifications();
+    }
+    // If we're in read category, no need to re-render as the notification will appear there automatically
+  }
+
+  // FIXED: Mark all as read with proper real-time updates
+  async markAllAsRead() {
+    if (!authToken || this.unreadCount === 0) return;
+
     try {
-      // Connect to Socket.io
-      this.socket = io({
-        auth: {
-          token: authToken,
+      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
-      // Socket event handlers
-      this.socket.on("connect", () => {
-        console.log("🔌 Connected to real-time notifications");
-        this.isConnected = true;
-        this.updateConnectionStatus(true);
-      });
+      if (response.ok) {
+        // Update local state
+        this.notifications.forEach((notification) => {
+          notification.isRead = true;
+        });
+        this.unreadCount = 0;
 
-      this.socket.on("disconnect", () => {
-        console.log("🔌 Disconnected from real-time notifications");
-        this.isConnected = false;
-        this.updateConnectionStatus(false);
-      });
+        console.log("All notifications marked as read");
 
-      this.socket.on("new-notification", (notification) => {
-        console.log("📢 Received real-time notification:", notification);
-        this.handleRealTimeNotification(notification);
-      });
+        // Update UI
+        this.updateBadge();
 
-      this.socket.on("notification-count-updated", (data) => {
-        if (data.increment) {
-          this.unreadCount++;
-          this.updateBadge();
-          this.showNewNotificationAlert();
+        // FIXED: Handle category switching based on current view
+        if (this.currentCategory === "unread") {
+          // If we're viewing unread and mark all as read, switch to all
+          this.switchCategory("all");
+        } else {
+          // Otherwise just re-render the current view
+          this.renderNotifications();
         }
-      });
 
-      this.socket.on("user-status-changed", (data) => {
-        // Handle user online/offline status changes if needed
-        console.log("User status changed:", data);
-      });
+        toastManager.success(
+          "All notifications marked as read",
+          "Notifications"
+        );
+      }
     } catch (error) {
-      console.error("Error initializing socket connection:", error);
+      console.error("Error marking all notifications as read:", error);
+      toastManager.error("Failed to mark all as read", "Error");
     }
   }
 
-  updateConnectionStatus(connected) {
-    // Add visual indicator for connection status
-    if (connected) {
-      this.bell.title = "Notifications (Real-time)";
-      this.bell.style.color = "var(--codeleaf-accent-primary)";
-    } else {
-      this.bell.title = "Notifications (Offline)";
-      this.bell.style.color = "var(--codeleaf-text-tertiary)";
-    }
-  }
-
+  // Handle real-time notifications with category awareness
   handleRealTimeNotification(notification) {
+    console.log("Handling real-time notification:", notification);
+
     // Add new notification to the beginning of the list
     this.notifications.unshift(notification);
 
@@ -3848,8 +4097,11 @@ class NotificationManager {
     // Show visual alert
     this.showRealTimeNotificationAlert(notification);
 
-    // If panel is open, update the list
-    if (this.isOpen) {
+    // If panel is open and we're in relevant category, update the list
+    if (
+      this.isOpen &&
+      (this.currentCategory === "all" || this.currentCategory === "unread")
+    ) {
       this.renderNotifications();
     }
 
@@ -3859,179 +4111,7 @@ class NotificationManager {
     }, 5000);
   }
 
-  showRealTimeNotificationAlert(notification) {
-    // Create floating notification alert
-    const alert = document.createElement("div");
-    alert.className = "real-time-notification-alert";
-    alert.innerHTML = `
-      <div class="notification-alert-content">
-        <div class="notification-alert-header">
-          <span class="notification-alert-type">${this.getTypeLabel(
-            notification.type
-          )}</span>
-          <button class="notification-alert-close">&times;</button>
-        </div>
-        <div class="notification-alert-message">${notification.message}</div>
-        <div class="notification-alert-time">Just now</div>
-      </div>
-    `;
-
-    // Add styles
-    alert.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 350px;
-      background: var(--codeleaf-bg-primary);
-      border: 1px solid var(--codeleaf-border-light);
-      border-left: 4px solid var(--codeleaf-accent-primary);
-      border-radius: var(--codeleaf-radius-lg);
-      box-shadow: var(--codeleaf-shadow-lg);
-      z-index: 10000;
-      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 4.7s forwards;
-      cursor: pointer;
-    `;
-
-    // Add close button handler
-    alert
-      .querySelector(".notification-alert-close")
-      .addEventListener("click", (e) => {
-        e.stopPropagation();
-        alert.remove();
-      });
-
-    // Add click handler to navigate to blog
-    alert.addEventListener("click", () => {
-      if (notification.blogSlug) {
-        window.location.href = `/blogs/${notification.blogSlug}`;
-      }
-      alert.remove();
-    });
-
-    document.body.appendChild(alert);
-
-    // Add CSS animations if not already added
-    this.addNotificationAlertStyles();
-  }
-
-  addNotificationAlertStyles() {
-    if (!document.getElementById("notification-alert-styles")) {
-      const styles = document.createElement("style");
-      styles.id = "notification-alert-styles";
-      styles.textContent = `
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes slideOutRight {
-          from {
-            opacity: 1;
-            transform: translateX(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-        }
-        
-        .real-time-notification-alert {
-          transition: all 0.3s ease;
-        }
-        
-        .real-time-notification-alert:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--codeleaf-shadow-lg);
-        }
-        
-        .notification-alert-content {
-          padding: var(--codeleaf-space-4);
-        }
-        
-        .notification-alert-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: var(--codeleaf-space-2);
-        }
-        
-        .notification-alert-type {
-          font-size: var(--codeleaf-font-xs);
-          color: var(--codeleaf-accent-primary);
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        
-        .notification-alert-close {
-          background: none;
-          border: none;
-          color: var(--codeleaf-text-tertiary);
-          cursor: pointer;
-          font-size: 1.2rem;
-          padding: 0;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-        }
-        
-        .notification-alert-close:hover {
-          background: var(--codeleaf-bg-tertiary);
-          color: var(--codeleaf-text-primary);
-        }
-        
-        .notification-alert-message {
-          font-size: var(--codeleaf-font-sm);
-          color: var(--codeleaf-text-primary);
-          line-height: 1.4;
-          margin-bottom: var(--codeleaf-space-2);
-        }
-        
-        .notification-alert-time {
-          font-size: var(--codeleaf-font-xs);
-          color: var(--codeleaf-text-tertiary);
-        }
-      `;
-      document.head.appendChild(styles);
-    }
-  }
-
-  hideRealTimeNotificationAlert() {
-    const alerts = document.querySelectorAll(".real-time-notification-alert");
-    alerts.forEach((alert) => {
-      alert.style.animation = "slideOutRight 0.3s ease forwards";
-      setTimeout(() => alert.remove(), 300);
-    });
-  }
-
-  async togglePanel() {
-    if (this.isOpen) {
-      this.closePanel();
-    } else {
-      await this.openPanel();
-    }
-  }
-
-  async openPanel() {
-    this.isOpen = true;
-    this.panel.classList.add("open");
-    await this.loadNotifications();
-  }
-
-  closePanel() {
-    this.isOpen = false;
-    this.panel.classList.remove("open");
-  }
-
+  // Load notifications from server
   async loadNotifications() {
     if (!authToken) return;
 
@@ -4045,72 +4125,16 @@ class NotificationManager {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          this.notifications = result.notifications;
-          this.unreadCount = result.unreadCount;
+          this.notifications = result.notifications || [];
+          this.unreadCount = result.unreadCount || 0;
           this.renderNotifications();
           this.updateBadge();
+          console.log("Loaded notifications:", this.notifications);
         }
       }
     } catch (error) {
       console.error("Error loading notifications:", error);
     }
-  }
-
-  renderNotifications() {
-    if (this.notifications.length === 0) {
-      this.list.innerHTML = `
-        <div class="notification-empty">
-          <div class="notification-empty-icon">🔔</div>
-          <p>No notifications yet</p>
-          <p style="font-size: var(--codeleaf-font-sm); margin-top: var(--codeleaf-space-2);">
-            Follow users to see their activity here
-          </p>
-          ${
-            this.isConnected
-              ? '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-accent-primary);">🔗 Real-time notifications enabled</div>'
-              : '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-text-tertiary);">⚠️ Real-time notifications offline</div>'
-          }
-        </div>
-      `;
-      return;
-    }
-
-    this.list.innerHTML = this.notifications
-      .map(
-        (notification) => `
-      <div class="notification-item ${notification.isRead ? "" : "unread"} ${
-          notification.realTime ? "new" : ""
-        }" 
-           data-id="${notification._id}" 
-           data-type="${notification.type}">
-        <div class="notification-content">
-          <div class="notification-type">${this.getTypeLabel(
-            notification.type
-          )}</div>
-          <p class="notification-message">${notification.message}</p>
-          <div class="notification-meta">
-            <span class="notification-author">@${notification.author}</span>
-            <span class="notification-time">${this.formatTime(
-              notification.timestamp
-            )}</span>
-          </div>
-          ${
-            notification.realTime
-              ? '<div class="notification-live-indicator">🟢 Live</div>'
-              : ""
-          }
-        </div>
-      </div>
-    `
-      )
-      .join("");
-
-    // Add click handlers
-    this.list.querySelectorAll(".notification-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        this.handleNotificationClick(item);
-      });
-    });
   }
 
   getTypeLabel(type) {
@@ -4137,27 +4161,28 @@ class NotificationManager {
     return time.toLocaleDateString();
   }
 
-  async handleNotificationClick(notificationElement) {
-    const notificationId = notificationElement.dataset.id;
-    const notificationType = notificationElement.dataset.type;
-
-    // Mark as read
-    await this.markAsRead(notificationId);
-
-    // Handle navigation based on type
-    if (notificationType === "new_blog") {
-      const notification = this.notifications.find(
-        (n) => n._id === notificationId
-      );
-      if (notification && notification.blogSlug) {
-        window.location.href = `/blogs/${notification.blogSlug}`;
-      }
+  async togglePanel() {
+    if (this.isOpen) {
+      this.closePanel();
+    } else {
+      await this.openPanel();
     }
+  }
 
-    // Remove unread styling
-    notificationElement.classList.remove("unread");
-    notificationElement.classList.remove("new");
-    this.updateBadge();
+  async openPanel() {
+    this.isOpen = true;
+    this.panel.classList.add("open");
+    await this.loadNotifications();
+  }
+
+  closePanel() {
+    this.isOpen = false;
+    this.panel.classList.remove("open");
+  }
+
+  viewAllNotifications() {
+    this.closePanel();
+    toastManager.info("Notifications page coming soon!", "Feature Preview");
   }
 
   async markAsRead(notificationId) {
@@ -4175,64 +4200,7 @@ class NotificationManager {
     }
   }
 
-  async markAllAsRead() {
-    if (!authToken || this.unreadCount === 0) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        // Update local state
-        this.notifications.forEach((notification) => {
-          notification.isRead = true;
-        });
-        this.unreadCount = 0;
-
-        // Update UI
-        this.renderNotifications();
-        this.updateBadge();
-
-        toastManager.success(
-          "All notifications marked as read",
-          "Notifications"
-        );
-      }
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-    }
-  }
-
-  viewAllNotifications() {
-    // For now, just close the panel
-    // In future, you could navigate to a dedicated notifications page
-    this.closePanel();
-    toastManager.info("Notifications page coming soon!", "Feature Preview");
-  }
-
-  updateBadge() {
-    if (this.unreadCount > 0) {
-      this.badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
-      this.badge.style.display = "flex";
-      this.bell.classList.add("has-unread");
-
-      // Add pulse animation for new notifications
-      if (this.unreadCount === 1) {
-        this.bell.style.animation = "bell-pulse 2s infinite";
-      }
-    } else {
-      this.badge.style.display = "none";
-      this.bell.classList.remove("has-unread");
-      this.bell.style.animation = "none";
-    }
-  }
-
   showNewNotificationAlert() {
-    // Subtle animation to indicate new notifications
     this.bell.style.animation = "none";
     setTimeout(() => {
       this.bell.style.animation = "bell-pulse 1s ease 2";
@@ -4240,12 +4208,11 @@ class NotificationManager {
   }
 
   startPolling() {
-    // Poll for new notifications every 2 minutes as fallback
     this.pollingInterval = setInterval(() => {
       if (authToken && !this.isOpen && !this.isConnected) {
         this.checkForNewNotifications();
       }
-    }, 120000); // 2 minutes
+    }, 120000);
   }
 
   async checkForNewNotifications() {
@@ -4264,7 +4231,6 @@ class NotificationManager {
           const previousCount = this.unreadCount;
           this.unreadCount = result.unreadCount;
 
-          // Show subtle notification for new items
           if (this.unreadCount > previousCount && previousCount > 0) {
             this.showNewNotificationAlert();
           }
@@ -4277,24 +4243,146 @@ class NotificationManager {
     }
   }
 
-  // Update following list for real-time notifications
-  // Add this method to your existing NotificationManager class in main.js
+  // Real-time notification alert methods
+  showRealTimeNotificationAlert(notification) {
+    const alert = document.createElement("div");
+    alert.className = "real-time-notification-alert";
+    alert.innerHTML = `
+      <div class="notification-alert-content">
+        <div class="notification-alert-header">
+          <span class="notification-alert-type">${this.getTypeLabel(
+            notification.type
+          )}</span>
+          <button class="notification-alert-close">&times;</button>
+        </div>
+        <div class="notification-alert-message">${notification.message}</div>
+        <div class="notification-alert-time">Just now</div>
+      </div>
+    `;
+
+    alert.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 350px;
+      background: var(--codeleaf-bg-primary);
+      border: 1px solid var(--codeleaf-border-light);
+      border-left: 4px solid var(--codeleaf-accent-primary);
+      border-radius: var(--codeleaf-radius-lg);
+      box-shadow: var(--codeleaf-shadow-lg);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 4.7s forwards;
+      cursor: pointer;
+    `;
+
+    alert
+      .querySelector(".notification-alert-close")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        alert.remove();
+      });
+
+    alert.addEventListener("click", () => {
+      if (notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+      }
+      alert.remove();
+    });
+
+    document.body.appendChild(alert);
+    this.addNotificationAlertStyles();
+  }
+
+  addNotificationAlertStyles() {
+    if (!document.getElementById("notification-alert-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "notification-alert-styles";
+      styles.textContent = `
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(100%); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+          from { opacity: 1; transform: translateX(0); }
+          to { opacity: 0; transform: translateX(100%); }
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  hideRealTimeNotificationAlert() {
+    const alerts = document.querySelectorAll(".real-time-notification-alert");
+    alerts.forEach((alert) => {
+      alert.style.animation = "slideOutRight 0.3s ease forwards";
+      setTimeout(() => alert.remove(), 300);
+    });
+  }
+
+  // Socket connection methods
+  initializeSocketConnection() {
+    if (!authToken) {
+      console.log("No auth token, skipping socket connection");
+      return;
+    }
+
+    try {
+      this.socket = io({
+        auth: {
+          token: authToken,
+        },
+      });
+
+      this.socket.on("connect", () => {
+        console.log("🔌 Connected to real-time notifications");
+        this.isConnected = true;
+        this.updateConnectionStatus(true);
+      });
+
+      this.socket.on("disconnect", () => {
+        console.log("🔌 Disconnected from real-time notifications");
+        this.isConnected = false;
+        this.updateConnectionStatus(false);
+      });
+
+      this.socket.on("new-notification", (notification) => {
+        console.log("📢 Received real-time notification:", notification);
+        this.handleRealTimeNotification(notification);
+      });
+
+      this.socket.on("notification-count-updated", (data) => {
+        if (data.increment) {
+          this.unreadCount++;
+          this.updateBadge();
+          this.showNewNotificationAlert();
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing socket connection:", error);
+    }
+  }
+
+  updateConnectionStatus(connected) {
+    if (connected) {
+      this.bell.title = "Notifications (Real-time)";
+      this.bell.style.color = "var(--codeleaf-accent-primary)";
+    } else {
+      this.bell.title = "Notifications (Offline)";
+      this.bell.style.color = "var(--codeleaf-text-tertiary)";
+    }
+  }
+
   updateFollowingList(followingList) {
     this.followingList = followingList || [];
-
-    // Update socket subscriptions if connected
     if (this.socket && this.isConnected) {
       this.socket.emit("update-following", this.followingList);
       console.log(
         `🔔 Updated real-time subscriptions for ${this.followingList.length} followed users`
       );
     }
-
-    // Show visual feedback
     this.showSubscriptionUpdateFeedback(this.followingList.length);
   }
 
-  // Add this helper method for visual feedback
   showSubscriptionUpdateFeedback(followingCount) {
     const feedback = document.createElement("div");
     feedback.className = "subscription-update-feedback";
@@ -4317,15 +4405,11 @@ class NotificationManager {
   `;
 
     document.body.appendChild(feedback);
-
-    // Remove after 3 seconds
     setTimeout(() => {
       if (feedback.parentNode) {
         feedback.parentNode.removeChild(feedback);
       }
     }, 3000);
-
-    // Add CSS animation if not exists
     this.addSubscriptionUpdateStyles();
   }
 
@@ -4334,17 +4418,11 @@ class NotificationManager {
       const styles = document.createElement("style");
       styles.id = "subscription-update-styles";
       styles.textContent = `
-      @keyframes slideInUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    `;
+      `;
       document.head.appendChild(styles);
     }
   }

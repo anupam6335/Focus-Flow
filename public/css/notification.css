@@ -348,3 +348,217 @@
 .connection-status.disconnected {
   background: var(--codeleaf-text-tertiary);
 }
+
+/* ===== NOTIFICATION CATEGORY STYLES ===== */
+/* ===== NOTIFICATION CATEGORY STYLES ===== */
+
+.notification-categories {
+  display: flex;
+  border-bottom: 1px solid var(--codeleaf-border-light);
+  background: var(--codeleaf-bg-secondary);
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-2) 0;
+  gap: var(--codeleaf-space-2); /* Add gap between tabs */
+}
+
+.category-tab {
+  flex: 1;
+  background: var(--codeleaf-bg-tertiary);
+  border: none;
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+  font-size: var(--codeleaf-font-sm);
+  color: var(--codeleaf-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--codeleaf-radius-md) var(--codeleaf-radius-md) 0 0;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--codeleaf-space-1);
+  margin-bottom: -1px; /* Align with the border */
+}
+
+.category-tab:hover {
+  color: var(--codeleaf-text-primary);
+  background: var(--codeleaf-bg-primary);
+  transform: translateY(-1px);
+}
+
+.category-tab.active {
+  color: var(--codeleaf-accent-primary);
+  border-bottom-color: var(--codeleaf-accent-primary);
+  background: var(--codeleaf-bg-primary);
+  font-weight: 600;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-tab.has-unread::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  background: var(--codeleaf-error);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Category counters */
+.category-counter {
+  background: var(--codeleaf-bg-primary);
+  color: var(--codeleaf-text-secondary);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: var(--codeleaf-font-xs);
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.category-tab.active .category-counter {
+  background: var(--codeleaf-accent-primary);
+  color: white;
+}
+
+.category-tab:not(.active):hover .category-counter {
+  background: var(--codeleaf-bg-secondary);
+  color: var(--codeleaf-text-primary);
+}
+
+/* Category-specific notification styles */
+.notification-item.read {
+  opacity: 0.7;
+  background: var(--codeleaf-bg-secondary);
+}
+
+.notification-item.read:hover {
+  opacity: 1;
+  background: var(--codeleaf-bg-tertiary);
+}
+
+.notification-item.unread {
+  background: rgba(45, 122, 45, 0.05);
+  border-left: 3px solid var(--codeleaf-accent-primary);
+}
+
+.notification-item.unread:hover {
+  background: rgba(45, 122, 45, 0.08);
+}
+
+/* Empty state for categories */
+.notification-empty {
+  padding: var(--codeleaf-space-8);
+  text-align: center;
+  color: var(--codeleaf-text-tertiary);
+}
+
+.notification-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--codeleaf-space-4);
+  opacity: 0.5;
+}
+
+/* Animation for category switching */
+.notification-list {
+  transition: opacity 0.2s ease;
+}
+
+.notification-list.switching {
+  opacity: 0.6;
+}
+
+/* Enhanced mobile responsive styles */
+@media (max-width: 767px) {
+  .notification-categories {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-2) 0;
+    gap: var(--codeleaf-space-1);
+  }
+  
+  .category-tab {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-2);
+    font-size: var(--codeleaf-font-xs);
+    border-radius: var(--codeleaf-radius-sm) var(--codeleaf-radius-sm) 0 0;
+  }
+  
+  .category-counter {
+    padding: 1px 4px;
+    font-size: 0.6rem;
+    min-width: 16px;
+  }
+  
+  .category-tab.has-unread::after {
+    top: 4px;
+    right: 4px;
+    width: 4px;
+    height: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-categories {
+    gap: var(--codeleaf-space-1);
+  }
+  
+  .category-tab {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-1);
+    font-size: 0.7rem;
+  }
+  
+  .category-counter {
+    padding: 1px 3px;
+    font-size: 0.55rem;
+    min-width: 14px;
+  }
+}
+
+/* Alternative style with borders instead of gaps */
+.notification-categories.bordered-tabs {
+  gap: 0;
+  padding: 0;
+}
+
+.notification-categories.bordered-tabs .category-tab {
+  margin: 0;
+  border-radius: 0;
+  border: 1px solid var(--codeleaf-border-light);
+  border-bottom: 2px solid transparent;
+  margin-right: -1px; /* Overlap borders */
+}
+
+.notification-categories.bordered-tabs .category-tab:last-child {
+  margin-right: 0;
+}
+
+.notification-categories.bordered-tabs .category-tab.active {
+  border-bottom-color: var(--codeleaf-accent-primary);
+  z-index: 2; /* Bring active tab to front */
+}
+
+/* Ensure the panel has proper z-index and styling */
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--codeleaf-bg-primary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  box-shadow: var(--codeleaf-shadow-lg);
+  z-index: 1000;
+  margin-top: var(--codeleaf-space-2);
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}

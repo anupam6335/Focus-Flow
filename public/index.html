@@ -39,33 +39,43 @@
                   </button>
 
                   <!-- Notification Dropdown Panel -->
-                  <div class="notification-panel" id="notificationPanel">
-                    <div class="notification-header">
-                      <h3 class="notification-title">Notifications</h3>
-                      <div class="notification-actions">
-                        <button class="notification-clear" id="markAllRead">
-                          Mark all read
-                        </button>
-                        <button
-                          class="notification-clear"
-                          id="closeNotifications"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                    <div class="notification-list" id="notificationList">
-                      <!-- Notifications will be loaded here -->
-                    </div>
-                    <div class="notification-footer">
-                      <button
-                        class="notification-view-all"
-                        id="viewAllNotifications"
-                      >
-                        View All Notifications
-                      </button>
-                    </div>
-                  </div>
+                  <!-- Replace the entire notification-panel section with this -->
+<div class="notification-panel" id="notificationPanel">
+  <div class="notification-header">
+    <h3 class="notification-title">Notifications</h3>
+    <div class="notification-actions">
+      <button class="notification-clear" id="markAllRead">
+        Mark all read
+      </button>
+      <button class="notification-clear" id="closeNotifications">
+        ✕
+      </button>
+    </div>
+  </div>
+  
+  <!-- Category Tabs -->
+  <div class="notification-categories">
+    <button class="category-tab active" data-category="all">
+      All <span class="category-counter"></span>
+    </button>
+    <button class="category-tab" data-category="unread">
+      Unread <span class="category-counter"></span>
+    </button>
+    <button class="category-tab" data-category="read">
+      Read <span class="category-counter"></span>
+    </button>
+  </div>
+
+  <div class="notification-list" id="notificationList">
+    <!-- Notifications will be loaded here -->
+  </div>
+  
+  <div class="notification-footer">
+    <button class="notification-view-all" id="viewAllNotifications">
+      View All Notifications
+    </button>
+  </div>
+</div>
                 </div>
 
                 <div id="syncStatus" class="sync-status">

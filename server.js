@@ -2721,6 +2721,7 @@ app.get(
 // Get notifications for current user
 app.get("/api/notifications", authenticateToken, async (req, res) => {
   try {
+     const { category } = req.query; // 'all', 'unread', 'read'
     const userId = req.user.username;
 
     // Get user's following list
@@ -2785,10 +2786,20 @@ app.get("/api/notifications", authenticateToken, async (req, res) => {
       }
     });
 
+    
+
     // Sort by timestamp and limit to 30 notifications
     const sortedNotifications = notifications
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 30);
+
+      // Filter by category if specified
+    let filteredNotifications = notifications;
+    if (category === 'unread') {
+      filteredNotifications = notifications.filter(n => !n.isRead);
+    } else if (category === 'read') {
+      filteredNotifications = notifications.filter(n => n.isRead);
+    }
 
     // Update last notification check time
     user.lastNotificationCheck = new Date();
@@ -2796,8 +2807,10 @@ app.get("/api/notifications", authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      notifications: sortedNotifications,
-      unreadCount: sortedNotifications.filter((n) => !n.isRead).length,
+      notifications: filteredNotifications,
+      unreadCount: notifications.filter(n => !n.isRead).length,
+      totalCount: notifications.length,
+      readCount: notifications.filter(n => n.isRead).length
     });
   } catch (error) {
     console.error("Error fetching notifications:", error);
