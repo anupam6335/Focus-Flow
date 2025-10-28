@@ -1091,3 +1091,651 @@ html {
 
 
 
+
+/* ============ Follower styling================= */
+/* Follow Button Styles */
+.follow-btn {
+  background: var(--codeleaf-accent-primary) !important;
+  color: white !important;
+  border: 1px solid var(--codeleaf-accent-primary) !important;
+  border-radius: var(--codeleaf-radius-md) !important;
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-4) !important;
+  font-size: var(--codeleaf-font-sm) !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: var(--codeleaf-space-2) !important;
+  min-height: 36px;
+}
+
+.follow-btn:hover {
+  background: var(--codeleaf-accent-secondary) !important;
+  border-color: var(--codeleaf-accent-secondary) !important;
+  transform: translateY(-1px) !important;
+}
+
+.follow-btn.following {
+  background: var(--codeleaf-bg-secondary) !important;
+  color: var(--codeleaf-text-primary) !important;
+  border-color: var(--codeleaf-border-medium) !important;
+}
+
+.follow-btn.following:hover {
+  background: var(--codeleaf-error) !important;
+  color: white !important;
+  border-color: var(--codeleaf-error) !important;
+}
+
+.follow-stats {
+  display: flex;
+  gap: var(--codeleaf-space-6);
+}
+
+.follow-stat {
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: var(--codeleaf-space-2);
+  border-radius: var(--codeleaf-radius-md);
+}
+
+.follow-stat:hover {
+  background: var(--codeleaf-bg-tertiary);
+}
+
+.follow-count {
+  display: block;
+  font-size: var(--codeleaf-font-lg);
+  font-weight: 700;
+  color: var(--codeleaf-accent-primary);
+}
+
+.follow-label {
+  display: block;
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-secondary);
+  margin-top: 2px;
+}
+
+/* Follow Modal Styles */
+.follow-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.follow-modal-content {
+  background: var(--codeleaf-bg-primary);
+  border-radius: var(--codeleaf-radius-lg);
+  padding: var(--codeleaf-space-6);
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--codeleaf-shadow-lg);
+}
+
+.follow-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--codeleaf-space-4);
+}
+
+.follow-modal-title {
+  font-size: var(--codeleaf-font-lg);
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+}
+
+.follow-modal-close {
+  background: none;
+  border: none;
+  font-size: var(--codeleaf-font-xl);
+  cursor: pointer;
+  color: var(--codeleaf-text-secondary);
+  padding: var(--codeleaf-space-1);
+}
+
+.follow-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--codeleaf-space-3);
+}
+
+.follow-user-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: var(--codeleaf-space-3);
+  padding: var(--codeleaf-space-3);
+  border-radius: var(--codeleaf-radius-md);
+  background: var(--codeleaf-bg-secondary);
+  transition: all 0.2s ease;
+}
+
+.follow-user-item:hover {
+  background: var(--codeleaf-bg-tertiary);
+}
+
+.follow-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--codeleaf-accent-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--codeleaf-font-sm);
+}
+
+.follow-user-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--codeleaf-text-primary);
+}
+
+.follow-user-status {
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-tertiary);
+}
+
+.follow-empty-state {
+  text-align: center;
+  padding: var(--codeleaf-space-8);
+  color: var(--codeleaf-text-tertiary);
+}
+
+.follow-badge {
+  background: var(--codeleaf-accent-muted);
+  color: var(--codeleaf-accent-primary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: var(--codeleaf-font-xs);
+  font-weight: 500;
+}
+
+
+/* Unfollow Confirmation Modal Styles */
+.unfollow-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+}
+
+.unfollow-modal-content {
+  background: var(--codeleaf-bg-primary);
+  border-radius: var(--codeleaf-radius-lg);
+  padding: var(--codeleaf-space-6);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--codeleaf-shadow-lg);
+  border: 1px solid var(--codeleaf-border-light);
+}
+
+.unfollow-modal-header {
+  text-align: center;
+  margin-bottom: var(--codeleaf-space-4);
+}
+
+.unfollow-modal-title {
+  font-size: var(--codeleaf-font-lg);
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin-bottom: var(--codeleaf-space-2);
+}
+
+.unfollow-modal-subtitle {
+  font-size: var(--codeleaf-font-sm);
+  color: var(--codeleaf-text-secondary);
+}
+
+.unfollow-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-3);
+  padding: var(--codeleaf-space-4);
+  background: var(--codeleaf-bg-secondary);
+  border-radius: var(--codeleaf-radius-md);
+  margin-bottom: var(--codeleaf-space-4);
+}
+
+.unfollow-user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--codeleaf-accent-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--codeleaf-font-lg);
+}
+
+.unfollow-user-details {
+  flex: 1;
+}
+
+.unfollow-user-name {
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin-bottom: 2px;
+}
+
+.unfollow-user-stats {
+  display: flex;
+  gap: var(--codeleaf-space-4);
+  margin-bottom: var(--codeleaf-space-4);
+  padding: var(--codeleaf-space-3);
+  background: var(--codeleaf-bg-tertiary);
+  border-radius: var(--codeleaf-radius-md);
+}
+
+.unfollow-stat {
+  text-align: center;
+  flex: 1;
+}
+
+.unfollow-stat-value {
+  display: block;
+  font-size: var(--codeleaf-font-base);
+  font-weight: 700;
+  color: var(--codeleaf-accent-primary);
+}
+
+.unfollow-stat-label {
+  display: block;
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-secondary);
+  margin-top: 2px;
+}
+
+.unfollow-modal-actions {
+  display: flex;
+  gap: var(--codeleaf-space-3);
+  margin-top: var(--codeleaf-space-4);
+}
+
+.unfollow-confirm-btn {
+  flex: 1;
+  background: var(--codeleaf-error) !important;
+  color: white !important;
+  border: 1px solid var(--codeleaf-error) !important;
+}
+
+.unfollow-confirm-btn:hover {
+  background: #d32f2f !important;
+  border-color: #d32f2f !important;
+}
+
+.unfollow-cancel-btn {
+  flex: 1;
+  background: var(--codeleaf-bg-secondary) !important;
+  color: var(--codeleaf-text-primary) !important;
+  border: 1px solid var(--codeleaf-border-medium) !important;
+}
+
+.unfollow-cancel-btn:hover {
+  background: var(--codeleaf-bg-tertiary) !important;
+}
+
+
+/* Add to profile.css and user-profile.css */
+.mutual-connections-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.mutual-connections-modal-content {
+  background: var(--codeleaf-bg-primary);
+  border-radius: var(--codeleaf-radius-lg);
+  padding: var(--codeleaf-space-6);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--codeleaf-shadow-lg);
+  border: 1px solid var(--codeleaf-border);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mutual-connections-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--codeleaf-space-4);
+  padding-bottom: var(--codeleaf-space-3);
+  border-bottom: 1px solid var(--codeleaf-border);
+}
+
+.mutual-connections-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--codeleaf-text-primary);
+  margin: 0;
+}
+
+.mutual-connections-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--codeleaf-text-secondary);
+  padding: var(--codeleaf-space-2);
+  border-radius: var(--codeleaf-radius-md);
+  transition: all 0.2s ease;
+}
+
+.mutual-connections-modal-close:hover {
+  background: var(--codeleaf-bg-tertiary);
+  color: var(--codeleaf-text-primary);
+}
+
+.mutual-connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--codeleaf-space-3);
+}
+
+.mutual-connection-item {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-3);
+  padding: var(--codeleaf-space-3);
+  border-radius: var(--codeleaf-radius-md);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.mutual-connection-item:hover {
+  background: var(--codeleaf-bg-secondary);
+  border-color: var(--codeleaf-border);
+  transform: translateY(-1px);
+}
+
+.mutual-connection-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--codeleaf-bg-tertiary);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.mutual-connection-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.mutual-connection-name {
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mutual-connection-status {
+  font-size: 0.8rem;
+  color: var(--codeleaf-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-2);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.online {
+  background: var(--codeleaf-success);
+}
+
+.status-indicator.offline {
+  background: var(--codeleaf-text-tertiary);
+}
+
+.mutual-connections-empty {
+  text-align: center;
+  padding: var(--codeleaf-space-8);
+  color: var(--codeleaf-text-secondary);
+}
+
+.mutual-connections-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--codeleaf-space-4);
+  opacity: 0.5;
+}
+
+.mutual-count-badge {
+  background: var(--codeleaf-accent-primary);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+
+/* Unfollow Confirmation Modal Styles */
+.unfollow-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+  backdrop-filter: blur(4px);
+}
+
+.unfollow-modal-content {
+  background: var(--codeleaf-bg-primary);
+  border-radius: var(--codeleaf-radius-lg);
+  padding: var(--codeleaf-space-6);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--codeleaf-shadow-lg);
+  border: 1px solid var(--codeleaf-border-light);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.unfollow-modal-header {
+  text-align: center;
+  margin-bottom: var(--codeleaf-space-4);
+}
+
+.unfollow-modal-title {
+  font-size: var(--codeleaf-font-lg);
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin-bottom: var(--codeleaf-space-2);
+}
+
+.unfollow-modal-subtitle {
+  font-size: var(--codeleaf-font-sm);
+  color: var(--codeleaf-text-secondary);
+  line-height: 1.4;
+}
+
+.unfollow-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-3);
+  padding: var(--codeleaf-space-4);
+  background: var(--codeleaf-bg-secondary);
+  border-radius: var(--codeleaf-radius-md);
+  margin-bottom: var(--codeleaf-space-4);
+}
+
+.unfollow-user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--codeleaf-accent-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--codeleaf-font-lg);
+  flex-shrink: 0;
+}
+
+.unfollow-user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.unfollow-user-name {
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unfollow-user-stats {
+  display: flex;
+  gap: var(--codeleaf-space-4);
+  padding: var(--codeleaf-space-3);
+  background: var(--codeleaf-bg-tertiary);
+  border-radius: var(--codeleaf-radius-md);
+  margin-top: var(--codeleaf-space-3);
+}
+
+.unfollow-stat {
+  text-align: center;
+  flex: 1;
+}
+
+.unfollow-stat-value {
+  display: block;
+  font-size: var(--codeleaf-font-base);
+  font-weight: 700;
+  color: var(--codeleaf-accent-primary);
+}
+
+.unfollow-stat-label {
+  display: block;
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-secondary);
+  margin-top: 2px;
+}
+
+.unfollow-modal-actions {
+  display: flex;
+  gap: var(--codeleaf-space-3);
+  margin-top: var(--codeleaf-space-4);
+}
+
+.unfollow-confirm-btn {
+  flex: 1;
+  background: var(--codeleaf-error) !important;
+  color: white !important;
+  border: 1px solid var(--codeleaf-error) !important;
+  padding: var(--codeleaf-space-3) var(--codeleaf-space-4) !important;
+  border-radius: var(--codeleaf-radius-md) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.unfollow-confirm-btn:hover {
+  background: #d32f2f !important;
+  border-color: #d32f2f !important;
+  transform: translateY(-1px) !important;
+}
+
+.unfollow-cancel-btn {
+  flex: 1;
+  background: var(--codeleaf-bg-secondary) !important;
+  color: var(--codeleaf-text-primary) !important;
+  border: 1px solid var(--codeleaf-border-medium) !important;
+  padding: var(--codeleaf-space-3) var(--codeleaf-space-4) !important;
+  border-radius: var(--codeleaf-radius-md) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.unfollow-cancel-btn:hover {
+  background: var(--codeleaf-bg-tertiary) !important;
+  border-color: var(--codeleaf-border-light) !important;
+  transform: translateY(-1px) !important;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .unfollow-modal-content {
+    padding: var(--codeleaf-space-4);
+    margin: var(--codeleaf-space-4);
+  }
+  
+  .unfollow-user-info {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .unfollow-user-stats {
+    flex-direction: column;
+    gap: var(--codeleaf-space-2);
+  }
+}
