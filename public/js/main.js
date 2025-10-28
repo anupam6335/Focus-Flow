@@ -432,8 +432,6 @@ function formatDateForDisplay(dateString) {
 
 // Add this function to verify the date change
 function verifyDateChange() {
-  
-
   // Test with a specific day
   const testDay = 1;
   console.log(`📊 Is day ${testDay} editable?`, isEditable(testDay));
@@ -799,22 +797,19 @@ async function handleLogin() {
       // Show immediate sync status
       updateSyncStatus("synced", "Data loaded successfully");
 
-        // NEW: Check if we have a return URL stored
-  const returnUrl = localStorage.getItem('returnUrl');
-  if (returnUrl && returnUrl !== window.location.href) {
-    localStorage.removeItem('returnUrl');
-    setTimeout(() => {
-      window.location.href = returnUrl;
-    }, 1000);
-    return; // Stop further execution
-  }
+      // NEW: Check if we have a return URL stored
+      const returnUrl = localStorage.getItem("returnUrl");
+      if (returnUrl && returnUrl !== window.location.href) {
+        localStorage.removeItem("returnUrl");
+        setTimeout(() => {
+          window.location.href = returnUrl;
+        }, 1000);
+        return; // Stop further execution
+      }
       // Force a sync to ensure we have the latest data
       setTimeout(() => {
         syncWithMongoDB();
       }, 1000);
-
-
-
     } else {
       toastManager.error(result.error || "Login failed", "Login Error");
     }
@@ -827,6 +822,21 @@ async function handleLogin() {
     loginBtn.disabled = false;
   }
 }
+
+// the auth check to handle notifications
+const originalHandleLogin = handleLogin;
+handleLogin = async function () {
+  await originalHandleLogin();
+
+  // Initialize real-time notification manager after login
+  if (authToken) {
+    setTimeout(() => {
+      if (!window.notificationManager) {
+        window.notificationManager = new NotificationManager();
+      }
+    }, 1000);
+  }
+};
 
 // Handle user registration
 async function handleRegister() {
@@ -922,6 +932,16 @@ function handleLogout() {
   renderTable();
   renderEnhancedActivityTracker();
 }
+
+// Update logout to clean up notifications
+const originalHandleLogout = handleLogout;
+handleLogout = function () {
+  if (window.notificationManager) {
+    window.notificationManager.destroy();
+    window.notificationManager = null;
+  }
+  originalHandleLogout();
+};
 
 // Show forgot password form
 function showForgotPasswordForm() {
@@ -2027,7 +2047,6 @@ async function syncWithMongoDB() {
 
       // Check if server has newer data
       if (serverVersion > currentVersion) {
-       
         appData = result.data;
         currentVersion = serverVersion;
         lastUpdated = serverLastUpdated;
@@ -2058,7 +2077,6 @@ async function syncWithMongoDB() {
       }
     }
   } catch (error) {
-    
     updateSyncStatus("offline", "Working offline");
 
     if (!error.message.includes("Failed to fetch")) {
@@ -3693,6 +3711,735 @@ function setupDirectEventListeners() {
   // console.log("✅ Direct event listeners set up");
 }
 
+// ===== ENHANCED REAL-TIME NOTIFICATION SYSTEM =====
+class NotificationManager {
+  constructor() {
+    this.isOpen = false;
+    this.notifications = [];
+    this.unreadCount = 0;
+    this.currentCategory = "all";
+    this.pollingInterval = null;
+    this.socket = null;
+    this.isConnected = false;
+
+    this.initializeElements();
+    this.setupEventListeners();
+    this.initializeSocketConnection();
+    this.startPolling();
+  }
+
+  initializeElements() {
+    this.bell = document.getElementById("notificationBell");
+    this.badge = document.getElementById("notificationBadge");
+    this.panel = document.getElementById("notificationPanel");
+    this.list = document.getElementById("notificationList");
+    this.markAllReadBtn = document.getElementById("markAllRead");
+    this.closeBtn = document.getElementById("closeNotifications");
+    this.viewAllBtn = document.getElementById("viewAllNotifications");
+
+    // Category elements
+    this.categoryTabs = document.querySelectorAll(".category-tab");
+  }
+
+  setupEventListeners() {
+    // Toggle notification panel
+    this.bell.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.togglePanel();
+    });
+
+    // Mark all as read
+    this.markAllReadBtn.addEventListener("click", () => {
+      this.markAllAsRead();
+    });
+
+    // Close panel
+    this.closeBtn.addEventListener("click", () => {
+      this.closePanel();
+    });
+
+    // View all notifications
+    this.viewAllBtn.addEventListener("click", () => {
+      this.viewAllNotifications();
+    });
+
+    // Category tab event listeners
+    this.categoryTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const category = e.currentTarget.dataset.category;
+        this.switchCategory(category);
+      });
+    });
+
+    // Close panel when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        this.isOpen &&
+        !this.panel.contains(e.target) &&
+        e.target !== this.bell
+      ) {
+        this.closePanel();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isOpen) {
+        this.closePanel();
+      }
+    });
+  }
+
+  // Switch between notification categories
+  switchCategory(category) {
+    if (this.currentCategory === category) return;
+
+    console.log(`Switching to category: ${category}`);
+
+    // Update active tab
+    this.categoryTabs.forEach((tab) => {
+      tab.classList.remove("active");
+      if (tab.dataset.category === category) {
+        tab.classList.add("active");
+      }
+    });
+
+    this.currentCategory = category;
+
+    // Add switching animation
+    this.list.classList.add("switching");
+
+    // Re-render notifications for the selected category
+    setTimeout(() => {
+      this.renderNotifications();
+      this.list.classList.remove("switching");
+    }, 150);
+  }
+
+  // Render notifications with category filtering
+  renderNotifications() {
+    console.log(
+      `Rendering notifications for category: ${this.currentCategory}`
+    );
+
+    // Filter notifications based on current category
+    let filteredNotifications = [...this.notifications];
+
+    if (this.currentCategory === "unread") {
+      filteredNotifications = this.notifications.filter((n) => !n.isRead);
+    } else if (this.currentCategory === "read") {
+      filteredNotifications = this.notifications.filter((n) => n.isRead);
+    }
+
+    console.log(`Filtered notifications: ${filteredNotifications.length}`);
+
+    if (filteredNotifications.length === 0) {
+      this.renderEmptyState();
+      return;
+    }
+
+    this.list.innerHTML = filteredNotifications
+      .map((notification) => {
+        const isUnread = !notification.isRead;
+        return `
+        <div class="notification-item ${isUnread ? "unread" : "read"}" 
+             data-id="${notification._id}" 
+             data-type="${notification.type}">
+          <div class="notification-content">
+            <div class="notification-type">${this.getTypeLabel(
+              notification.type
+            )}</div>
+            <p class="notification-message">${notification.message}</p>
+            <div class="notification-meta">
+              <span class="notification-author">@${notification.author}</span>
+              <span class="notification-time">${this.formatTime(
+                notification.timestamp
+              )}</span>
+            </div>
+            ${
+              isUnread
+                ? '<div class="notification-live-indicator">🟢 Live</div>'
+                : ""
+            }
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    // Add click handlers
+    this.list.querySelectorAll(".notification-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        this.handleNotificationClick(item);
+      });
+    });
+  }
+
+  // Render empty state for categories
+  renderEmptyState() {
+    let emptyMessage = "";
+    let emptyIcon = "🔔";
+
+    switch (this.currentCategory) {
+      case "unread":
+        emptyMessage = "No unread notifications";
+        emptyIcon = "📭";
+        break;
+      case "read":
+        emptyMessage = "No read notifications";
+        emptyIcon = "📖";
+        break;
+      default:
+        emptyMessage = "No notifications yet";
+        emptyIcon = "🔔";
+    }
+
+    this.list.innerHTML = `
+      <div class="notification-empty">
+        <div class="notification-empty-icon">${emptyIcon}</div>
+        <p>${emptyMessage}</p>
+        <p style="font-size: var(--codeleaf-font-sm); margin-top: var(--codeleaf-space-2);">
+          ${
+            this.currentCategory === "all"
+              ? "Follow users to see their activity here"
+              : "Notifications will appear here"
+          }
+        </p>
+        ${
+          this.isConnected
+            ? '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-accent-primary);">🔗 Real-time notifications enabled</div>'
+            : ""
+        }
+      </div>
+    `;
+  }
+
+  // Update badge and category counters
+  updateBadge() {
+    // Update main badge
+    if (this.unreadCount > 0) {
+      this.badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
+      this.badge.style.display = "flex";
+      this.bell.classList.add("has-unread");
+
+      if (this.unreadCount === 1) {
+        this.bell.style.animation = "bell-pulse 2s infinite";
+      }
+    } else {
+      this.badge.style.display = "none";
+      this.bell.classList.remove("has-unread");
+      this.bell.style.animation = "none";
+    }
+
+    // Update category counters
+    this.updateCategoryCounters();
+  }
+
+  // Update counters on category tabs
+  updateCategoryCounters() {
+    const totalCount = this.notifications.length;
+    const unreadCount = this.notifications.filter((n) => !n.isRead).length;
+    const readCount = totalCount - unreadCount;
+
+    console.log(
+      `Updating counters - Total: ${totalCount}, Unread: ${unreadCount}, Read: ${readCount}`
+    );
+
+    // Update counters for each category
+    this.updateCategoryCounter("all", totalCount);
+    this.updateCategoryCounter("unread", unreadCount);
+    this.updateCategoryCounter("read", readCount);
+
+    // Add/remove unread indicator from unread tab
+    const unreadTab = document.querySelector('[data-category="unread"]');
+    if (unreadCount > 0) {
+      unreadTab.classList.add("has-unread");
+    } else {
+      unreadTab.classList.remove("has-unread");
+    }
+  }
+
+  // Helper to update category counter
+  updateCategoryCounter(category, count) {
+    const tab = document.querySelector(`[data-category="${category}"]`);
+    if (!tab) {
+      console.error(`Tab for category ${category} not found`);
+      return;
+    }
+
+    let counter = tab.querySelector(".category-counter");
+
+    if (count > 0) {
+      if (!counter) {
+        counter = document.createElement("span");
+        counter.className = "category-counter";
+        tab.appendChild(counter);
+      }
+      counter.textContent = count;
+    } else if (counter) {
+      counter.remove();
+    }
+  }
+
+  // FIXED: Handle notification click with proper real-time category switching
+  async handleNotificationClick(notificationElement) {
+    const notificationId = notificationElement.dataset.id;
+    const notificationType = notificationElement.dataset.type;
+
+    console.log(`Handling click for notification: ${notificationId}`);
+
+    // Mark as read on server
+    await this.markAsRead(notificationId);
+
+    // Update local state
+    const notificationIndex = this.notifications.findIndex(
+      (n) => n._id === notificationId
+    );
+    if (notificationIndex !== -1) {
+      this.notifications[notificationIndex].isRead = true;
+      this.unreadCount = Math.max(0, this.unreadCount - 1);
+
+      console.log(
+        `Notification marked as read. Unread count: ${this.unreadCount}`
+      );
+    }
+
+    // Handle navigation based on type
+    if (notificationType === "new_blog") {
+      const notification = this.notifications.find(
+        (n) => n._id === notificationId
+      );
+      if (notification && notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+        return; // Don't update UI since we're navigating away
+      }
+    }
+
+    // Update UI immediately
+    this.updateBadge();
+
+    // FIXED: Real-time category handling
+    if (this.currentCategory === "unread") {
+      // If we're in unread category, the notification should disappear immediately
+      // Check if this was the last unread notification
+      if (this.unreadCount === 0) {
+        // No more unread notifications, switch to all category
+        this.switchCategory("all");
+      } else {
+        // Still have unread notifications, re-render the unread list
+        this.renderNotifications();
+      }
+    } else if (this.currentCategory === "all") {
+      // In all category, just re-render to update the read status
+      this.renderNotifications();
+    }
+    // If we're in read category, no need to re-render as the notification will appear there automatically
+  }
+
+  // FIXED: Mark all as read with proper real-time updates
+  async markAllAsRead() {
+    if (!authToken || this.unreadCount === 0) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        // Update local state
+        this.notifications.forEach((notification) => {
+          notification.isRead = true;
+        });
+        this.unreadCount = 0;
+
+        console.log("All notifications marked as read");
+
+        // Update UI
+        this.updateBadge();
+
+        // FIXED: Handle category switching based on current view
+        if (this.currentCategory === "unread") {
+          // If we're viewing unread and mark all as read, switch to all
+          this.switchCategory("all");
+        } else {
+          // Otherwise just re-render the current view
+          this.renderNotifications();
+        }
+
+        toastManager.success(
+          "All notifications marked as read",
+          "Notifications"
+        );
+      }
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      toastManager.error("Failed to mark all as read", "Error");
+    }
+  }
+
+  // Handle real-time notifications with category awareness
+  handleRealTimeNotification(notification) {
+    console.log("Handling real-time notification:", notification);
+
+    // Add new notification to the beginning of the list
+    this.notifications.unshift(notification);
+
+    // Increment unread count
+    this.unreadCount++;
+
+    // Update UI
+    this.updateBadge();
+
+    // Show visual alert
+    this.showRealTimeNotificationAlert(notification);
+
+    // If panel is open and we're in relevant category, update the list
+    if (
+      this.isOpen &&
+      (this.currentCategory === "all" || this.currentCategory === "unread")
+    ) {
+      this.renderNotifications();
+    }
+
+    // Auto-close notification after 5 seconds
+    setTimeout(() => {
+      this.hideRealTimeNotificationAlert();
+    }, 5000);
+  }
+
+  // Load notifications from server
+  async loadNotifications() {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          this.notifications = result.notifications || [];
+          this.unreadCount = result.unreadCount || 0;
+          this.renderNotifications();
+          this.updateBadge();
+          console.log("Loaded notifications:", this.notifications);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+    }
+  }
+
+  getTypeLabel(type) {
+    const labels = {
+      new_blog: "New Blog",
+      user_activity: "Activity",
+    };
+    return labels[type] || "Notification";
+  }
+
+  formatTime(timestamp) {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return time.toLocaleDateString();
+  }
+
+  async togglePanel() {
+    if (this.isOpen) {
+      this.closePanel();
+    } else {
+      await this.openPanel();
+    }
+  }
+
+  async openPanel() {
+    this.isOpen = true;
+    this.panel.classList.add("open");
+    await this.loadNotifications();
+  }
+
+  closePanel() {
+    this.isOpen = false;
+    this.panel.classList.remove("open");
+  }
+
+  viewAllNotifications() {
+    this.closePanel();
+    toastManager.info("Notifications page coming soon!", "Feature Preview");
+  }
+
+  async markAsRead(notificationId) {
+    if (!authToken) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }
+
+  showNewNotificationAlert() {
+    this.bell.style.animation = "none";
+    setTimeout(() => {
+      this.bell.style.animation = "bell-pulse 1s ease 2";
+    }, 10);
+  }
+
+  startPolling() {
+    this.pollingInterval = setInterval(() => {
+      if (authToken && !this.isOpen && !this.isConnected) {
+        this.checkForNewNotifications();
+      }
+    }, 120000);
+  }
+
+  async checkForNewNotifications() {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const previousCount = this.unreadCount;
+          this.unreadCount = result.unreadCount;
+
+          if (this.unreadCount > previousCount && previousCount > 0) {
+            this.showNewNotificationAlert();
+          }
+
+          this.updateBadge();
+        }
+      }
+    } catch (error) {
+      console.error("Error checking notifications:", error);
+    }
+  }
+
+  // Real-time notification alert methods
+  showRealTimeNotificationAlert(notification) {
+    const alert = document.createElement("div");
+    alert.className = "real-time-notification-alert";
+    alert.innerHTML = `
+      <div class="notification-alert-content">
+        <div class="notification-alert-header">
+          <span class="notification-alert-type">${this.getTypeLabel(
+            notification.type
+          )}</span>
+          <button class="notification-alert-close">&times;</button>
+        </div>
+        <div class="notification-alert-message">${notification.message}</div>
+        <div class="notification-alert-time">Just now</div>
+      </div>
+    `;
+
+    alert.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 350px;
+      background: var(--codeleaf-bg-primary);
+      border: 1px solid var(--codeleaf-border-light);
+      border-left: 4px solid var(--codeleaf-accent-primary);
+      border-radius: var(--codeleaf-radius-lg);
+      box-shadow: var(--codeleaf-shadow-lg);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 4.7s forwards;
+      cursor: pointer;
+    `;
+
+    alert
+      .querySelector(".notification-alert-close")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        alert.remove();
+      });
+
+    alert.addEventListener("click", () => {
+      if (notification.blogSlug) {
+        window.location.href = `/blogs/${notification.blogSlug}`;
+      }
+      alert.remove();
+    });
+
+    document.body.appendChild(alert);
+    this.addNotificationAlertStyles();
+  }
+
+  addNotificationAlertStyles() {
+    if (!document.getElementById("notification-alert-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "notification-alert-styles";
+      styles.textContent = `
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(100%); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+          from { opacity: 1; transform: translateX(0); }
+          to { opacity: 0; transform: translateX(100%); }
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  hideRealTimeNotificationAlert() {
+    const alerts = document.querySelectorAll(".real-time-notification-alert");
+    alerts.forEach((alert) => {
+      alert.style.animation = "slideOutRight 0.3s ease forwards";
+      setTimeout(() => alert.remove(), 300);
+    });
+  }
+
+  // Socket connection methods
+  initializeSocketConnection() {
+    if (!authToken) {
+      console.log("No auth token, skipping socket connection");
+      return;
+    }
+
+    try {
+      this.socket = io({
+        auth: {
+          token: authToken,
+        },
+      });
+
+      this.socket.on("connect", () => {
+        console.log("🔌 Connected to real-time notifications");
+        this.isConnected = true;
+        this.updateConnectionStatus(true);
+      });
+
+      this.socket.on("disconnect", () => {
+        console.log("🔌 Disconnected from real-time notifications");
+        this.isConnected = false;
+        this.updateConnectionStatus(false);
+      });
+
+      this.socket.on("new-notification", (notification) => {
+        console.log("📢 Received real-time notification:", notification);
+        this.handleRealTimeNotification(notification);
+      });
+
+      this.socket.on("notification-count-updated", (data) => {
+        if (data.increment) {
+          this.unreadCount++;
+          this.updateBadge();
+          this.showNewNotificationAlert();
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing socket connection:", error);
+    }
+  }
+
+  updateConnectionStatus(connected) {
+    if (connected) {
+      this.bell.title = "Notifications (Real-time)";
+      this.bell.style.color = "var(--codeleaf-accent-primary)";
+    } else {
+      this.bell.title = "Notifications (Offline)";
+      this.bell.style.color = "var(--codeleaf-text-tertiary)";
+    }
+  }
+
+  updateFollowingList(followingList) {
+    this.followingList = followingList || [];
+    if (this.socket && this.isConnected) {
+      this.socket.emit("update-following", this.followingList);
+      console.log(
+        `🔔 Updated real-time subscriptions for ${this.followingList.length} followed users`
+      );
+    }
+    this.showSubscriptionUpdateFeedback(this.followingList.length);
+  }
+
+  showSubscriptionUpdateFeedback(followingCount) {
+    const feedback = document.createElement("div");
+    feedback.className = "subscription-update-feedback";
+    feedback.innerHTML = `
+    <div style="
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--codeleaf-accent-primary);
+      color: white;
+      padding: 12px 16px;
+      border-radius: var(--codeleaf-radius-md);
+      box-shadow: var(--codeleaf-shadow-lg);
+      z-index: 10001;
+      font-size: var(--codeleaf-font-sm);
+      animation: slideInUp 0.3s ease;
+    ">
+      🔔 Now receiving real-time updates from ${followingCount} users
+    </div>
+  `;
+
+    document.body.appendChild(feedback);
+    setTimeout(() => {
+      if (feedback.parentNode) {
+        feedback.parentNode.removeChild(feedback);
+      }
+    }, 3000);
+    this.addSubscriptionUpdateStyles();
+  }
+
+  addSubscriptionUpdateStyles() {
+    if (!document.getElementById("subscription-update-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "subscription-update-styles";
+      styles.textContent = `
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  destroy() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+}
+
+// Initialize notification manager when DOM is loaded
+let notificationManager;
+
 // Scroll to Top Functionality
 function initScrollToTop() {
   const scrollToTopBtn = document.getElementById("scrollToTop");
@@ -3756,4 +4503,44 @@ document.addEventListener("DOMContentLoaded", function () {
       renderActivityCalendar();
     }
   }, 500);
+
+  // Initialize notification manager after a short delay to ensure auth is checked
+  setTimeout(() => {
+    if (authToken && !window.notificationManager) {
+      window.notificationManager = new NotificationManager();
+
+      // Load initial following list and set up subscriptions
+      setTimeout(() => {
+        initializeNotificationSubscriptions();
+      }, 2000);
+    }
+  }, 1000);
 });
+
+// NEW: Initialize notification subscriptions with current following list
+async function initializeNotificationSubscriptions() {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token || !window.notificationManager) return;
+
+    const response = await fetch(`${API_BASE_URL}/user-info`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.user) {
+        const followingList = result.user.social?.following || [];
+        window.notificationManager.updateFollowingList(followingList);
+
+        console.log(
+          `🎯 Initialized real-time notifications for ${followingList.length} followed users`
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing notification subscriptions:", error);
+  }
+}

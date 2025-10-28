@@ -1,0 +1,564 @@
+/* ===== NOTIFICATION SYSTEM STYLES ===== */
+
+/* Notification Bell Icon */
+.notification-bell {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: var(--codeleaf-space-2);
+  border-radius: var(--codeleaf-radius-md);
+  transition: all 0.3s ease;
+  color: var(--codeleaf-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  min-width: auto;
+}
+
+.notification-bell:hover {
+  background: var(--codeleaf-bg-tertiary);
+  color: var(--codeleaf-accent-primary);
+  transform: scale(1.1);
+}
+
+.notification-bell.has-unread {
+  color: var(--codeleaf-accent-primary);
+  animation: bell-pulse 2s infinite;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--codeleaf-error);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--codeleaf-bg-secondary);
+  animation: badge-bounce 0.5s ease;
+}
+
+@keyframes bell-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes badge-bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Notification Dropdown Panel */
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--codeleaf-bg-primary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  box-shadow: var(--codeleaf-shadow-lg);
+  z-index: 1000;
+  margin-top: var(--codeleaf-space-2);
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.notification-header {
+  padding: var(--codeleaf-space-4);
+  border-bottom: 1px solid var(--codeleaf-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-title {
+  font-size: var(--codeleaf-font-lg);
+  font-weight: 600;
+  color: var(--codeleaf-text-primary);
+  margin: 0;
+}
+
+.notification-actions {
+  display: flex;
+  gap: var(--codeleaf-space-2);
+}
+
+.notification-clear {
+  background: none;
+  border: none;
+  color: var(--codeleaf-text-secondary);
+  cursor: pointer;
+  padding: var(--codeleaf-space-1) var(--codeleaf-space-2);
+  border-radius: var(--codeleaf-radius-md);
+  font-size: var(--codeleaf-font-sm);
+  transition: all 0.2s ease;
+}
+
+.notification-clear:hover {
+  background: var(--codeleaf-bg-tertiary);
+  color: var(--codeleaf-accent-primary);
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: var(--codeleaf-space-4);
+  border-bottom: 1px solid var(--codeleaf-border-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  animation: slide-in-right 0.3s ease;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: var(--codeleaf-bg-secondary);
+}
+
+.notification-item.unread {
+  background: rgba(45, 122, 45, 0.05);
+  border-left: 3px solid var(--codeleaf-accent-primary);
+}
+
+.notification-item.unread:hover {
+  background: rgba(45, 122, 45, 0.08);
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--codeleaf-space-1);
+}
+
+.notification-type {
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-accent-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.notification-message {
+  font-size: var(--codeleaf-font-sm);
+  color: var(--codeleaf-text-primary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.notification-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--codeleaf-space-2);
+}
+
+.notification-author {
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-secondary);
+  font-weight: 500;
+}
+
+.notification-time {
+  font-size: var(--codeleaf-font-xs);
+  color: var(--codeleaf-text-tertiary);
+}
+
+.notification-empty {
+  padding: var(--codeleaf-space-8);
+  text-align: center;
+  color: var(--codeleaf-text-tertiary);
+}
+
+.notification-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--codeleaf-space-4);
+  opacity: 0.5;
+}
+
+.notification-footer {
+  padding: var(--codeleaf-space-3);
+  border-top: 1px solid var(--codeleaf-border-light);
+  text-align: center;
+}
+
+.notification-view-all {
+  background: none;
+  border: none;
+  color: var(--codeleaf-accent-primary);
+  cursor: pointer;
+  font-size: var(--codeleaf-font-sm);
+  font-weight: 500;
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-4);
+  border-radius: var(--codeleaf-radius-md);
+  transition: all 0.2s ease;
+}
+
+.notification-view-all:hover {
+  background: var(--codeleaf-bg-tertiary);
+}
+
+/* Notification Animations */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes notification-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 122, 45, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(45, 122, 45, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(45, 122, 45, 0);
+  }
+}
+
+.notification-item.new {
+  animation: notification-pulse 2s ease;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+  .notification-panel {
+    width: 350px;
+    right: -50px;
+  }
+
+  .notification-item {
+    padding: var(--codeleaf-space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: 300px;
+    right: -80px;
+  }
+
+  .notification-header {
+    padding: var(--codeleaf-space-3);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-item.unread {
+    background: rgba(76, 166, 76, 0.08);
+  }
+
+  .notification-item.unread:hover {
+    background: rgba(76, 166, 76, 0.12);
+  }
+}
+
+/* Real-time Notification Indicators */
+.notification-live-indicator {
+  position: absolute;
+  top: var(--codeleaf-space-2);
+  right: var(--codeleaf-space-2);
+  background: var(--codeleaf-accent-primary);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.notification-item.new {
+  border-left: 3px solid var(--codeleaf-accent-primary);
+  background: rgba(45, 122, 45, 0.03);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Connection status indicator */
+.connection-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.connection-status.connected {
+  background: var(--codeleaf-success);
+  animation: pulse 2s infinite;
+}
+
+.connection-status.disconnected {
+  background: var(--codeleaf-text-tertiary);
+}
+
+/* ===== NOTIFICATION CATEGORY STYLES ===== */
+/* ===== NOTIFICATION CATEGORY STYLES ===== */
+
+.notification-categories {
+  display: flex;
+  border-bottom: 1px solid var(--codeleaf-border-light);
+  background: var(--codeleaf-bg-secondary);
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-2) 0;
+  gap: var(--codeleaf-space-2); /* Add gap between tabs */
+}
+
+.category-tab {
+  flex: 1;
+  background: var(--codeleaf-bg-tertiary);
+  border: none;
+  padding: var(--codeleaf-space-2) var(--codeleaf-space-3);
+  font-size: var(--codeleaf-font-sm);
+  color: var(--codeleaf-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--codeleaf-radius-md) var(--codeleaf-radius-md) 0 0;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--codeleaf-space-1);
+  margin-bottom: -1px; /* Align with the border */
+}
+
+.category-tab:hover {
+  color: var(--codeleaf-text-primary);
+  background: var(--codeleaf-bg-primary);
+  transform: translateY(-1px);
+}
+
+.category-tab.active {
+  color: var(--codeleaf-accent-primary);
+  border-bottom-color: var(--codeleaf-accent-primary);
+  background: var(--codeleaf-bg-primary);
+  font-weight: 600;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-tab.has-unread::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  background: var(--codeleaf-error);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Category counters */
+.category-counter {
+  background: var(--codeleaf-bg-primary);
+  color: var(--codeleaf-text-secondary);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: var(--codeleaf-font-xs);
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.category-tab.active .category-counter {
+  background: var(--codeleaf-accent-primary);
+  color: white;
+}
+
+.category-tab:not(.active):hover .category-counter {
+  background: var(--codeleaf-bg-secondary);
+  color: var(--codeleaf-text-primary);
+}
+
+/* Category-specific notification styles */
+.notification-item.read {
+  opacity: 0.7;
+  background: var(--codeleaf-bg-secondary);
+}
+
+.notification-item.read:hover {
+  opacity: 1;
+  background: var(--codeleaf-bg-tertiary);
+}
+
+.notification-item.unread {
+  background: rgba(45, 122, 45, 0.05);
+  border-left: 3px solid var(--codeleaf-accent-primary);
+}
+
+.notification-item.unread:hover {
+  background: rgba(45, 122, 45, 0.08);
+}
+
+/* Empty state for categories */
+.notification-empty {
+  padding: var(--codeleaf-space-8);
+  text-align: center;
+  color: var(--codeleaf-text-tertiary);
+}
+
+.notification-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--codeleaf-space-4);
+  opacity: 0.5;
+}
+
+/* Animation for category switching */
+.notification-list {
+  transition: opacity 0.2s ease;
+}
+
+.notification-list.switching {
+  opacity: 0.6;
+}
+
+/* Enhanced mobile responsive styles */
+@media (max-width: 767px) {
+  .notification-categories {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-2) 0;
+    gap: var(--codeleaf-space-1);
+  }
+  
+  .category-tab {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-2);
+    font-size: var(--codeleaf-font-xs);
+    border-radius: var(--codeleaf-radius-sm) var(--codeleaf-radius-sm) 0 0;
+  }
+  
+  .category-counter {
+    padding: 1px 4px;
+    font-size: 0.6rem;
+    min-width: 16px;
+  }
+  
+  .category-tab.has-unread::after {
+    top: 4px;
+    right: 4px;
+    width: 4px;
+    height: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-categories {
+    gap: var(--codeleaf-space-1);
+  }
+  
+  .category-tab {
+    padding: var(--codeleaf-space-2) var(--codeleaf-space-1);
+    font-size: 0.7rem;
+  }
+  
+  .category-counter {
+    padding: 1px 3px;
+    font-size: 0.55rem;
+    min-width: 14px;
+  }
+}
+
+/* Alternative style with borders instead of gaps */
+.notification-categories.bordered-tabs {
+  gap: 0;
+  padding: 0;
+}
+
+.notification-categories.bordered-tabs .category-tab {
+  margin: 0;
+  border-radius: 0;
+  border: 1px solid var(--codeleaf-border-light);
+  border-bottom: 2px solid transparent;
+  margin-right: -1px; /* Overlap borders */
+}
+
+.notification-categories.bordered-tabs .category-tab:last-child {
+  margin-right: 0;
+}
+
+.notification-categories.bordered-tabs .category-tab.active {
+  border-bottom-color: var(--codeleaf-accent-primary);
+  z-index: 2; /* Bring active tab to front */
+}
+
+/* Ensure the panel has proper z-index and styling */
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  background: var(--codeleaf-bg-primary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  box-shadow: var(--codeleaf-shadow-lg);
+  z-index: 1000;
+  margin-top: var(--codeleaf-space-2);
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}

@@ -32,14 +32,22 @@ mongoose.connect(process.env.MONGODB_URI, {
   useUnifiedTopology: true,
 });
 
-// update the userSchema
+// userSchema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   lastActive: { type: Date, default: Date.now },
   isOnline: { type: Boolean, default: false },
-  following: [{ type: String }], // NEW: Array of usernames that the user follows
+  following: [{ type: String }],
+  // NEW: Notification preferences and read status
+  notificationPreferences: {
+    newBlogs: { type: Boolean, default: true },
+    activity: { type: Boolean, default: true },
+    emailNotifications: { type: Boolean, default: false },
+  },
+  readNotifications: [{ type: mongoose.Schema.Types.ObjectId }], // Track read notifications
+  lastNotificationCheck: { type: Date, default: Date.now },
 });
 
 const checklistDataSchema = new mongoose.Schema({
@@ -72,6 +80,7 @@ const passwordResetSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// blogSchema
 const blogSchema = new mongoose.Schema({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
@@ -80,10 +89,12 @@ const blogSchema = new mongoose.Schema({
   isPublic: { type: Boolean, default: true },
   tags: [{ type: String }],
   likes: { type: Number, default: 0 },
-  likedBy: [{ type: String }], // Array of usernames who liked the blog
-  views: { type: Number, default: 0 }, // Add views count
+  likedBy: [{ type: String }],
+  views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  // NEW: Track notification status
+  notificationSent: { type: Boolean, default: false },
 });
 
 const User = mongoose.model("User", userSchema);
@@ -179,7 +190,7 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Enhanced Socket.io connection handling with stable online status
+// Enhanced Socket.io connection handling with real-time notifications
 const connectedUsers = new Map(); // Track connected users and their sockets
 
 io.on("connection", async (socket) => {
@@ -199,6 +210,17 @@ io.on("connection", async (socket) => {
           lastHeartbeat: new Date(),
           isOnline: true,
         });
+
+        // Join user's personal notification room
+        socket.join(`user-${username}`);
+
+        // Join rooms for followed users to receive their notifications
+        const user = await User.findOne({ username });
+        if (user && user.following) {
+          user.following.forEach((followedUser) => {
+            socket.join(`blog-publish-${followedUser}`);
+          });
+        }
 
         // Update user as online with timestamp
         await User.findOneAndUpdate(
@@ -230,6 +252,43 @@ io.on("connection", async (socket) => {
   // Leave blog room
   socket.on("leave-blog", (blogSlug) => {
     socket.leave(blogSlug);
+  });
+
+  // Update following list when user follows/unfollows
+  // Enhanced: Update following list when user follows/unfollows
+  socket.on("update-following", async (followingList) => {
+    if (username) {
+      console.log(
+        `🔄 ${username} updating following subscriptions:`,
+        followingList
+      );
+
+      // Leave all blog-publish rooms
+      const rooms = Array.from(socket.rooms);
+      rooms.forEach((room) => {
+        if (
+          room.startsWith("blog-publish-") &&
+          room !== `blog-publish-${username}`
+        ) {
+          socket.leave(room);
+          console.log(`🚪 ${username} left ${room}`);
+        }
+      });
+
+      // Join rooms for new followed users
+      followingList.forEach((followedUser) => {
+        const roomName = `blog-publish-${followedUser}`;
+        if (!socket.rooms.has(roomName)) {
+          socket.join(roomName);
+          console.log(
+            `✅ ${username} joined ${roomName} for real-time updates`
+          );
+        }
+      });
+
+      // Also join user's personal room for direct notifications
+      socket.join(`user-${username}`);
+    }
   });
 
   // Enhanced Heartbeat with status maintenance
@@ -574,12 +633,11 @@ app.get("/api/user-info", authenticateToken, async (req, res) => {
         maxStreak: activityData ? activityData.activityData.maxStreak : 0,
       },
 
-        // Follow data
-  social: {
-    followingCount: user.following ? user.following.length : 0,
-    // We'll calculate followers count separately
-  }
-
+      // Follow data
+      social: {
+        followingCount: user.following ? user.following.length : 0,
+        // We'll calculate followers count separately
+      },
     };
 
     res.json({
@@ -592,7 +650,7 @@ app.get("/api/user-info", authenticateToken, async (req, res) => {
   }
 });
 
-// Add to server.js - New endpoint to get all users
+// New endpoint to get all users
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     // Get all users (excluding passwords)
@@ -824,12 +882,11 @@ app.get("/api/user-info/:username", async (req, res) => {
       // Add access level info
       accessLevel: isAuthenticated ? "authenticated" : "public",
 
-        // Follow data
-  social: {
-    followingCount: user.following ? user.following.length : 0,
-    // We'll calculate followers count separately
-  }
-
+      // Follow data
+      social: {
+        followingCount: user.following ? user.following.length : 0,
+        // We'll calculate followers count separately
+      },
     };
 
     res.json({
@@ -843,7 +900,7 @@ app.get("/api/user-info/:username", async (req, res) => {
   }
 });
 
-// Add to server.js - New endpoint for progress statistics
+//New endpoint for progress statistics
 app.get("/api/progress-stats", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
@@ -1590,7 +1647,8 @@ app.get("/api/blogs/:slug", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-// Create new blog (protected)
+
+// Enhanced blog creation with real-time notifications
 app.post("/api/blogs", authenticateToken, async (req, res) => {
   try {
     const { title, content, isPublic = true, tags = [] } = req.body;
@@ -1623,6 +1681,11 @@ app.post("/api/blogs", authenticateToken, async (req, res) => {
 
     await blog.save();
 
+    // NEW: Enhanced real-time notifications
+    if (isPublic) {
+      await triggerRealTimeBlogNotifications(blog, req.user.username);
+    }
+
     res.status(201).json({
       success: true,
       blog: {
@@ -1634,6 +1697,79 @@ app.post("/api/blogs", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Enhanced real-time notification function
+// Enhanced real-time notification function with better targeting
+async function triggerRealTimeBlogNotifications(blog, authorUsername) {
+  try {
+    // Find users who follow the author and have notification preferences enabled
+    const followers = await User.find({
+      following: authorUsername,
+      "notificationPreferences.newBlogs": true,
+    });
+
+    console.log(
+      `📢 Sending real-time notifications to ${followers.length} followers of ${authorUsername}`
+    );
+
+    // Create notification data
+    const notificationData = {
+      _id: blog._id,
+      type: "new_blog",
+      title: "New blog published",
+      message: `${authorUsername} published "${blog.title}"`,
+      author: authorUsername,
+      blogSlug: blog.slug,
+      timestamp: new Date(),
+      isRead: false,
+      realTime: true,
+    };
+
+    let deliveredCount = 0;
+
+    // Send real-time notifications to all online followers
+    followers.forEach((follower) => {
+      const userConnection = connectedUsers.get(follower.username);
+      if (userConnection) {
+        // Send via socket to specific user room
+        io.to(`user-${follower.username}`).emit("new-notification", {
+          ...notificationData,
+          realTime: true,
+        });
+
+        // Also send to blog-publish room for this specific user
+        io.to(`blog-publish-${authorUsername}`).emit("new-notification", {
+          ...notificationData,
+          realTime: true,
+        });
+
+        deliveredCount++;
+
+        console.log(`✅ Notification delivered to ${follower.username}`);
+      } else {
+        console.log(
+          `⏸️  User ${follower.username} is offline, notification queued`
+        );
+      }
+    });
+
+    // Update notification count for all followers (including offline ones)
+    followers.forEach((follower) => {
+      const userConnection = connectedUsers.get(follower.username);
+      if (userConnection) {
+        io.to(userConnection.socketId).emit("notification-count-updated", {
+          increment: true,
+        });
+      }
+    });
+
+    console.log(
+      `📢 Real-time notifications: ${deliveredCount}/${followers.length} delivered instantly`
+    );
+  } catch (error) {
+    console.error("❌ Error triggering real-time blog notifications:", error);
+  }
+}
 
 // Update blog (protected - author only)
 app.put("/api/blogs/:slug", authenticateToken, async (req, res) => {
@@ -2391,7 +2527,6 @@ app.post("/api/users-status", authenticateToken, async (req, res) => {
   }
 });
 
-
 // Follow a user
 app.post("/api/follow/:username", authenticateToken, async (req, res) => {
   try {
@@ -2483,11 +2618,11 @@ app.get("/api/followers/:username", async (req, res) => {
 
     res.json({
       success: true,
-      followers: followers.map(user => ({
+      followers: followers.map((user) => ({
         username: user.username,
         accountCreated: user.createdAt,
         lastActive: user.lastActive,
-        isOnline: user.isOnline
+        isOnline: user.isOnline,
       })),
     });
   } catch (error) {
@@ -2500,10 +2635,10 @@ app.get("/api/following/:username", async (req, res) => {
   try {
     const username = req.params.username;
 
-    const user = await User.findOne(
-      { username },
-      "following"
-    ).populate("following", "username createdAt lastActive isOnline");
+    const user = await User.findOne({ username }, "following").populate(
+      "following",
+      "username createdAt lastActive isOnline"
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -2520,11 +2655,11 @@ app.get("/api/following/:username", async (req, res) => {
 
     res.json({
       success: true,
-      following: followingUsers.map(user => ({
+      following: followingUsers.map((user) => ({
         username: user.username,
         accountCreated: user.createdAt,
         lastActive: user.lastActive,
-        isOnline: user.isOnline
+        isOnline: user.isOnline,
       })),
     });
   } catch (error) {
@@ -2533,45 +2668,302 @@ app.get("/api/following/:username", async (req, res) => {
 });
 
 // Fix the mutual connections endpoint to include proper online status
-app.get("/api/mutual-connections/:username", authenticateToken, async (req, res) => {
-  try {
-    const currentUser = req.user.username;
-    const targetUsername = req.params.username;
+app.get(
+  "/api/mutual-connections/:username",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const currentUser = req.user.username;
+      const targetUsername = req.params.username;
 
-    // Get current user's following list
-    const currentUserData = await User.findOne({ username: currentUser });
-    if (!currentUserData) {
-      return res.status(404).json({ success: false, error: "Current user not found" });
+      // Get current user's following list
+      const currentUserData = await User.findOne({ username: currentUser });
+      if (!currentUserData) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Current user not found" });
+      }
+
+      // Get target user's followers list with full user data including online status
+      const targetUserFollowers = await User.find({
+        following: targetUsername,
+      }).select("username isOnline lastActive createdAt");
+
+      // Find mutual connections - users that both current user follows AND who follow the target user
+      const mutualConnections = targetUserFollowers.filter(
+        (follower) =>
+          currentUserData.following &&
+          currentUserData.following.includes(follower.username)
+      );
+
+      // Format the response with proper online status
+      const formattedConnections = mutualConnections.map((user) => ({
+        username: user.username,
+        isOnline: user.isOnline || false,
+        lastActive: user.lastActive || user.createdAt,
+        accountCreated: user.createdAt,
+      }));
+
+      res.json({
+        success: true,
+        mutualConnections: formattedConnections,
+        count: formattedConnections.length,
+      });
+    } catch (error) {
+      console.error("Error in mutual connections:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// ========== NOTIFICATION API ROUTES ==========
+
+// Get notifications for current user
+app.get("/api/notifications", authenticateToken, async (req, res) => {
+  try {
+     const { category } = req.query; // 'all', 'unread', 'read'
+    const userId = req.user.username;
+
+    // Get user's following list
+    const user = await User.findOne({ username: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    // Get target user's followers list with full user data including online status
-    const targetUserFollowers = await User.find({ 
-      following: targetUsername 
-    }).select('username isOnline lastActive createdAt');
+    const following = user.following || [];
 
-    // Find mutual connections - users that both current user follows AND who follow the target user
-    const mutualConnections = targetUserFollowers.filter(follower =>
-      currentUserData.following && currentUserData.following.includes(follower.username)
-    );
+    // Get recent blogs from followed users (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Format the response with proper online status
-    const formattedConnections = mutualConnections.map(user => ({
-      username: user.username,
-      isOnline: user.isOnline || false,
-      lastActive: user.lastActive || user.createdAt,
-      accountCreated: user.createdAt
-    }));
+    const recentBlogs = await Blog.find({
+      author: { $in: following },
+      createdAt: { $gte: sevenDaysAgo },
+      isPublic: true,
+    })
+      .sort({ createdAt: -1 })
+      .select("title slug author createdAt tags")
+      .limit(50);
+
+    // Get recent activity from followed users
+    const recentActivity = await ActivityTracker.find({
+      userId: { $in: following },
+      lastUpdated: { $gte: sevenDaysAgo },
+    })
+      .sort({ lastUpdated: -1 })
+      .limit(50);
+
+    // Format notifications
+    const notifications = [];
+
+    // Add blog notifications
+    recentBlogs.forEach((blog) => {
+      notifications.push({
+        _id: blog._id,
+        type: "new_blog",
+        title: `New blog published`,
+        message: `${blog.author} published "${blog.title}"`,
+        author: blog.author,
+        blogSlug: blog.slug,
+        timestamp: blog.createdAt,
+        isRead: user.readNotifications?.includes(blog._id.toString()) || false,
+      });
+    });
+
+    // Add activity notifications (simplified - you can enhance this)
+    recentActivity.forEach((activity) => {
+      if (activity.activityData && activity.activityData.currentStreak > 0) {
+        notifications.push({
+          _id: activity._id,
+          type: "user_activity",
+          title: `User activity update`,
+          message: `${activity.userId} is on a ${activity.activityData.currentStreak} day streak!`,
+          author: activity.userId,
+          timestamp: activity.lastUpdated,
+          isRead:
+            user.readNotifications?.includes(activity._id.toString()) || false,
+        });
+      }
+    });
+
+    
+
+    // Sort by timestamp and limit to 30 notifications
+    const sortedNotifications = notifications
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 30);
+
+      // Filter by category if specified
+    let filteredNotifications = notifications;
+    if (category === 'unread') {
+      filteredNotifications = notifications.filter(n => !n.isRead);
+    } else if (category === 'read') {
+      filteredNotifications = notifications.filter(n => n.isRead);
+    }
+
+    // Update last notification check time
+    user.lastNotificationCheck = new Date();
+    await user.save();
 
     res.json({
       success: true,
-      mutualConnections: formattedConnections,
-      count: formattedConnections.length
+      notifications: filteredNotifications,
+      unreadCount: notifications.filter(n => !n.isRead).length,
+      totalCount: notifications.length,
+      readCount: notifications.filter(n => n.isRead).length
     });
   } catch (error) {
-    console.error("Error in mutual connections:", error);
+    console.error("Error fetching notifications:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Mark notification as read
+app.post("/api/notifications/:id/read", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+    const notificationId = req.params.id;
+
+    const user = await User.findOne({ username: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    // Add to read notifications if not already there
+    if (!user.readNotifications.includes(notificationId)) {
+      user.readNotifications.push(notificationId);
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      message: "Notification marked as read",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Mark all notifications as read
+app.post("/api/notifications/read-all", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+
+    const user = await User.findOne({ username: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    // Get current notifications to mark them all as read
+    const response = await fetch(`http://localhost:${PORT}/api/notifications`, {
+      headers: {
+        Authorization: `Bearer ${req.headers.authorization.split(" ")[1]}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      // Add all notification IDs to read notifications
+      result.notifications.forEach((notification) => {
+        if (!user.readNotifications.includes(notification._id)) {
+          user.readNotifications.push(notification._id);
+        }
+      });
+
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      message: "All notifications marked as read",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get notification count (for badge)
+app.get("/api/notifications/count", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.username;
+
+    const response = await fetch(`http://localhost:${PORT}/api/notifications`, {
+      headers: {
+        Authorization: `Bearer ${req.headers.authorization.split(" ")[1]}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      res.json({
+        success: true,
+        unreadCount: result.unreadCount,
+      });
+    } else {
+      res.json({
+        success: true,
+        unreadCount: 0,
+      });
+    }
+  } catch (error) {
+    res.json({
+      success: true,
+      unreadCount: 0,
+    });
+  }
+});
+
+// Real-time notification status endpoint
+app.get(
+  "/api/notifications/real-time-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = req.user.username;
+      const userConnection = connectedUsers.get(userId);
+
+      res.json({
+        success: true,
+        realTimeEnabled: !!userConnection,
+        connectedUsersCount: connectedUsers.size,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Helper function to trigger blog notifications
+async function triggerBlogNotifications(blog, authorUsername) {
+  try {
+    // Find users who follow the author
+    const followers = await User.find({
+      following: authorUsername,
+      "notificationPreferences.newBlogs": true,
+    });
+
+    // For each follower, we don't need to create separate notification documents
+    // The notification system will pick up new blogs in the main notifications endpoint
+    // But we can emit real-time events if needed
+
+    // Emit real-time notification to online followers
+    followers.forEach((follower) => {
+      const userConnection = connectedUsers.get(follower.username);
+      if (userConnection) {
+        io.to(userConnection.socketId).emit("new-blog-notification", {
+          type: "new_blog",
+          title: `New blog from ${authorUsername}`,
+          message: `${authorUsername} published "${blog.title}"`,
+          blogSlug: blog.slug,
+          timestamp: new Date(),
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Error triggering blog notifications:", error);
+  }
+}
 
 // Helper function to generate slug
 function generateSlug(title) {

@@ -53,24 +53,26 @@ async function checkFollowStatus() {
 }
 
 // Unfollow Modal functionality
-let pendingUnfollowUsername = '';
+let pendingUnfollowUsername = "";
 
 function showUnfollowModal() {
   if (!currentTargetUsername) return;
-  
+
   pendingUnfollowUsername = currentTargetUsername;
-  
+
   // Get user data for the modal
   const user = currentViewingUser;
   if (!user) return;
-  
+
   const totalSolved = user.statistics?.totalProblemsSolved || 0;
   const totalBlogs = user.statistics?.totalBlogsPublished || 0;
-  
+
   // Populate modal content
-  const userInfoContainer = document.getElementById('unfollowUserInfo');
+  const userInfoContainer = document.getElementById("unfollowUserInfo");
   userInfoContainer.innerHTML = `
-    <div class="unfollow-user-avatar">${generatePixelAvatar(user.username)}</div>
+    <div class="unfollow-user-avatar">${generatePixelAvatar(
+      user.username
+    )}</div>
     <div class="unfollow-user-details">
       <div class="unfollow-user-name">${user.username.toUpperCase()}</div>
       <div class="unfollow-user-stats">
@@ -85,113 +87,166 @@ function showUnfollowModal() {
       </div>
     </div>
   `;
-  
+
   // Show modal
-  const modal = document.getElementById('unfollowModal');
-  modal.style.display = 'flex';
-  
+  const modal = document.getElementById("unfollowModal");
+  modal.style.display = "flex";
+
   // Add escape key listener
-  document.addEventListener('keydown', handleUnfollowModalEscape);
+  document.addEventListener("keydown", handleUnfollowModalEscape);
 }
 
 function closeUnfollowModal() {
-  const modal = document.getElementById('unfollowModal');
-  modal.style.display = 'none';
-  pendingUnfollowUsername = '';
-  
+  const modal = document.getElementById("unfollowModal");
+  modal.style.display = "none";
+  pendingUnfollowUsername = "";
+
   // Remove escape key listener
-  document.removeEventListener('keydown', handleUnfollowModalEscape);
+  document.removeEventListener("keydown", handleUnfollowModalEscape);
 }
 
 function handleUnfollowModalEscape(event) {
-  if (event.key === 'Escape') {
+  if (event.key === "Escape") {
     closeUnfollowModal();
   }
 }
 
-async function confirmUnfollow() {
-  if (!pendingUnfollowUsername) return;
-  
-  try {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      showToast('Please log in to unfollow users', 'info');
-      closeUnfollowModal();
-      return;
-    }
-    
-    const response = await fetch(
-      `${API_BASE_URL}/unfollow/${pendingUnfollowUsername}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    
-    if (response.ok) {
-      const result = await response.json();
-      currentFollowStatus = false;
-      updateFollowButton();
-      await loadFollowStats();
-      showToast(result.message, 'success');
-    } else {
-      const error = await response.json();
-      showToast(error.error, 'error');
-    }
-  } catch (error) {
-    console.error('Error unfollowing user:', error);
-    showToast('Failed to unfollow user', 'error');
-  } finally {
-    closeUnfollowModal();
-  }
-}
-
-// Update the toggleFollow function to show modal for unfollow
+// Enhanced follow function with real-time notification updates
 async function toggleFollow() {
   try {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     if (!token) {
-      showToast('Please log in to follow users', 'info');
+      showToast("Please log in to follow users", "info");
       return;
     }
-    
+
     // If currently following, show confirmation modal
     if (currentFollowStatus) {
       showUnfollowModal();
       return;
     }
-    
+
     // If not following, proceed with follow action
     const response = await fetch(
       `${API_BASE_URL}/follow/${currentTargetUsername}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
-    
+
     if (response.ok) {
       const result = await response.json();
       currentFollowStatus = true;
       updateFollowButton();
       await loadFollowStats();
-      showToast(result.message, 'success');
+      showToast(result.message, "success");
+
+      // CRITICAL: Update real-time notification subscriptions
+      await updateNotificationSubscriptions();
     } else {
       const error = await response.json();
-      showToast(error.error, 'error');
+      showToast(error.error, "error");
     }
   } catch (error) {
-    console.error('Error toggling follow:', error);
-    showToast('Failed to update follow status', 'error');
+    console.error("Error toggling follow:", error);
+    showToast("Failed to update follow status", "error");
   }
 }
 
+// Enhanced unfollow function with real-time notification updates
+async function confirmUnfollow() {
+  if (!pendingUnfollowUsername) return;
+
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      showToast("Please log in to unfollow users", "info");
+      closeUnfollowModal();
+      return;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/unfollow/${pendingUnfollowUsername}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      currentFollowStatus = false;
+      updateFollowButton();
+      await loadFollowStats();
+      showToast(result.message, "success");
+
+      // CRITICAL: Update real-time notification subscriptions
+      await updateNotificationSubscriptions();
+    } else {
+      const error = await response.json();
+      showToast(error.error, "error");
+    }
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    showToast("Failed to unfollow user", "error");
+  } finally {
+    closeUnfollowModal();
+  }
+}
+
+// NEW: Function to update real-time notification subscriptions
+async function updateNotificationSubscriptions() {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    // Get updated following list
+    const response = await fetch(`${API_BASE_URL}/user-info`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.user) {
+        const followingList = result.user.social?.following || [];
+
+        // Update notification manager subscriptions
+        if (window.notificationManager) {
+          window.notificationManager.updateFollowingList(followingList);
+        }
+
+        // Also update socket subscriptions directly
+        updateSocketSubscriptions(followingList);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating notification subscriptions:", error);
+  }
+}
+
+// NEW: Direct socket subscription updates
+function updateSocketSubscriptions(followingList) {
+  // Get the socket instance from notification manager
+  const socket = window.notificationManager?.socket;
+
+  if (socket && socket.connected) {
+    // Emit the update to the server
+    socket.emit("update-following", followingList);
+
+    console.log(
+      `🔄 Updated real-time subscriptions for ${followingList.length} users`
+    );
+  }
+}
 function updateFollowButton() {
   const button = document.getElementById("followButton");
   const icon = document.getElementById("followIcon");
@@ -213,19 +268,23 @@ async function loadMutualConnectionsCount() {
   try {
     const targetUsername = getTargetUsername();
     const currentUsername = await getCurrentUsername();
-    
+
     if (!targetUsername || !currentUsername) return;
 
     const token = localStorage.getItem("authToken");
-    const response = await fetch(`${API_BASE_URL}/mutual-connections/${targetUsername}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/mutual-connections/${targetUsername}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (response.ok) {
       const result = await response.json();
-      document.getElementById("mutualConnectionsCount").textContent = result.count;
+      document.getElementById("mutualConnectionsCount").textContent =
+        result.count;
     }
   } catch (error) {
     console.error("Error loading mutual connections count:", error);
@@ -236,15 +295,18 @@ async function showMutualConnectionsModal() {
   try {
     const targetUsername = getTargetUsername();
     const currentUsername = await getCurrentUsername();
-    
+
     if (!targetUsername || !currentUsername) return;
 
     const token = localStorage.getItem("authToken");
-    const response = await fetch(`${API_BASE_URL}/mutual-connections/${targetUsername}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/mutual-connections/${targetUsername}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) return;
 
@@ -268,13 +330,27 @@ async function showMutualConnectionsModal() {
               ? mutualConnections
                   .map(
                     (user) => `
-                <div class="mutual-connection-item" onclick="viewUserProfile('${user.username}')">
-                  <div class="mutual-connection-avatar">${generateUserAvatar(user.username)}</div>
+                <div class="mutual-connection-item" onclick="viewUserProfile('${
+                  user.username
+                }')">
+                  <div class="mutual-connection-avatar">${generateUserAvatar(
+                    user.username
+                  )}</div>
                   <div class="mutual-connection-details">
                     <div class="mutual-connection-name">${user.username}</div>
                     <div class="mutual-connection-status">
-                      <div class="status-indicator ${user.isOnline ? 'online' : 'offline'}"></div>
-                       ${user.isOnline ? 'Online now' : `Last seen ${user.lastActive ? formatRelativeTime(user.lastActive) : 'some time ago'}`}
+                      <div class="status-indicator ${
+                        user.isOnline ? "online" : "offline"
+                      }"></div>
+                       ${
+                         user.isOnline
+                           ? "Online now"
+                           : `Last seen ${
+                               user.lastActive
+                                 ? formatRelativeTime(user.lastActive)
+                                 : "some time ago"
+                             }`
+                       }
                     </div>
                   </div>
                 </div>
@@ -311,17 +387,23 @@ async function showMutualConnectionsModal() {
 async function loadFollowStats() {
   try {
     // Load following count
-    const followingResponse = await fetch(`${API_BASE_URL}/following/${currentTargetUsername}`);
+    const followingResponse = await fetch(
+      `${API_BASE_URL}/following/${currentTargetUsername}`
+    );
     if (followingResponse.ok) {
       const followingResult = await followingResponse.json();
-      document.getElementById("followingCount").textContent = followingResult.following.length;
+      document.getElementById("followingCount").textContent =
+        followingResult.following.length;
     }
 
     // Load followers count
-    const followersResponse = await fetch(`${API_BASE_URL}/followers/${currentTargetUsername}`);
+    const followersResponse = await fetch(
+      `${API_BASE_URL}/followers/${currentTargetUsername}`
+    );
     if (followersResponse.ok) {
       const followersResult = await followersResponse.json();
-      document.getElementById("followersCount").textContent = followersResult.followers.length;
+      document.getElementById("followersCount").textContent =
+        followersResult.followers.length;
     }
 
     // Load mutual connections count
@@ -1356,7 +1438,7 @@ function renderUserProfile() {
 
   updateShareButton();
   initializeFollowFeature();
-    loadMutualConnectionsCount(); 
+  loadMutualConnectionsCount();
 }
 
 // Share Profile Functionality for user-profile
@@ -4123,10 +4205,10 @@ function updateNavigation() {
 }
 
 // Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
-  const modal = document.getElementById('unfollowModal');
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("unfollowModal");
   if (modal) {
-    modal.addEventListener('click', function(e) {
+    modal.addEventListener("click", function (e) {
       if (e.target === modal) {
         closeUnfollowModal();
       }
