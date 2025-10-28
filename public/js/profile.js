@@ -1841,6 +1841,105 @@ async function loadUserProfile() {
   }
 }
 
+// In profile.js - Add to the existing functionality
+async function loadFollowStats() {
+  try {
+    const currentUsername = currentUserData?.username;
+    if (!currentUsername) return;
+
+    // Load following count
+    const followingResponse = await fetch(
+      `${API_BASE_URL}/following/${currentUsername}`
+    );
+    if (followingResponse.ok) {
+      const followingResult = await followingResponse.json();
+      document.getElementById("followingCount").textContent =
+        followingResult.following.length;
+    }
+
+    // Load followers count
+    const followersResponse = await fetch(
+      `${API_BASE_URL}/followers/${currentUsername}`
+    );
+    if (followersResponse.ok) {
+      const followersResult = await followersResponse.json();
+      document.getElementById("followersCount").textContent =
+        followersResult.followers.length;
+    }
+  } catch (error) {
+    console.error("Error loading follow stats:", error);
+  }
+}
+
+// Add modal functions (same as in user-profile.js)
+function showFollowersModal() {
+  showFollowModal("followers");
+}
+
+function showFollowingModal() {
+  showFollowModal("following");
+}
+
+async function showFollowModal(type) {
+  try {
+    const currentUsername = currentUserData?.username;
+    if (!currentUsername) return;
+
+    const response = await fetch(`${API_BASE_URL}/${type}/${currentUsername}`);
+    if (!response.ok) return;
+
+    const result = await response.json();
+    const users = type === "followers" ? result.followers : result.following;
+
+    const modal = document.createElement("div");
+    modal.className = "follow-modal";
+    modal.innerHTML = `
+      <div class="follow-modal-content">
+        <div class="follow-modal-header">
+          <h3 class="follow-modal-title">${
+            type === "followers" ? "Followers" : "Following"
+          }</h3>
+          <button class="follow-modal-close" onclick="this.closest('.follow-modal').remove()">×</button>
+        </div>
+        <div class="follow-modal-list">
+          ${
+            users.length > 0
+              ? users
+                  .map(
+                    (user) => `
+              <div class="follow-user-item" onclick="viewUserProfile('${
+                user.username
+              }')">
+                <div class="follow-user-avatar">${generateUserAvatar(
+                  user.username
+                )}</div>
+                <div class="follow-user-name">${user.username}</div>
+                <div class="follow-user-status">${
+                  user.isOnline ? "Online" : "Offline"
+                }</div>
+              </div>
+            `
+                  )
+                  .join("")
+              : `<div class="follow-empty-state">No ${type} yet</div>`
+          }
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  } catch (error) {
+    console.error(`Error loading ${type}:`, error);
+  }
+}
+
 // Enhanced render function with all new features - FIXED for profile
 function renderUserProfile() {
   if (!currentUserData) return; // Use currentUserData instead of currentViewingUser
@@ -1902,6 +2001,7 @@ function renderUserProfile() {
   document.getElementById("maxStreak").textContent = maxStreak;
 
   updateShareButton();
+  loadFollowStats();
 }
 
 // Share Profile Functionality
@@ -3318,40 +3418,54 @@ function initializeCommunitySearch() {
 }
 
 // Render user directory
-function renderUserDirectory(users, container) {
-  if (!users || users.length === 0) {
-    container.innerHTML = `
-            <div class="empty-state">
-                No other users yet 
-                <br><small>Be the first to invite friends to join!</small>
-            </div>
-        `;
-    return;
+async function renderUserDirectory(users) {
+  const currentUsername = currentUserData?.username;
+  const token = localStorage.getItem("authToken");
+
+  // Get current user's following list
+  let followingList = [];
+  if (token && currentUsername) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/following/${currentUsername}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const result = await response.json();
+        followingList = result.following.map((user) => user.username);
+      }
+    } catch (error) {
+      console.error("Error loading following list:", error);
+    }
   }
 
-  container.innerHTML = users
-    .map(
-      (user) => `
+  this.userDirectory.innerHTML = users
+    .map((user) => {
+      const isFollowing = followingList.includes(user.username);
+      return `
         <div class="user-item" onclick="viewUserProfile('${user.username}')">
-            <div class="user-avatar">${generateUserAvatar(user.username)}</div>
-            <div class="user-details">
-                <div class="user-name">${escapeHtml(
-                  user.username.toUpperCase()
-                )}</div>
-                <div class="user-stats">
-                    <span class="user-stat">${
-                      user.totalSolved || 0
-                    } solved</span>
-                    <span class="user-stat">${user.totalBlogs || 0} blogs</span>
-                    <span class="user-stat">${
-                      user.currentStreak || 0
-                    } day streak</span>
-                </div>
+          <div class="user-avatar">${generateUserAvatar(user.username)}</div>
+          <div class="user-details">
+            <div class="user-name">${escapeHtml(
+              user.username.toUpperCase()
+            )}</div>
+            <div class="user-stats">
+              <span class="user-stat">${user.totalSolved || 0} solved</span>
+              <span class="user-stat">${user.totalBlogs || 0} blogs</span>
+              <span class="user-stat">${
+                user.currentStreak || 0
+              } day streak</span>
+              ${
+                isFollowing ? '<span class="follow-badge">Following</span>' : ""
+              }
             </div>
-            <div class="user-action">View Profile →</div>
+          </div>
+          <div class="user-action">View Profile →</div>
         </div>
-    `
-    )
+      `;
+    })
     .join("");
 }
 
@@ -3568,11 +3682,11 @@ class UserStatusManager {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        timeout: 20000
+        timeout: 20000,
       });
 
-      this.socket.on('connect', () => {
-        console.log('Connected for real-time status updates');
+      this.socket.on("connect", () => {
+        console.log("Connected for real-time status updates");
         this.updateStatusDisplay();
       });
 
@@ -3580,16 +3694,15 @@ class UserStatusManager {
         this.handleStatusUpdate(data);
       });
 
-      this.socket.on('disconnect', (reason) => {
-        console.log('Disconnected from status updates:', reason);
+      this.socket.on("disconnect", (reason) => {
+        console.log("Disconnected from status updates:", reason);
         // Don't immediately update status - wait for reconnection
       });
 
-      this.socket.on('reconnect', () => {
-        console.log('Reconnected to status updates');
+      this.socket.on("reconnect", () => {
+        console.log("Reconnected to status updates");
         this.updateStatusDisplay();
       });
-
     } catch (error) {
       console.error("Failed to connect to socket:", error);
     }
@@ -3598,7 +3711,7 @@ class UserStatusManager {
   initializeStatusDisplay() {
     // Set initial status to "Checking..." while we fetch actual status
     this.renderStatus({ isOnline: null, lastActive: new Date() });
-    
+
     // Initial status fetch
     this.updateStatusDisplay();
   }
@@ -3676,7 +3789,7 @@ class UserStatusManager {
         // User is offline
         statusIndicator.className = "status-indicator offline";
         const timeAgo = this.getTimeAgo(status.lastActive);
-        
+
         // Only show "Last seen just now" for very recent activity
         if (timeAgo === "just now") {
           statusText.textContent = "Online";
@@ -3740,12 +3853,14 @@ class UserStatusManager {
       const statusElement = userElement.querySelector(".user-status");
       if (statusElement) {
         if (status.isOnline) {
-          statusElement.innerHTML = '<div class="status-indicator online"></div> Online now';
+          statusElement.innerHTML =
+            '<div class="status-indicator online"></div> Online now';
         } else {
           const timeAgo = this.getTimeAgo(status.lastActive);
           // For community users, be more conservative with "just now"
           if (timeAgo === "just now") {
-            statusElement.innerHTML = '<div class="status-indicator online"></div> Online';
+            statusElement.innerHTML =
+              '<div class="status-indicator online"></div> Online';
           } else {
             statusElement.innerHTML = `<div class="status-indicator offline"></div> Last seen ${timeAgo}`;
           }
@@ -3757,7 +3872,7 @@ class UserStatusManager {
   // Force logout/disconnect
   forceOffline() {
     if (this.socket) {
-      this.socket.emit('force-disconnect');
+      this.socket.emit("force-disconnect");
     }
   }
 

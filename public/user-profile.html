@@ -60,6 +60,15 @@
                     <span>Share Profile</span>
                   </button>
                 </div>
+
+                  <button
+                  class="follow-btn"
+                  id="followButton"
+                  onclick="toggleFollow()"
+                >
+                  <span id="followIcon">➕</span>
+                  <span id="followText">Follow</span>
+                </button>
               </div>
               <p class="profile-bio" id="userBio">
                 Member since <span id="joinDate">...</span>
@@ -71,6 +80,43 @@
                 <span class="status-text" id="statusText"
                   >Loading status...</span
                 >
+              </div>
+
+              <!-- In user-profile.html, add this after the profile-status section -->
+              <div
+                class="profile-follow-section"
+                id="profileFollowSection"
+                style="margin-top: 15px; display: none"
+              >
+                <div class="follow-stats" style="display: flex; gap: 15px">
+                  <div
+                    class="follow-stat"
+                    onclick="showFollowingModal()"
+                    style="cursor: pointer"
+                  >
+                    <span class="follow-count" id="followingCount">0</span>
+                    <span class="follow-label">Following</span>
+                  </div>
+                  <div
+                    class="follow-stat"
+                    onclick="showFollowersModal()"
+                    style="cursor: pointer"
+                  >
+                    <span class="follow-count" id="followersCount">0</span>
+                    <span class="follow-label">Followers</span>
+                  </div>
+
+                  <div
+                    class="follow-stat"
+                    onclick="showMutualConnectionsModal()"
+                    style="cursor: pointer"
+                  >
+                    <span class="follow-count" id="mutualConnectionsCount"
+                      >0</span
+                    >
+                    <span class="follow-label">Mutual</span>
+                  </div>
+                </div>
               </div>
 
               <!-- Enhanced Stats Grid -->
@@ -480,6 +526,30 @@
         </div>
       </div>
     </div>
+
+
+    <!-- Unfollow Confirmation Modal -->
+<div id="unfollowModal" class="unfollow-modal" style="display: none;">
+  <div class="unfollow-modal-content">
+    <div class="unfollow-modal-header">
+      <h3 class="unfollow-modal-title">Unfollow User</h3>
+      <p class="unfollow-modal-subtitle">Are you sure you want to unfollow this user?</p>
+    </div>
+    
+    <div class="unfollow-user-info" id="unfollowUserInfo">
+      <!-- User info will be populated here -->
+    </div>
+    
+    <div class="unfollow-modal-actions">
+      <button class="unfollow-cancel-btn" onclick="closeUnfollowModal()">
+        <span>Cancel</span>
+      </button>
+      <button class="unfollow-confirm-btn" onclick="confirmUnfollow()">
+        <span>Unfollow</span>
+      </button>
+    </div>
+  </div>
+</div>
 
     <script src="js/user-profile.js"></script>
   </body>

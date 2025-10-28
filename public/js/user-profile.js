@@ -8,6 +8,397 @@ function getTargetUsername() {
   return urlParams.get("user");
 }
 
+// Follow functionality for user-profile.js
+let currentFollowStatus = false;
+let currentTargetUsername = "";
+
+async function initializeFollowFeature() {
+  currentTargetUsername = getTargetUsername();
+  const currentUsername = await getCurrentUsername();
+
+  // Only show follow button if user is viewing another user's profile and is logged in
+  if (
+    currentTargetUsername &&
+    currentUsername &&
+    currentTargetUsername !== currentUsername
+  ) {
+    document.getElementById("profileFollowSection").style.display = "block";
+    await checkFollowStatus();
+    await loadFollowStats();
+  }
+}
+
+async function checkFollowStatus() {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const response = await fetch(
+      `${API_BASE_URL}/is-following/${currentTargetUsername}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      currentFollowStatus = result.isFollowing;
+      updateFollowButton();
+    }
+  } catch (error) {
+    console.error("Error checking follow status:", error);
+  }
+}
+
+// Unfollow Modal functionality
+let pendingUnfollowUsername = '';
+
+function showUnfollowModal() {
+  if (!currentTargetUsername) return;
+  
+  pendingUnfollowUsername = currentTargetUsername;
+  
+  // Get user data for the modal
+  const user = currentViewingUser;
+  if (!user) return;
+  
+  const totalSolved = user.statistics?.totalProblemsSolved || 0;
+  const totalBlogs = user.statistics?.totalBlogsPublished || 0;
+  
+  // Populate modal content
+  const userInfoContainer = document.getElementById('unfollowUserInfo');
+  userInfoContainer.innerHTML = `
+    <div class="unfollow-user-avatar">${generatePixelAvatar(user.username)}</div>
+    <div class="unfollow-user-details">
+      <div class="unfollow-user-name">${user.username.toUpperCase()}</div>
+      <div class="unfollow-user-stats">
+        <div class="unfollow-stat">
+          <span class="unfollow-stat-value">${totalSolved}</span>
+          <span class="unfollow-stat-label">Solved</span>
+        </div>
+        <div class="unfollow-stat">
+          <span class="unfollow-stat-value">${totalBlogs}</span>
+          <span class="unfollow-stat-label">Blogs</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Show modal
+  const modal = document.getElementById('unfollowModal');
+  modal.style.display = 'flex';
+  
+  // Add escape key listener
+  document.addEventListener('keydown', handleUnfollowModalEscape);
+}
+
+function closeUnfollowModal() {
+  const modal = document.getElementById('unfollowModal');
+  modal.style.display = 'none';
+  pendingUnfollowUsername = '';
+  
+  // Remove escape key listener
+  document.removeEventListener('keydown', handleUnfollowModalEscape);
+}
+
+function handleUnfollowModalEscape(event) {
+  if (event.key === 'Escape') {
+    closeUnfollowModal();
+  }
+}
+
+async function confirmUnfollow() {
+  if (!pendingUnfollowUsername) return;
+  
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      showToast('Please log in to unfollow users', 'info');
+      closeUnfollowModal();
+      return;
+    }
+    
+    const response = await fetch(
+      `${API_BASE_URL}/unfollow/${pendingUnfollowUsername}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    if (response.ok) {
+      const result = await response.json();
+      currentFollowStatus = false;
+      updateFollowButton();
+      await loadFollowStats();
+      showToast(result.message, 'success');
+    } else {
+      const error = await response.json();
+      showToast(error.error, 'error');
+    }
+  } catch (error) {
+    console.error('Error unfollowing user:', error);
+    showToast('Failed to unfollow user', 'error');
+  } finally {
+    closeUnfollowModal();
+  }
+}
+
+// Update the toggleFollow function to show modal for unfollow
+async function toggleFollow() {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      showToast('Please log in to follow users', 'info');
+      return;
+    }
+    
+    // If currently following, show confirmation modal
+    if (currentFollowStatus) {
+      showUnfollowModal();
+      return;
+    }
+    
+    // If not following, proceed with follow action
+    const response = await fetch(
+      `${API_BASE_URL}/follow/${currentTargetUsername}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    if (response.ok) {
+      const result = await response.json();
+      currentFollowStatus = true;
+      updateFollowButton();
+      await loadFollowStats();
+      showToast(result.message, 'success');
+    } else {
+      const error = await response.json();
+      showToast(error.error, 'error');
+    }
+  } catch (error) {
+    console.error('Error toggling follow:', error);
+    showToast('Failed to update follow status', 'error');
+  }
+}
+
+function updateFollowButton() {
+  const button = document.getElementById("followButton");
+  const icon = document.getElementById("followIcon");
+  const text = document.getElementById("followText");
+
+  if (currentFollowStatus) {
+    button.classList.add("following");
+    icon.textContent = "✓";
+    text.textContent = "Following";
+  } else {
+    button.classList.remove("following");
+    icon.textContent = "➕";
+    text.textContent = "Follow";
+  }
+}
+
+// Mutual Connections functionality for user-profile.js
+async function loadMutualConnectionsCount() {
+  try {
+    const targetUsername = getTargetUsername();
+    const currentUsername = await getCurrentUsername();
+    
+    if (!targetUsername || !currentUsername) return;
+
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/mutual-connections/${targetUsername}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      document.getElementById("mutualConnectionsCount").textContent = result.count;
+    }
+  } catch (error) {
+    console.error("Error loading mutual connections count:", error);
+  }
+}
+
+async function showMutualConnectionsModal() {
+  try {
+    const targetUsername = getTargetUsername();
+    const currentUsername = await getCurrentUsername();
+    
+    if (!targetUsername || !currentUsername) return;
+
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/mutual-connections/${targetUsername}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return;
+
+    const result = await response.json();
+    const mutualConnections = result.mutualConnections || [];
+
+    const modal = document.createElement("div");
+    modal.className = "mutual-connections-modal";
+    modal.innerHTML = `
+      <div class="mutual-connections-modal-content">
+        <div class="mutual-connections-modal-header">
+          <h3 class="mutual-connections-modal-title">
+            Mutual Connections with ${targetUsername}
+            <span class="mutual-count-badge">${mutualConnections.length}</span>
+          </h3>
+          <button class="mutual-connections-modal-close" onclick="this.closest('.mutual-connections-modal').remove()">×</button>
+        </div>
+        <div class="mutual-connections-list">
+          ${
+            mutualConnections.length > 0
+              ? mutualConnections
+                  .map(
+                    (user) => `
+                <div class="mutual-connection-item" onclick="viewUserProfile('${user.username}')">
+                  <div class="mutual-connection-avatar">${generateUserAvatar(user.username)}</div>
+                  <div class="mutual-connection-details">
+                    <div class="mutual-connection-name">${user.username}</div>
+                    <div class="mutual-connection-status">
+                      <div class="status-indicator ${user.isOnline ? 'online' : 'offline'}"></div>
+                       ${user.isOnline ? 'Online now' : `Last seen ${user.lastActive ? formatRelativeTime(user.lastActive) : 'some time ago'}`}
+                    </div>
+                  </div>
+                </div>
+              `
+                  )
+                  .join("")
+              : `
+                <div class="mutual-connections-empty">
+                  <div class="mutual-connections-empty-icon">🤝</div>
+                  <div>No mutual connections with ${targetUsername}</div>
+                  <small>Follow more people to build your network!</small>
+                </div>
+              `
+          }
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  } catch (error) {
+    console.error("Error loading mutual connections:", error);
+    showToast("Failed to load mutual connections", "error");
+  }
+}
+
+// Update the existing loadFollowStats function to include mutual connections
+async function loadFollowStats() {
+  try {
+    // Load following count
+    const followingResponse = await fetch(`${API_BASE_URL}/following/${currentTargetUsername}`);
+    if (followingResponse.ok) {
+      const followingResult = await followingResponse.json();
+      document.getElementById("followingCount").textContent = followingResult.following.length;
+    }
+
+    // Load followers count
+    const followersResponse = await fetch(`${API_BASE_URL}/followers/${currentTargetUsername}`);
+    if (followersResponse.ok) {
+      const followersResult = await followersResponse.json();
+      document.getElementById("followersCount").textContent = followersResult.followers.length;
+    }
+
+    // Load mutual connections count
+    await loadMutualConnectionsCount();
+  } catch (error) {
+    console.error("Error loading follow stats:", error);
+  }
+}
+
+// Modal functions for showing followers/following lists
+function showFollowersModal() {
+  showFollowModal("followers");
+}
+
+function showFollowingModal() {
+  showFollowModal("following");
+}
+
+async function showFollowModal(type) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/${type}/${currentTargetUsername}`
+    );
+    if (!response.ok) return;
+
+    const result = await response.json();
+    const users = type === "followers" ? result.followers : result.following;
+
+    const modal = document.createElement("div");
+    modal.className = "follow-modal";
+    modal.innerHTML = `
+      <div class="follow-modal-content">
+        <div class="follow-modal-header">
+          <h3 class="follow-modal-title">${
+            type === "followers" ? "Followers" : "Following"
+          }</h3>
+          <button class="follow-modal-close" onclick="this.closest('.follow-modal').remove()">×</button>
+        </div>
+        <div class="follow-modal-list">
+          ${
+            users.length > 0
+              ? users
+                  .map(
+                    (user) => `
+              <div class="follow-user-item" onclick="viewUserProfile('${
+                user.username
+              }')">
+                <div class="follow-user-avatar">${generateUserAvatar(
+                  user.username
+                )}</div>
+                <div class="follow-user-name">${user.username}</div>
+                <div class="follow-user-status">${
+                  user.isOnline ? "Online" : "Offline"
+                }</div>
+              </div>
+            `
+                  )
+                  .join("")
+              : `<div class="follow-empty-state">No ${type} yet</div>`
+          }
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  } catch (error) {
+    console.error(`Error loading ${type}:`, error);
+  }
+}
+
 // Update loadUserProfile function
 async function loadUserProfile() {
   const targetUsername = getTargetUsername();
@@ -61,6 +452,7 @@ async function loadUserProfile() {
   }
 
   updateShareButton();
+  initializeFollowFeature();
 }
 
 // Update loadSocialLinks function
@@ -816,6 +1208,76 @@ function showError(message) {
   container.insertBefore(errorDiv, container.firstChild);
 }
 
+// Add these modal functions to user-profile.js (after the existing functions)
+
+function showFollowersModal() {
+  showFollowModal("followers");
+}
+
+function showFollowingModal() {
+  showFollowModal("following");
+}
+
+async function showFollowModal(type) {
+  try {
+    const currentUsername = getTargetUsername();
+    if (!currentUsername) return;
+
+    const response = await fetch(`${API_BASE_URL}/${type}/${currentUsername}`);
+    if (!response.ok) return;
+
+    const result = await response.json();
+    const users = type === "followers" ? result.followers : result.following;
+
+    const modal = document.createElement("div");
+    modal.className = "follow-modal";
+    modal.innerHTML = `
+      <div class="follow-modal-content">
+        <div class="follow-modal-header">
+          <h3 class="follow-modal-title">${
+            type === "followers" ? "Followers" : "Following"
+          }</h3>
+          <button class="follow-modal-close" onclick="this.closest('.follow-modal').remove()">×</button>
+        </div>
+        <div class="follow-modal-list">
+          ${
+            users.length > 0
+              ? users
+                  .map(
+                    (user) => `
+              <div class="follow-user-item" onclick="viewUserProfile('${
+                user.username
+              }')">
+                <div class="follow-user-avatar">${generateUserAvatar(
+                  user.username
+                )}</div>
+                <div class="follow-user-name">${user.username}</div>
+                <div class="follow-user-status">${
+                  user.isOnline ? "Online" : "Offline"
+                }</div>
+              </div>
+            `
+                  )
+                  .join("")
+              : `<div class="follow-empty-state">No ${type} yet</div>`
+          }
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  } catch (error) {
+    console.error(`Error loading ${type}:`, error);
+  }
+}
+
 // Enhanced render function with all new features - FIXED for user-profile
 function renderUserProfile() {
   if (!currentViewingUser) return;
@@ -876,7 +1338,25 @@ function renderUserProfile() {
   document.getElementById("avgDaily").textContent = avgDaily.toFixed(1);
   document.getElementById("maxStreak").textContent = maxStreak;
 
+  // Update the follow stats section to be clickable
+  const followStatsSection = `
+    <div class="profile-follow-section" style="margin-top: 15px;">
+      <div class="follow-stats" style="display: flex; gap: 15px;">
+        <div class="follow-stat" onclick="showFollowingModal()" style="cursor: pointer;">
+          <span class="follow-count" id="followingCount">0</span>
+          <span class="follow-label">Following</span>
+        </div>
+        <div class="follow-stat" onclick="showFollowersModal()" style="cursor: pointer;">
+          <span class="follow-count" id="followersCount">0</span>
+          <span class="follow-label">Followers</span>
+        </div>
+      </div>
+    </div>
+  `;
+
   updateShareButton();
+  initializeFollowFeature();
+    loadMutualConnectionsCount(); 
 }
 
 // Share Profile Functionality for user-profile
@@ -3641,6 +4121,18 @@ function updateNavigation() {
     loginLink.style.display = "inline";
   }
 }
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('unfollowModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeUnfollowModal();
+      }
+    });
+  }
+});
 
 // Add responsive behavior for the heatmap
 window.addEventListener("resize", function () {

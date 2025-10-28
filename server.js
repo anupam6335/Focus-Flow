@@ -32,13 +32,14 @@ mongoose.connect(process.env.MONGODB_URI, {
   useUnifiedTopology: true,
 });
 
-// User Schema
+// update the userSchema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  lastActive: { type: Date, default: Date.now }, // NEW: Add last active tracking
-  isOnline: { type: Boolean, default: false }, // NEW: Add online status
+  lastActive: { type: Date, default: Date.now },
+  isOnline: { type: Boolean, default: false },
+  following: [{ type: String }], // NEW: Array of usernames that the user follows
 });
 
 const checklistDataSchema = new mongoose.Schema({
@@ -572,6 +573,13 @@ app.get("/api/user-info", authenticateToken, async (req, res) => {
           : 0,
         maxStreak: activityData ? activityData.activityData.maxStreak : 0,
       },
+
+        // Follow data
+  social: {
+    followingCount: user.following ? user.following.length : 0,
+    // We'll calculate followers count separately
+  }
+
     };
 
     res.json({
@@ -815,6 +823,13 @@ app.get("/api/user-info/:username", async (req, res) => {
 
       // Add access level info
       accessLevel: isAuthenticated ? "authenticated" : "public",
+
+        // Follow data
+  social: {
+    followingCount: user.following ? user.following.length : 0,
+    // We'll calculate followers count separately
+  }
+
     };
 
     res.json({
@@ -2372,6 +2387,188 @@ app.post("/api/users-status", authenticateToken, async (req, res) => {
       status: statusMap,
     });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+// Follow a user
+app.post("/api/follow/:username", authenticateToken, async (req, res) => {
+  try {
+    const currentUser = req.user.username;
+    const targetUsername = req.params.username;
+
+    if (currentUser === targetUsername) {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot follow yourself",
+      });
+    }
+
+    // Check if target user exists
+    const targetUser = await User.findOne({ username: targetUsername });
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Add to following list if not already following
+    await User.findOneAndUpdate(
+      { username: currentUser },
+      { $addToSet: { following: targetUsername } } // $addToSet prevents duplicates
+    );
+
+    res.json({
+      success: true,
+      message: `You are now following ${targetUsername}`,
+      action: "followed",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Unfollow a user
+app.post("/api/unfollow/:username", authenticateToken, async (req, res) => {
+  try {
+    const currentUser = req.user.username;
+    const targetUsername = req.params.username;
+
+    // Remove from following list
+    await User.findOneAndUpdate(
+      { username: currentUser },
+      { $pull: { following: targetUsername } }
+    );
+
+    res.json({
+      success: true,
+      message: `You have unfollowed ${targetUsername}`,
+      action: "unfollowed",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Check if current user is following a specific user
+app.get("/api/is-following/:username", authenticateToken, async (req, res) => {
+  try {
+    const currentUser = req.user.username;
+    const targetUsername = req.params.username;
+
+    const user = await User.findOne({ username: currentUser });
+    const isFollowing = user.following.includes(targetUsername);
+
+    res.json({
+      success: true,
+      isFollowing,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get followers list for a user
+app.get("/api/followers/:username", async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    // Find all users who are following this user
+    const followers = await User.find(
+      { following: username },
+      "username createdAt lastActive isOnline"
+    );
+
+    res.json({
+      success: true,
+      followers: followers.map(user => ({
+        username: user.username,
+        accountCreated: user.createdAt,
+        lastActive: user.lastActive,
+        isOnline: user.isOnline
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get following list for a user
+app.get("/api/following/:username", async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    const user = await User.findOne(
+      { username },
+      "following"
+    ).populate("following", "username createdAt lastActive isOnline");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Since we're storing usernames directly, we need to fetch user details
+    const followingUsers = await User.find(
+      { username: { $in: user.following } },
+      "username createdAt lastActive isOnline"
+    );
+
+    res.json({
+      success: true,
+      following: followingUsers.map(user => ({
+        username: user.username,
+        accountCreated: user.createdAt,
+        lastActive: user.lastActive,
+        isOnline: user.isOnline
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fix the mutual connections endpoint to include proper online status
+app.get("/api/mutual-connections/:username", authenticateToken, async (req, res) => {
+  try {
+    const currentUser = req.user.username;
+    const targetUsername = req.params.username;
+
+    // Get current user's following list
+    const currentUserData = await User.findOne({ username: currentUser });
+    if (!currentUserData) {
+      return res.status(404).json({ success: false, error: "Current user not found" });
+    }
+
+    // Get target user's followers list with full user data including online status
+    const targetUserFollowers = await User.find({ 
+      following: targetUsername 
+    }).select('username isOnline lastActive createdAt');
+
+    // Find mutual connections - users that both current user follows AND who follow the target user
+    const mutualConnections = targetUserFollowers.filter(follower =>
+      currentUserData.following && currentUserData.following.includes(follower.username)
+    );
+
+    // Format the response with proper online status
+    const formattedConnections = mutualConnections.map(user => ({
+      username: user.username,
+      isOnline: user.isOnline || false,
+      lastActive: user.lastActive || user.createdAt,
+      accountCreated: user.createdAt
+    }));
+
+    res.json({
+      success: true,
+      mutualConnections: formattedConnections,
+      count: formattedConnections.length
+    });
+  } catch (error) {
+    console.error("Error in mutual connections:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
