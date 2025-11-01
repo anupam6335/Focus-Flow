@@ -1,0 +1,5 @@
+{
+  "deploy": {
+    "branch": "feat-railway-domain-test"
+  }
+}
