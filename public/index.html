@@ -1,413 +1,470 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="en" itemscope itemtype="https://schema.org/WebApplication">
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FocusFlow - Track your coding progress, master DSA questions, and build consistency with daily problem-solving. Monitor streaks, analytics, and achieve your programming goals." />
+    <meta name="keywords" content="coding tracker, DSA practice, leetcode, programming progress, coding consistency, problem solving, algorithm practice, coding journey" />
+    <meta name="author" content="FocusFlow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FocusFlow – Track Your Progress, Master Your Coding Journey" />
+    <meta property="og:description" content="Track your coding progress, master DSA questions, and build consistency with daily problem-solving. Monitor streaks and analytics." />
+    <meta property="og:url" content="https://focus-flow-lopn.onrender.com" />
+    <meta property="og:site_name" content="FocusFlow" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FocusFlow – Track Your Progress, Master Your Coding Journey" />
+    <meta name="twitter:description" content="Track your coding progress, master DSA questions, and build consistency with daily problem-solving." />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FocusFlow",
+        "description": "Track your coding progress, master DSA questions, and build consistency with daily problem-solving",
+        "url": "https://focus-flow-lopn.onrender.com",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web Browser",
+        "permissions": "browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "FocusFlow"
+        },
+        "featureList": [
+            "Daily Progress Tracking",
+            "Consistency Analytics",
+            "Problem Solving Statistics",
+            "Streak Monitoring",
+            "Heatmap Visualization"
+        ]
+    }
+    </script>
+    
     <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
+    <link rel="canonical" href="https://focus-flow-lopn.onrender.com" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style" />
+    <link rel="preload" href="js/main.js" as="script" />
+    
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/notification.css" />
     <link rel="stylesheet" href="css/past-day.css" />
     <link rel="stylesheet" href="css/main.css" />
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-    <title>FocusFlow – Track Your Progress, Master Your Journey</title>
-  </head>
-  <body>
+    <title>FocusFlow – Track Your Progress, Master Your Coding Journey | DSA Practice Tracker</title>
+</head>
+<body itemscope itemtype="https://schema.org/WebPage">
     <!-- Main Container -->
     <div class="main-container">
-      <!-- Left Column (70%) -->
-      <div class="left-column">
-        <div class="container">
-          <header>
-            <div class="header-container">
-              <h1 class="site-logo">FocusFlow</h1>
-              <div class="header-controls">
-                <a href="/blogs" class="nav-link blog-link">📝 Blogs</a>
-                <a href="/profile" class="nav-link profile-link">👤 Profile</a>
+        <!-- Left Column (70%) -->
+        <div class="left-column">
+            <div class="container">
+                <header role="banner">
+                    <div class="header-container">
+                        <h1 class="site-logo" itemprop="name">FocusFlow</h1>
+                        <div class="header-controls">
+                            <a href="/blogs" class="nav-link blog-link" aria-label="Read our coding blogs">📝 Blogs</a>
+                            <a href="/profile" class="nav-link profile-link" aria-label="View your profile">👤 Profile</a>
 
-                <!-- NEW: Notification Bell -->
-                <div class="notification-container" style="position: relative">
-                  <button
-                    class="notification-bell"
-                    id="notificationBell"
-                    aria-label="Notifications"
-                  >
-                    🔔
-                    <span
-                      class="notification-badge"
-                      id="notificationBadge"
-                      style="display: none"
-                    ></span>
-                  </button>
+                            <!-- Notification Bell -->
+                            <div class="notification-container" style="position: relative">
+                                <button
+                                    class="notification-bell"
+                                    id="notificationBell"
+                                    aria-label="Notifications"
+                                >
+                                    🔔
+                                    <span
+                                        class="notification-badge"
+                                        id="notificationBadge"
+                                        style="display: none"
+                                    ></span>
+                                </button>
 
-                  <!-- Notification Dropdown Panel -->
-                  <!-- Replace the entire notification-panel section with this -->
-                  <div class="notification-panel" id="notificationPanel">
-                    <div class="notification-header">
-                      <h3 class="notification-title">Notifications</h3>
-                      <div class="notification-actions">
-                        <button class="notification-clear" id="markAllRead">
-                          Mark all read
-                        </button>
-                        <button
-                          class="notification-clear"
-                          id="closeNotifications"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                                <!-- Notification Dropdown Panel -->
+                                <div class="notification-panel" id="notificationPanel">
+                                    <div class="notification-header">
+                                        <h2 class="notification-title">Notifications</h2>
+                                        <div class="notification-actions">
+                                            <button class="notification-clear" id="markAllRead">
+                                                Mark all read
+                                            </button>
+                                            <button
+                                                class="notification-clear"
+                                                id="closeNotifications"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Category Tabs -->
+                                    <nav class="notification-categories" role="tablist">
+                                        <button class="category-tab active" data-category="all" role="tab" aria-selected="true">
+                                            All <span class="category-counter"></span>
+                                        </button>
+                                        <button class="category-tab" data-category="unread" role="tab" aria-selected="false">
+                                            Unread <span class="category-counter"></span>
+                                        </button>
+                                        <button class="category-tab" data-category="read" role="tab" aria-selected="false">
+                                            Read <span class="category-counter"></span>
+                                        </button>
+                                    </nav>
+
+                                    <div class="notification-list" id="notificationList" role="tabpanel">
+                                        <!-- Notifications will be loaded here -->
+                                    </div>
+
+                                    <div class="notification-footer">
+                                        <button
+                                            class="notification-view-all"
+                                            id="viewAllNotifications"
+                                        >
+                                            View All Notifications
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="syncStatus" class="sync-status">
+                                <div class="sync-dot synced"></div>
+                                <span>Synced</span>
+                            </div>
+                            <div class="header-buttons">
+                                <button class="sync-button" id="syncButton">
+                                    🔄 Sync Now
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </header>
 
-                    <!-- Category Tabs -->
-                    <div class="notification-categories">
-                      <button class="category-tab active" data-category="all">
-                        All <span class="category-counter"></span>
-                      </button>
-                      <button class="category-tab" data-category="unread">
-                        Unread <span class="category-counter"></span>
-                      </button>
-                      <button class="category-tab" data-category="read">
-                        Read <span class="category-counter"></span>
-                      </button>
-                    </div>
-
-                    <div class="notification-list" id="notificationList">
-                      <!-- Notifications will be loaded here -->
-                    </div>
-
-                    <div class="notification-footer">
-                      <button
-                        class="notification-view-all"
-                        id="viewAllNotifications"
-                      >
-                        View All Notifications
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="syncStatus" class="sync-status">
-                  <div class="sync-dot synced"></div>
-                  <span>Synced</span>
-                </div>
-                <div class="header-buttons">
-                  <button class="sync-button" id="syncButton">
-                    🔄 Sync Now
-                  </button>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <!-- NEW: Search Bar -->
-          <div class="search-container">
-            <input
-              type="search"
-              id="searchBar"
-              class="search-bar"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              placeholder="Search by day number (e.g., 1, 2, 3...)"
-              aria-label="Search days by number"
-            />
-            <div class="search-info" id="searchInfo">
-              Type a day number to filter. Clear to show all days.
-            </div>
-          </div>
-
-          <!-- Toast Notification Container -->
-          <div class="toast-container" id="toastContainer"></div>
-
-          <!-- Confirmation Dialog -->
-          <div class="confirm-dialog" id="confirmDialog">
-            <div class="confirm-content">
-              <div class="confirm-title" id="confirmTitle">Confirm Action</div>
-              <div class="confirm-message" id="confirmMessage">
-                Are you sure you want to proceed?
-              </div>
-              <div class="confirm-buttons">
-                <button class="confirm-btn cancel" id="confirmCancel">
-                  Cancel
-                </button>
-                <button class="confirm-btn confirm" id="confirmOk">OK</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Daily Questions Table -->
-          <table>
-            <thead>
-              <tr>
-                <th class="day-cell">Day</th>
-                <!-- <th class="questions-cell">Questions</th> -->
-                <th class="status-cell" style="display: none"></th>
-                <th class="tags-cell" style="display: none"></th>
-                <!-- <th class="links-cell">Important Links</th> -->
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <!-- Rows will be generated by JavaScript -->
-            </tbody>
-          </table>
-
-          <div class="footer">
-            <p>Your progress is automatically saved. Keep coding! 🚀</p>
-            <p>
-              If you find this helpful, please give a ⭐ on
-              <a
-                href="https://github.com/anupam6335/Daily-Tracker"
-                target="_blank"
-                rel="noopener noreferrer"
-                >GitHub</a
-              >!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column (30%) -->
-      <div class="right-column">
-        <!-- Daily Progress -->
-        <div class="daily-progress-container">
-          <div class="daily-progress-header">
-            <h2>Daily Progress</h2>
-            <button id="addDayBtn" class="add-day-btn">+ Add New Day</button>
-          </div>
-
-          <div id="authSection" class="auth-section" style="display: none">
-            <div id="loginForm" class="auth-form">
-              <h3 class="auth-title">Welcome to FocusFlow</h3>
-              <p class="auth-subtitle">
-                Sign in to continue your coding journey
-              </p>
-
-              <div class="oauth-buttons">
-                <button id="googleSignIn" class="oauth-btn google-btn">
-                  <img
-                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2LjUxIDkuMjA0NTVWOS4wOTU0NUMxNi41MSA3LjE0MDkxIDE1LjY5IDUuNDM2MzYgMTQuMjE4MiA0LjI3MjczTDEyLjA5MTggNi4zODY4MkMxMi44ODM2IDcuMDQ1IDEzLjM0NTUgOC4wMDQ1NSAxMy4zNDU1IDkuMDk1NDVWOS4yMDQ1NUgxNi41MVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkuMDAwMTggMTMuNjM2NEM3LjE2MzY0IDEzLjYzNjQgNS41NjM2NCAxMi42OTU1IDQuNTQ1NDUgMTEuMjU0NUwyLjQxODE4IDEzLjM2ODJDMy45MTM2NCAxNS41NDE4IDYuMzI3MjcgMTcgOS4wMDAxOCAxN0MxMC45NTQ1IDE3IDEyLjY3MjcgMTYuMzE4MiAxNC4wOTE4IDE1LjE4MThMMTEuOTYzNiAxMy4wNjgyQzExLjI0NTUgMTMuNTU0NSAxMC4yMTM2IDEzLjYzNjQgOS4wMDAxOCAxMy42MzY0WiIgZmlsbD0iIzM0QTgzNSIvPgo8cGF0aCBkPSJNMy40NTQ1NSA5LjAwMDAxQzMuNDU0NTUgOC4zMTgxOCAzLjU5NTQ1IDcuNjY4MTggMy44NTA5MSA3LjA2MzY0TDEuNzE4MTggNC45NDU0NUMxLjA2MzY0IDYuMzY4MTggMC42ODE4MTggOC4xMzE4MiAwLjY4MTgxOCAxMC4wMDAwQzAuNjgxODE4IDExLjg2ODIgMS4wNjM2NCAxMy42MTM2IDEuNzE4MTggMTUuMDU0NUwzLjg1MDkxIDEyLjkzNjRDMi4zOTA5MSAxMi4zMTM2IDMuNDU0NTUgMTAuNzgxOCAzLjQ1NDU1IDkuMDAwMDFaIiBmaWxsPSIjRkJCQzA0Ii8+CjxwYXRoIGQ9Ik05LjAwMDE4IDQuMzYzNjRDOS45OTA5MSA0LjM2MzY0IDEwLjg5NTUgNC42NzI3MyAxMS42MzE4IDUuMjU0NTVMMTMuNzU5MSAzLjEzMTgyQzEyLjI3MjcgMS44NDA5MSAxMC4yNDU1IDEgOS4wMDAxOCAxQzcuMDQ1NDUgMSA1LjMyNzI3IDEuNjgxODIgMy45MDkwOSAyLjgxODE4TDYuMDM2MzYgNC45MzE4MkM3LjA1NDU1IDMuNDg2MzYgOC42NTQ1NSAyLjM2MzY0IDkuMDAwMTggMi4zNjM2NFY0LjM2MzY0WiIgZmlsbD0iI0VBNDMzNSIvPgo8cGF0aCBkPSJNOS4wMDAxOCAxMy42MzY0QzEwLjIxMzYgMTMuNjM2NCAxMS4yNDU1IDEzLjU1NDUgMTEuOTYzNiAxMy4wNjgyTDE0LjA5MTggMTUuMTgxOEMxMi42NzI3IDE2LjMxODIgMTAuOTU0NSAxNyA5LjAwMDE4IDE3QzYuMzI3MjcgMTcgMy45MTM2NCAxNS41NDE4IDIuNDE4MTggMTMuMzY4Mkw0LjU0NTQ1IDExLjI1NDVDNS41NjM2NCAxMi42OTU1IDcuMTYzNjQgMTMuNjM2NCA5LjAwMDE4IDEzLjYzNjRaIiBmaWxsPSIjNTJBRjU0Ii8+Cjwvc3ZnPgo="
-                    alt="Google"
-                  />
-                  Sign in with Google
-                </button>
-
-                <button id="githubSignIn" class="oauth-btn github-btn">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path
-                      d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <input
+                        type="search"
+                        id="searchBar"
+                        class="search-bar"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        placeholder="Search by day number (e.g., 1, 2, 3...)"
+                        aria-label="Search days by number"
                     />
-                  </svg>
-                  Sign in with GitHub
-                </button>
-              </div>
-
-              <div class="auth-divider">
-                <span>Or continue with email</span>
-              </div>
-
-              <!-- Keep existing email/password form for backward compatibility -->
-              <div class="legacy-auth" style="display: none">
-                <div class="auth-input-group">
-                  <input
-                    type="text"
-                    id="usernameInput"
-                    placeholder="Username"
-                    class="auth-input"
-                  />
-                  <input
-                    type="password"
-                    id="passwordInput"
-                    placeholder="Password"
-                    class="auth-input"
-                  />
-                  <button id="loginBtn" class="auth-btn primary">Login</button>
-                  <button id="showRegisterBtn" class="auth-btn secondary">
-                    Register
-                  </button>
+                    <div class="search-info" id="searchInfo">
+                        Type a day number to filter. Clear to show all days.
+                    </div>
                 </div>
-              </div>
 
-              <div style="margin-top: 10px; text-align: center">
-                <button
-                  id="showLegacyAuth"
-                  class="auth-btn"
-                  style="
-                    background: none;
-                    border: none;
-                    color: var(--link-color);
-                    text-decoration: underline;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                  "
-                >
-                  Use email/password instead
-                </button>
-              </div>
-            </div>
+                <!-- Toast Notification Container -->
+                <div class="toast-container" id="toastContainer"></div>
 
-            <!-- Keep register form for backward compatibility -->
-            <div id="registerForm" class="auth-form" style="display: none">
-              <h3 class="auth-title">Create Account</h3>
-              <div class="auth-input-group">
-                <input
-                  type="text"
-                  id="regUsernameInput"
-                  placeholder="Username"
-                  class="auth-input"
-                />
-                <input
-                  type="password"
-                  id="regPasswordInput"
-                  placeholder="Password"
-                  class="auth-input"
-                />
-                <input
-                  type="password"
-                  id="regConfirmPasswordInput"
-                  placeholder="Confirm Password"
-                  class="auth-input"
-                />
-                <button id="registerBtn" class="auth-btn primary">
-                  Register
-                </button>
-                <button id="showLoginBtn" class="auth-btn secondary">
-                  Back to Login
-                </button>
-              </div>
-            </div>
+                <!-- Confirmation Dialog -->
+                <div class="confirm-dialog" id="confirmDialog">
+                    <div class="confirm-content">
+                        <h2 class="confirm-title" id="confirmTitle">Confirm Action</h2>
+                        <div class="confirm-message" id="confirmMessage">
+                            Are you sure you want to proceed?
+                        </div>
+                        <div class="confirm-buttons">
+                            <button class="confirm-btn cancel" id="confirmCancel">
+                                Cancel
+                            </button>
+                            <button class="confirm-btn confirm" id="confirmOk">OK</button>
+                        </div>
+                    </div>
+                </div>
 
-            <div id="userInfo" class="user-info" style="display: none">
-              <div class="user-info-content">
-                <span
-                  >Logged in as:
-                  <a
-                    href="/profile"
-                    style="
-                      color: #d0d7de;
-                      text-decoration: none;
-                      text-transform: uppercase;
-                    "
-                  >
-                    <strong id="currentUsername"></strong>
-                  </a>
-                </span>
-                <button id="logoutBtn" class="auth-btn secondary">
-                  Logout
-                </button>
-              </div>
+                <!-- Daily Questions Table -->
+                <section aria-labelledby="daily-progress-heading">
+                    <h2 id="daily-progress-heading" class="sr-only">Daily Coding Progress</h2>
+                    <table role="grid">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="day-cell">Day</th>
+                                <th scope="col" class="questions-cell" style="display: none">Questions</th>
+                                <th scope="col" class="status-cell" style="display: none">Status</th>
+                                <th scope="col" class="tags-cell" style="display: none">Tags</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows will be generated by JavaScript -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <footer class="footer" role="contentinfo">
+                    <p>Your progress is automatically saved. Keep coding! 🚀</p>
+                    <p>
+                        If you find this helpful, please give a ⭐ on
+                        <a
+                            href="https://github.com/anupam6335/Daily-Tracker"
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                        >GitHub</a
+                        >!
+                    </p>
+                </footer>
             </div>
-          </div>
         </div>
 
-        <!-- Consistency Map -->
-        <div class="activity-tracker-container">
-          <div class="activity-tracker-header">
-            <h2>Progress Analytics</h2>
-            <span class="activity-tracker-subtitle" id="activityStartDate">
-              Your journey started on 25-09-2025 (Day 1)
-              <!-- This will be updated dynamically -->
-            </span>
-          </div>
-
-          <!-- Analytics Dashboard -->
-          <div class="analytics-dashboard">
-            <div class="metrics-grid">
-              <div class="metric-card">
-                <div class="metric-value" id="currentStreak">0</div>
-                <div class="metric-label">Current Streak</div>
-                <div class="metric-subtitle">days in a row</div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-value" id="totalSolved">0</div>
-                <div class="metric-label">Total Solved</div>
-                <div class="metric-subtitle">problems</div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-value" id="averageDaily">0.0</div>
-                <div class="metric-label">Daily Average</div>
-                <div class="metric-subtitle">problems/day</div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-value" id="maxStreak">0</div>
-                <div class="metric-label">Max Streak 🔥</div>
-                <div class="metric-subtitle">best record</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- GitHub-style Heatmap -->
-          <div class="heatmap-container">
-            <div class="heatmap-header">
-              <h3>Consistency Map 📌</h3>
-              <div class="heatmap-legend">
-                <span>Less</span>
-                <div class="legend-colors">
-                  <div class="legend-color level-0"></div>
-                  <div class="legend-color level-1"></div>
-                  <div class="legend-color level-2"></div>
-                  <div class="legend-color level-3"></div>
-                  <div class="legend-color level-4"></div>
+        <!-- Right Column (30%) -->
+        <div class="right-column">
+            <!-- Daily Progress -->
+            <section class="daily-progress-container" aria-labelledby="daily-progress-sidebar-heading">
+                <div class="daily-progress-header">
+                    <h2 id="daily-progress-sidebar-heading">Daily Progress</h2>
+                    <button id="addDayBtn" class="add-day-btn">+ Add New Day</button>
                 </div>
-                <span>More</span>
-              </div>
-            </div>
 
-            <div class="heatmap-content">
-              <div class="months-row">
-                <!-- Month labels will be generated by JavaScript -->
-              </div>
-              <div class="heatmap-grid" id="heatmapGrid">
-                <!-- Heatmap cells will be generated by JavaScript -->
-              </div>
-            </div>
-          </div>
+                <div id="authSection" class="auth-section" style="display: none">
+                    <!-- Auth forms remain exactly the same -->
+                    <div id="loginForm" class="auth-form">
+                        <h3 class="auth-title">Welcome to FocusFlow</h3>
+                        <p class="auth-subtitle">
+                            Sign in to continue your coding journey
+                        </p>
+
+                        <div class="oauth-buttons">
+                            <button id="googleSignIn" class="oauth-btn google-btn">
+                                <img
+                                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2LjUxIDkuMjA0NTVWOS4wOTU0NUMxNi41MSA3LjE0MDkxIDE1LjY5IDUuNDM2MzYgMTQuMjE4MiA0LjI3MjczTDEyLjA5MTggNi4zODY4MkMxMi44ODM2IDcuMDQ1IDEzLjM0NTUgOC4wMDQ1NSAxMy4zNDU1IDkuMDk1NDVWOS4yMDQ1NUgxNi41MVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkuMDAwMTggMTMuNjM2NEM3LjE2MzY0IDEzLjYzNjQgNS41NjM2NCAxMi42OTU1IDQuNTQ1NDUgMTEuMjU0NUwyLjQxODE4IDEzLjM2ODJDMy45MTM2NCAxNS41NDE4IDYuMzI3MjcgMTcgOS4wMDAxOCAxN0MxMC45NTQ1IDE3IDEyLjY3MjcgMTYuMzE4MiAxNC4wOTE4IDE1LjE4MThMMTEuOTYzNiAxMy4wNjgyQzExLjI0NTUgMTMuNTU0NSAxMC4yMTM2IDEzLjYzNjQgOS4wMDAxOCAxMy42MzY0WiIgZmlsbD0iIzM0QTgzNSIvPgo8cGF0aCBkPSJNMy40NTQ1NSA5LjAwMDAxQzMuNDU0NTUgOC4zMTgxOCAzLjU5NTQ1IDcuNjY4MTggMy44NTA5MSA3LjA2MzY0TDEuNzE4MTggNC45NDU0NUMxLjA2MzY0IDYuMzY4MTggMC42ODE4MTggOC4xMzE4MiAwLjY4MTgxOCAxMC4wMDAwQzAuNjgxODE4IDExLjg2ODIgMS4wNjM2NCAxMy42MTM2IDEuNzE4MTggMTUuMDU0NUwzLjg1MDkxIDEyLjkzNjRDMi4zOTA5MSAxMi4zMTM2IDMuNDU0NTUgMTAuNzgxOCAzLjQ1NDU1IDkuMDAwMDFaIiBmaWxsPSIjRkJCQzA0Ii8+CjxwYXRoIGQ9Ik05LjAwMDE4IDQuMzYzNjRDOS45OTA5MSA0LjM2MzY0IDEwLjg5NTUgNC42NzI3MyAxMS42MzE4IDUuMjU0NTVMMTMuNzU5MSAzLjEzMTgyQzEyLjI3MjcgMS44NDA5MSAxMC4yNDU1IDEgOS4wMDAxOCAxQzcuMDQ1NDUgMSA1LjMyNzI3IDEuNjgxODIgMy45MDkwOSAyLjgxODE4TDYuMDM2MzYgNC45MzE4MkM3LjA1NDU1IDMuNDg2MzYgOC42NTQ1NSAyLjM2MzY0IDkuMDAwMTggMi4zNjM2NFY0LjM2MzY0WiIgZmlsbD0iI0VBNDMzNSIvPgo8cGF0aCBkPSJNOS4wMDAxOCAxMy42MzY0QzEwLjIxMzYgMTMyLjYzNjQgMTEuMjQ1NSAxMy41NTQ1IDExLjk2MzYgMTMuMDY4MkwxNC4wOTE4IDE1LjE4MThDMTIuNjcyNyAxNi4zMTgyIDEwLjk1NDUgMTcgOS4wMDAxOCAxN0M2LjMyNzI3IDE3IDMuOTEzNjQgMTUuNTQxOCAyLjQxODE4IDEzLjM2ODJMNC41NDU0NSAxMS4yNTQ1QzUuNTYzNjQgMTIuNjk1NSA3LjE2MzY0IDEzLjYzNjQgOS4wMDAxOCAxMy42MzY0WiIgZmlsbD0iIzUyQUY1NCIvPgo8L3N2Zz4K"
+                                    alt="Google"
+                                />
+                                Sign in with Google
+                            </button>
+
+                            <button id="githubSignIn" class="oauth-btn github-btn">
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                                    />
+                                </svg>
+                                Sign in with GitHub
+                            </button>
+                        </div>
+
+                        <div class="auth-divider">
+                            <span>Or continue with email</span>
+                        </div>
+
+                        <!-- Keep existing email/password form for backward compatibility -->
+                        <div class="legacy-auth" style="display: none">
+                            <div class="auth-input-group">
+                                <input
+                                    type="text"
+                                    id="usernameInput"
+                                    placeholder="Username"
+                                    class="auth-input"
+                                />
+                                <input
+                                    type="password"
+                                    id="passwordInput"
+                                    placeholder="Password"
+                                    class="auth-input"
+                                />
+                                <button id="loginBtn" class="auth-btn primary">Login</button>
+                                <button id="showRegisterBtn" class="auth-btn secondary">
+                                    Register
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 10px; text-align: center">
+                            <button
+                                id="showLegacyAuth"
+                                class="auth-btn"
+                                style="
+                                    background: none;
+                                    border: none;
+                                    color: var(--link-color);
+                                    text-decoration: underline;
+                                    cursor: pointer;
+                                    font-size: 0.9rem;
+                                "
+                            >
+                                Use email/password instead
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Keep register form for backward compatibility -->
+                    <div id="registerForm" class="auth-form" style="display: none">
+                        <h3 class="auth-title">Create Account</h3>
+                        <div class="auth-input-group">
+                            <input
+                                type="text"
+                                id="regUsernameInput"
+                                placeholder="Username"
+                                class="auth-input"
+                            />
+                            <input
+                                type="password"
+                                id="regPasswordInput"
+                                placeholder="Password"
+                                class="auth-input"
+                            />
+                            <input
+                                type="password"
+                                id="regConfirmPasswordInput"
+                                placeholder="Confirm Password"
+                                class="auth-input"
+                            />
+                            <button id="registerBtn" class="auth-btn primary">
+                                Register
+                            </button>
+                            <button id="showLoginBtn" class="auth-btn secondary">
+                                Back to Login
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="userInfo" class="user-info" style="display: none">
+                        <div class="user-info-content">
+                            <span
+                                >Logged in as:
+                                <a
+                                    href="/profile"
+                                    style="
+                                        color: #d0d7de;
+                                        text-decoration: none;
+                                        text-transform: uppercase;
+                                    "
+                                >
+                                    <strong id="currentUsername"></strong>
+                                </a>
+                            </span>
+                            <button id="logoutBtn" class="auth-btn secondary">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Consistency Map -->
+            <section class="activity-tracker-container" aria-labelledby="progress-analytics-heading">
+                <div class="activity-tracker-header">
+                    <h2 id="progress-analytics-heading">Progress Analytics</h2>
+                    <span class="activity-tracker-subtitle" id="activityStartDate">
+                        Your journey started on 25-09-2025 (Day 1)
+                    </span>
+                </div>
+
+                <!-- Analytics Dashboard -->
+                <div class="analytics-dashboard">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="currentStreak">0</div>
+                            <div class="metric-label">Current Streak</div>
+                            <div class="metric-subtitle">days in a row</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalSolved">0</div>
+                            <div class="metric-label">Total Solved</div>
+                            <div class="metric-subtitle">problems</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="averageDaily">0.0</div>
+                            <div class="metric-label">Daily Average</div>
+                            <div class="metric-subtitle">problems/day</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="maxStreak">0</div>
+                            <div class="metric-label">Max Streak 🔥</div>
+                            <div class="metric-subtitle">best record</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub-style Heatmap -->
+                <div class="heatmap-container">
+                    <div class="heatmap-header">
+                        <h3>Consistency Map 📌</h3>
+                        <div class="heatmap-legend">
+                            <span>Less</span>
+                            <div class="legend-colors">
+                                <div class="legend-color level-0"></div>
+                                <div class="legend-color level-1"></div>
+                                <div class="legend-color level-2"></div>
+                                <div class="legend-color level-3"></div>
+                                <div class="legend-color level-4"></div>
+                            </div>
+                            <span>More</span>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-content">
+                        <div class="months-row">
+                            <!-- Month labels will be generated by JavaScript -->
+                        </div>
+                        <div class="heatmap-grid" id="heatmapGrid">
+                            <!-- Heatmap cells will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-      </div>
     </div>
 
     <!-- Modal for editing question links -->
     <div class="modal" id="linkModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 class="modal-title">Edit Question Link</h3>
-          <button class="close-modal" id="closeModal">&times;</button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Question Link</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input
+                    type="text"
+                    id="questionTextInput"
+                    class="modal-input"
+                    placeholder="Question text"
+                />
+                <input
+                    type="url"
+                    id="questionLinkInput"
+                    class="modal-input"
+                    placeholder="https://example.com"
+                />
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" id="cancelModal">
+                    Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" id="saveLink">
+                    Save Link
+                </button>
+            </div>
         </div>
-        <div class="modal-body">
-          <input
-            type="text"
-            id="questionTextInput"
-            class="modal-input"
-            placeholder="Question text"
-          />
-          <input
-            type="url"
-            id="questionLinkInput"
-            class="modal-input"
-            placeholder="https://example.com"
-          />
-        </div>
-        <div class="modal-buttons">
-          <button class="modal-btn modal-btn-secondary" id="cancelModal">
-            Cancel
-          </button>
-          <button class="modal-btn modal-btn-primary" id="saveLink">
-            Save Link
-          </button>
-        </div>
-      </div>
     </div>
 
     <script src="js/main.js"></script>
 
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
-      ↑
+        ↑
     </button>
-  </body>
+</body>
 </html>
