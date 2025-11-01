@@ -175,10 +175,10 @@ async function loadPublicBlogs(page = 1) {
         }
       }
     } else {
-      console.error("Failed to load public blogs:", result.error);
+      // console.error("Failed to load public blogs:", result.error);
     }
   } catch (error) {
-    console.error("Error loading public blogs:", error);
+    // console.error("Error loading public blogs:", error);
   }
 }
 
@@ -286,7 +286,7 @@ async function loadBlogs(page = 1) {
       toastManager.error(result.error || "Failed to load blogs", "Blog Error");
     }
   } catch (error) {
-    console.error("Error loading blogs:", error);
+    // console.error("Error loading blogs:", error);
 
     // More specific error message for popular tab
     if (currentTab === "popular") {
@@ -356,7 +356,7 @@ async function updateTabCounts() {
       document.getElementById("popular-blogs-count").textContent = "0";
     }
   } catch (error) {
-    console.error("Error updating tab counts:", error);
+    // console.error("Error updating tab counts:", error);
     // Set fallback values
     document.getElementById("all-blogs-count").textContent = "0";
     document.getElementById("my-blogs-count").textContent = "0";
@@ -396,7 +396,7 @@ async function updatePublicTabCounts() {
     // Hide "My Blogs" count for unlogged users or show 0
     document.getElementById("my-blogs-count").textContent = "0";
   } catch (error) {
-    console.error("Error updating public tab counts:", error);
+    // console.error("Error updating public tab counts:", error);
     // Set fallback values
     document.getElementById("all-blogs-count").textContent = "0";
     document.getElementById("popular-blogs-count").textContent = "0";
@@ -584,7 +584,7 @@ class BlogsPageSearch {
 
   performSearch(searchTerm) {
     if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
-      console.warn("BlogsPageSearch: No blog data available for search");
+      // // console.warn("BlogsPageSearch: No blog data available for search");
       this.setSearchingState(false);
       return;
     }
@@ -1279,7 +1279,7 @@ async function toggleLike(slug, event) {
       toastManager.error(result.error, "Like Failed");
     }
   } catch (error) {
-    console.error("Error toggling like:", error);
+    // console.error("Error toggling like:", error);
     if (error.message.includes("Cannot like your own blog")) {
       toastManager.warning(
         "You cannot like your own blog",
@@ -1382,7 +1382,7 @@ async function editBlog(slug) {
       toastManager.error(result.error, "Error Loading Blog");
     }
   } catch (error) {
-    console.error("Error loading blog for edit:", error);
+    // console.error("Error loading blog for edit:", error);
     toastManager.error("Failed to load blog for editing", "Network Error");
   }
 }
@@ -1464,7 +1464,7 @@ document.getElementById("blogForm").addEventListener("submit", async (e) => {
       toastManager.error(result.error, "Save Failed");
     }
   } catch (error) {
-    console.error("Error saving blog:", error);
+    // console.error("Error saving blog:", error);
     toastManager.error(
       "Failed to save blog. Please try again.",
       "Network Error"
@@ -1480,7 +1480,7 @@ async function trackBlogView(slug) {
     });
     // We don't need to handle the response, just fire and forget
   } catch (error) {
-    console.error("Error tracking view:", error);
+    // console.error("Error tracking view:", error);
     // Silent fail - don't disrupt user experience
   }
 }

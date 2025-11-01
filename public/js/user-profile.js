@@ -48,7 +48,7 @@ async function checkFollowStatus() {
       updateFollowButton();
     }
   } catch (error) {
-    console.error("Error checking follow status:", error);
+    // console.error("Error checking follow status:", error);
   }
 }
 
@@ -152,7 +152,7 @@ async function toggleFollow() {
       showToast(error.error, "error");
     }
   } catch (error) {
-    console.error("Error toggling follow:", error);
+    // console.error("Error toggling follow:", error);
     showToast("Failed to update follow status", "error");
   }
 }
@@ -194,7 +194,7 @@ async function confirmUnfollow() {
       showToast(error.error, "error");
     }
   } catch (error) {
-    console.error("Error unfollowing user:", error);
+    // console.error("Error unfollowing user:", error);
     showToast("Failed to unfollow user", "error");
   } finally {
     closeUnfollowModal();
@@ -229,7 +229,7 @@ async function updateNotificationSubscriptions() {
       }
     }
   } catch (error) {
-    console.error("Error updating notification subscriptions:", error);
+    // console.error("Error updating notification subscriptions:", error);
   }
 }
 
@@ -287,7 +287,7 @@ async function loadMutualConnectionsCount() {
         result.count;
     }
   } catch (error) {
-    console.error("Error loading mutual connections count:", error);
+    // console.error("Error loading mutual connections count:", error);
   }
 }
 
@@ -378,7 +378,7 @@ async function showMutualConnectionsModal() {
       }
     });
   } catch (error) {
-    console.error("Error loading mutual connections:", error);
+    // console.error("Error loading mutual connections:", error);
     showToast("Failed to load mutual connections", "error");
   }
 }
@@ -409,7 +409,7 @@ async function loadFollowStats() {
     // Load mutual connections count
     await loadMutualConnectionsCount();
   } catch (error) {
-    console.error("Error loading follow stats:", error);
+    // console.error("Error loading follow stats:", error);
   }
 }
 
@@ -477,7 +477,7 @@ async function showFollowModal(type) {
       }
     });
   } catch (error) {
-    console.error(`Error loading ${type}:`, error);
+    // console.error(`Error loading ${type}:`, error);
   }
 }
 
@@ -526,7 +526,7 @@ async function loadUserProfile() {
       throw new Error(result.error || "Failed to load user data");
     }
   } catch (error) {
-    console.error("Error loading user profile:", error);
+    // console.error("Error loading user profile:", error);
     showError("User not found. Redirecting to home...");
     setTimeout(() => {
       window.location.href = "/";
@@ -563,7 +563,7 @@ async function loadSocialLinks() {
       throw new Error(result.error || "Failed to load social links");
     }
   } catch (error) {
-    console.error("Error loading social links:", error);
+    // console.error("Error loading social links:", error);
     renderSocialLinks({
       linkedin: "",
       github: "",
@@ -679,7 +679,7 @@ class EnhancedProgressChart {
         }
       }
     } catch (error) {
-      console.error("Error loading progress data:", error);
+      // console.error("Error loading progress data:", error);
     }
 
     // Fallback: Try to calculate from user data
@@ -1356,7 +1356,7 @@ async function showFollowModal(type) {
       }
     });
   } catch (error) {
-    console.error(`Error loading ${type}:`, error);
+    // console.error(`Error loading ${type}:`, error);
   }
 }
 
@@ -1474,7 +1474,7 @@ async function shareProfile() {
       shareBtn.innerHTML = originalText;
     }, 2000);
   } catch (error) {
-    console.error("Error sharing profile:", error);
+    // console.error("Error sharing profile:", error);
 
     // Fallback for browsers that don't support Clipboard API
     const targetUsername = getTargetUsername();
@@ -1708,7 +1708,7 @@ async function loadUserDirectory() {
       throw new Error(result.error || "No users found");
     }
   } catch (error) {
-    console.error("Error loading user directory:", error);
+    // console.error("Error loading user directory:", error);
     // Fallback: Show message about community feature
     container.innerHTML = `
             <div class="empty-state">
@@ -1799,7 +1799,7 @@ class UserProfileCommunitySearch {
 
   performSearch(searchTerm) {
     if (!this.allUsers || this.allUsers.length === 0) {
-      console.warn("No users available for search");
+      // // console.warn("No users available for search");
       this.setSearchingState(false);
       return;
     }
@@ -1915,7 +1915,7 @@ class UserProfileCommunitySearch {
         });
       }
     } catch (error) {
-      console.error("Error loading community users status:", error);
+      // console.error("Error loading community users status:", error);
     }
   }
 
@@ -2128,7 +2128,7 @@ async function getCurrentUsername() {
       return result.user;
     }
   } catch (error) {
-    console.error("Error getting current username:", error);
+    // console.error("Error getting current username:", error);
   }
   return null;
 }
@@ -2664,7 +2664,7 @@ class UserProfileQuestionHistorySearch {
 
   performSearch(searchTerm) {
     if (!this.originalQuestionData || this.originalQuestionData.length === 0) {
-      console.warn("No question data available for search");
+      // // console.warn("No question data available for search");
       this.setSearchingState(false);
       return;
     }
@@ -3120,7 +3120,7 @@ function getQuestionsForDay(dayNumber) {
   const checklistData = window.checklistData || getChecklistDataFromStorage();
 
   if (!checklistData || !Array.isArray(checklistData)) {
-    console.warn("Checklist data not available");
+    // // console.warn("Checklist data not available");
     return [];
   }
 
@@ -3143,7 +3143,7 @@ function getChecklistDataFromStorage() {
     const savedData = localStorage.getItem("dsaChecklistData");
     return savedData ? JSON.parse(savedData) : null;
   } catch (error) {
-    console.error("Error loading checklist data:", error);
+    // console.error("Error loading checklist data:", error);
     return null;
   }
 }
@@ -3383,7 +3383,7 @@ class UserProfileBlogSearch {
 
   performSearch(searchTerm) {
     if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
-      console.warn("UserProfileBlogSearch: No blog data available for search");
+      // // console.warn("UserProfileBlogSearch: No blog data available for search");
       this.setSearchingState(false);
       return;
     }
@@ -3692,7 +3692,7 @@ function renderBlogs() {
   if (userProfileBlogSearch) {
     userProfileBlogSearch.setBlogData(publicBlogs);
   } else {
-    console.log("User profile blog search not initialized yet");
+   //  console.log("User profile blog search not initialized yet");
   }
 
   // If there's an active search, let the search system handle rendering
@@ -3953,7 +3953,7 @@ class UserProfileStatusManager {
       //   console.log('Disconnected from status updates in user profile');
       // });
     } catch (error) {
-      console.error("Failed to connect to socket in user profile:", error);
+      // console.error("Failed to connect to socket in user profile:", error);
     }
   }
 
@@ -3990,7 +3990,7 @@ class UserProfileStatusManager {
         this.renderStatus(result.status);
       }
     } catch (error) {
-      console.error("Error updating status in user profile:", error);
+      // console.error("Error updating status in user profile:", error);
       // Fallback to offline status
       this.renderStatus({ isOnline: false, lastActive: new Date() });
     }
@@ -4107,7 +4107,7 @@ class UserProfileStatusManager {
         });
       }
     } catch (error) {
-      console.error("Error loading community users status:", error);
+      // console.error("Error loading community users status:", error);
     }
   }
 

@@ -54,7 +54,7 @@ class PremiumProgressChart {
         throw new Error(result.error || "Invalid response");
       }
     } catch (error) {
-      console.error("Error loading progress data:", error);
+      // console.error("Error loading progress data:", error);
       // Fallback data for testing
       this.currentData = { total: 17, easy: 5, medium: 10, hard: 2 };
     }
@@ -992,7 +992,7 @@ class QuestionHistorySearch {
 
   performSearch(searchTerm) {
     if (!this.originalQuestionData || this.originalQuestionData.length === 0) {
-      console.warn("No question data available for search");
+      // // console.warn("No question data available for search");
       this.setSearchingState(false);
       return;
     }
@@ -1386,7 +1386,7 @@ function getQuestionsForDay(dayNumber) {
   const checklistData = window.checklistData || getChecklistDataFromStorage();
 
   if (!checklistData || !Array.isArray(checklistData)) {
-    console.warn("Checklist data not available");
+    // // console.warn("Checklist data not available");
     return [];
   }
 
@@ -1409,7 +1409,7 @@ function getChecklistDataFromStorage() {
     const savedData = localStorage.getItem("dsaChecklistData");
     return savedData ? JSON.parse(savedData) : null;
   } catch (error) {
-    console.error("Error loading checklist data:", error);
+    // console.error("Error loading checklist data:", error);
     return null;
   }
 }
@@ -1622,7 +1622,7 @@ async function loadSocialLinks() {
       throw new Error(result.error || "Failed to load social links");
     }
   } catch (error) {
-    console.error("Error loading social links:", error);
+    // console.error("Error loading social links:", error);
     // Initialize with empty data
     originalSocialLinksData = { ...socialLinksData };
     renderSocialLinks();
@@ -1817,7 +1817,7 @@ async function saveSocialLinks() {
       throw new Error(result.error || "Failed to save social links");
     }
   } catch (error) {
-    console.error("Error saving social links:", error);
+    // console.error("Error saving social links:", error);
     toastManager.error("Failed to save social links", "Save Error");
   }
 }
@@ -1867,7 +1867,7 @@ async function loadUserProfile() {
 
     await loadSocialLinks();
   } catch (error) {
-    console.error("Error loading user profile:", error);
+    // console.error("Error loading user profile:", error);
     toastManager.error("Failed to load profile data", "Profile Error");
   }
 }
@@ -1897,7 +1897,7 @@ async function loadFollowStats() {
         followersResult.followers.length;
     }
   } catch (error) {
-    console.error("Error loading follow stats:", error);
+    // console.error("Error loading follow stats:", error);
   }
 }
 
@@ -1966,7 +1966,7 @@ async function showFollowModal(type) {
       }
     });
   } catch (error) {
-    console.error(`Error loading ${type}:`, error);
+    // console.error(`Error loading ${type}:`, error);
   }
 }
 
@@ -2234,7 +2234,7 @@ async function updateUsername() {
       throw new Error(result.error || "Failed to update username");
     }
   } catch (error) {
-    console.error("Error updating username:", error);
+    // console.error("Error updating username:", error);
     toastManager.error(error.message, "Update Failed");
     saveBtn.disabled = false;
     saveBtn.innerHTML = "<span>💾</span><span>Save Username</span>";
@@ -2280,7 +2280,7 @@ async function updateAvatar() {
       throw new Error(result.error || "Failed to update avatar");
     }
   } catch (error) {
-    console.error("Error updating avatar:", error);
+    // console.error("Error updating avatar:", error);
     toastManager.error(error.message, "Update Failed");
   }
 }
@@ -2304,7 +2304,7 @@ async function loadCurrentAvatar() {
       }
     }
   } catch (error) {
-    console.error("Error loading avatar:", error);
+    // console.error("Error loading avatar:", error);
     // Fallback to generated avatar
     const generatedAvatar = generatePixelAvatar(currentUserData?.username);
     updateAvatarDisplay(generatedAvatar);
@@ -2481,7 +2481,7 @@ async function shareProfile() {
       shareBtn.innerHTML = originalText;
     }, 2000);
   } catch (error) {
-    console.error("Error sharing profile:", error);
+    // console.error("Error sharing profile:", error);
 
     // Fallback for browsers that don't support Clipboard API
     const username = currentUserData?.username;
@@ -2808,7 +2808,7 @@ class BlogSearch {
 
   performSearch(searchTerm) {
     if (!this.currentBlogsData || this.currentBlogsData.length === 0) {
-      console.warn("BlogSearch: No blog data available for search");
+      // // console.warn("BlogSearch: No blog data available for search");
       this.setSearchingState(false);
       return;
     }
@@ -3126,7 +3126,7 @@ function renderBlogs() {
   if (blogSearch) {
     blogSearch.setAllBlogsData(allBlogs);
   } else {
-    console.log("Blog search not initialized yet");
+   //  console.log("Blog search not initialized yet");
   }
 
   // If there's an active search, let the search system handle rendering
@@ -3416,7 +3416,7 @@ async function loadUserDirectory() {
       throw new Error(result.error || "No users found");
     }
   } catch (error) {
-    console.error("Error loading user directory:", error);
+    // console.error("Error loading user directory:", error);
     // Fallback: Show message about community feature
     container.innerHTML = `
             <div class="empty-state">
@@ -3561,7 +3561,7 @@ class CommunitySearch {
 
   performSearch(searchTerm) {
     if (!this.allUsers || this.allUsers.length === 0) {
-      console.warn("No users available for search");
+      // // console.warn("No users available for search");
       this.setSearchingState(false);
       return;
     }
@@ -3673,7 +3673,7 @@ class CommunitySearch {
         });
       }
     } catch (error) {
-      console.error("Error loading community users status:", error);
+      // console.error("Error loading community users status:", error);
     }
   }
 
@@ -3878,7 +3878,7 @@ async function renderUserDirectory(users) {
         followingList = result.following.map((user) => user.username);
       }
     } catch (error) {
-      console.error("Error loading following list:", error);
+      // console.error("Error loading following list:", error);
     }
   }
 
@@ -4127,7 +4127,7 @@ class UserStatusManager {
       });
 
       this.socket.on("connect", () => {
-        console.log("Connected for real-time status updates");
+       //  console.log("Connected for real-time status updates");
         this.updateStatusDisplay();
       });
 
@@ -4136,16 +4136,16 @@ class UserStatusManager {
       });
 
       this.socket.on("disconnect", (reason) => {
-        console.log("Disconnected from status updates:", reason);
+       //  console.log("Disconnected from status updates:", reason);
         // Don't immediately update status - wait for reconnection
       });
 
       this.socket.on("reconnect", () => {
-        console.log("Reconnected to status updates");
+       //  console.log("Reconnected to status updates");
         this.updateStatusDisplay();
       });
     } catch (error) {
-      console.error("Failed to connect to socket:", error);
+      // console.error("Failed to connect to socket:", error);
     }
   }
 
@@ -4197,7 +4197,7 @@ class UserStatusManager {
         this.renderStatus(result.status);
       }
     } catch (error) {
-      console.error("Error updating status:", error);
+      // console.error("Error updating status:", error);
       // Don't change status on error - maintain last known status
     }
   }
