@@ -1842,7 +1842,6 @@ class CommentsManager {
     await this.continueInit();
   }
 
-  // FIXED: Enhanced CommentsManager initialization
   async continueInit() {
     // FIX: Ensure currentUser is always set from localStorage (can be null for guests)
     this.currentUser = localStorage.getItem("username");
@@ -1856,6 +1855,17 @@ class CommentsManager {
 
     // UPDATE: Always update comment input visibility
     this.updateCommentInputVisibility();
+
+    // NEW: Setup comment scrolling functionality
+    this.setupCommentScrolling();
+  }
+
+  setupCommentScrolling() {
+    // Handle URL parameters for comment scrolling
+    this.handleCommentScrollFromURL();
+
+    // Also handle hash-based anchors for backward compatibility
+    this.handleHashBasedScrolling();
   }
 
   // NEW: Method to verify token and set user
@@ -2481,7 +2491,7 @@ class CommentsManager {
     }
   }
 
-  // Existing functionality (keep these as they are)
+  // In your CommentsManager class - update the handleVote method
   async handleVote(commentId, voteType) {
     try {
       const token = localStorage.getItem("authToken");
@@ -2490,21 +2500,28 @@ class CommentsManager {
         return;
       }
 
+      // Use the new route that includes notifications
       const response = await fetch(
-        `${API_BASE_URL}/comments/${commentId}/vote`,
+        `${API_BASE_URL}/comments/${commentId}/${voteType}`, // Changed to specific like/dislike routes
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ voteType }),
         }
       );
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to vote");
+      }
+
+      const result = await response.json();
+
+      // Update UI with new counts
+      if (result.success) {
+        this.updateCommentVotes(commentId, result.likes, result.dislikes);
       }
     } catch (error) {
       console.error("Error voting:", error);
@@ -2764,7 +2781,116 @@ class CommentsManager {
     }
   }
 
-  // ✨ NEW: Enhanced Comment Rendering with Delete Button
+  // Handle comment scroll from URL parameters
+  handleCommentScrollFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const commentId = urlParams.get("comment");
+
+    if (commentId) {
+      this.scrollToCommentWithRetry(commentId);
+    }
+  }
+
+  // Handle hash-based scrolling (backward compatibility)
+  handleHashBasedScrolling() {
+    if (window.location.hash) {
+      const commentId = window.location.hash.replace("#comment-", "");
+      if (commentId) {
+        setTimeout(() => this.scrollToCommentWithRetry(commentId), 1000);
+      }
+    }
+  }
+
+  // Enhanced scroll to comment with retry logic
+  scrollToCommentWithRetry(commentId, maxAttempts = 10) {
+    let attempts = 0;
+
+    const tryScroll = () => {
+      attempts++;
+      const success = this.scrollToComment(commentId);
+
+      if (success) {
+        return;
+      }
+
+      if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 500);
+      } else {
+        this.showCommentNotFoundMessage(commentId);
+      }
+    };
+
+    tryScroll();
+  }
+
+  // Scroll to specific comment with highlight
+  scrollToComment(commentId) {
+    // Try to find the comment element by various methods
+    const commentElement =
+      document.getElementById(`comment-${commentId}`) ||
+      document.querySelector(`[data-comment-id="${commentId}"]`) ||
+      document.querySelector(`[data-comment-id="${commentId.toString()}"]`);
+
+    if (commentElement) {
+      // Add highlight effect
+      this.highlightComment(commentElement);
+
+      // Scroll to comment with offset for header
+      const offset = 100; // Account for fixed header
+      const elementPosition = commentElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Highlight comment with visual effects
+  highlightComment(commentElement) {
+    // Remove highlight from any previously highlighted comments
+    document.querySelectorAll(".comment-highlighted").forEach((el) => {
+      el.classList.remove("comment-highlighted");
+    });
+
+    // Add highlight class
+    commentElement.classList.add("comment-highlighted");
+
+    // Add pulse animation
+    commentElement.style.animation = "comment-pulse 2s ease-in-out";
+
+    // Remove animation after it completes
+    setTimeout(() => {
+      commentElement.style.animation = "";
+    }, 2000);
+
+    // Auto-remove highlight after 5 seconds
+    setTimeout(() => {
+      commentElement.classList.remove("comment-highlighted");
+    }, 5000);
+  }
+
+  // Show message if comment not found
+  showCommentNotFoundMessage(commentId) {
+    // You can show a toast or console message
+    console.warn(`Comment ${commentId} not found on this page`);
+
+    // Optional: Show a subtle notification
+    if (window.toastManager) {
+      window.toastManager.info(
+        "The comment you're looking for might have been deleted or is not available.",
+        "Comment Not Found",
+        4000
+      );
+    }
+  }
+
+  // Update comment rendering to include proper IDs
   renderComment(comment, depth = 0) {
     const timeAgo = this.getTimeAgo(comment.createdAt);
     const hasReplies = comment.replies && comment.replies.length > 0;
@@ -2784,165 +2910,166 @@ class CommentsManager {
         : `/user-profile?user=${comment.author}`;
 
     return `
-  <div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
+<div class="comment-item ${comment.isPinned ? "pinned" : ""} ${
       isRestricted ? "reported" : ""
-    }" data-comment-id="${comment._id}">
-    <div class="comment-header">
-      <div class="comment-user">
-        <div class="comment-avatar">${comment.author
-          .charAt(0)
-          .toUpperCase()}</div>
-        <div class="comment-user-info">
-           <!-- UPDATED: Username with profile link -->
+    }" 
+     id="comment-${comment._id}" 
+     data-comment-id="${comment._id}">
+  <div class="comment-header">
+    <div class="comment-user">
+      <div class="comment-avatar">${comment.author
+        .charAt(0)
+        .toUpperCase()}</div>
+      <div class="comment-user-info">
+        <!-- UPDATED: Username with profile link -->
         <div class="comment-author">
           <a href="${profileLink}" class="username-link">${comment.author.toUpperCase()}</a>
         </div>
-          <div class="comment-meta">
-            <span class="comment-time">⏱️ ${timeAgo}</span>
-            ${
-              comment.isEdited
-                ? '<span class="comment-edited">Edited</span>'
-                : ""
-            }
-            ${
-              comment.isPinned
-                ? '<span class="comment-pinned-tag">📌 Pinned</span>'
-                : ""
-            }
-          </div>
+        <div class="comment-meta">
+          <span class="comment-time">⏱️ ${timeAgo}</span>
+          ${
+            comment.isEdited ? '<span class="comment-edited">Edited</span>' : ""
+          }
+          ${
+            comment.isPinned
+              ? '<span class="comment-pinned-tag">📌 Pinned</span>'
+              : ""
+          }
         </div>
       </div>
-      <div class="comment-actions">
-        ${
-          isParentComment && this.isBlogAuthor
-            ? `
-          <button class="comment-pin ${
-            comment.isPinned ? "pinned" : ""
-          }" title="${comment.isPinned ? "Unpin" : "Pin comment"}">
-            ${comment.isPinned ? "📌" : "📍"}
-          </button>
-        `
-            : ""
-        }
-      </div>
     </div>
-    
-    <div class="comment-content">${this.escapeHtml(comment.content)}</div>
-    
-    ${
-      isRestricted
-        ? `
-      <div class="report-warning">
-        ⚠️ This comment may not be helpful.
-      </div>
-    `
-        : ""
-    }
-    
-    <div class="comment-footer">
-      <div class="comment-votes">
-        <button class="vote-btn like-btn ${
-          comment.likedBy &&
-          currentUser &&
-          comment.likedBy.includes(currentUser)
-            ? "liked"
-            : ""
-        }" title="Like" ${!currentUser ? "disabled" : ""}>
-          👍 <span class="vote-count like-count">${comment.likes}</span>
+    <div class="comment-actions">
+      ${
+        isParentComment && this.isBlogAuthor
+          ? `
+        <button class="comment-pin ${
+          comment.isPinned ? "pinned" : ""
+        }" title="${comment.isPinned ? "Unpin" : "Pin comment"}">
+          ${comment.isPinned ? "📌" : "📍"}
         </button>
-        <button class="vote-btn dislike-btn ${
-          comment.dislikedBy &&
-          currentUser &&
-          comment.dislikedBy.includes(currentUser)
-            ? "disliked"
-            : ""
-        }" title="Dislike" ${!currentUser ? "disabled" : ""}>
-          👎 <span class="vote-count dislike-count">${comment.dislikes}</span>
-        </button>
-      </div>
-      
-      <div class="comment-actions-right">
-        ${
-          // ✨ DELETE BUTTON - Only show for comment author
-          isAuthor
-            ? `
-          <button class="action-btn delete-btn" title="Delete comment" style="color: var(--codeleaf-error);">
-            🗑️ Delete
-          </button>
-        `
-            : ""
-        }
-        ${
-          // FIX: Consistent Edit button visibility check
-          isAuthor
-            ? `
-          <button class="action-btn edit-btn" title="Edit comment">
-            ✏️ Edit
-          </button>
-        `
-            : ""
-        }
-        <button class="action-btn reply-btn" title="Reply" ${
-          !currentUser ? "disabled" : ""
-        }>
-          💬 Reply
-        </button>
-        ${
-          !isAuthor && currentUser
-            ? `
-          <button class="action-btn report-btn" title="Report">
-            🚩 Report
-          </button>
-        `
-            : ""
-        }
-        ${
-          hasReplies
-            ? `
-          <button class="reply-toggle ${depth > 2 ? "collapsed" : ""}">
-            <span class="icon">▼</span>
-            <span class="text">${
-              depth > 2 ? "Show replies" : "Hide replies"
-            }</span>
-            <span class="reply-count">(${comment.replies.length})</span>
-          </button>
-        `
-            : ""
-        }
-      </div>
+      `
+          : ""
+      }
     </div>
-    
-    ${
-      hasReplies
-        ? `
-      <div class="comment-replies ${depth > 2 ? "collapsed" : ""}">
-        ${comment.replies
-          .map((reply) => this.renderComment(reply, depth + 1))
-          .join("")}
-      </div>
-    `
-        : ""
-    }
   </div>
+  
+  <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+  
+  ${
+    isRestricted
+      ? `
+    <div class="report-warning">
+      ⚠️ This comment may not be helpful.
+    </div>
+  `
+      : ""
+  }
+  
+  <div class="comment-footer">
+    <div class="comment-votes">
+      <button class="vote-btn like-btn ${
+        comment.likedBy && currentUser && comment.likedBy.includes(currentUser)
+          ? "liked"
+          : ""
+      }" title="Like" ${!currentUser ? "disabled" : ""}>
+        👍 <span class="vote-count like-count">${comment.likes}</span>
+      </button>
+      <button class="vote-btn dislike-btn ${
+        comment.dislikedBy &&
+        currentUser &&
+        comment.dislikedBy.includes(currentUser)
+          ? "disliked"
+          : ""
+      }" title="Dislike" ${!currentUser ? "disabled" : ""}>
+        👎 <span class="vote-count dislike-count">${comment.dislikes}</span>
+      </button>
+    </div>
+    
+    <div class="comment-actions-right">
+      ${
+        // ✨ DELETE BUTTON - Only show for comment author
+        isAuthor
+          ? `
+        <button class="action-btn delete-btn" title="Delete comment" style="color: var(--codeleaf-error);">
+          🗑️ Delete
+        </button>
+      `
+          : ""
+      }
+      ${
+        // FIX: Consistent Edit button visibility check
+        isAuthor
+          ? `
+        <button class="action-btn edit-btn" title="Edit comment">
+          ✏️ Edit
+        </button>
+      `
+          : ""
+      }
+      <button class="action-btn reply-btn" title="Reply" ${
+        !currentUser ? "disabled" : ""
+      }>
+        💬 Reply
+      </button>
+      ${
+        !isAuthor && currentUser
+          ? `
+        <button class="action-btn report-btn" title="Report">
+          🚩 Report
+        </button>
+      `
+          : ""
+      }
+      ${
+        hasReplies
+          ? `
+        <button class="reply-toggle ${depth > 2 ? "collapsed" : ""}">
+          <span class="icon">▼</span>
+          <span class="text">${
+            depth > 2 ? "Show replies" : "Hide replies"
+          }</span>
+          <span class="reply-count">(${comment.replies.length})</span>
+        </button>
+      `
+          : ""
+      }
+    </div>
+  </div>
+  
+  ${
+    hasReplies
+      ? `
+    <div class="comment-replies ${depth > 2 ? "collapsed" : ""}">
+      ${comment.replies
+        .map((reply) => this.renderComment(reply, depth + 1))
+        .join("")}
+    </div>
+  `
+      : ""
+  }
+</div>
 `;
   }
 
-  // ✨ UPDATE: Enhanced Event Listeners for Delete Buttons
+  // FIXED: Enhanced comment voting with proper event listeners
   attachCommentEventListeners() {
-    // Vote buttons
+    // Like buttons - use separate like/dislike routes
     document.querySelectorAll(".like-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const commentId = this.getCommentIdFromElement(btn);
-        this.handleVote(commentId, "like");
+
+        this.handleCommentLike(commentId);
       });
     });
 
+    // Dislike buttons - use separate like/dislike routes
     document.querySelectorAll(".dislike-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const commentId = this.getCommentIdFromElement(btn);
-        this.handleVote(commentId, "dislike");
+
+        this.handleCommentDislike(commentId);
       });
     });
 
@@ -2955,7 +3082,7 @@ class CommentsManager {
       });
     });
 
-    // ✏️ Edit buttons (for both parent and nested comments)
+    // ✏️ Edit buttons
     document.querySelectorAll(".edit-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -2964,7 +3091,7 @@ class CommentsManager {
       });
     });
 
-    // 📌 Pin buttons (only for blog author on parent comments)
+    // 📌 Pin buttons
     document.querySelectorAll(".comment-pin").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -3001,6 +3128,172 @@ class CommentsManager {
     });
   }
 
+  // NEW: Separate like handler for comments
+  async handleCommentLike(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to like comments",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      // Show loading state
+      const likeBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .like-btn`
+      );
+      if (likeBtn) {
+        likeBtn.disabled = true;
+        likeBtn.style.opacity = "0.6";
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to like comment");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update UI with new counts
+        this.updateCommentVoteUI(
+          commentId,
+          result.likes,
+          result.dislikes,
+          "like",
+          result.hasLiked
+        );
+      }
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      toastManager.error(error.message, "Like Failed");
+    } finally {
+      // Re-enable button
+      const likeBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .like-btn`
+      );
+      if (likeBtn) {
+        likeBtn.disabled = false;
+        likeBtn.style.opacity = "1";
+      }
+    }
+  }
+
+  // NEW: Separate dislike handler for comments
+  async handleCommentDislike(commentId) {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toastManager.error(
+          "Please log in to dislike comments",
+          "Authentication Required"
+        );
+        return;
+      }
+
+      // Show loading state
+      const dislikeBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .dislike-btn`
+      );
+      if (dislikeBtn) {
+        dislikeBtn.disabled = true;
+        dislikeBtn.style.opacity = "0.6";
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/comments/${commentId}/dislike`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to dislike comment");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update UI with new counts
+        this.updateCommentVoteUI(
+          commentId,
+          result.likes,
+          result.dislikes,
+          "dislike",
+          result.hasDisliked
+        );
+      }
+    } catch (error) {
+      console.error("Error disliking comment:", error);
+      toastManager.error(error.message, "Dislike Failed");
+    } finally {
+      // Re-enable button
+      const dislikeBtn = document.querySelector(
+        `[data-comment-id="${commentId}"] .dislike-btn`
+      );
+      if (dislikeBtn) {
+        dislikeBtn.disabled = false;
+        dislikeBtn.style.opacity = "1";
+      }
+    }
+  }
+
+  // NEW: Update comment vote UI
+  updateCommentVoteUI(commentId, likes, dislikes, voteType, hasVoted) {
+    const commentElement = document.querySelector(
+      `[data-comment-id="${commentId}"]`
+    );
+    if (!commentElement) return;
+
+    // Update counts
+    const likeCount = commentElement.querySelector(".like-count");
+    const dislikeCount = commentElement.querySelector(".dislike-count");
+    const likeBtn = commentElement.querySelector(".like-btn");
+    const dislikeBtn = commentElement.querySelector(".dislike-btn");
+
+    if (likeCount) likeCount.textContent = likes;
+    if (dislikeCount) dislikeCount.textContent = dislikes;
+
+    // Update button states
+    if (voteType === "like") {
+      if (likeBtn) {
+        likeBtn.classList.toggle("liked", hasVoted);
+        dislikeBtn?.classList.remove("disliked"); // Remove dislike if was disliked
+      }
+    } else if (voteType === "dislike") {
+      if (dislikeBtn) {
+        dislikeBtn.classList.toggle("disliked", hasVoted);
+        likeBtn?.classList.remove("liked"); // Remove like if was liked
+      }
+    }
+
+    // Add visual feedback
+    const button = voteType === "like" ? likeBtn : dislikeBtn;
+    if (button && hasVoted) {
+      button.style.transform = "scale(1.1)";
+      setTimeout(() => {
+        button.style.transform = "scale(1)";
+      }, 200);
+    }
+  }
   // Helper methods
   getCommentIdFromElement(element) {
     return element.closest(".comment-item").dataset.commentId;
@@ -3203,13 +3496,23 @@ class CommentsManager {
   }
 }
 
-// FIXED: Simple initialization for public access
+// Enhanced initialization with comment scrolling
 document.addEventListener("DOMContentLoaded", () => {
   // Store blog slug globally
   window.blogSlug = blogSlug;
 
   // Initialize comments manager immediately - no waiting for user
   window.commentsManager = new CommentsManager();
+
+  // NEW: Also handle comment scrolling on page load for direct navigation
+  setTimeout(() => {
+    if (
+      window.commentsManager &&
+      window.commentsManager.setupCommentScrolling
+    ) {
+      window.commentsManager.setupCommentScrolling();
+    }
+  }, 1000);
 });
 
 // Replace the original loadBlog function
@@ -3358,8 +3661,6 @@ class LoginStateManager {
           // Fallback: show console message
         }
       }, 500);
-    } else {
-      console.log("👋 User logged out");
     }
   }
 
@@ -3435,10 +3736,6 @@ class LoginStateManager {
   updateProfileLinks() {
     const usernameLinks = document.querySelectorAll(".username-link");
     const currentUser = localStorage.getItem("username");
-
-    console.log(
-      `Found ${usernameLinks.length} username links, current user: ${currentUser}`
-    );
 
     usernameLinks.forEach((link) => {
       const username = link.textContent.trim().toUpperCase();

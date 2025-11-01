@@ -305,7 +305,6 @@ async function initApp() {
   await initializeApp();
 }
 
-
 // Update the isEditable function to use dynamic APP_START_DATE
 function isEditable(dayNumber) {
   const startDate = new Date(APP_START_DATE);
@@ -324,9 +323,9 @@ function isEditable(dayNumber) {
 async function setAppStartDateFromUser() {
   if (authToken && userId !== "default-user") {
     try {
-      // console.log("🔄 Fetching user info to set APP_START_DATE...");
-      // console.log("📝 User ID:", userId);
-      // console.log("🔑 Auth token exists:", !!authToken);
+      ////  console.log("🔄 Fetching user info to set APP_START_DATE...");
+      ////  console.log("📝 User ID:", userId);
+      ////  console.log("🔑 Auth token exists:", !!authToken);
 
       const response = await fetch(`${API_BASE_URL}/user-info`, {
         headers: {
@@ -334,11 +333,11 @@ async function setAppStartDateFromUser() {
         },
       });
 
-      // console.log("📡 API Response status:", response.status);
+      ////  console.log("📡 API Response status:", response.status);
 
       if (response.ok) {
         const result = await response.json();
-        // console.log("📦 API Response data:", result);
+        ////  console.log("📦 API Response data:", result);
 
         if (result.success && result.user && result.user.accountCreated) {
           // Use the user's account creation date as APP_START_DATE
@@ -349,7 +348,7 @@ async function setAppStartDateFromUser() {
           const day = String(userCreatedAt.getDate()).padStart(2, "0");
           APP_START_DATE = `${year}-${month}-${day}`;
 
-          // console.log("📅 Parsed dates:", {
+          ////  console.log("📅 Parsed dates:", {
           //     original: result.user.accountCreated,
           //     jsDate: userCreatedAt,
           //     formatted: APP_START_DATE
@@ -361,17 +360,17 @@ async function setAppStartDateFromUser() {
           // console.log(`✅ APP_START_DATE set to user creation date: ${APP_START_DATE}`);
           return true;
         } else {
-          console.log("❌ User data missing in response:", result);
+         //  console.log("❌ User data missing in response:", result);
         }
       } else {
         const errorText = await response.text();
-        // console.log("❌ API Error response:", errorText);
+        ////  console.log("❌ API Error response:", errorText);
       }
     } catch (error) {
-      console.log("❌ Error fetching user info:", error);
+     //  console.log("❌ Error fetching user info:", error);
     }
   } else {
-    console.log("ℹ️ User not authenticated, using default start date");
+   //  console.log("ℹ️ User not authenticated, using default start date");
   }
 
   // Use fallback date
@@ -389,7 +388,7 @@ function updateActivityTrackerSubtitle() {
     //   `📝 Updated subtitle to: Starting from ${formattedDate} ( Day 1 )`
     // );
   } else {
-    console.log("❌ Could not find activity tracker subtitle element");
+   //  console.log("❌ Could not find activity tracker subtitle element");
   }
 }
 
@@ -405,7 +404,7 @@ function formatDateForDisplay(dateString) {
       })
       .replace(/,/g, "");
   } catch (error) {
-    console.log("❌ Error formatting date:", error);
+   //  console.log("❌ Error formatting date:", error);
     return dateString; // Return original string if parsing fails
   }
 }
@@ -445,9 +444,9 @@ function shouldAllowMutation(dayIndex) {
   const editable = isEditable(dayNumber);
 
   if (!editable) {
-    console.warn(
-      `Attempted to mutate non-editable day ${dayNumber}. Action blocked.`
-    );
+    // console.warn(
+    //   `Attempted to mutate non-editable day ${dayNumber}. Action blocked.`
+    // );
     toastManager.warning(
       "Only today's items are editable.",
       "Editing Restricted"
@@ -459,32 +458,32 @@ function shouldAllowMutation(dayIndex) {
 
 // Safe OAuth initialization
 function initOAuth() {
-  const googleBtn = document.getElementById('googleSignIn');
-  const githubBtn = document.getElementById('githubSignIn');
-  const legacyAuthBtn = document.getElementById('showLegacyAuth');
+  const googleBtn = document.getElementById("googleSignIn");
+  const githubBtn = document.getElementById("githubSignIn");
+  const legacyAuthBtn = document.getElementById("showLegacyAuth");
 
   if (googleBtn) {
-    googleBtn.addEventListener('click', () => {
-      console.log('Initiating Google OAuth...');
-      window.location.href = '/auth/google';
+    googleBtn.addEventListener("click", () => {
+     //  console.log("Initiating Google OAuth...");
+      window.location.href = "/auth/google";
     });
   }
 
   if (githubBtn) {
-    githubBtn.addEventListener('click', () => {
-      console.log('Initiating GitHub OAuth...');
-      window.location.href = '/auth/github';
+    githubBtn.addEventListener("click", () => {
+     //  console.log("Initiating GitHub OAuth...");
+      window.location.href = "/auth/github";
     });
   }
 
   if (legacyAuthBtn) {
-    legacyAuthBtn.addEventListener('click', () => {
-      const legacyAuth = document.querySelector('.legacy-auth');
+    legacyAuthBtn.addEventListener("click", () => {
+      const legacyAuth = document.querySelector(".legacy-auth");
       if (legacyAuth) {
-        if (legacyAuth.style.display === 'none') {
-          legacyAuth.style.display = 'block';
+        if (legacyAuth.style.display === "none") {
+          legacyAuth.style.display = "block";
         } else {
-          legacyAuth.style.display = 'none';
+          legacyAuth.style.display = "none";
         }
       }
     });
@@ -496,15 +495,15 @@ function initOAuth() {
 
 function checkOAuthSuccess() {
   // Check if we have a token from OAuth redirect
-  const token = localStorage.getItem('authToken');
-  const username = localStorage.getItem('userId');
-  
+  const token = localStorage.getItem("authToken");
+  const username = localStorage.getItem("userId");
+
   if (token && username && !authToken) {
-    console.log('✅ OAuth login detected, setting up user...');
+   //  console.log("✅ OAuth login detected, setting up user...");
     authToken = token;
     userId = username;
     showUserInfo();
-    
+
     // Load user data
     loadData().then(() => {
       setAppStartDateFromUser();
@@ -512,40 +511,43 @@ function checkOAuthSuccess() {
       renderEnhancedActivityTracker();
     });
   } else {
-    console.log('🔐 No OAuth token found or user already logged in');
+   //  console.log("🔐 No OAuth token found or user already logged in");
   }
 }
 function checkOAuthCallback() {
   const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  const user = urlParams.get('user');
-  
+  const token = urlParams.get("token");
+  const user = urlParams.get("user");
+
   if (token && user) {
     // OAuth login successful
     authToken = token;
     userId = user;
-    
+
     // Save for auto-login
-    localStorage.setItem('authToken', authToken);
-    localStorage.setItem('userId', userId);
-    
+    localStorage.setItem("authToken", authToken);
+    localStorage.setItem("userId", userId);
+
     showUserInfo();
-    
+
     // Load data and initialize app
     loadData().then(() => {
       setAppStartDateFromUser();
       renderTable();
       renderEnhancedActivityTracker();
     });
-    
+
     // Clean URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
-  
+
   // Check for auth errors
-  const authError = urlParams.get('auth_error');
+  const authError = urlParams.get("auth_error");
   if (authError) {
-    toastManager.error(`Authentication failed with ${authError}. Please try again.`, 'Login Failed');
+    toastManager.error(
+      `Authentication failed with ${authError}. Please try again.`,
+      "Login Failed"
+    );
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
@@ -557,8 +559,8 @@ async function checkAutoLogin() {
 
   if (savedToken && savedUserId) {
     try {
-      console.log("🔐 Checking auto-login...");
-      
+     //  console.log("🔐 Checking auto-login...");
+
       // Verify token is still valid
       const response = await fetch(`${API_BASE_URL}/verify-token`, {
         headers: {
@@ -569,12 +571,12 @@ async function checkAutoLogin() {
       if (response.ok) {
         authToken = savedToken;
         userId = savedUserId;
-        console.log("✅ Auto-login successful for user:", userId);
+       //  console.log("✅ Auto-login successful for user:", userId);
         showUserInfo();
         return true;
       } else {
         // Token invalid, clear saved credentials BUT KEEP PROGRESS DATA
-        console.log("❌ Token invalid, clearing credentials");
+       //  console.log("❌ Token invalid, clearing credentials");
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("appVersion");
@@ -583,12 +585,12 @@ async function checkAutoLogin() {
         // Progress data remains in localStorage
       }
     } catch (error) {
-      console.log("❌ Auto-login check failed:", error);
+     //  console.log("❌ Auto-login check failed:", error);
       showLoginForm();
       // Progress data remains in localStorage
     }
   } else {
-    console.log("🔐 No saved credentials, showing login form");
+   //  console.log("🔐 No saved credentials, showing login form");
     showLoginForm();
   }
   return false;
@@ -606,7 +608,7 @@ function showLoginForm() {
   if (loginForm) loginForm.style.display = "block";
   if (registerForm) registerForm.style.display = "none";
   if (userInfo) userInfo.style.display = "none";
-  
+
   // Show table but disable interactions
   if (table) {
     table.style.opacity = "0.6";
@@ -618,7 +620,9 @@ function showLoginForm() {
   const forgotUsernameInput = document.getElementById("forgotUsernameInput");
   const resetCodeInput = document.getElementById("resetCodeInput");
   const newPasswordInput = document.getElementById("newPasswordInput");
-  const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
+  const confirmNewPasswordInput = document.getElementById(
+    "confirmNewPasswordInput"
+  );
 
   if (resetCodeSection) resetCodeSection.style.display = "none";
   if (forgotUsernameInput) forgotUsernameInput.value = "";
@@ -640,11 +644,11 @@ function showUserInfo() {
   if (loginForm) loginForm.style.display = "none";
   if (registerForm) registerForm.style.display = "none";
   if (userInfo) userInfo.style.display = "block";
-  
+
   if (currentUsername) {
     currentUsername.textContent = userId;
   }
-  
+
   // Enable table interactions
   if (table) {
     table.style.opacity = "1";
@@ -700,8 +704,10 @@ function setupAuthEventListeners() {
 
   // Enter key support for registration
   const regPasswordInput = document.getElementById("regPasswordInput");
-  const regConfirmPasswordInput = document.getElementById("regConfirmPasswordInput");
-  
+  const regConfirmPasswordInput = document.getElementById(
+    "regConfirmPasswordInput"
+  );
+
   if (regPasswordInput) {
     regPasswordInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") handleRegister();
@@ -1025,29 +1031,27 @@ async function handleRegister() {
   }
 }
 
-
 // Update logout to use OAuth logout
 async function handleLogout() {
   try {
     // Call server logout endpoint
-    await fetch('/auth/logout', { method: 'POST' });
+    await fetch("/auth/logout", { method: "POST" });
   } catch (error) {
-    console.log('Logout request failed:', error);
+   //  console.log("Logout request failed:", error);
   }
-  
+
   // Clear local state
   authToken = null;
-  userId = 'default-user';
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('appVersion');
-  localStorage.removeItem('lastUpdated');
-  
+  userId = "default-user";
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("appVersion");
+  localStorage.removeItem("lastUpdated");
+
   showLoginForm();
   renderTable();
   renderEnhancedActivityTracker();
 }
-
 
 // Update logout to clean up notifications
 const originalHandleLogout = handleLogout;
@@ -1318,7 +1322,7 @@ function ensureDataStructure() {
 
 // Save data to both localStorage and MongoDB - FIXED VERSION
 async function saveData() {
-  // console.log("💾 saveData() called");
+  ////  console.log("💾 saveData() called");
 
   // Mark that we have pending changes
   pendingChanges = true;
@@ -1329,7 +1333,7 @@ async function saveData() {
     localStorage.setItem("appVersion", currentVersion.toString());
     localStorage.setItem("lastUpdated", lastUpdated);
 
-    // console.log("💾 Local storage updated");
+    ////  console.log("💾 Local storage updated");
 
     // Update filtered data if search is active
     if (searchFilter) {
@@ -1338,15 +1342,15 @@ async function saveData() {
 
     // Also save to MongoDB if logged in
     if (authToken) {
-      // console.log("💾 Saving main data to MongoDB...");
+      ////  console.log("💾 Saving main data to MongoDB...");
       await saveToMongoDB();
-      // console.log("💾 Main data saved to MongoDB");
+      ////  console.log("💾 Main data saved to MongoDB");
 
       // Now save activity tracker data
-      // console.log("💾 Now saving activity tracker data...");
+      ////  console.log("💾 Now saving activity tracker data...");
       // await saveActivityTrackerData();
     } else {
-      // console.log("💾 User not logged in, only saving locally");
+      ////  console.log("💾 User not logged in, only saving locally");
       updateSyncStatus("offline", "Changes saved locally");
     }
   } catch (error) {
@@ -1356,13 +1360,13 @@ async function saveData() {
   // Always update the activity tracker display
   renderEnhancedActivityTracker();
 
-  // console.log("💾 saveData() completed");
+  ////  console.log("💾 saveData() completed");
 }
 
 // Save data to MongoDB with conflict detection
 async function saveToMongoDB() {
   if (isSyncing) {
-    // console.log("Already syncing, skipping...");
+    ////  console.log("Already syncing, skipping...");
     return;
   }
 
@@ -1405,7 +1409,7 @@ async function saveToMongoDB() {
       throw new Error(result.error || "Sync failed");
     }
   } catch (error) {
-    // console.log("Failed to save to MongoDB:", error);
+    ////  console.log("Failed to save to MongoDB:", error);
     updateSyncStatus("error", "Failed to sync with cloud");
 
     // Retry after 5 seconds
@@ -1421,7 +1425,7 @@ async function saveToMongoDB() {
 
 // Update the initializeEnhancedActivityTracker function
 function initializeEnhancedActivityTracker() {
-  // console.log("Initializing enhanced activity tracker with auto-sync...");
+  ////  console.log("Initializing enhanced activity tracker with auto-sync...");
 
   // Initialize activity tracker data
   if (!window.activityTrackerData) {
@@ -1441,21 +1445,21 @@ function initializeEnhancedActivityTracker() {
 
   // Load existing data
   loadActivityTrackerData().then(() => {
-    // console.log("Activity tracker data loaded with auto-sync enabled");
+    ////  console.log("Activity tracker data loaded with auto-sync enabled");
     renderEnhancedActivityTracker();
   });
 
   // Periodic sync as backup (every 1 minutes)
   setInterval(() => {
     if (authToken && !isSyncing) {
-      // console.log("🕒 Periodic background sync...");
+      ////  console.log("🕒 Periodic background sync...");
       saveActivityTrackerData();
     }
   }, 60000); // 1 minutes
 }
 // Hook into all operations that should trigger activity tracker save - FIXED VERSION
 function hookIntoSaveOperations() {
-  // console.log("🔗 Setting up automatic activity tracker sync...");
+  ////  console.log("🔗 Setting up automatic activity tracker sync...");
 
   // Store original functions
   const originalFunctions = {
@@ -1476,7 +1480,7 @@ function hookIntoSaveOperations() {
     if (syncTimeout) clearTimeout(syncTimeout);
     syncTimeout = setTimeout(() => {
       if (authToken) {
-        // console.log("🔄 Auto-saving activity tracker data...");
+        ////  console.log("🔄 Auto-saving activity tracker data...");
         saveActivityTrackerData();
       }
     }, 1000); // 1 second debounce
@@ -1541,12 +1545,12 @@ function hookIntoSaveOperations() {
     debouncedSync();
   };
 
-  // console.log("✅ Automatic activity tracker sync enabled");
+  ////  console.log("✅ Automatic activity tracker sync enabled");
 }
 
 // This new function for direct event listening as backup
 function setupAutomaticSyncListeners() {
-  // console.log("🎯 Setting up automatic sync listeners...");
+  ////  console.log("🎯 Setting up automatic sync listeners...");
 
   let syncDebounceTimer = null;
 
@@ -1554,7 +1558,7 @@ function setupAutomaticSyncListeners() {
     if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
     syncDebounceTimer = setTimeout(() => {
       if (authToken && !isSyncing) {
-        // console.log("🔄 Auto-sync triggered by user action");
+        ////  console.log("🔄 Auto-sync triggered by user action");
         saveActivityTrackerData();
       }
     }, 800); // 800ms debounce
@@ -1602,7 +1606,7 @@ function setupAutomaticSyncListeners() {
     }
   });
 
-  // console.log("✅ Automatic sync listeners activated");
+  ////  console.log("✅ Automatic sync listeners activated");
 }
 
 // Load activity tracker data from MongoDB - FIXED VERSION
@@ -1667,19 +1671,19 @@ async function loadActivityTrackerData() {
 // Enhanced saveActivityTrackerData function with better error handling
 async function saveActivityTrackerData() {
   if (!authToken) {
-    // console.log("🔐 Not logged in, skipping activity tracker save");
+    ////  console.log("🔐 Not logged in, skipping activity tracker save");
     return;
   }
 
   if (isSyncing) {
-    // console.log("⏳ Sync already in progress, skipping...");
+    ////  console.log("⏳ Sync already in progress, skipping...");
     return;
   }
 
   isSyncing = true;
 
   try {
-    // console.log("💾 Starting automatic activity tracker save...");
+    ////  console.log("💾 Starting automatic activity tracker save...");
 
     // Calculate fresh data
     const analytics = calculateAnalytics();
@@ -1695,7 +1699,7 @@ async function saveActivityTrackerData() {
       activityHistory: activityHistory,
     };
 
-    // console.log("💾 Activity data to save:", trackerData);
+    ////  console.log("💾 Activity data to save:", trackerData);
 
     const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
       method: "POST",
@@ -1711,7 +1715,7 @@ async function saveActivityTrackerData() {
     const result = await response.json();
 
     if (result.success) {
-      // console.log("✅ Activity tracker data saved automatically");
+      ////  console.log("✅ Activity tracker data saved automatically");
       // Update local copy
       window.activityTrackerData = trackerData;
       // Update sync status briefly
@@ -2080,7 +2084,7 @@ if (typeof initializeActivityTracker !== "undefined") {
 }
 // Handle sync conflict when server has newer data - IMPROVED VERSION
 async function handleSyncConflict(conflictResult) {
-  // console.log("🔄 Handling sync conflict...");
+  ////  console.log("🔄 Handling sync conflict...");
 
   // Check if this is a minor conflict that can be auto-merged
   if (!conflictResult.requiresUserResolution) {
@@ -2230,14 +2234,14 @@ async function updateActivityTrackerWithUserData() {
         }
       }
     } catch (error) {
-      console.log("Error updating activity tracker with user data:", error);
+     //  console.log("Error updating activity tracker with user data:", error);
     }
   }
   return false;
 }
 // Improved save function with better change detection
 async function saveData() {
-  // console.log("💾 saveData() called");
+  ////  console.log("💾 saveData() called");
 
   // Better change detection - only mark as pending if there are actual changes
   const previousData = JSON.parse(
@@ -2247,7 +2251,7 @@ async function saveData() {
 
   // Check if there are meaningful changes
   if (JSON.stringify(previousData) === currentDataString) {
-    // console.log("💾 No meaningful changes detected, skipping save");
+    ////  console.log("💾 No meaningful changes detected, skipping save");
     return;
   }
 
@@ -2259,14 +2263,14 @@ async function saveData() {
     localStorage.setItem("appVersion", currentVersion.toString());
     localStorage.setItem("lastUpdated", lastUpdated);
 
-    // console.log("💾 Local storage updated");
+    ////  console.log("💾 Local storage updated");
 
     // Save to MongoDB if logged in (with improved error handling)
     if (authToken) {
-      // console.log("💾 Saving to MongoDB...");
+      ////  console.log("💾 Saving to MongoDB...");
       await saveToMongoDB();
     } else {
-      // console.log("💾 User not logged in, only saving locally");
+      ////  console.log("💾 User not logged in, only saving locally");
       updateSyncStatus("offline", "Changes saved locally");
     }
   } catch (error) {
@@ -2316,7 +2320,7 @@ async function forcePushToServer() {
       throw new Error(result.error || "Save failed");
     }
   } catch (error) {
-    // console.log("Force push failed:", error);
+    ////  console.log("Force push failed:", error);
     updateSyncStatus("error", "Save failed");
 
     // Show appropriate error message
@@ -2377,7 +2381,7 @@ async function forcePushToServer() {
       throw new Error(result.error || "Force push failed");
     }
   } catch (error) {
-    // console.log("Force push failed:", error);
+    ////  console.log("Force push failed:", error);
     updateSyncStatus("error", "Force push failed");
   }
 }
@@ -2433,7 +2437,7 @@ async function syncWithMongoDB() {
       }
     }
   } catch (error) {
-    // console.log("Background sync failed:", error);
+    ////  console.log("Background sync failed:", error);
     updateSyncStatus("offline", "Working offline");
 
     // Don't show error toast for background sync failures to avoid annoying users
@@ -3716,7 +3720,7 @@ function playCelebrationSound() {
     oscillator.stop(audioContext.currentTime + 0.3);
   } catch (error) {
     // Silent fail if audio context is not supported or user hasn't interacted
-    // console.log("Audio not available or user interaction required");
+    ////  console.log("Audio not available or user interaction required");
   }
 }
 
@@ -3788,12 +3792,12 @@ function formatDate(date) {
 
 // Set up direct event listeners as backup
 function setupDirectEventListeners() {
-  // console.log("🎯 Setting up direct event listeners...");
+  ////  console.log("🎯 Setting up direct event listeners...");
 
   // Listen for clicks on checkboxes
   document.addEventListener("change", function (e) {
     if (e.target.classList.contains("question-checkbox")) {
-      // console.log("🎯 Checkbox change detected");
+      ////  console.log("🎯 Checkbox change detected");
       setTimeout(() => {
         saveActivityTrackerData();
       }, 1000);
@@ -3803,7 +3807,7 @@ function setupDirectEventListeners() {
   // Listen for clicks on add question buttons
   document.addEventListener("click", function (e) {
     if (e.target.classList.contains("add-question-btn")) {
-      // console.log("🎯 Add question button click detected");
+      ////  console.log("🎯 Add question button click detected");
       setTimeout(() => {
         saveActivityTrackerData();
       }, 1000);
@@ -3817,14 +3821,14 @@ function setupDirectEventListeners() {
       (e.target.classList.contains("add-tag-input") ||
         e.target.classList.contains("add-link-input"))
     ) {
-      // console.log("🎯 Tag/link input Enter key detected");
+      ////  console.log("🎯 Tag/link input Enter key detected");
       setTimeout(() => {
         saveActivityTrackerData();
       }, 1000);
     }
   });
 
-  // console.log("✅ Direct event listeners set up");
+  ////  console.log("✅ Direct event listeners set up");
 }
 
 // ===== ENHANCED REAL-TIME NOTIFICATION SYSTEM =====
@@ -3955,32 +3959,44 @@ class NotificationManager {
       return;
     }
 
+    // In renderNotifications method - update the HTML template
     this.list.innerHTML = filteredNotifications
       .map((notification) => {
         const isUnread = !notification.isRead;
         return `
-        <div class="notification-item ${isUnread ? "unread" : "read"}" 
-             data-id="${notification._id}" 
-             data-type="${notification.type}">
-          <div class="notification-content">
-            <div class="notification-type">${this.getTypeLabel(
-              notification.type
-            )}</div>
-            <p class="notification-message">${notification.message}</p>
-            <div class="notification-meta">
-              <span class="notification-author">@${notification.author}</span>
-              <span class="notification-time">${this.formatTime(
-                notification.timestamp
-              )}</span>
-            </div>
-            ${
-              isUnread
-                ? '<div class="notification-live-indicator">🟢 Live</div>'
-                : ""
-            }
-          </div>
+    <div class="notification-item ${
+      isUnread ? "unread" : "read"
+    } clickable-notification" 
+         data-id="${notification._id}" 
+         data-type="${notification.type}"
+         title="Click to view">
+      <div class="notification-content">
+        <div class="notification-type">
+          <span class="notification-type-icon">${this.getTypeIcon(
+            notification.type
+          )}</span>
+          ${this.getTypeLabel(notification.type)}
         </div>
-      `;
+        <p class="notification-message">${notification.message}</p>
+        <div class="notification-meta">
+          <span class="notification-author">@${notification.sender}</span>
+          <span class="notification-time">${this.formatTime(
+            notification.timestamp
+          )}</span>
+        </div>
+        ${
+          isUnread
+            ? '<div class="notification-live-indicator">🟢 Live</div>'
+            : ""
+        }
+        ${
+          notification.url
+            ? '<div class="notification-url-hint">🔗 Click to view</div>'
+            : ""
+        }
+      </div>
+    </div>
+  `;
       })
       .join("");
 
@@ -4098,60 +4114,65 @@ class NotificationManager {
     }
   }
 
-  // FIXED: Handle notification click with proper real-time category switching
-  async handleNotificationClick(notificationElement) {
-    const notificationId = notificationElement.dataset.id;
-    const notificationType = notificationElement.dataset.type;
+  // In main.js - Fix the handleNotificationClick method in NotificationManager class
+async handleNotificationClick(notificationElement) {
+  const notificationId = notificationElement.dataset.id;
+  const notification = this.notifications.find(
+    (n) => n._id === notificationId
+  );
 
-    console.log(`Handling click for notification: ${notificationId}`);
+  if (!notification) return;
 
-    // Mark as read on server
-    await this.markAsRead(notificationId);
+  console.log(`🖱️ Handling notification click:`, notification);
 
-    // Update local state
-    const notificationIndex = this.notifications.findIndex(
-      (n) => n._id === notificationId
-    );
-    if (notificationIndex !== -1) {
-      this.notifications[notificationIndex].isRead = true;
-      this.unreadCount = Math.max(0, this.unreadCount - 1);
+  // Mark as read on server
+  await this.markAsRead(notificationId);
 
-      console.log(
-        `Notification marked as read. Unread count: ${this.unreadCount}`
-      );
-    }
+  // Update local state
+  notification.isRead = true;
+  this.unreadCount = Math.max(0, this.unreadCount - 1);
 
-    // Handle navigation based on type
-    if (notificationType === "new_blog") {
-      const notification = this.notifications.find(
-        (n) => n._id === notificationId
-      );
-      if (notification && notification.blogSlug) {
-        window.location.href = `/blogs/${notification.blogSlug}`;
-        return; // Don't update UI since we're navigating away
-      }
-    }
-
-    // Update UI immediately
-    this.updateBadge();
-
-    // FIXED: Real-time category handling
-    if (this.currentCategory === "unread") {
-      // If we're in unread category, the notification should disappear immediately
-      // Check if this was the last unread notification
-      if (this.unreadCount === 0) {
-        // No more unread notifications, switch to all category
-        this.switchCategory("all");
-      } else {
-        // Still have unread notifications, re-render the unread list
-        this.renderNotifications();
-      }
-    } else if (this.currentCategory === "all") {
-      // In all category, just re-render to update the read status
-      this.renderNotifications();
-    }
-    // If we're in read category, no need to re-render as the notification will appear there automatically
+  // Handle navigation based on notification type
+  if (notification.url) {
+    console.log(`🔗 Navigating to: ${notification.url}`);
+    window.location.href = notification.url;
+    return;
   }
+
+  // FIX: Handle like notifications specifically
+  if (notification.type === "like_on_blog" && notification.blogSlug) {
+    console.log(`❤️ Redirecting to blog: ${notification.blogSlug}`);
+    window.location.href = `/blogs/${notification.blogSlug}`;
+    return;
+  }
+
+  // Fallback navigation for other notification types
+  if (notification.blogSlug) {
+    let url = `/blogs/${notification.blogSlug}`;
+
+    // Add comment parameter for comment-related notifications
+    if (
+      notification.commentId &&
+      (notification.type === "comment_on_blog" ||
+        notification.type === "reply_to_comment" ||
+        notification.type === "mention_in_comment")
+    ) {
+      url += `?comment=${notification.commentId}`;
+    }
+
+    console.log(`🔄 Fallback navigation to: ${url}`);
+    window.location.href = url;
+    return;
+  }
+
+  // Update UI if no navigation occurred
+  this.updateBadge();
+  if (this.currentCategory === "unread" && this.unreadCount === 0) {
+    this.switchCategory("all");
+  } else {
+    this.renderNotifications();
+  }
+}
 
   // FIXED: Mark all as read with proper real-time updates
   async markAllAsRead() {
@@ -4172,7 +4193,7 @@ class NotificationManager {
         });
         this.unreadCount = 0;
 
-        console.log("All notifications marked as read");
+       //  console.log("All notifications marked as read");
 
         // Update UI
         this.updateBadge();
@@ -4199,7 +4220,7 @@ class NotificationManager {
 
   // Handle real-time notifications with category awareness
   handleRealTimeNotification(notification) {
-    console.log("Handling real-time notification:", notification);
+   //  console.log("Handling real-time notification:", notification);
 
     // Add new notification to the beginning of the list
     this.notifications.unshift(notification);
@@ -4227,54 +4248,140 @@ class NotificationManager {
     }, 5000);
   }
 
-  // Load notifications from server
+  // In main.js - Back to using main route
   async loadNotifications() {
-    if (!authToken) return;
+    if (!authToken) {
+     //  console.log("🔐 No auth token, skipping notification load");
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+     //  console.log("📥 Loading notifications from server...");
+
+      // BACK TO MAIN ROUTE
+      const response = await fetch(
+        `${API_BASE_URL}/notifications?category=${this.currentCategory}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+       //  console.log("📦 Notifications loaded:", result);
+
+        if (result.success) {
+          this.notifications = result.notifications || [];
+          this.unreadCount = result.unreadCount || 0;
+
+          console.log(
+            `✅ Loaded ${this.notifications.length} notifications, ${this.unreadCount} unread`
+          );
+
+          this.renderNotifications();
+          this.updateBadge();
+        } else {
+          console.error("❌ Failed to load notifications:", result.error);
+        }
+      } else {
+        console.error("❌ HTTP error loading notifications:", response.status);
+        // Fallback to test data if main route fails
+        await this.loadFallbackNotifications();
+      }
+    } catch (error) {
+      console.error("❌ Error loading notifications:", error);
+      // Fallback to test data if main route fails
+      await this.loadFallbackNotifications();
+    }
+  }
+
+  // Keep fallback as backup
+  async loadFallbackNotifications() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications-fallback`, {
+        headers: { Authorization: `Bearer ${authToken}` },
       });
 
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          this.notifications = result.notifications || [];
-          this.unreadCount = result.unreadCount || 0;
+          this.notifications = result.notifications;
+          this.unreadCount = result.unreadCount;
           this.renderNotifications();
           this.updateBadge();
-          console.log("Loaded notifications:", this.notifications);
         }
       }
     } catch (error) {
-      console.error("Error loading notifications:", error);
+      console.error("Fallback also failed:", error);
     }
   }
 
   getTypeLabel(type) {
     const labels = {
       new_blog: "New Blog",
+      comment_on_blog: "Comment on Blog",
+      reply_to_comment: "Reply to Comment",
+      like_on_blog: "Like on Blog",
+      like_on_comment: "Like on Comment", // NEW
+      mention_in_blog: "Mention in Blog",
+      mention_in_comment: "Mention in Comment",
+      comments_disabled: "Comments Disabled",
       user_activity: "Activity",
     };
     return labels[type] || "Notification";
   }
 
+  // Add icon for comment likes
+  getTypeIcon(type) {
+    const icons = {
+      new_blog: "📝",
+      comment_on_blog: "💬",
+      reply_to_comment: "↩️",
+      like_on_blog: "❤️",
+      like_on_comment: "👍", // NEW: Different icon for comment likes
+      mention_in_blog: "📌",
+      mention_in_comment: "📌",
+      comments_disabled: "🚫",
+      user_activity: "🔔",
+    };
+    return icons[type] || "🔔";
+  }
+
+  // In main.js - Fix the formatTime method in NotificationManager
   formatTime(timestamp) {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffMs = now - time;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    try {
+      // Handle both string and Date objects
+      const time = new Date(timestamp);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+      // Check if the date is valid
+      if (isNaN(time.getTime())) {
+        // console.warn("Invalid timestamp:", timestamp);
+        return "Recently";
+      }
 
-    return time.toLocaleDateString();
+      const now = new Date();
+      const diffMs = now - time;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+
+      // For older dates, use a more readable format
+      return time.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: time.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+      });
+    } catch (error) {
+      console.error("Error formatting time:", error, "Timestamp:", timestamp);
+      return "Recently";
+    }
   }
 
   async togglePanel() {
@@ -4438,7 +4545,7 @@ class NotificationManager {
   // Socket connection methods
   initializeSocketConnection() {
     if (!authToken) {
-      console.log("No auth token, skipping socket connection");
+     //  console.log("No auth token, skipping socket connection");
       return;
     }
 
@@ -4450,19 +4557,19 @@ class NotificationManager {
       });
 
       this.socket.on("connect", () => {
-        console.log("🔌 Connected to real-time notifications");
+       //  console.log("🔌 Connected to real-time notifications");
         this.isConnected = true;
         this.updateConnectionStatus(true);
       });
 
       this.socket.on("disconnect", () => {
-        console.log("🔌 Disconnected from real-time notifications");
+       //  console.log("🔌 Disconnected from real-time notifications");
         this.isConnected = false;
         this.updateConnectionStatus(false);
       });
 
       this.socket.on("new-notification", (notification) => {
-        console.log("📢 Received real-time notification:", notification);
+       //  console.log("📢 Received real-time notification:", notification);
         this.handleRealTimeNotification(notification);
       });
 
@@ -4605,25 +4712,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
 async function initializeApp() {
   try {
-    console.log("🚀 Initializing FocusFlow...");
-    
+   //  console.log("🚀 Initializing FocusFlow...");
+
     // First, set up all event listeners
     setupAuthEventListeners();
     initOAuth();
     setupSearchFunctionality();
     setupEventListeners();
-    
+
     // Then check authentication
     await checkAutoLogin();
-    
+
     // Then load data and initialize components
     await loadData();
     await setAppStartDateFromUser();
-    
+
     filterTableData();
     renderTable();
     initializeActivityTracker();
-    
+
     // Initialize notification manager after auth check
     setTimeout(() => {
       if (authToken && !window.notificationManager) {
@@ -4639,8 +4746,7 @@ async function initializeApp() {
       }
     }, 20000);
 
-    console.log("✅ FocusFlow initialized successfully");
-    
+   //  console.log("✅ FocusFlow initialized successfully");
   } catch (error) {
     console.error("❌ Error initializing app:", error);
   }

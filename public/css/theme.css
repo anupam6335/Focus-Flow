@@ -1089,9 +1089,6 @@ html {
   }
 }
 
-
-
-
 /* ============ Follower styling================= */
 /* Follow Button Styles */
 .follow-btn {
@@ -1264,7 +1261,6 @@ html {
   font-weight: 500;
 }
 
-
 /* Unfollow Confirmation Modal Styles */
 .unfollow-modal {
   position: fixed;
@@ -1393,7 +1389,6 @@ html {
 .unfollow-cancel-btn:hover {
   background: var(--codeleaf-bg-tertiary) !important;
 }
-
 
 /* Add to profile.css and user-profile.css */
 .mutual-connections-modal {
@@ -1559,7 +1554,6 @@ html {
   font-weight: 600;
   margin-left: 4px;
 }
-
 
 /* Unfollow Confirmation Modal Styles */
 .unfollow-modal {
@@ -1728,12 +1722,12 @@ html {
     padding: var(--codeleaf-space-4);
     margin: var(--codeleaf-space-4);
   }
-  
+
   .unfollow-user-info {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .unfollow-user-stats {
     flex-direction: column;
     gap: var(--codeleaf-space-2);
@@ -1772,7 +1766,7 @@ html {
 }
 
 .oauth-btn.google-btn:hover {
-  border-color: #4285F4;
+  border-color: #4285f4;
   box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
 }
 

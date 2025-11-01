@@ -172,6 +172,42 @@ const userRestrictionSchema = new mongoose.Schema({
   reason: { type: String, default: "Multiple reports" },
 });
 
+// ========== NOTIFICATION SCHEMA ==========
+const notificationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    required: true,
+    enum: [
+      "new_blog",
+      "comment_on_blog",
+      "reply_to_comment",
+      "like_on_comment",
+      "like_on_blog",
+      "mention_in_blog",
+      "mention_in_comment",
+      "comments_disabled",
+      "user_activity",
+    ],
+  },
+  recipient: { type: String, required: true },
+  sender: { type: String, required: true },
+  blogSlug: { type: String, default: null },
+  commentId: { type: mongoose.Schema.Types.ObjectId, default: null },
+  message: { type: String, required: true },
+  metadata: { type: Object, default: {} },
+  url: { type: String, required: true },
+  isRead: { type: Boolean, default: false },
+  // FIXED: Ensure proper date handling
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    // Add index for better query performance
+    index: true,
+  },
+});
+// Make sure this line is present and correct:
+const Notification = mongoose.model("Notification", notificationSchema);
+
 const Comment = mongoose.model("Comment", commentSchema);
 const BlogStats = mongoose.model("BlogStats", blogStatsSchema);
 const UserRestriction = mongoose.model(
@@ -227,8 +263,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log("Google profile received:", profile.id);
-
         // Find user by Google ID
         let user = await User.findOne({
           providerId: profile.id,
@@ -236,7 +270,6 @@ passport.use(
         });
 
         if (user) {
-          console.log("Existing Google user found:", user.username);
           return done(null, user);
         }
 
@@ -245,7 +278,6 @@ passport.use(
         if (email) {
           user = await User.findOne({ email: email });
           if (user) {
-            console.log("Linking existing user with Google:", user.username);
             // Update existing user with Google auth
             user.authProvider = "google";
             user.providerId = profile.id;
@@ -265,7 +297,6 @@ passport.use(
         });
 
         await newUser.save();
-        console.log("New Google user created:", username);
 
         // Create default data for new user
         const defaultData = generateDefaultData();
@@ -277,7 +308,7 @@ passport.use(
 
         done(null, newUser);
       } catch (error) {
-        console.error("Google OAuth error:", error);
+        // console.error("Google OAuth error:", error);
         done(error);
       }
     }
@@ -297,8 +328,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log("GitHub profile received:", profile.id);
-
         // Find user by GitHub ID
         let user = await User.findOne({
           providerId: profile.id,
@@ -306,7 +335,6 @@ passport.use(
         });
 
         if (user) {
-          console.log("Existing GitHub user found:", user.username);
           return done(null, user);
         }
 
@@ -315,7 +343,6 @@ passport.use(
         if (email) {
           user = await User.findOne({ email: email });
           if (user) {
-            console.log("Linking existing user with GitHub:", user.username);
             user.authProvider = "github";
             user.providerId = profile.id;
             await user.save();
@@ -334,7 +361,6 @@ passport.use(
         });
 
         await newUser.save();
-        console.log("New GitHub user created:", username);
 
         // Create default data for new user
         const defaultData = generateDefaultData();
@@ -346,7 +372,7 @@ passport.use(
 
         done(null, newUser);
       } catch (error) {
-        console.error("GitHub OAuth error:", error);
+        // console.error("GitHub OAuth error:", error);
         done(error);
       }
     }
@@ -403,7 +429,7 @@ io.on("connection", async (socket) => {
         });
       }
     } catch (error) {
-      console.log("Invalid token for socket connection");
+     //  console.log("Invalid token for socket connection");
     }
   }
 
@@ -421,11 +447,6 @@ io.on("connection", async (socket) => {
   // Enhanced: Update following list when user follows/unfollows
   socket.on("update-following", async (followingList) => {
     if (username) {
-      console.log(
-        `🔄 ${username} updating following subscriptions:`,
-        followingList
-      );
-
       // Leave all blog-publish rooms
       const rooms = Array.from(socket.rooms);
       rooms.forEach((room) => {
@@ -434,7 +455,6 @@ io.on("connection", async (socket) => {
           room !== `blog-publish-${username}`
         ) {
           socket.leave(room);
-          console.log(`🚪 ${username} left ${room}`);
         }
       });
 
@@ -443,9 +463,6 @@ io.on("connection", async (socket) => {
         const roomName = `blog-publish-${followedUser}`;
         if (!socket.rooms.has(roomName)) {
           socket.join(roomName);
-          console.log(
-            `✅ ${username} joined ${roomName} for real-time updates`
-          );
         }
       });
 
@@ -473,8 +490,6 @@ io.on("connection", async (socket) => {
 
   // Handle graceful disconnect with delay
   socket.on("disconnect", async (reason) => {
-    console.log("User disconnected:", socket.id, "Reason:", reason);
-
     // Update user as offline only after a delay for page refreshes/navigation
     if (username) {
       setTimeout(async () => {
@@ -808,7 +823,7 @@ app.get("/api/user-info", authenticateToken, async (req, res) => {
       user: userInfo,
     });
   } catch (error) {
-    console.error("Error fetching user info:", error);
+    // console.error("Error fetching user info:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -877,7 +892,7 @@ app.get("/api/user-info/:username", async (req, res) => {
         }
       } catch (error) {
         // Token is invalid, but we still allow public access
-        console.log("Invalid token, proceeding with public access");
+       //  console.log("Invalid token, proceeding with public access");
       }
     }
 
@@ -1058,7 +1073,7 @@ app.get("/api/user-info/:username", async (req, res) => {
       accessLevel: isAuthenticated ? "authenticated" : "public",
     });
   } catch (error) {
-    console.error("Error fetching user info:", error);
+    // console.error("Error fetching user info:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1107,14 +1122,12 @@ app.get("/api/progress-stats", authenticateToken, async (req, res) => {
       }
     });
 
-    // console.log(`Progress stats for ${userId}:`, stats);
-
     res.json({
       success: true,
       stats,
     });
   } catch (error) {
-    console.error("Error fetching progress stats:", error);
+    // console.error("Error fetching progress stats:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1168,7 +1181,7 @@ app.get("/api/progress-stats/:username", async (req, res) => {
       stats,
     });
   } catch (error) {
-    console.error("Error fetching progress stats:", error);
+    // console.error("Error fetching progress stats:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1244,13 +1257,9 @@ app.post("/api/data", authenticateToken, async (req, res) => {
 
       if (timeDiff > 2000 && clientVersion < currentData.version) {
         // 2-second grace period
-        // console.log(
-        //   `🔄 Conflict detected for user ${userId}. Time difference: ${timeDiff}ms`
-        // );
 
         // Auto-merge strategy: Check if changes are compatible
         if (areChangesCompatible(currentData.data, data)) {
-          // console.log("✅ Changes are compatible, auto-merging...");
           // Merge changes intelligently
           const mergedData = mergeDataIntelligently(currentData.data, data);
           currentData.data = mergedData;
@@ -1268,7 +1277,6 @@ app.post("/api/data", authenticateToken, async (req, res) => {
         }
       } else if (timeDiff > 0) {
         // Small time difference, prefer client data (likely rapid sequential updates)
-        // console.log("🔄 Minor time difference, accepting client changes");
         currentData.data = data;
       } else {
         // Client has newer or equal data, accept it
@@ -1320,14 +1328,10 @@ app.post("/api/force-sync", authenticateToken, async (req, res) => {
 // Get activity tracker data
 app.get("/api/activity-tracker", authenticateToken, async (req, res) => {
   try {
-    // console.log("📥 Received activity tracker data GET request");
-    // console.log("📥 User:", req.user.username);
-
     const userId = req.user.username;
     let activityData = await ActivityTracker.findOne({ userId });
 
     if (!activityData) {
-      // console.log("🆕 Creating new activity tracker for user:", userId);
       // Create default activity data
       activityData = await ActivityTracker.create({
         userId,
@@ -1341,7 +1345,7 @@ app.get("/api/activity-tracker", authenticateToken, async (req, res) => {
         },
       });
     } else {
-      // console.log("📋 Found existing activity tracker for user:", userId);
+      ////  console.log("📋 Found existing activity tracker for user:", userId);
     }
 
     res.json({
@@ -1349,7 +1353,7 @@ app.get("/api/activity-tracker", authenticateToken, async (req, res) => {
       activityData: activityData.activityData,
     });
   } catch (error) {
-    console.error("❌ Error getting activity tracker data:", error);
+    // console.error("❌ Error getting activity tracker data:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1357,15 +1361,10 @@ app.get("/api/activity-tracker", authenticateToken, async (req, res) => {
 // Save activity tracker data - WITH DEBUGGING
 app.post("/api/activity-tracker", authenticateToken, async (req, res) => {
   try {
-    // console.log("📥 Received activity tracker data save request");
-    // console.log("📥 User:", req.user.username);
-    // console.log("📥 Data received:", req.body.activityData);
-
     const userId = req.user.username;
     const { activityData } = req.body;
 
     if (!activityData) {
-      // console.log("❌ No activity data provided");
       return res
         .status(400)
         .json({ success: false, error: "Activity data is required" });
@@ -1374,10 +1373,7 @@ app.post("/api/activity-tracker", authenticateToken, async (req, res) => {
     let tracker = await ActivityTracker.findOne({ userId });
 
     if (!tracker) {
-      // console.log("🆕 Creating new activity tracker for user:", userId);
       tracker = new ActivityTracker({ userId });
-    } else {
-      // console.log("📝 Updating existing activity tracker for user:", userId);
     }
 
     tracker.activityData = activityData;
@@ -1390,7 +1386,7 @@ app.post("/api/activity-tracker", authenticateToken, async (req, res) => {
       message: "Activity data saved successfully",
     });
   } catch (error) {
-    console.error("❌ Error saving activity tracker data:", error);
+    // console.error("❌ Error saving activity tracker data:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1430,15 +1426,12 @@ app.post("/api/forgot-password", async (req, res) => {
       expiresAt,
     });
 
-    // console.log(`Password reset code for ${username}: ${resetCode}`);
-
     res.json({
       success: true,
       message: "If the username exists, a reset code has been sent",
-      demoCode: resetCode, // Remove this in production
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    // console.error("Forgot password error:", error);
     res
       .status(500)
       .json({ success: false, error: "Failed to process request" });
@@ -1502,7 +1495,7 @@ app.post("/api/reset-password", async (req, res) => {
       message: "Password reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    // console.error("Reset password error:", error);
     res.status(500).json({ success: false, error: "Failed to reset password" });
   }
 });
@@ -1662,7 +1655,7 @@ app.get("/api/blogs/popular", async (req, res) => {
       blogs: blogsWithPopularity,
     });
   } catch (error) {
-    console.error("Error in popular blogs route:", error);
+    // console.error("Error in popular blogs route:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1811,7 +1804,7 @@ app.get("/api/blogs/:slug", async (req, res) => {
   }
 });
 
-// Enhanced blog creation with real-time notifications
+// Enhanced blog creation with mention handling
 app.post("/api/blogs", authenticateToken, async (req, res) => {
   try {
     const { title, content, isPublic = true, tags = [] } = req.body;
@@ -1844,8 +1837,37 @@ app.post("/api/blogs", authenticateToken, async (req, res) => {
 
     await blog.save();
 
-    // NEW: Enhanced real-time notifications
+    // NEW: Add mention notifications for blog content
+    await handleMentionsInContent(
+      content,
+      req.user.username,
+      blog.slug,
+      blog._id,
+      "blog"
+    );
+
+    // NEW: Add this after blog.save() - Notify followers about new blog
     if (isPublic) {
+      // Get users who follow the author (this remains follow-based)
+      const followers = await User.find({
+        following: req.user.username,
+        "notificationPreferences.newBlogs": true,
+      });
+
+      for (const follower of followers) {
+        await createNotification({
+          type: "new_blog",
+          recipient: follower.username, // Only followers get new blog notifications
+          sender: req.user.username,
+          blogSlug: blog.slug,
+          message: `${req.user.username} published a new blog "${blog.title}"`,
+          metadata: {
+            blogTitle: blog.title,
+          },
+        });
+      }
+
+      // Keep existing real-time notifications
       await triggerRealTimeBlogNotifications(blog, req.user.username);
     }
 
@@ -1861,7 +1883,226 @@ app.post("/api/blogs", authenticateToken, async (req, res) => {
   }
 });
 
-// Enhanced real-time notification function
+// In handleCommentsDisabled function - keep as direct notification
+async function handleCommentsDisabled(blogSlug, blogAuthor) {
+  try {
+    await createNotification({
+      type: "comments_disabled",
+      recipient: blogAuthor, // Blog owner always gets notified
+      sender: "system",
+      blogSlug: blogSlug,
+      message:
+        "Comments on your blog have been disabled due to multiple reports",
+      metadata: {
+        reason: "Multiple user reports",
+        action: "comments_disabled",
+      },
+    });
+  } catch (error) {
+    // console.error("Error sending comments disabled notification:", error);
+  }
+}
+
+// Update the report comment route to trigger comments disabled notification
+app.post(
+  "/api/comments/:commentId/report",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+        return res.status(404).json({
+          success: false,
+          error: "Comment not found",
+        });
+      }
+
+      // Check if user already reported
+      if (comment.reportedBy.includes(username)) {
+        return res.status(400).json({
+          success: false,
+          error: "You have already reported this comment",
+        });
+      }
+
+      comment.reports += 1;
+      comment.reportedBy.push(username);
+
+      // NEW: If multiple reports (3 or more), restrict the comment author and check for blog restrictions
+      if (comment.reports >= 3) {
+        const restriction = new UserRestriction({
+          username: comment.author,
+          blogSlug: comment.blogSlug,
+          reason: "Multiple reports on comments",
+        });
+        await restriction.save();
+
+        // Check if we should disable comments on the blog
+        const blogReports = await Comment.aggregate([
+          {
+            $match: {
+              blogSlug: comment.blogSlug,
+              reports: { $gte: 3 },
+            },
+          },
+          { $group: { _id: null, count: { $sum: 1 } } },
+        ]);
+
+        const highReportCount = blogReports[0]?.count || 0;
+
+        // NEW: If 3 or more comments have 3+ reports, notify blog owner
+        if (highReportCount >= 3) {
+          const blog = await Blog.findOne({ slug: comment.blogSlug });
+          if (blog) {
+            await createNotification({
+              type: "comments_disabled",
+              recipient: blog.author,
+              sender: "system",
+              blogSlug: comment.blogSlug,
+              message:
+                "Comments on your blog have been disabled due to multiple reports",
+              metadata: {
+                reason: "Multiple user reports",
+                action: "comments_disabled",
+              },
+            });
+          }
+        }
+
+        // Notify about restriction
+        io.to(comment.blogSlug).emit("user-restricted", {
+          username: comment.author,
+          blogSlug: comment.blogSlug,
+        });
+      }
+
+      await comment.save();
+
+      // Broadcast report update
+      io.to(comment.blogSlug).emit("comment-reported", {
+        commentId,
+        reports: comment.reports,
+      });
+
+      res.json({
+        success: true,
+        reports: comment.reports,
+        message:
+          comment.reports >= 3
+            ? "Comment reported. User has been restricted due to multiple reports."
+            : "Comment reported successfully",
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// NEW: Enhanced notification types
+const NOTIFICATION_TYPES = {
+  NEW_BLOG: "new_blog",
+  COMMENT_ON_BLOG: "comment_on_blog", // NEW
+  REPLY_TO_COMMENT: "reply_to_comment", // NEW
+  LIKE_ON_BLOG: "like_on_blog", // NEW
+  MENTION_IN_BLOG: "mention_in_blog", // NEW
+  MENTION_IN_COMMENT: "mention_in_comment", // NEW
+  COMMENTS_DISABLED: "comments_disabled", // NEW
+};
+
+// In server.js - Update the createNotification function
+async function createNotification(notificationData) {
+  try {
+    const {
+      type,
+      recipient,
+      sender,
+      blogSlug,
+      commentId,
+      message,
+      metadata = {},
+    } = notificationData;
+
+    // Generate precise URL based on notification type
+    let url = "";
+    switch (type) {
+      case "new_blog":
+        url = `/blogs/${blogSlug}`;
+        break;
+      case "comment_on_blog":
+        // Scroll to the specific comment
+        url = `/blogs/${blogSlug}?comment=${commentId}`;
+        break;
+      case "reply_to_comment":
+        // Scroll to the specific reply
+        url = `/blogs/${blogSlug}?comment=${commentId}`;
+        break;
+      case "like_on_blog": // ADD THIS CASE
+        url = `/blogs/${blogSlug}`;
+        break;
+      case "like_on_comment": // ADD THIS CASE
+        url = `/blogs/${blogSlug}?comment=${commentId}`;
+        break;
+      case "mention_in_blog":
+        url = `/blogs/${blogSlug}`;
+        break;
+      case "mention_in_comment":
+        // Scroll to the specific comment where mentioned
+        url = `/blogs/${blogSlug}?comment=${commentId}`;
+        break;
+      case "comments_disabled":
+        url = `/blogs/${blogSlug}`;
+        break;
+      default:
+        url = "/blogs";
+    }
+
+    // Create and save notification to database
+    const notification = new Notification({
+      type,
+      recipient,
+      sender,
+      blogSlug,
+      commentId,
+      message,
+      metadata,
+      url, // Make sure this is set
+      isRead: false,
+    });
+
+    await notification.save();
+
+    // Emit real-time notification
+    const userConnection = connectedUsers.get(recipient);
+    if (userConnection) {
+      io.to(`user-${recipient}`).emit("new-notification", {
+        _id: notification._id,
+        type: notification.type,
+        recipient: notification.recipient,
+        sender: notification.sender,
+        blogSlug: notification.blogSlug,
+        commentId: notification.commentId,
+        message: notification.message,
+        metadata: notification.metadata,
+        url: notification.url, // Make sure this is included
+        timestamp: notification.createdAt,
+        isRead: notification.isRead,
+      });
+
+      io.to(userConnection.socketId).emit("notification-count-updated", {
+        increment: true,
+      });
+    }
+
+    return notification;
+  } catch (error) {
+    // console.error("Error creating notification:", error);
+  }
+}
+
 // Enhanced real-time notification function with better targeting
 async function triggerRealTimeBlogNotifications(blog, authorUsername) {
   try {
@@ -1870,10 +2111,6 @@ async function triggerRealTimeBlogNotifications(blog, authorUsername) {
       following: authorUsername,
       "notificationPreferences.newBlogs": true,
     });
-
-    console.log(
-      `📢 Sending real-time notifications to ${followers.length} followers of ${authorUsername}`
-    );
 
     // Create notification data
     const notificationData = {
@@ -1907,12 +2144,6 @@ async function triggerRealTimeBlogNotifications(blog, authorUsername) {
         });
 
         deliveredCount++;
-
-        console.log(`✅ Notification delivered to ${follower.username}`);
-      } else {
-        console.log(
-          `⏸️  User ${follower.username} is offline, notification queued`
-        );
       }
     });
 
@@ -1925,12 +2156,8 @@ async function triggerRealTimeBlogNotifications(blog, authorUsername) {
         });
       }
     });
-
-    console.log(
-      `📢 Real-time notifications: ${deliveredCount}/${followers.length} delivered instantly`
-    );
   } catch (error) {
-    console.error("❌ Error triggering real-time blog notifications:", error);
+    // console.error("❌ Error triggering real-time blog notifications:", error);
   }
 }
 
@@ -2032,7 +2259,7 @@ app.get("/api/my-blogs", authenticateToken, async (req, res) => {
   }
 });
 
-// Update like route with self-like restriction
+// FIXED: Like route with proper notification
 app.post("/api/blogs/:slug/like", authenticateToken, async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug });
@@ -2061,6 +2288,20 @@ app.post("/api/blogs/:slug/like", authenticateToken, async (req, res) => {
       // Like the blog
       blog.likes += 1;
       blog.likedBy.push(username);
+
+      // FIXED: Always notify blog author about like
+      if (blog.author !== username) {
+        await createNotification({
+          type: "like_on_blog",
+          recipient: blog.author,
+          sender: username,
+          blogSlug: blog.slug,
+          message: `${username} liked your blog "${blog.title}"`,
+          metadata: {
+            blogTitle: blog.title,
+          },
+        });
+      }
     }
 
     await blog.save();
@@ -2068,14 +2309,63 @@ app.post("/api/blogs/:slug/like", authenticateToken, async (req, res) => {
     res.json({
       success: true,
       likes: blog.likes,
-      hasLiked: !hasLiked, // Return the new state
+      hasLiked: !hasLiked,
       message: hasLiked ? "Blog unliked" : "Blog liked",
     });
   } catch (error) {
+    // console.error("❌ Error in like route:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+// UPDATED: Handle mentions in blog content and comments (ALWAYS notify mentioned users)
+async function handleMentionsInContent(
+  content,
+  sender,
+  blogSlug,
+  entityId,
+  entityType
+) {
+  try {
+    // Simple mention detection - looks for @username pattern
+    const mentionRegex = /@(\w+)/g;
+    const mentions = [];
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      mentions.push(match[1]);
+    }
+
+    // Remove duplicates
+    const uniqueMentions = [...new Set(mentions)];
+
+    // Create notifications for each mentioned user (ALWAYS notify, regardless of follow status)
+    for (const mentionedUser of uniqueMentions) {
+      // Check if user exists and it's not the sender
+      const userExists = await User.findOne({ username: mentionedUser });
+      if (userExists && mentionedUser !== sender) {
+        const notificationType =
+          entityType === "blog" ? "mention_in_blog" : "mention_in_comment";
+
+        await createNotification({
+          type: notificationType,
+          recipient: mentionedUser, // Mentioned user always gets notified
+          sender: sender,
+          blogSlug: blogSlug,
+          commentId: entityType === "comment" ? entityId : null,
+          message: `${sender} mentioned you in a ${entityType}`,
+          metadata: {
+            entityType: entityType,
+            contentPreview: content.substring(0, 100),
+            entityId: entityId,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    // console.error("Error handling mentions:", error);
+  }
+}
 // ========== COMMENT API ROUTES ==========
 
 // Edit comment route
@@ -2218,7 +2508,7 @@ app.get("/api/blogs/:slug/comments", async (req, res) => {
   }
 });
 
-// Create new comment
+// Enhanced comment creation with notifications
 app.post("/api/blogs/:slug/comments", authenticateToken, async (req, res) => {
   try {
     const { slug } = req.params;
@@ -2253,8 +2543,53 @@ app.post("/api/blogs/:slug/comments", authenticateToken, async (req, res) => {
       parentId: parentId || null,
     });
 
+    // In the comment route - after comment.save()
     await comment.save();
 
+    // NEW: Notify blog author about new comment (ALWAYS notify, regardless of follow status)
+    const blog = await Blog.findOne({ slug });
+    if (blog && blog.author !== username) {
+      await createNotification({
+        type: "comment_on_blog",
+        recipient: blog.author, // Blog owner always gets notified
+        sender: username,
+        blogSlug: slug,
+        commentId: comment._id,
+        message: `${username} commented on your blog "${blog.title}"`,
+        metadata: {
+          blogTitle: blog.title,
+          commentContent: content.substring(0, 100),
+        },
+      });
+    }
+
+    // NEW: Notify parent comment author about reply (ALWAYS notify, regardless of follow status)
+    if (parentId) {
+      const parentComment = await Comment.findById(parentId);
+      if (parentComment && parentComment.author !== username) {
+        await createNotification({
+          type: "reply_to_comment",
+          recipient: parentComment.author, // Parent comment author always gets notified
+          sender: username,
+          blogSlug: slug,
+          commentId: comment._id,
+          message: `${username} replied to your comment on "${blog.title}"`,
+          metadata: {
+            blogTitle: blog.title,
+            replyContent: content.substring(0, 100),
+          },
+        });
+      }
+    }
+
+    // NEW: Check for mentions in comment (ALWAYS notify mentioned users)
+    await handleMentionsInContent(
+      content,
+      username,
+      slug,
+      comment._id,
+      "comment"
+    );
     // Populate the new comment with replies array for consistency
     const commentWithReplies = {
       ...comment.toObject(),
@@ -2784,7 +3119,7 @@ app.put("/api/update-username", authenticateToken, async (req, res) => {
       newToken: newToken,
     });
   } catch (error) {
-    console.error("Error updating username:", error);
+    // console.error("Error updating username:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -2840,7 +3175,7 @@ app.put("/api/update-avatar", authenticateToken, async (req, res) => {
       avatar: avatar,
     });
   } catch (error) {
-    console.error("Error updating avatar:", error);
+    // console.error("Error updating avatar:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -3043,7 +3378,7 @@ app.get(
         count: formattedConnections.length,
       });
     } catch (error) {
-      console.error("Error in mutual connections:", error);
+      // console.error("Error in mutual connections:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -3051,119 +3386,65 @@ app.get(
 
 // ========== NOTIFICATION API ROUTES ==========
 
-// Get notifications for current user
+// FIXED: Get notifications for current user
 app.get("/api/notifications", authenticateToken, async (req, res) => {
   try {
-    const { category } = req.query; // 'all', 'unread', 'read'
+    const { category = "all" } = req.query;
     const userId = req.user.username;
 
-    // Get user's following list
-    const user = await User.findOne({ username: userId });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
+    // Build query based on category
+    let query = { recipient: userId };
 
-    const following = user.following || [];
-
-    // Get recent blogs from followed users (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const recentBlogs = await Blog.find({
-      author: { $in: following },
-      createdAt: { $gte: sevenDaysAgo },
-      isPublic: true,
-    })
-      .sort({ createdAt: -1 })
-      .select("title slug author createdAt tags")
-      .limit(50);
-
-    // Get recent activity from followed users
-    const recentActivity = await ActivityTracker.find({
-      userId: { $in: following },
-      lastUpdated: { $gte: sevenDaysAgo },
-    })
-      .sort({ lastUpdated: -1 })
-      .limit(50);
-
-    // Format notifications
-    const notifications = [];
-
-    // Add blog notifications
-    recentBlogs.forEach((blog) => {
-      notifications.push({
-        _id: blog._id,
-        type: "new_blog",
-        title: `New blog published`,
-        message: `${blog.author} published "${blog.title}"`,
-        author: blog.author,
-        blogSlug: blog.slug,
-        timestamp: blog.createdAt,
-        isRead: user.readNotifications?.includes(blog._id.toString()) || false,
-      });
-    });
-
-    // Add activity notifications (simplified - you can enhance this)
-    recentActivity.forEach((activity) => {
-      if (activity.activityData && activity.activityData.currentStreak > 0) {
-        notifications.push({
-          _id: activity._id,
-          type: "user_activity",
-          title: `User activity update`,
-          message: `${activity.userId} is on a ${activity.activityData.currentStreak} day streak!`,
-          author: activity.userId,
-          timestamp: activity.lastUpdated,
-          isRead:
-            user.readNotifications?.includes(activity._id.toString()) || false,
-        });
-      }
-    });
-
-    // Sort by timestamp and limit to 30 notifications
-    const sortedNotifications = notifications
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, 30);
-
-    // Filter by category if specified
-    let filteredNotifications = notifications;
     if (category === "unread") {
-      filteredNotifications = notifications.filter((n) => !n.isRead);
+      query.isRead = false;
     } else if (category === "read") {
-      filteredNotifications = notifications.filter((n) => n.isRead);
+      query.isRead = true;
     }
 
-    // Update last notification check time
-    user.lastNotificationCheck = new Date();
-    await user.save();
+    // Get notifications from database using Notification model
+    const notifications = await Notification.find(query)
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    // Count unread notifications
+    const unreadCount = await Notification.countDocuments({
+      recipient: userId,
+      isRead: false,
+    });
 
     res.json({
       success: true,
-      notifications: filteredNotifications,
-      unreadCount: notifications.filter((n) => !n.isRead).length,
+      notifications: notifications,
+      unreadCount: unreadCount,
       totalCount: notifications.length,
       readCount: notifications.filter((n) => n.isRead).length,
     });
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({ success: false, error: error.message });
+    // console.error("❌ Error in /api/notifications route:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
-// Mark notification as read
+// UPDATED: Mark notification as read
 app.post("/api/notifications/:id/read", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
     const notificationId = req.params.id;
 
-    const user = await User.findOne({ username: userId });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, recipient: userId },
+      { isRead: true },
+      { new: true }
+    );
 
-    // Add to read notifications if not already there
-    if (!user.readNotifications.includes(notificationId)) {
-      user.readNotifications.push(notificationId);
-      await user.save();
+    if (!notification) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Notification not found" });
     }
 
     res.json({
@@ -3171,73 +3452,48 @@ app.post("/api/notifications/:id/read", authenticateToken, async (req, res) => {
       message: "Notification marked as read",
     });
   } catch (error) {
+    // console.error("Error marking notification as read:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Mark all notifications as read
+// UPDATED: Mark all notifications as read
 app.post("/api/notifications/read-all", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
 
-    const user = await User.findOne({ username: userId });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    // Get current notifications to mark them all as read
-    const response = await fetch(`http://localhost:${PORT}/api/notifications`, {
-      headers: {
-        Authorization: `Bearer ${req.headers.authorization.split(" ")[1]}`,
-      },
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-
-      // Add all notification IDs to read notifications
-      result.notifications.forEach((notification) => {
-        if (!user.readNotifications.includes(notification._id)) {
-          user.readNotifications.push(notification._id);
-        }
-      });
-
-      await user.save();
-    }
+    const result = await Notification.updateMany(
+      { recipient: userId, isRead: false },
+      { isRead: true }
+    );
 
     res.json({
       success: true,
-      message: "All notifications marked as read",
+      message: `Marked ${result.modifiedCount} notifications as read`,
+      modifiedCount: result.modifiedCount,
     });
   } catch (error) {
+    // console.error("Error marking all notifications as read:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Get notification count (for badge)
+// UPDATED: Get notification count (for badge)
 app.get("/api/notifications/count", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.username;
 
-    const response = await fetch(`http://localhost:${PORT}/api/notifications`, {
-      headers: {
-        Authorization: `Bearer ${req.headers.authorization.split(" ")[1]}`,
-      },
+    const unreadCount = await Notification.countDocuments({
+      recipient: userId,
+      isRead: false,
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      res.json({
-        success: true,
-        unreadCount: result.unreadCount,
-      });
-    } else {
-      res.json({
-        success: true,
-        unreadCount: 0,
-      });
-    }
+    res.json({
+      success: true,
+      unreadCount: unreadCount,
+    });
   } catch (error) {
+    // console.error("Error getting notification count:", error);
     res.json({
       success: true,
       unreadCount: 0,
@@ -3363,7 +3619,7 @@ async function triggerBlogNotifications(blog, authorUsername) {
       }
     });
   } catch (error) {
-    console.error("Error triggering blog notifications:", error);
+    // console.error("Error triggering blog notifications:", error);
   }
 }
 
@@ -3405,7 +3661,6 @@ function areChangesCompatible(serverData, clientData) {
     }
     return compatibleChanges;
   } catch (error) {
-    // console.log("Error checking compatibility:", error);
     return false;
   }
 }
@@ -3442,7 +3697,6 @@ function mergeDataIntelligently(serverData, clientData) {
     });
     return mergedData;
   } catch (error) {
-    // console.log("Error during merge, using server data:", error);
     return serverData;
   }
 }
@@ -3497,6 +3751,141 @@ function ensureDifficultyField(data) {
     })),
   }));
 }
+
+// Comment Like Route
+app.post(
+  "/api/comments/:commentId/like",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+      if (!comment) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Comment not found" });
+      }
+
+      // Prevent self-like
+      if (comment.author === username) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Cannot like your own comment" });
+      }
+
+      const hasLiked = comment.likedBy.includes(username);
+      const hasDisliked = comment.dislikedBy.includes(username);
+
+      if (hasLiked) {
+        // Unlike
+        comment.likes = Math.max(0, comment.likes - 1);
+        comment.likedBy = comment.likedBy.filter((user) => user !== username);
+      } else {
+        // Like - remove dislike first if exists
+        if (hasDisliked) {
+          comment.dislikes = Math.max(0, comment.dislikes - 1);
+          comment.dislikedBy = comment.dislikedBy.filter(
+            (user) => user !== username
+          );
+        }
+
+        // Add like
+        comment.likes += 1;
+        comment.likedBy.push(username);
+
+        // NOTIFY COMMENT AUTHOR
+        await createNotification({
+          type: "like_on_comment",
+          recipient: comment.author,
+          sender: username,
+          blogSlug: comment.blogSlug,
+          commentId: comment._id,
+          message: `${username} liked your comment`,
+          metadata: {
+            blogSlug: comment.blogSlug,
+            commentPreview: comment.content.substring(0, 50),
+            liker: username,
+          },
+        });
+      }
+
+      await comment.save();
+
+      res.json({
+        success: true,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        hasLiked: !hasLiked,
+        message: hasLiked ? "Comment unliked" : "Comment liked",
+      });
+    } catch (error) {
+      // console.error("Comment like error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Comment Dislike Route
+app.post(
+  "/api/comments/:commentId/dislike",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { commentId } = req.params;
+      const username = req.user.username;
+
+      const comment = await Comment.findById(commentId);
+      if (!comment) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Comment not found" });
+      }
+
+      // Prevent self-dislike
+      if (comment.author === username) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Cannot dislike your own comment" });
+      }
+
+      const hasDisliked = comment.dislikedBy.includes(username);
+      const hasLiked = comment.likedBy.includes(username);
+
+      if (hasDisliked) {
+        // Undislike
+        comment.dislikes = Math.max(0, comment.dislikes - 1);
+        comment.dislikedBy = comment.dislikedBy.filter(
+          (user) => user !== username
+        );
+      } else {
+        // Dislike - remove like first if exists
+        if (hasLiked) {
+          comment.likes = Math.max(0, comment.likes - 1);
+          comment.likedBy = comment.likedBy.filter((user) => user !== username);
+        }
+
+        // Add dislike
+        comment.dislikes += 1;
+        comment.dislikedBy.push(username);
+      }
+
+      await comment.save();
+
+      res.json({
+        success: true,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        hasDisliked: !hasDisliked,
+        message: hasDisliked ? "Comment undisliked" : "Comment disliked",
+      });
+    } catch (error) {
+      // console.error("Comment dislike error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
 
 // ========== STATIC FILE ROUTES ==========
 // Serve static files from the 'public' directory
