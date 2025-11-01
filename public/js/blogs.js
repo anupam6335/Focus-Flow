@@ -1293,16 +1293,55 @@ async function toggleLike(slug, event) {
     }
   }
 }
-// Open create blog modal
-function openCreateModal() {
-  editingBlog = null;
-  document.getElementById("modalTitle").textContent = "Create New Blog";
-  document.getElementById("modalSubmit").textContent = "Create Blog";
-  document.getElementById("blogForm").reset();
-  document.getElementById("blogModal").style.display = "flex";
+
+// Function to position modal in visible viewport
+function positionModalInViewport() {
+  const modal = document.getElementById("blogModal");
+  const modalContent = modal.querySelector(".modal-content");
+
+  if (!modal || !modalContent) return;
+
+  // Calculate viewport dimensions
+  const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+
+  // Calculate modal dimensions
+  const modalHeight = modalContent.offsetHeight;
+  const modalWidth = modalContent.offsetWidth;
+
+  // Position modal in the center of the visible viewport
+  const topPosition = Math.max(20, (viewportHeight - modalHeight) / 2);
+  const leftPosition = (viewportWidth - modalWidth) / 2;
+
+  // Apply positioning
+  modalContent.style.position = "fixed";
+  modalContent.style.top = `${topPosition}px`;
+  modalContent.style.left = `${leftPosition}px`;
+  modalContent.style.transform = "none"; // Remove any existing transforms
+  modalContent.style.margin = "0"; // Remove default margins
 }
 
-// Open edit blog modal
+// Enhanced modal opening with viewport positioning
+function openCreateModal() {
+  editingBlog = null;
+  document.getElementById("modalTitle").textContent =
+    "Create New Blog – Editable Anytime";
+  document.getElementById("modalSubmit").textContent = "Create Blog";
+  document.getElementById("blogForm").reset();
+
+  const modal = document.getElementById("blogModal");
+  modal.style.display = "flex";
+
+  // Position modal in viewport after it's displayed
+  setTimeout(() => {
+    positionModalInViewport();
+  }, 10);
+
+  // Add resize listener for responsive positioning
+  window.addEventListener("resize", positionModalInViewport);
+}
+
+// Enhanced edit blog modal with viewport positioning
 async function editBlog(slug) {
   try {
     const token = localStorage.getItem("authToken");
@@ -1328,7 +1367,17 @@ async function editBlog(slug) {
         ? editingBlog.tags.join(", ")
         : "";
       document.getElementById("blogIsPublic").checked = editingBlog.isPublic;
-      document.getElementById("blogModal").style.display = "flex";
+
+      const modal = document.getElementById("blogModal");
+      modal.style.display = "flex";
+
+      // Position modal in viewport after it's displayed
+      setTimeout(() => {
+        positionModalInViewport();
+      }, 10);
+
+      // Add resize listener for responsive positioning
+      window.addEventListener("resize", positionModalInViewport);
     } else {
       toastManager.error(result.error, "Error Loading Blog");
     }
@@ -1338,10 +1387,24 @@ async function editBlog(slug) {
   }
 }
 
-// Close modal
+// Enhanced close modal function
 function closeModal() {
-  document.getElementById("blogModal").style.display = "none";
+  const modal = document.getElementById("blogModal");
+  modal.style.display = "none";
   editingBlog = null;
+
+  // Remove resize listener when modal is closed
+  window.removeEventListener("resize", positionModalInViewport);
+
+  // Reset modal positioning for next open
+  const modalContent = modal.querySelector(".modal-content");
+  if (modalContent) {
+    modalContent.style.position = "";
+    modalContent.style.top = "";
+    modalContent.style.left = "";
+    modalContent.style.transform = "";
+    modalContent.style.margin = "";
+  }
 }
 
 // Handle form submission
