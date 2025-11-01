@@ -1,9 +1,9 @@
 // Get blog slug from URL
 const pathSegments = window.location.pathname.split("/");
 const blogSlug = pathSegments[pathSegments.length - 1];
-const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
+const API_BASE_URL = "focus-flow-in.up.railway.app/api";
 
-const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
+const FRONTEND_URL = "focus-flow-in.up.railway.app";
 
 document.getElementById("back-to-blogs").href = `${FRONTEND_URL}/blogs`;
 document.getElementById("tracker-link").href = `${FRONTEND_URL}/`;
@@ -1546,7 +1546,7 @@ async function deleteBlog(slug) {
     if (result.success) {
       toastManager.success("Blog deleted successfully!", "Blog Deleted");
       setTimeout(() => {
-        window.location.href = "https://focus-flow-lopn.onrender.com/blogs";
+        window.location.href = "focus-flow-in.up.railway.app/blogs";
       }, 1500);
     } else {
       toastManager.error(result.error, "Delete Failed");
@@ -1868,7 +1868,7 @@ class CommentsManager {
   }
 
   setupSocketConnection() {
-    this.socket = io("https://focus-flow-lopn.onrender.com");
+    this.socket = io("focus-flow-in.up.railway.app");
     this.socket.emit("join-blog", this.blogSlug);
 
     // Real-time event listeners

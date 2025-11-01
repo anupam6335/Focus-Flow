@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/theme.css" />
     <title>Profile - FocusFlow</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
+    <link rel="stylesheet" href="css/profile-edit.css" />
     <link rel="stylesheet" href="css/profile.css" />
   </head>
   <body>
@@ -40,7 +40,6 @@
                   My Profile
                 </div>
 
-                <!-- Add this right after the profile-name-container div -->
                 <div class="profile-actions">
                   <button class="share-profile-btn" onclick="shareProfile()">
                     <span>🔗</span>
@@ -52,7 +51,142 @@
                 Member since <span id="joinDate">...</span>
               </p>
 
-              <!-- ADD THIS SECTION FOR STATUS DISPLAY -->
+              <div class="profile-actions-container">
+                <button
+                  class="profile-action-btn"
+                  onclick="openUsernameModal()"
+                >
+                  <span>✏️</span>
+                  <span>Edit Username</span>
+                </button>
+
+                <button class="profile-action-btn" onclick="openAvatarModal()">
+                  <span>🎨</span>
+                  <span>Change Avatar</span>
+                </button>
+              </div>
+
+              <!-- Username Edit Modal -->
+              <div class="profile-modal" id="usernameModal">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h2>✏️ Edit Username</h2>
+                    <button class="modal-close" onclick="closeUsernameModal()">
+                      &times;
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="current-info">
+                      <div class="current-label">Current Username</div>
+                      <div
+                        class="current-value"
+                        id="currentUsernameValue"
+                      ></div>
+                    </div>
+
+                    <div class="edit-input-group">
+                      <label for="usernameInput">New Username</label>
+                      <input
+                        type="text"
+                        id="usernameInput"
+                        class="edit-input"
+                        placeholder="Enter new username"
+                        maxlength="20"
+                      />
+                      <button
+                        class="check-availability-btn"
+                        onclick="checkUsernameAvailability()"
+                      >
+                        Check Availability
+                      </button>
+                    </div>
+
+                    <div
+                      class="availability-message"
+                      id="availabilityMessage"
+                    ></div>
+
+                    <div class="username-rules">
+                      <h4>Username Rules:</h4>
+                      <div>✓ 3-20 characters</div>
+                      <div>✓ Letters, numbers, and underscores only</div>
+                      <div>✓ Must be unique across FocusFlow</div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button
+                      class="modal-btn secondary"
+                      onclick="closeUsernameModal()"
+                    >
+                      <span>❌</span>
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      class="modal-btn primary"
+                      onclick="updateUsername()"
+                      id="saveUsernameBtn"
+                      disabled
+                    >
+                      <span>💾</span>
+                      <span>Save Username</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Avatar Edit Modal -->
+              <div class="profile-modal" id="avatarModal">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h2>🎨 Change Avatar</h2>
+                    <button class="modal-close" onclick="closeAvatarModal()">
+                      &times;
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="current-avatar-section">
+                      <div class="current-label">Current Avatar</div>
+                      <div class="current-avatar-preview-large">
+                        <div
+                          class="pixel-avatar-xlarge"
+                          id="currentAvatarPreview"
+                        >
+                          👤
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="avatar-selection-section">
+                      <div class="section-label">Choose New Avatar</div>
+                      <div
+                        class="avatar-selection-grid"
+                        id="avatarSelectionGrid"
+                      >
+                        <!-- Avatars will be populated by JavaScript -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button
+                      class="modal-btn secondary"
+                      onclick="closeAvatarModal()"
+                    >
+                      <span>❌</span>
+                      <span>Cancel</span>
+                    </button>
+                    <button class="modal-btn primary" onclick="updateAvatar()">
+                      <span>💾</span>
+                      <span>Save Avatar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATUS DISPLAY -->
               <div class="profile-status" id="profileStatus">
                 <div class="status-indicator" id="statusIndicator"></div>
                 <span class="status-text" id="statusText"
@@ -186,7 +320,7 @@
           <div class="content-section">
             <h2 class="section-title">📚 Question History</h2>
 
-            <!-- Add this search bar section -->
+            <!--search bar section -->
             <div
               class="search-container"
               style="margin-bottom: var(--codeleaf-space-4)"
@@ -222,7 +356,7 @@
           <div class="content-section">
             <h2 class="section-title">✍️ My Blogs</h2>
 
-            <!-- Add this search bar section -->
+            <!-- search bar section -->
             <div
               class="search-container"
               style="margin-bottom: var(--codeleaf-space-4)"
