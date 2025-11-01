@@ -95,7 +95,7 @@
               <div class="blog-content" id="blogContentText"></div>
 
               <!-- comment section will be here -->
-             <!--after the blog content section -->
+              <!--after the blog content section -->
               <section class="comments-section" id="commentsSection">
                 <div class="comments-header">
                   <h2 class="comments-title">Community Discussion</h2>
@@ -136,7 +136,7 @@
                   </div>
                 </div>
 
-               <!--after the Comment Input Area in blog-view.html -->
+                <!--after the Comment Input Area in blog-view.html -->
                 <div
                   class="guest-comment-message"
                   id="guestCommentMessage"
@@ -176,6 +176,87 @@
                 >
               </div>
             </article>
+
+            <div
+              class="inline-editor-container"
+              id="inlineEditorContainer"
+              style="display: none"
+            >
+              <div class="inline-editor" id="inlineEditor">
+                <div class="inline-editor-header">
+                  <h3 class="inline-editor-title">Edit Blog</h3>
+                  <div class="inline-editor-actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      onclick="cancelInlineEdit()"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      onclick="saveInlineEdit()"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+
+                <form id="inlineEditForm" class="inline-edit-form">
+                  <div class="form-group">
+                    <label class="form-label" for="inlineEditTitle"
+                      >Title</label
+                    >
+                    <input
+                      type="text"
+                      id="inlineEditTitle"
+                      class="form-input"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="inlineEditContent"
+                      >Content (Markdown supported)</label
+                    >
+                    <textarea
+                      id="inlineEditContent"
+                      class="form-textarea"
+                      required
+                      rows="20"
+                    ></textarea>
+                    <div class="markdown-help">
+                      Supports Markdown: **bold**, *italic*, `code`, # headers,
+                      - lists
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="inlineEditTags"
+                      >Tags (comma separated)</label
+                    >
+                    <input
+                      type="text"
+                      id="inlineEditTags"
+                      class="form-input"
+                      placeholder="coding, algorithms, tips"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        id="inlineEditIsPublic"
+                        class="form-checkbox"
+                      />
+                      Make this blog public
+                    </label>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -198,7 +279,7 @@
       </div>
     </div>
 
-   <!--HTML for the confirmation popup (place before closing body tag) -->
+    <!--HTML for the confirmation popup (place before closing body tag) -->
     <div class="confirmation-overlay" id="confirmationOverlay">
       <div class="confirmation-popup">
         <div class="confirmation-icon">⚠️</div>
@@ -221,71 +302,6 @@
             Delete
           </button>
         </div>
-      </div>
-    </div>
-    <!-- Edit Blog Modal -->
-    <div class="modal" id="editBlogModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 class="modal-title">Edit Blog</h3>
-          <button class="close-modal" onclick="closeEditModal()">
-            &times;
-          </button>
-        </div>
-        <form id="editBlogForm">
-          <div class="form-group">
-            <label class="form-label" for="editBlogTitle">Title</label>
-            <input type="text" id="editBlogTitle" class="form-input" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="editBlogContent"
-              >Content (Markdown supported)</label
-            >
-            <textarea
-              id="editBlogContent"
-              class="form-textarea"
-              required
-            ></textarea>
-            <div class="markdown-help">
-              Supports Markdown: **bold**, *italic*, `code`, # headers, - lists
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="editBlogTags"
-              >Tags (comma separated)</label
-            >
-            <input
-              type="text"
-              id="editBlogTags"
-              class="form-input"
-              placeholder="coding, algorithms, tips"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input
-                type="checkbox"
-                id="editBlogIsPublic"
-                class="form-checkbox"
-              />
-              Make this blog public
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              onclick="closeEditModal()"
-            >
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary">Update Blog</button>
-          </div>
-        </form>
       </div>
     </div>
 

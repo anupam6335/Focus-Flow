@@ -1628,5 +1628,148 @@ h1 {
   text-decoration: underline;
 }
 
+/* Inline Editor Styles */
+.inline-editor-container {
+  width: 100%;
+  animation: fadeInUp 0.3s ease-out;
+}
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+.inline-editor {
+  background: var(--codeleaf-bg-primary);
+  border: 1px solid var(--codeleaf-border-light);
+  border-radius: var(--codeleaf-radius-lg);
+  padding: var(--codeleaf-space-6);
+  margin-bottom: var(--codeleaf-space-6);
+  box-shadow: var(--codeleaf-shadow-lg);
+  border-left: 4px solid var(--codeleaf-accent-primary);
+}
+
+.inline-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--codeleaf-space-6);
+  padding-bottom: var(--codeleaf-space-4);
+  border-bottom: 1px solid var(--codeleaf-border-light);
+}
+
+.inline-editor-title {
+  font-size: var(--codeleaf-font-xl);
+  color: var(--codeleaf-accent-primary);
+  font-weight: 700;
+  margin: 0;
+}
+
+.inline-editor-actions {
+  display: flex;
+  gap: var(--codeleaf-space-3);
+  flex-wrap: wrap;
+}
+
+.inline-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--codeleaf-space-4);
+}
+
+.inline-edit-form .form-group {
+  margin-bottom: 0;
+}
+
+.inline-edit-form .form-input,
+.inline-edit-form .form-textarea {
+  background: var(--codeleaf-bg-secondary);
+  border: 1px solid var(--codeleaf-border-medium);
+  transition: all 0.2s ease;
+}
+
+.inline-edit-form .form-input:focus,
+.inline-edit-form .form-textarea:focus {
+  background: var(--codeleaf-bg-primary);
+  border-color: var(--codeleaf-accent-primary);
+  box-shadow: 0 0 0 3px rgba(45, 122, 45, 0.1);
+}
+
+.inline-edit-form .form-textarea {
+  min-height: 500px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: var(--codeleaf-font-sm);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-2);
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--codeleaf-text-primary);
+}
+
+.checkbox-label:hover {
+  color: var(--codeleaf-accent-primary);
+}
+
+/* Make the editor take the same space as the blog article */
+.inline-editor-container ~ .right-sidebar {
+  margin-top: 0;
+}
+
+/* Ensure the layout remains consistent */
+.blog-content-area {
+  position: relative;
+}
+
+/* Responsive design for inline editor */
+@media (max-width: 768px) {
+  .inline-editor {
+    padding: var(--codeleaf-space-4);
+  }
+
+  .inline-editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--codeleaf-space-3);
+  }
+
+  .inline-editor-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .inline-edit-form .form-textarea {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inline-editor {
+    padding: var(--codeleaf-space-3);
+  }
+
+  .inline-editor-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .inline-editor-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .inline-edit-form .form-textarea {
+    min-height: 300px;
+  }
+}
