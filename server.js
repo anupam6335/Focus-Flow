@@ -20,7 +20,7 @@ const JWT_SECRET =
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://focus-flow-in.up.railway.app",
     methods: ["GET", "POST"],
   },
 });
@@ -222,7 +222,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${
-        process.env.BASE_URL || "http://localhost:3000"
+        process.env.BASE_URL || "https://focus-flow-in.up.railway.app"
       }/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -291,7 +291,7 @@ passport.use(
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: `${
-        process.env.BASE_URL || "http://localhost:3000"
+        process.env.BASE_URL || "https://focus-flow-in.up.railway.app"
       }/auth/github/callback`,
       scope: ["user:email"],
     },
@@ -3292,7 +3292,7 @@ app.get(
     // In production, you might want to use a more secure method
     res.redirect(
       `${
-        process.env.FRONTEND_URL || "http://localhost:3000"
+        process.env.FRONTEND_URL || "https://focus-flow-in.up.railway.app"
       }/oauth-success.html?token=${token}&username=${encodeURIComponent(
         req.user.username
       )}`
@@ -3323,7 +3323,7 @@ app.get(
     // Redirect to frontend with token
     res.redirect(
       `${
-        process.env.FRONTEND_URL || "http://localhost:3000"
+        process.env.FRONTEND_URL || "https://focus-flow-in.up.railway.app"
       }/oauth-success.html?token=${token}&username=${encodeURIComponent(
         req.user.username
       )}`

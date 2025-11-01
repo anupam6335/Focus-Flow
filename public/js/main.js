@@ -28,7 +28,7 @@ const DEFAULT_QUESTIONS = [
 ];
 
 // MongoDB configuration
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://focus-flow-in.up.railway.app/api";
 let userId = "default-user";
 let authToken = null;
 
