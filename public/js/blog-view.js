@@ -933,7 +933,12 @@ class MiniMap {
     // Click event for mini-map items
     this.content.addEventListener("click", (e) => {
       if (e.target.classList.contains("mini-map-item")) {
-        this.scrollToSection(e.target.dataset.id);
+        const targetId = e.target.dataset.id;
+        if (targetId === "commentsSection") {
+          scrollToCommentsSection();
+        } else {
+          this.scrollToSection(targetId);
+        }
       }
     });
 
@@ -1079,6 +1084,13 @@ class MiniMap {
       this.content.appendChild(item);
     });
 
+    // ADD THIS: Create comments section indicator
+    const commentsItem = document.createElement("div");
+    commentsItem.className = "mini-map-item mini-map-comments";
+    commentsItem.textContent = "💬 Community Discussion";
+    commentsItem.dataset.id = "commentsSection";
+    this.content.appendChild(commentsItem);
+
     // Add progress indicator
     this.progress.style.display = "block";
     this.updateProgress();
@@ -1108,6 +1120,12 @@ class MiniMap {
         activeSection = heading.id;
       }
     });
+
+    // Check if comments section is in view
+    const commentsSection = document.getElementById("commentsSection");
+    if (commentsSection && commentsSection.offsetTop <= scrollPosition + 300) {
+      activeSection = "commentsSection";
+    }
 
     // Update active class
     document.querySelectorAll(".mini-map-item").forEach((item) => {
@@ -1572,29 +1590,33 @@ function escapeHtml(unsafe) {
 
 function openEditModal() {
   try {
-    const blogArticle = document.getElementById('blogArticle');
-    const inlineEditorContainer = document.getElementById('inlineEditorContainer');
-    
+    const blogArticle = document.getElementById("blogArticle");
+    const inlineEditorContainer = document.getElementById(
+      "inlineEditorContainer"
+    );
+
     // Hide the entire blog article and show inline editor in its place
-    blogArticle.style.display = 'none';
-    inlineEditorContainer.style.display = 'block';
-    
+    blogArticle.style.display = "none";
+    inlineEditorContainer.style.display = "block";
+
     // Load the blog data for editing
     loadBlogForEditing();
-    
+
     // Scroll to the top of the editor
-    inlineEditorContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    
+    inlineEditorContainer.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   } catch (error) {
-    console.error('Error opening inline editor:', error);
-    toastManager.error('Failed to open editor', 'Error');
+    console.error("Error opening inline editor:", error);
+    toastManager.error("Failed to open editor", "Error");
   }
 }
 
 // New function to load blog data for editing
 async function loadBlogForEditing() {
   try {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -1610,68 +1632,79 @@ async function loadBlogForEditing() {
     if (result.success) {
       const blog = result.blog;
 
-      document.getElementById('inlineEditTitle').value = blog.title;
-      document.getElementById('inlineEditContent').value = blog.content;
-      document.getElementById('inlineEditTags').value = blog.tags ? blog.tags.join(', ') : '';
-      document.getElementById('inlineEditIsPublic').checked = blog.isPublic;
-      
+      document.getElementById("inlineEditTitle").value = blog.title;
+      document.getElementById("inlineEditContent").value = blog.content;
+      document.getElementById("inlineEditTags").value = blog.tags
+        ? blog.tags.join(", ")
+        : "";
+      document.getElementById("inlineEditIsPublic").checked = blog.isPublic;
+
       // Focus on the title field for better UX
       setTimeout(() => {
-        document.getElementById('inlineEditTitle').focus();
+        document.getElementById("inlineEditTitle").focus();
       }, 100);
     } else {
-      toastManager.error(result.error, 'Error Loading Blog');
+      toastManager.error(result.error, "Error Loading Blog");
     }
   } catch (error) {
-    console.error('Error loading blog for edit:', error);
-    toastManager.error('Failed to load blog for editing', 'Network Error');
+    console.error("Error loading blog for edit:", error);
+    toastManager.error("Failed to load blog for editing", "Network Error");
   }
 }
 
 // Cancel inline editing
 function cancelInlineEdit() {
-  const blogArticle = document.getElementById('blogArticle');
-  const inlineEditorContainer = document.getElementById('inlineEditorContainer');
-  
+  const blogArticle = document.getElementById("blogArticle");
+  const inlineEditorContainer = document.getElementById(
+    "inlineEditorContainer"
+  );
+
   // Show blog article and hide editor
-  blogArticle.style.display = 'block';
-  inlineEditorContainer.style.display = 'none';
-  
+  blogArticle.style.display = "block";
+  inlineEditorContainer.style.display = "none";
+
   // Reset any form changes
-  document.getElementById('inlineEditForm').reset();
-  
+  document.getElementById("inlineEditForm").reset();
+
   // Scroll back to the top of the blog
-  blogArticle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  blogArticle.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // Save inline edits
 async function saveInlineEdit() {
-  const title = document.getElementById('inlineEditTitle').value.trim();
-  const content = document.getElementById('inlineEditContent').value.trim();
-  const tags = document.getElementById('inlineEditTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
-  const isPublic = document.getElementById('inlineEditIsPublic').checked;
+  const title = document.getElementById("inlineEditTitle").value.trim();
+  const content = document.getElementById("inlineEditContent").value.trim();
+  const tags = document
+    .getElementById("inlineEditTags")
+    .value.split(",")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag);
+  const isPublic = document.getElementById("inlineEditIsPublic").checked;
 
   if (!title || !content) {
-    toastManager.warning('Title and content are required', 'Validation Error');
+    toastManager.warning("Title and content are required", "Validation Error");
     return;
   }
 
   try {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     if (!token) {
-      toastManager.error('Please log in to update blog', 'Authentication Error');
+      toastManager.error(
+        "Please log in to update blog",
+        "Authentication Error"
+      );
       return;
     }
 
-    const saveBtn = document.querySelector('#inlineEditor .btn-primary');
+    const saveBtn = document.querySelector("#inlineEditor .btn-primary");
     const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Updating...';
+    saveBtn.textContent = "Updating...";
     saveBtn.disabled = true;
 
     const response = await fetch(`${API_BASE_URL}/blogs/${blogSlug}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ title, content, tags, isPublic }),
@@ -1687,16 +1720,16 @@ async function saveInlineEdit() {
       const responseText = await response.text();
       result = responseText ? JSON.parse(responseText) : {};
     } catch (parseError) {
-      throw new Error('Invalid server response format');
+      throw new Error("Invalid server response format");
     }
 
     if (result && result.success) {
-      toastManager.success('Blog updated successfully!', 'Blog Updated');
-      
+      toastManager.success("Blog updated successfully!", "Blog Updated");
+
       // Show success state briefly before navigating
-      saveBtn.textContent = 'Saved!';
-      saveBtn.style.background = 'var(--codeleaf-success)';
-      
+      saveBtn.textContent = "Saved!";
+      saveBtn.style.background = "var(--codeleaf-success)";
+
       setTimeout(() => {
         if (result.blog && result.blog.slug && result.blog.slug !== blogSlug) {
           window.location.href = `/blogs/${result.blog.slug}`;
@@ -1705,37 +1738,50 @@ async function saveInlineEdit() {
         }
       }, 1000);
     } else {
-      throw new Error(result.error || result.message || 'Update failed');
+      throw new Error(result.error || result.message || "Update failed");
     }
   } catch (error) {
-    console.error('Error updating blog:', error);
-    
+    console.error("Error updating blog:", error);
+
     // Reset button state
-    const saveBtn = document.querySelector('#inlineEditor .btn-primary');
+    const saveBtn = document.querySelector("#inlineEditor .btn-primary");
     if (saveBtn) {
-      saveBtn.textContent = 'Save Changes';
+      saveBtn.textContent = "Save Changes";
       saveBtn.disabled = false;
-      saveBtn.style.background = '';
+      saveBtn.style.background = "";
     }
-    
-    if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
-      toastManager.error('Authentication failed. Please log in again.', 'Auth Error');
-    } else if (error.message.includes('HTTP 404')) {
-      toastManager.error('Blog not found. It may have been deleted.', 'Not Found');
-    } else if (error.message.includes('HTTP 409')) {
-      toastManager.error('A blog with this title already exists.', 'Conflict');
+
+    if (
+      error.message.includes("HTTP 401") ||
+      error.message.includes("HTTP 403")
+    ) {
+      toastManager.error(
+        "Authentication failed. Please log in again.",
+        "Auth Error"
+      );
+    } else if (error.message.includes("HTTP 404")) {
+      toastManager.error(
+        "Blog not found. It may have been deleted.",
+        "Not Found"
+      );
+    } else if (error.message.includes("HTTP 409")) {
+      toastManager.error("A blog with this title already exists.", "Conflict");
     } else {
-      toastManager.error(`Failed to update blog: ${error.message}`, 'Update Error');
+      toastManager.error(
+        `Failed to update blog: ${error.message}`,
+        "Update Error"
+      );
     }
   }
 }
 
 // Handle form submission
-document.getElementById('inlineEditForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  saveInlineEdit();
-});
-
+document
+  .getElementById("inlineEditForm")
+  .addEventListener("submit", function (e) {
+    e.preventDefault();
+    saveInlineEdit();
+  });
 
 // Scroll to Top Functionality
 function initScrollToTop() {
@@ -3171,10 +3217,34 @@ async function loadBlog() {
   await loadBlogWithMarkdown();
 }
 
-// Initialize when page loads
+function scrollToCommentsSection() {
+  const commentsSection = document.getElementById("commentsSection");
+  if (commentsSection) {
+    commentsSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    // Optional: Add a subtle highlight effect
+    commentsSection.style.transition = "all 0.3s ease";
+    commentsSection.style.boxShadow =
+      "0 0 0 2px var(--codeleaf-accent-primary)";
+
+    setTimeout(() => {
+      commentsSection.style.boxShadow = "none";
+    }, 2000);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initScrollToTop();
-  loadBlog(); // This now uses the enhanced version
+  loadBlog();
+
+  // ADD THIS: Initialize View Comments button
+  const viewCommentsBtn = document.getElementById("viewCommentsBtn");
+  if (viewCommentsBtn) {
+    viewCommentsBtn.addEventListener("click", scrollToCommentsSection);
+  }
 });
 
 // ===== FIXED LOGIN STATE MANAGER =====
