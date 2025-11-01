@@ -302,29 +302,9 @@ renderTable = function () {
 
 // Initialize the app
 async function initApp() {
-  await checkAutoLogin();
-  setupAuthEventListeners();
-  await loadData();
-
-  // NEW: Set dynamic start date from user profile
-  await setAppStartDateFromUser();
-
-  // NEW: Initialize search functionality
-  setupSearchFunctionality();
-  filterTableData(); // Initialize filtered data
-
-  renderTable();
-  setupEventListeners();
-
-  initializeActivityTracker();
-
-  // Start periodic sync
-  setInterval(() => {
-    if (authToken && !isSyncing) {
-      syncWithMongoDB();
-    }
-  }, 20000); // Sync every 20 seconds
+  await initializeApp();
 }
+
 
 // Update the isEditable function to use dynamic APP_START_DATE
 function isEditable(dayNumber) {
@@ -477,13 +457,108 @@ function shouldAllowMutation(dayIndex) {
   return editable;
 }
 
-// Check if user is auto-logged in - FIXED VERSION
+// Safe OAuth initialization
+function initOAuth() {
+  const googleBtn = document.getElementById('googleSignIn');
+  const githubBtn = document.getElementById('githubSignIn');
+  const legacyAuthBtn = document.getElementById('showLegacyAuth');
+
+  if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+      console.log('Initiating Google OAuth...');
+      window.location.href = '/auth/google';
+    });
+  }
+
+  if (githubBtn) {
+    githubBtn.addEventListener('click', () => {
+      console.log('Initiating GitHub OAuth...');
+      window.location.href = '/auth/github';
+    });
+  }
+
+  if (legacyAuthBtn) {
+    legacyAuthBtn.addEventListener('click', () => {
+      const legacyAuth = document.querySelector('.legacy-auth');
+      if (legacyAuth) {
+        if (legacyAuth.style.display === 'none') {
+          legacyAuth.style.display = 'block';
+        } else {
+          legacyAuth.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  // Check for OAuth success on page load
+  checkOAuthSuccess();
+}
+
+function checkOAuthSuccess() {
+  // Check if we have a token from OAuth redirect
+  const token = localStorage.getItem('authToken');
+  const username = localStorage.getItem('userId');
+  
+  if (token && username && !authToken) {
+    console.log('✅ OAuth login detected, setting up user...');
+    authToken = token;
+    userId = username;
+    showUserInfo();
+    
+    // Load user data
+    loadData().then(() => {
+      setAppStartDateFromUser();
+      renderTable();
+      renderEnhancedActivityTracker();
+    });
+  } else {
+    console.log('🔐 No OAuth token found or user already logged in');
+  }
+}
+function checkOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  const user = urlParams.get('user');
+  
+  if (token && user) {
+    // OAuth login successful
+    authToken = token;
+    userId = user;
+    
+    // Save for auto-login
+    localStorage.setItem('authToken', authToken);
+    localStorage.setItem('userId', userId);
+    
+    showUserInfo();
+    
+    // Load data and initialize app
+    loadData().then(() => {
+      setAppStartDateFromUser();
+      renderTable();
+      renderEnhancedActivityTracker();
+    });
+    
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
+  // Check for auth errors
+  const authError = urlParams.get('auth_error');
+  if (authError) {
+    toastManager.error(`Authentication failed with ${authError}. Please try again.`, 'Login Failed');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+// Fixed checkAutoLogin function
 async function checkAutoLogin() {
   const savedToken = localStorage.getItem("authToken");
   const savedUserId = localStorage.getItem("userId");
 
   if (savedToken && savedUserId) {
     try {
+      console.log("🔐 Checking auto-login...");
+      
       // Verify token is still valid
       const response = await fetch(`${API_BASE_URL}/verify-token`, {
         headers: {
@@ -494,10 +569,12 @@ async function checkAutoLogin() {
       if (response.ok) {
         authToken = savedToken;
         userId = savedUserId;
+        console.log("✅ Auto-login successful for user:", userId);
         showUserInfo();
         return true;
       } else {
         // Token invalid, clear saved credentials BUT KEEP PROGRESS DATA
+        console.log("❌ Token invalid, clearing credentials");
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("appVersion");
@@ -506,91 +583,136 @@ async function checkAutoLogin() {
         // Progress data remains in localStorage
       }
     } catch (error) {
-      // console.log("Auto-login check failed:", error);
+      console.log("❌ Auto-login check failed:", error);
       showLoginForm();
       // Progress data remains in localStorage
     }
   } else {
+    console.log("🔐 No saved credentials, showing login form");
     showLoginForm();
   }
   return false;
 }
 
-// Show login form - UPDATED to handle forgot password form
+// Fixed showLoginForm function
 function showLoginForm() {
-  authSection.style.display = "block";
-  loginForm.style.display = "block";
-  registerForm.style.display = "none";
-  forgotPasswordForm.style.display = "none"; // Add this line
-  userInfo.style.display = "none";
+  const authSection = document.getElementById("authSection");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const userInfo = document.getElementById("userInfo");
+  const table = document.querySelector("table");
+
+  if (authSection) authSection.style.display = "block";
+  if (loginForm) loginForm.style.display = "block";
+  if (registerForm) registerForm.style.display = "none";
+  if (userInfo) userInfo.style.display = "none";
+  
   // Show table but disable interactions
-  document.querySelector("table").style.opacity = "0.6";
-  document.querySelector("table").style.pointerEvents = "none";
+  if (table) {
+    table.style.opacity = "0.6";
+    table.style.pointerEvents = "none";
+  }
 
-  // Clear any reset form state
-  resetCodeSection.style.display = "none";
-  forgotUsernameInput.value = "";
-  resetCodeInput.value = "";
-  newPasswordInput.value = "";
-  confirmNewPasswordInput.value = "";
+  // Clear any reset form state if elements exist
+  const resetCodeSection = document.getElementById("resetCodeSection");
+  const forgotUsernameInput = document.getElementById("forgotUsernameInput");
+  const resetCodeInput = document.getElementById("resetCodeInput");
+  const newPasswordInput = document.getElementById("newPasswordInput");
+  const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
+
+  if (resetCodeSection) resetCodeSection.style.display = "none";
+  if (forgotUsernameInput) forgotUsernameInput.value = "";
+  if (resetCodeInput) resetCodeInput.value = "";
+  if (newPasswordInput) newPasswordInput.value = "";
+  if (confirmNewPasswordInput) confirmNewPasswordInput.value = "";
 }
 
-// Show user info when logged in
+// Fixed showUserInfo function
 function showUserInfo() {
-  authSection.style.display = "block";
-  loginForm.style.display = "none";
-  registerForm.style.display = "none";
-  userInfo.style.display = "block";
-  currentUsername.textContent = userId;
+  const authSection = document.getElementById("authSection");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const userInfo = document.getElementById("userInfo");
+  const currentUsername = document.getElementById("currentUsername");
+  const table = document.querySelector("table");
+
+  if (authSection) authSection.style.display = "block";
+  if (loginForm) loginForm.style.display = "none";
+  if (registerForm) registerForm.style.display = "none";
+  if (userInfo) userInfo.style.display = "block";
+  
+  if (currentUsername) {
+    currentUsername.textContent = userId;
+  }
+  
   // Enable table interactions
-  document.querySelector("table").style.opacity = "1";
-  document.querySelector("table").style.pointerEvents = "auto";
+  if (table) {
+    table.style.opacity = "1";
+    table.style.pointerEvents = "auto";
+  }
 }
 
-// Setup authentication event listeners
 function setupAuthEventListeners() {
-  loginBtn.addEventListener("click", handleLogin);
-  showRegisterBtn.addEventListener("click", () => {
-    loginForm.style.display = "none";
-    registerForm.style.display = "block";
-  });
-  registerBtn.addEventListener("click", handleRegister);
-  showLoginBtn.addEventListener("click", () => {
-    registerForm.style.display = "none";
-    loginForm.style.display = "block";
-  });
-  logoutBtn.addEventListener("click", handleLogout);
+  const loginBtn = document.getElementById("loginBtn");
+  const showRegisterBtn = document.getElementById("showRegisterBtn");
+  const registerBtn = document.getElementById("registerBtn");
+  const showLoginBtn = document.getElementById("showLoginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  // Enter key support
-  passwordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleLogin();
-  });
-  regPasswordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleRegister();
-  });
-  regConfirmPasswordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleRegister();
-  });
+  // Only add event listeners if elements exist
+  if (loginBtn) {
+    loginBtn.addEventListener("click", handleLogin);
+  }
 
-  // Forgot password event listeners
-  showForgotPasswordBtn.addEventListener("click", showForgotPasswordForm);
-  showLoginFromForgotBtn.addEventListener("click", showLoginForm);
-  sendResetCodeBtn.addEventListener("click", handleSendResetCode);
-  resetPasswordBtn.addEventListener("click", handleResetPassword);
+  if (showRegisterBtn) {
+    showRegisterBtn.addEventListener("click", () => {
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      if (loginForm) loginForm.style.display = "none";
+      if (registerForm) registerForm.style.display = "block";
+    });
+  }
 
-  // Enter key support for forgot password
-  forgotUsernameInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleSendResetCode();
-  });
-  resetCodeInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleResetPassword();
-  });
-  newPasswordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleResetPassword();
-  });
-  confirmNewPasswordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleResetPassword();
-  });
+  if (registerBtn) {
+    registerBtn.addEventListener("click", handleRegister);
+  }
+
+  if (showLoginBtn) {
+    showLoginBtn.addEventListener("click", () => {
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      if (registerForm) registerForm.style.display = "none";
+      if (loginForm) loginForm.style.display = "block";
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleLogout);
+  }
+
+  // Enter key support for login
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleLogin();
+    });
+  }
+
+  // Enter key support for registration
+  const regPasswordInput = document.getElementById("regPasswordInput");
+  const regConfirmPasswordInput = document.getElementById("regConfirmPasswordInput");
+  
+  if (regPasswordInput) {
+    regPasswordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleRegister();
+    });
+  }
+
+  if (regConfirmPasswordInput) {
+    regConfirmPasswordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleRegister();
+    });
+  }
 }
 
 // Toast Notification System
@@ -903,35 +1025,29 @@ async function handleRegister() {
   }
 }
 
-// Handle user logout - FIXED VERSION
-function handleLogout() {
-  // Save the current progress data BEFORE logging out
-  const currentProgress = JSON.parse(
-    localStorage.getItem("dsaChecklistData") || "[]"
-  );
 
-  // Save activity tracker data locally
-  const currentActivityData = window.activityTrackerData;
-
-  authToken = null;
-  userId = "default-user";
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("appVersion");
-  localStorage.removeItem("lastUpdated");
-
-  // RESTORE the progress data after clearing auth items
-  if (currentProgress && currentProgress.length > 0) {
-    localStorage.setItem("dsaChecklistData", JSON.stringify(currentProgress));
+// Update logout to use OAuth logout
+async function handleLogout() {
+  try {
+    // Call server logout endpoint
+    await fetch('/auth/logout', { method: 'POST' });
+  } catch (error) {
+    console.log('Logout request failed:', error);
   }
-
-  // Preserve activity data locally
-  window.activityTrackerData = currentActivityData;
-
+  
+  // Clear local state
+  authToken = null;
+  userId = 'default-user';
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('appVersion');
+  localStorage.removeItem('lastUpdated');
+  
   showLoginForm();
   renderTable();
   renderEnhancedActivityTracker();
 }
+
 
 // Update logout to clean up notifications
 const originalHandleLogout = handleLogout;
@@ -4482,40 +4598,53 @@ function initScrollToTop() {
 // Initialize scroll to top when DOM is loaded
 document.addEventListener("DOMContentLoaded", initScrollToTop);
 
-// Initialize activity tracker and app when DOM is loaded - FIXED VERSION
+// Initialize the app when DOM is fully loaded
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize the main app
-  initApp();
-
-  // Initialize enhanced activity tracker after main app is loaded
-  setTimeout(() => {
-    if (typeof initializeEnhancedActivityTracker === "function") {
-      initializeEnhancedActivityTracker();
-      // console.log("Enhanced activity tracker initialized");
-    }
-
-    // Check achievements after everything is loaded
-    checkExistingAchievements();
-  }, 1000); // Increased delay to ensure app data is loaded
-  // Ensure activity tracker renders after a short delay to catch any initial render
-  setTimeout(() => {
-    if (typeof renderActivityCalendar === "function") {
-      renderActivityCalendar();
-    }
-  }, 500);
-
-  // Initialize notification manager after a short delay to ensure auth is checked
-  setTimeout(() => {
-    if (authToken && !window.notificationManager) {
-      window.notificationManager = new NotificationManager();
-
-      // Load initial following list and set up subscriptions
-      setTimeout(() => {
-        initializeNotificationSubscriptions();
-      }, 2000);
-    }
-  }, 1000);
+  initializeApp();
 });
+
+async function initializeApp() {
+  try {
+    console.log("🚀 Initializing FocusFlow...");
+    
+    // First, set up all event listeners
+    setupAuthEventListeners();
+    initOAuth();
+    setupSearchFunctionality();
+    setupEventListeners();
+    
+    // Then check authentication
+    await checkAutoLogin();
+    
+    // Then load data and initialize components
+    await loadData();
+    await setAppStartDateFromUser();
+    
+    filterTableData();
+    renderTable();
+    initializeActivityTracker();
+    
+    // Initialize notification manager after auth check
+    setTimeout(() => {
+      if (authToken && !window.notificationManager) {
+        window.notificationManager = new NotificationManager();
+        initializeNotificationSubscriptions();
+      }
+    }, 1000);
+
+    // Start periodic sync
+    setInterval(() => {
+      if (authToken && !isSyncing) {
+        syncWithMongoDB();
+      }
+    }, 20000);
+
+    console.log("✅ FocusFlow initialized successfully");
+    
+  } catch (error) {
+    console.error("❌ Error initializing app:", error);
+  }
+}
 
 // NEW: Initialize notification subscriptions with current following list
 async function initializeNotificationSubscriptions() {
