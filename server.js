@@ -7,10 +7,10 @@ require("dotenv").config();
 const path = require("path");
 const http = require("http");
 const socketIo = require("socket.io");
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const GitHubStrategy = require('passport-github2').Strategy;
-const session = require('express-session');
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const GitHubStrategy = require("passport-github2").Strategy;
+const session = require("express-session");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +30,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-
 app.use(passport.initialize());
 
 // MongoDB connection
@@ -40,20 +39,21 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 const userSchema = new mongoose.Schema({
-  
   username: { type: String, required: true, unique: true },
   password: { type: String }, // Make password optional for OAuth users
-  
+
+  // NEW: Avatar field
+  avatar: { type: String, default: null },
+
   // NEW: OAuth fields
-  authProvider: { 
-    type: String, 
-    enum: ['local', 'google', 'github'], 
-    default: 'local' 
+  authProvider: {
+    type: String,
+    enum: ["local", "google", "github"],
+    default: "local",
   },
   providerId: { type: String }, // Google/GitHub user ID
   email: { type: String }, // Store email for OAuth users
-  
-  
+
   createdAt: { type: Date, default: Date.now },
   lastActive: { type: Date, default: Date.now },
   isOnline: { type: Boolean, default: false },
@@ -207,7 +207,6 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-
 // Passport serialization
 passport.serializeUser((user, done) => {
   done(null, user.username);
@@ -217,129 +216,142 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${
+        process.env.BASE_URL || "https://focus-flow-lopn.onrender.com"
+      }/auth/google/callback`,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        console.log("Google profile received:", profile.id);
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${process.env.BASE_URL || 'https://focus-flow-lopn.onrender.com'}/auth/google/callback`
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    console.log('Google profile received:', profile.id);
-    
-    // Find user by Google ID
-    let user = await User.findOne({ 
-      providerId: profile.id, 
-      authProvider: 'google' 
-    });
-    
-    if (user) {
-      console.log('Existing Google user found:', user.username);
-      return done(null, user);
-    }
-    
-    // Check if user exists with same email
-    const email = profile.emails?.[0]?.value;
-    if (email) {
-      user = await User.findOne({ email: email });
-      if (user) {
-        console.log('Linking existing user with Google:', user.username);
-        // Update existing user with Google auth
-        user.authProvider = 'google';
-        user.providerId = profile.id;
-        await user.save();
-        return done(null, user);
+        // Find user by Google ID
+        let user = await User.findOne({
+          providerId: profile.id,
+          authProvider: "google",
+        });
+
+        if (user) {
+          console.log("Existing Google user found:", user.username);
+          return done(null, user);
+        }
+
+        // Check if user exists with same email
+        const email = profile.emails?.[0]?.value;
+        if (email) {
+          user = await User.findOne({ email: email });
+          if (user) {
+            console.log("Linking existing user with Google:", user.username);
+            // Update existing user with Google auth
+            user.authProvider = "google";
+            user.providerId = profile.id;
+            await user.save();
+            return done(null, user);
+          }
+        }
+
+        // Create new user
+        const username = `user_${profile.id.substring(0, 8)}`;
+        const newUser = new User({
+          username: username,
+          email: email,
+          authProvider: "google",
+          providerId: profile.id,
+          // No password for OAuth users
+        });
+
+        await newUser.save();
+        console.log("New Google user created:", username);
+
+        // Create default data for new user
+        const defaultData = generateDefaultData();
+        await ChecklistData.create({
+          userId: username,
+          data: defaultData,
+          version: 1,
+        });
+
+        done(null, newUser);
+      } catch (error) {
+        console.error("Google OAuth error:", error);
+        done(error);
       }
     }
-    
-    // Create new user
-    const username = `user_${profile.id.substring(0, 8)}`;
-    const newUser = new User({
-      username: username,
-      email: email,
-      authProvider: 'google',
-      providerId: profile.id,
-      // No password for OAuth users
-    });
-    
-    await newUser.save();
-    console.log('New Google user created:', username);
-    
-    // Create default data for new user
-    const defaultData = generateDefaultData();
-    await ChecklistData.create({
-      userId: username,
-      data: defaultData,
-      version: 1,
-    });
-    
-    done(null, newUser);
-  } catch (error) {
-    console.error('Google OAuth error:', error);
-    done(error);
-  }
-}));
+  )
+);
 
 // GitHub Strategy
-passport.use(new GitHubStrategy({
-  clientID: process.env.GITHUB_CLIENT_ID,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  callbackURL: `${process.env.BASE_URL || 'https://focus-flow-lopn.onrender.com'}/auth/github/callback`,
-  scope: ['user:email']
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    console.log('GitHub profile received:', profile.id);
-    
-    // Find user by GitHub ID
-    let user = await User.findOne({ 
-      providerId: profile.id, 
-      authProvider: 'github' 
-    });
-    
-    if (user) {
-      console.log('Existing GitHub user found:', user.username);
-      return done(null, user);
-    }
-    
-    // Check if user exists with same email
-    const email = profile.emails?.[0]?.value;
-    if (email) {
-      user = await User.findOne({ email: email });
-      if (user) {
-        console.log('Linking existing user with GitHub:', user.username);
-        user.authProvider = 'github';
-        user.providerId = profile.id;
-        await user.save();
-        return done(null, user);
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: `${
+        process.env.BASE_URL || "https://focus-flow-lopn.onrender.com"
+      }/auth/github/callback`,
+      scope: ["user:email"],
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        console.log("GitHub profile received:", profile.id);
+
+        // Find user by GitHub ID
+        let user = await User.findOne({
+          providerId: profile.id,
+          authProvider: "github",
+        });
+
+        if (user) {
+          console.log("Existing GitHub user found:", user.username);
+          return done(null, user);
+        }
+
+        // Check if user exists with same email
+        const email = profile.emails?.[0]?.value;
+        if (email) {
+          user = await User.findOne({ email: email });
+          if (user) {
+            console.log("Linking existing user with GitHub:", user.username);
+            user.authProvider = "github";
+            user.providerId = profile.id;
+            await user.save();
+            return done(null, user);
+          }
+        }
+
+        // Create new user - use GitHub username if available
+        const username =
+          profile.username || `github_${profile.id.substring(0, 8)}`;
+        const newUser = new User({
+          username: username,
+          email: email,
+          authProvider: "github",
+          providerId: profile.id,
+        });
+
+        await newUser.save();
+        console.log("New GitHub user created:", username);
+
+        // Create default data for new user
+        const defaultData = generateDefaultData();
+        await ChecklistData.create({
+          userId: username,
+          data: defaultData,
+          version: 1,
+        });
+
+        done(null, newUser);
+      } catch (error) {
+        console.error("GitHub OAuth error:", error);
+        done(error);
       }
     }
-    
-    // Create new user - use GitHub username if available
-    const username = profile.username || `github_${profile.id.substring(0, 8)}`;
-    const newUser = new User({
-      username: username,
-      email: email,
-      authProvider: 'github',
-      providerId: profile.id,
-    });
-    
-    await newUser.save();
-    console.log('New GitHub user created:', username);
-    
-    // Create default data for new user
-    const defaultData = generateDefaultData();
-    await ChecklistData.create({
-      userId: username,
-      data: defaultData,
-      version: 1,
-    });
-    
-    done(null, newUser);
-  } catch (error) {
-    console.error('GitHub OAuth error:', error);
-    done(error);
-  }
-}));
-
+  )
+);
 
 // Enhanced Socket.io connection handling with real-time notifications
 const connectedUsers = new Map(); // Track connected users and their sockets
@@ -2678,6 +2690,176 @@ app.post("/api/users-status", authenticateToken, async (req, res) => {
   }
 });
 
+// Update username endpoint
+app.put("/api/update-username", authenticateToken, async (req, res) => {
+  try {
+    const { newUsername } = req.body;
+    const currentUsername = req.user.username;
+
+    if (!newUsername || newUsername.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Username is required",
+      });
+    }
+
+    const trimmedUsername = newUsername.trim();
+
+    // Check username length
+    if (trimmedUsername.length < 3) {
+      return res.status(400).json({
+        success: false,
+        error: "Username must be at least 3 characters long",
+      });
+    }
+
+    // Check if username is the same
+    if (trimmedUsername === currentUsername) {
+      return res.status(400).json({
+        success: false,
+        error: "New username is the same as current username",
+      });
+    }
+
+    // Check if username already exists
+    const existingUser = await User.findOne({ username: trimmedUsername });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: "Username already taken",
+      });
+    }
+
+    // Update username in User collection
+    await User.findOneAndUpdate(
+      { username: currentUsername },
+      { username: trimmedUsername }
+    );
+
+    // Update username in ChecklistData collection
+    await ChecklistData.findOneAndUpdate(
+      { userId: currentUsername },
+      { userId: trimmedUsername }
+    );
+
+    // Update username in ActivityTracker collection
+    await ActivityTracker.findOneAndUpdate(
+      { userId: currentUsername },
+      { userId: trimmedUsername }
+    );
+
+    // Update username in SocialLinks collection
+    await SocialLinks.findOneAndUpdate(
+      { userId: currentUsername },
+      { userId: trimmedUsername }
+    );
+
+    // Update username in Blog collection (as author)
+    await Blog.updateMany(
+      { author: currentUsername },
+      { author: trimmedUsername }
+    );
+
+    // Update username in Comment collection
+    await Comment.updateMany(
+      { author: currentUsername },
+      { author: trimmedUsername }
+    );
+
+    // Update following lists in all users
+    await User.updateMany(
+      { following: currentUsername },
+      { $set: { "following.$": trimmedUsername } }
+    );
+
+    // Generate new token with updated username
+    const newToken = jwt.sign({ username: trimmedUsername }, JWT_SECRET, {
+      expiresIn: "230d",
+    });
+
+    res.json({
+      success: true,
+      message: "Username updated successfully",
+      newUsername: trimmedUsername,
+      newToken: newToken,
+    });
+  } catch (error) {
+    console.error("Error updating username:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Check username availability
+app.get("/api/check-username/:username", async (req, res) => {
+  try {
+    const username = req.params.username.trim();
+
+    if (!username || username.length < 3) {
+      return res.json({
+        success: true,
+        available: false,
+        message: "Username must be at least 3 characters long",
+      });
+    }
+
+    const existingUser = await User.findOne({ username: username });
+
+    res.json({
+      success: true,
+      available: !existingUser,
+      message: existingUser ? "Username already taken" : "Username available",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update avatar endpoint
+app.put("/api/update-avatar", authenticateToken, async (req, res) => {
+  try {
+    const { avatar } = req.body;
+    const username = req.user.username;
+
+    if (!avatar) {
+      return res.status(400).json({
+        success: false,
+        error: "Avatar is required",
+      });
+    }
+
+    // For now, we'll store the avatar preference in the User model
+    // You might want to add an avatar field to your User schema
+    await User.findOneAndUpdate(
+      { username: username },
+      { $set: { avatar: avatar } }
+    );
+
+    res.json({
+      success: true,
+      message: "Avatar updated successfully",
+      avatar: avatar,
+    });
+  } catch (error) {
+    console.error("Error updating avatar:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get user avatar
+app.get("/api/user-avatar/:username", async (req, res) => {
+  try {
+    const username = req.params.username;
+    const user = await User.findOne({ username: username }).select("avatar");
+
+    res.json({
+      success: true,
+      avatar: user?.avatar || null,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Follow a user
 app.post("/api/follow/:username", authenticateToken, async (req, res) => {
   try {
@@ -2872,7 +3054,7 @@ app.get(
 // Get notifications for current user
 app.get("/api/notifications", authenticateToken, async (req, res) => {
   try {
-     const { category } = req.query; // 'all', 'unread', 'read'
+    const { category } = req.query; // 'all', 'unread', 'read'
     const userId = req.user.username;
 
     // Get user's following list
@@ -2937,19 +3119,17 @@ app.get("/api/notifications", authenticateToken, async (req, res) => {
       }
     });
 
-    
-
     // Sort by timestamp and limit to 30 notifications
     const sortedNotifications = notifications
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 30);
 
-      // Filter by category if specified
+    // Filter by category if specified
     let filteredNotifications = notifications;
-    if (category === 'unread') {
-      filteredNotifications = notifications.filter(n => !n.isRead);
-    } else if (category === 'read') {
-      filteredNotifications = notifications.filter(n => n.isRead);
+    if (category === "unread") {
+      filteredNotifications = notifications.filter((n) => !n.isRead);
+    } else if (category === "read") {
+      filteredNotifications = notifications.filter((n) => n.isRead);
     }
 
     // Update last notification check time
@@ -2959,9 +3139,9 @@ app.get("/api/notifications", authenticateToken, async (req, res) => {
     res.json({
       success: true,
       notifications: filteredNotifications,
-      unreadCount: notifications.filter(n => !n.isRead).length,
+      unreadCount: notifications.filter((n) => !n.isRead).length,
       totalCount: notifications.length,
-      readCount: notifications.filter(n => n.isRead).length
+      readCount: notifications.filter((n) => n.isRead).length,
     });
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -3085,56 +3265,75 @@ app.get(
   }
 );
 
-
 // ========== OAUTH ROUTES ==========
 // ========== OAUTH ROUTES ==========
 
 // Google OAuth routes
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
 
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { 
-    failureRedirect: '/?auth_error=google',
-    session: false // Important: We're using JWT, not sessions
-  }), 
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/?auth_error=google",
+    session: false, // Important: We're using JWT, not sessions
+  }),
   (req, res) => {
     // Successful authentication - generate JWT token
     const token = jwt.sign({ username: req.user.username }, JWT_SECRET, {
-      expiresIn: '230d',
+      expiresIn: "230d",
     });
-    
+
     // Redirect to frontend with token in URL (for development)
     // In production, you might want to use a more secure method
-    res.redirect(`${process.env.FRONTEND_URL || 'https://focus-flow-lopn.onrender.com'}/oauth-success.html?token=${token}&username=${encodeURIComponent(req.user.username)}`);
+    res.redirect(
+      `${
+        process.env.FRONTEND_URL || "https://focus-flow-lopn.onrender.com"
+      }/oauth-success.html?token=${token}&username=${encodeURIComponent(
+        req.user.username
+      )}`
+    );
   }
 );
 
 // GitHub OAuth routes
-app.get('/auth/github', passport.authenticate('github', {
-  scope: ['user:email']
-}));
+app.get(
+  "/auth/github",
+  passport.authenticate("github", {
+    scope: ["user:email"],
+  })
+);
 
-app.get('/auth/github/callback', 
-  passport.authenticate('github', { 
-    failureRedirect: '/?auth_error=github',
-    session: false // Important: We're using JWT, not sessions
-  }), 
+app.get(
+  "/auth/github/callback",
+  passport.authenticate("github", {
+    failureRedirect: "/?auth_error=github",
+    session: false, // Important: We're using JWT, not sessions
+  }),
   (req, res) => {
     // Successful authentication - generate JWT token
     const token = jwt.sign({ username: req.user.username }, JWT_SECRET, {
-      expiresIn: '230d',
+      expiresIn: "230d",
     });
-    
+
     // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL || 'https://focus-flow-lopn.onrender.com'}/oauth-success.html?token=${token}&username=${encodeURIComponent(req.user.username)}`);
+    res.redirect(
+      `${
+        process.env.FRONTEND_URL || "https://focus-flow-lopn.onrender.com"
+      }/oauth-success.html?token=${token}&username=${encodeURIComponent(
+        req.user.username
+      )}`
+    );
   }
 );
 
 // Simple logout endpoint
-app.post('/auth/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+app.post("/auth/logout", (req, res) => {
+  res.json({ success: true, message: "Logged out successfully" });
 });
 
 // Helper function to trigger blog notifications

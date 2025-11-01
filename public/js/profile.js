@@ -3,6 +3,9 @@ const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
 const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
 let currentUserData = null;
 let currentBlogTab = "public";
+// Username and Avatar Management
+let currentEditingAvatar = null;
+let selectedAvatarInModal = null;
 
 // Premium Progress Chart - Fixed Animation & Revert Issues
 class PremiumProgressChart {
@@ -1543,9 +1546,37 @@ function navigateDays(direction, currentButton) {
   }
 }
 
+function setupProfileEditEventListeners() {
+  // Username input enter key support
+  const usernameInput = document.getElementById("usernameInput");
+  if (usernameInput) {
+    usernameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        checkUsernameAvailability();
+      }
+    });
+
+    // Real-time validation
+    usernameInput.addEventListener("input", (e) => {
+      const saveBtn = document.getElementById("saveUsernameBtn");
+      const messageDiv = document.getElementById("availabilityMessage");
+
+      // Clear previous messages on new input
+      if (
+        messageDiv.textContent &&
+        !messageDiv.textContent.includes("Checking")
+      ) {
+        messageDiv.textContent = "";
+      }
+      saveBtn.disabled = true;
+    });
+  }
+}
+
 // Initialize keyboard navigation when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   enhanceKeyboardNavigation();
+  setupProfileEditEventListeners();
 });
 
 // Close all other open days when opening a new one (optional)
@@ -1791,7 +1822,6 @@ async function saveSocialLinks() {
   }
 }
 
-// Load user profile data
 async function loadUserProfile() {
   try {
     const token = localStorage.getItem("authToken");
@@ -1816,7 +1846,6 @@ async function loadUserProfile() {
       currentUserData = result.user;
 
       initializeUserStatusManager();
-      // Initialize community search after directory is loaded
       initializeCommunitySearch();
       initializeQuestionHistorySearch();
       initializeBlogSearch();
@@ -1829,11 +1858,13 @@ async function loadUserProfile() {
       renderConsistencyMap();
       renderProgressBars();
       loadUserDirectory();
+
+      // Initialize profile edit functionality
+      initializeProfileModals();
     } else {
       throw new Error(result.error || "Failed to load user data");
     }
 
-    // Load social links
     await loadSocialLinks();
   } catch (error) {
     console.error("Error loading user profile:", error);
@@ -1841,7 +1872,6 @@ async function loadUserProfile() {
   }
 }
 
-// In profile.js - Add to the existing functionality
 async function loadFollowStats() {
   try {
     const currentUsername = currentUserData?.username;
@@ -1871,7 +1901,7 @@ async function loadFollowStats() {
   }
 }
 
-// Add modal functions (same as in user-profile.js)
+// Add modal functions
 function showFollowersModal() {
   showFollowModal("followers");
 }
@@ -1940,6 +1970,408 @@ async function showFollowModal(type) {
   }
 }
 
+// Initialize profile modals
+function initializeProfileModals() {
+  loadCurrentAvatar();
+  populateAvatarOptions();
+  setupModalEventListeners();
+}
+
+// Setup modal event listeners
+function setupModalEventListeners() {
+  // Close modals when clicking outside
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("profile-modal")) {
+      if (e.target.id === "usernameModal") {
+        closeUsernameModal();
+      } else if (e.target.id === "avatarModal") {
+        closeAvatarModal();
+      }
+    }
+  });
+
+  // Close modals with Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeUsernameModal();
+      closeAvatarModal();
+    }
+  });
+
+  // Username input enter key support
+  const usernameInput = document.getElementById("usernameInput");
+  if (usernameInput) {
+    usernameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        checkUsernameAvailability();
+      }
+    });
+
+    // Real-time validation
+    usernameInput.addEventListener("input", (e) => {
+      const saveBtn = document.getElementById("saveUsernameBtn");
+      const messageDiv = document.getElementById("availabilityMessage");
+
+      // Clear previous messages on new input
+      if (
+        messageDiv &&
+        messageDiv.textContent &&
+        !messageDiv.textContent.includes("Checking")
+      ) {
+        messageDiv.textContent = "";
+      }
+      if (saveBtn) {
+        saveBtn.disabled = true;
+      }
+    });
+  }
+}
+
+// Username Modal Functions
+function openUsernameModal() {
+  const modal = document.getElementById("usernameModal");
+  const currentUsername = document.getElementById("currentUsernameValue");
+
+  if (modal && currentUsername) {
+    currentUsername.textContent = currentUserData?.username || "";
+    modal.classList.add("show");
+
+    // Reset form
+    const usernameInput = document.getElementById("usernameInput");
+    const messageDiv = document.getElementById("availabilityMessage");
+    const saveBtn = document.getElementById("saveUsernameBtn");
+
+    if (usernameInput) usernameInput.value = "";
+    if (messageDiv) messageDiv.textContent = "";
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = "<span>💾</span><span>Save Username</span>";
+    }
+
+    // Focus on input
+    setTimeout(() => {
+      if (usernameInput) usernameInput.focus();
+    }, 300);
+  }
+}
+
+function closeUsernameModal() {
+  const modal = document.getElementById("usernameModal");
+  if (modal) {
+    modal.classList.remove("show");
+  }
+}
+
+// Avatar Modal Functions
+function openAvatarModal() {
+  const modal = document.getElementById("avatarModal");
+  const currentAvatar = document.getElementById("currentAvatarPreview");
+
+  if (modal && currentAvatar) {
+    currentAvatar.textContent = currentEditingAvatar;
+    modal.classList.add("show");
+    selectedAvatarInModal = currentEditingAvatar;
+
+    // Select current avatar in grid
+    setTimeout(() => {
+      const avatarOptions = document.querySelectorAll(".avatar-option");
+      avatarOptions.forEach((option) => {
+        option.classList.remove("selected");
+        if (option.textContent === currentEditingAvatar) {
+          option.classList.add("selected");
+        }
+      });
+    }, 100);
+  }
+}
+
+function closeAvatarModal() {
+  const modal = document.getElementById("avatarModal");
+  if (modal) {
+    modal.classList.remove("show");
+  }
+  // Reset selection to current avatar
+  selectedAvatarInModal = currentEditingAvatar;
+}
+
+// Select avatar in modal
+function selectAvatar(avatar) {
+  // Remove selected class from all options
+  document.querySelectorAll(".avatar-option").forEach((option) => {
+    option.classList.remove("selected");
+  });
+
+  // Add selected class to clicked option
+  event.target.classList.add("selected");
+
+  // Update preview in modal
+  const preview = document.getElementById("currentAvatarPreview");
+  if (preview) {
+    preview.textContent = avatar;
+  }
+
+  selectedAvatarInModal = avatar;
+}
+
+async function checkUsernameAvailability() {
+  const usernameInput = document.getElementById("usernameInput");
+  const messageDiv = document.getElementById("availabilityMessage");
+  const saveBtn = document.getElementById("saveUsernameBtn");
+
+  const newUsername = usernameInput.value.trim();
+
+  if (!newUsername) {
+    messageDiv.textContent = "Please enter a username";
+    messageDiv.className = "availability-message unavailable";
+    saveBtn.disabled = true;
+    return;
+  }
+
+  if (newUsername.length < 3) {
+    messageDiv.textContent = "Username must be at least 3 characters";
+    messageDiv.className = "availability-message unavailable";
+    saveBtn.disabled = true;
+    return;
+  }
+
+  if (newUsername === currentUserData?.username) {
+    messageDiv.textContent = "This is your current username";
+    messageDiv.className = "availability-message unavailable";
+    saveBtn.disabled = true;
+    return;
+  }
+
+  // Username validation
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  if (!usernameRegex.test(newUsername)) {
+    messageDiv.textContent = "Only letters, numbers, and underscores allowed";
+    messageDiv.className = "availability-message unavailable";
+    saveBtn.disabled = true;
+    return;
+  }
+
+  messageDiv.textContent = "Checking availability...";
+  messageDiv.className = "availability-message checking";
+  saveBtn.disabled = true;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/check-username/${encodeURIComponent(newUsername)}`
+    );
+    const result = await response.json();
+
+    if (result.success) {
+      if (result.available) {
+        messageDiv.textContent = "✓ Username available!";
+        messageDiv.className = "availability-message available";
+        saveBtn.disabled = false;
+      } else {
+        messageDiv.textContent = "✗ Username already taken";
+        messageDiv.className = "availability-message unavailable";
+        saveBtn.disabled = true;
+      }
+    } else {
+      messageDiv.textContent = "Error checking username";
+      messageDiv.className = "availability-message unavailable";
+      saveBtn.disabled = true;
+    }
+  } catch (error) {
+    messageDiv.textContent = "Error checking username availability";
+    messageDiv.className = "availability-message unavailable";
+    saveBtn.disabled = true;
+  }
+}
+
+// Update username (updated for modal)
+async function updateUsername() {
+  const usernameInput = document.getElementById("usernameInput");
+  const newUsername = usernameInput.value.trim();
+  const saveBtn = document.getElementById("saveUsernameBtn");
+
+  if (!newUsername || saveBtn.disabled) {
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = "<span>⏳</span><span>Saving...</span>";
+
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/update-username`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ newUsername }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update local storage with new token
+      localStorage.setItem("authToken", result.newToken);
+      localStorage.setItem("userId", result.newUsername);
+
+      // Update current user data
+      currentUserData.username = result.newUsername;
+
+      // Update UI
+      document.getElementById("userName").textContent =
+        result.newUsername.toUpperCase();
+
+      // Show success message
+      toastManager.success("Username updated successfully!", "Success");
+
+      // Close modal
+      closeUsernameModal();
+
+      // Refresh page to update all references
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      throw new Error(result.error || "Failed to update username");
+    }
+  } catch (error) {
+    console.error("Error updating username:", error);
+    toastManager.error(error.message, "Update Failed");
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = "<span>💾</span><span>Save Username</span>";
+  }
+}
+
+// Update avatar (updated for modal)
+async function updateAvatar() {
+  if (!selectedAvatarInModal) {
+    toastManager.warning("Please select an avatar", "Avatar Required");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${API_BASE_URL}/update-avatar`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ avatar: selectedAvatarInModal }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update current editing avatar
+      currentEditingAvatar = selectedAvatarInModal;
+
+      // Update main profile avatar
+      const mainAvatar = document.getElementById("userAvatar");
+      if (mainAvatar) {
+        mainAvatar.textContent = selectedAvatarInModal;
+      }
+
+      // Show success message
+      toastManager.success("Avatar updated successfully!", "Success");
+
+      // Close modal
+      closeAvatarModal();
+    } else {
+      throw new Error(result.error || "Failed to update avatar");
+    }
+  } catch (error) {
+    console.error("Error updating avatar:", error);
+    toastManager.error(error.message, "Update Failed");
+  }
+}
+
+// Load current avatar from server or use generated one
+async function loadCurrentAvatar() {
+  try {
+    const username = currentUserData?.username;
+    if (!username) return;
+
+    const response = await fetch(`${API_BASE_URL}/user-avatar/${username}`);
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.avatar) {
+        // Use saved avatar from server
+        updateAvatarDisplay(result.avatar);
+      } else {
+        // Use generated avatar
+        const generatedAvatar = generatePixelAvatar(username);
+        updateAvatarDisplay(generatedAvatar);
+      }
+    }
+  } catch (error) {
+    console.error("Error loading avatar:", error);
+    // Fallback to generated avatar
+    const generatedAvatar = generatePixelAvatar(currentUserData?.username);
+    updateAvatarDisplay(generatedAvatar);
+  }
+}
+
+// Update avatar display
+function updateAvatarDisplay(avatar) {
+  const mainAvatar = document.getElementById("userAvatar");
+
+  if (mainAvatar) mainAvatar.textContent = avatar;
+
+  currentEditingAvatar = avatar;
+  selectedAvatarInModal = avatar;
+}
+
+// Populate avatar options
+function populateAvatarOptions() {
+  const grid = document.getElementById("avatarSelectionGrid");
+  if (!grid) return;
+
+  const avatars = [
+    "👨‍💻",
+    "👩‍💻",
+    "🧙‍♂️",
+    "🧙‍♀️",
+    "🦊",
+    "🐱",
+    "🐼",
+    "🐨",
+    "🦁",
+    "🐯",
+    "🐉",
+    "🦄",
+    "🌟",
+    "🚀",
+    "🎯",
+    "💎",
+    "🔮",
+    "⚡",
+    "🔥",
+    "🌙",
+    "☀️",
+    "🌈",
+    "🌊",
+    "🌳",
+    "🎨",
+    "📚",
+    "🔧",
+    "🎭",
+    "👑",
+    "🛡️",
+    "🗝️",
+    "💡",
+  ];
+
+  grid.innerHTML = avatars
+    .map(
+      (avatar) => `
+    <div class="avatar-option" onclick="selectAvatar('${avatar}')">
+      ${avatar}
+    </div>
+  `
+    )
+    .join("");
+}
+
 // Enhanced render function with all new features - FIXED for profile
 function renderUserProfile() {
   if (!currentUserData) return; // Use currentUserData instead of currentViewingUser
@@ -1961,7 +2393,16 @@ function renderUserProfile() {
   levelBadge.className = `user-level-badge ${userLevel.level.toLowerCase()}`;
 
   // Set user name and bio
+  const usernameDisplay = document.getElementById("currentUsernameDisplay");
+  if (usernameDisplay) {
+    usernameDisplay.textContent = user.username;
+  }
+
+  // Set current username
   document.getElementById("userName").textContent = user.username.toUpperCase();
+
+  // Initialize modals
+  initializeProfileModals();
   document.getElementById("joinDate").textContent = formatDate(
     user.accountCreated
   );
@@ -3921,7 +4362,6 @@ window.addEventListener("resize", function () {
   }
 });
 
-// Add to profile.js
 window.addEventListener("beforeunload", () => {
   if (userStatusManager) {
     userStatusManager.destroy();

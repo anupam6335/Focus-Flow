@@ -53,7 +53,6 @@
                   My Profile
                 </div>
 
-                <!-- Add this right after the profile-name-container div -->
                 <div class="profile-actions">
                   <button class="share-profile-btn" onclick="shareProfile()">
                     <span>🔗</span>
@@ -61,7 +60,7 @@
                   </button>
                 </div>
 
-                  <button
+                <button
                   class="follow-btn"
                   id="followButton"
                   onclick="toggleFollow()"
@@ -74,7 +73,7 @@
                 Member since <span id="joinDate">...</span>
               </p>
 
-              <!-- ADD THIS SECTION FOR STATUS DISPLAY -->
+              <!--  FOR STATUS DISPLAY -->
               <div class="profile-status" id="profileStatus">
                 <div class="status-indicator" id="statusIndicator"></div>
                 <span class="status-text" id="statusText"
@@ -193,7 +192,7 @@
           <div class="content-section">
             <h2 class="section-title">📚 Question History</h2>
 
-            <!-- Add this search bar section -->
+            <!-- search bar section -->
             <div
               class="search-container"
               style="margin-bottom: var(--codeleaf-space-4)"
@@ -230,7 +229,7 @@
           <div class="content-section">
             <h2 class="section-title">✍️ Blogs</h2>
 
-            <!-- Add this search bar section -->
+            <!--search bar section -->
             <div
               class="search-container"
               style="margin-bottom: var(--codeleaf-space-4)"
@@ -527,29 +526,30 @@
       </div>
     </div>
 
-
     <!-- Unfollow Confirmation Modal -->
-<div id="unfollowModal" class="unfollow-modal" style="display: none;">
-  <div class="unfollow-modal-content">
-    <div class="unfollow-modal-header">
-      <h3 class="unfollow-modal-title">Unfollow User</h3>
-      <p class="unfollow-modal-subtitle">Are you sure you want to unfollow this user?</p>
+    <div id="unfollowModal" class="unfollow-modal" style="display: none">
+      <div class="unfollow-modal-content">
+        <div class="unfollow-modal-header">
+          <h3 class="unfollow-modal-title">Unfollow User</h3>
+          <p class="unfollow-modal-subtitle">
+            Are you sure you want to unfollow this user?
+          </p>
+        </div>
+
+        <div class="unfollow-user-info" id="unfollowUserInfo">
+          <!-- User info will be populated here -->
+        </div>
+
+        <div class="unfollow-modal-actions">
+          <button class="unfollow-cancel-btn" onclick="closeUnfollowModal()">
+            <span>Cancel</span>
+          </button>
+          <button class="unfollow-confirm-btn" onclick="confirmUnfollow()">
+            <span>Unfollow</span>
+          </button>
+        </div>
+      </div>
     </div>
-    
-    <div class="unfollow-user-info" id="unfollowUserInfo">
-      <!-- User info will be populated here -->
-    </div>
-    
-    <div class="unfollow-modal-actions">
-      <button class="unfollow-cancel-btn" onclick="closeUnfollowModal()">
-        <span>Cancel</span>
-      </button>
-      <button class="unfollow-confirm-btn" onclick="confirmUnfollow()">
-        <span>Unfollow</span>
-      </button>
-    </div>
-  </div>
-</div>
 
     <script src="js/user-profile.js"></script>
   </body>
