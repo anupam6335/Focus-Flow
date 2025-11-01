@@ -1773,3 +1773,52 @@ h1 {
     min-height: 300px;
   }
 }
+
+/* View Comments Button Styles */
+.view-comments-container {
+  display: flex;
+  justify-content: center;
+  margin: var(--codeleaf-space-8) 0;
+  padding: var(--codeleaf-space-4) 0;
+  border-top: 1px solid var(--codeleaf-border-light);
+  border-bottom: 1px solid var(--codeleaf-border-light);
+}
+
+.view-comments-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--codeleaf-space-2);
+  padding: var(--codeleaf-space-4) var(--codeleaf-space-6);
+  font-size: var(--codeleaf-font-base);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.view-comments-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--codeleaf-shadow-lg);
+}
+
+/* Comments indicator in mini-map */
+.mini-map-comments {
+  border-left: 2px solid #ff6b6b !important;
+  font-weight: 600;
+  color: var(--codeleaf-accent-primary);
+  background: var(--codeleaf-bg-secondary);
+}
+
+.mini-map-comments:hover {
+  background: var(--codeleaf-bg-tertiary) !important;
+  border-left-color: #ff5252 !important;
+}
+
+.mini-map-comments.active {
+  background: var(--codeleaf-bg-tertiary) !important;
+  border-left-color: var(--codeleaf-accent-primary) !important;
+  color: var(--codeleaf-accent-primary) !important;
+}
+
+/* Comments section highlight */
+.comments-section {
+  transition: box-shadow 0.3s ease;
+}
