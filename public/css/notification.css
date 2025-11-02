@@ -350,7 +350,6 @@
 }
 
 /* ===== NOTIFICATION CATEGORY STYLES ===== */
-/* ===== NOTIFICATION CATEGORY STYLES ===== */
 
 .notification-categories {
   display: flex;
@@ -358,6 +357,7 @@
   background: var(--codeleaf-bg-secondary);
   padding: var(--codeleaf-space-2) var(--codeleaf-space-2) 0;
   gap: var(--codeleaf-space-2); /* Add gap between tabs */
+  padding-bottom: 10px;
 }
 
 .category-tab {
@@ -766,4 +766,64 @@ html {
 .comment-votes {
   position: relative;
   z-index: 10;
+}
+
+/* Enhanced visual feedback for automatic notifications */
+.notification-bell.auto-update {
+  position: relative;
+}
+
+.notification-bell.auto-update::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--codeleaf-accent-primary);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+}
+
+/* Smooth badge transitions */
+.notification-badge {
+  transition: all 0.3s ease;
+}
+
+/* Auto-refresh indicator */
+.auto-refresh-indicator {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 8px;
+  height: 8px;
+  background: var(--codeleaf-success);
+  border-radius: 50%;
+  border: 2px solid var(--codeleaf-bg-secondary);
+  opacity: 0.7;
+}
+
+.notification-bell.refreshing .auto-refresh-indicator {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
