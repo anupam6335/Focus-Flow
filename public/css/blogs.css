@@ -180,7 +180,6 @@ h1 {
   gap: var(--codeleaf-space-2);
   flex: 1;
   flex-wrap: wrap;
-  z-index: -1;
 }
 
 .tab-compact {
@@ -219,15 +218,11 @@ h1 {
 }
 
 /* Enhanced Instagram-style Grid Layout with CodeLeaf Theme */
-.blogsContainer {
-  z-index: -1;
-}
 .blogs-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: var(--codeleaf-space-4);
   margin-bottom: var(--codeleaf-space-6);
-  z-index: -1;
 }
 
 /* Award-Winning Blog Card Animation */
@@ -243,7 +238,6 @@ h1 {
   display: flex;
   flex-direction: column;
   height: 100%;
-  z-index: -1;
 }
 
 /* Big cards (2x2 grid items) */
@@ -2028,7 +2022,6 @@ header {
   margin-bottom: var(--codeleaf-space-4);
   box-shadow: var(--codeleaf-shadow-sm);
   transition: all 0.3s ease;
-  z-index: -1;
 }
 
 .blog-header-integrated:hover {
