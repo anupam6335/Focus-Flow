@@ -360,17 +360,17 @@ async function setAppStartDateFromUser() {
           // console.log(`✅ APP_START_DATE set to user creation date: ${APP_START_DATE}`);
           return true;
         } else {
-         //  console.log("❌ User data missing in response:", result);
+          //  console.log("❌ User data missing in response:", result);
         }
       } else {
         const errorText = await response.text();
         ////  console.log("❌ API Error response:", errorText);
       }
     } catch (error) {
-     //  console.log("❌ Error fetching user info:", error);
+      //  console.log("❌ Error fetching user info:", error);
     }
   } else {
-   //  console.log("ℹ️ User not authenticated, using default start date");
+    //  console.log("ℹ️ User not authenticated, using default start date");
   }
 
   // Use fallback date
@@ -388,7 +388,7 @@ function updateActivityTrackerSubtitle() {
     //   `📝 Updated subtitle to: Starting from ${formattedDate} ( Day 1 )`
     // );
   } else {
-   //  console.log("❌ Could not find activity tracker subtitle element");
+    //  console.log("❌ Could not find activity tracker subtitle element");
   }
 }
 
@@ -404,7 +404,7 @@ function formatDateForDisplay(dateString) {
       })
       .replace(/,/g, "");
   } catch (error) {
-   //  console.log("❌ Error formatting date:", error);
+    //  console.log("❌ Error formatting date:", error);
     return dateString; // Return original string if parsing fails
   }
 }
@@ -464,14 +464,14 @@ function initOAuth() {
 
   if (googleBtn) {
     googleBtn.addEventListener("click", () => {
-     //  console.log("Initiating Google OAuth...");
+      //  console.log("Initiating Google OAuth...");
       window.location.href = "/auth/google";
     });
   }
 
   if (githubBtn) {
     githubBtn.addEventListener("click", () => {
-     //  console.log("Initiating GitHub OAuth...");
+      //  console.log("Initiating GitHub OAuth...");
       window.location.href = "/auth/github";
     });
   }
@@ -499,7 +499,7 @@ function checkOAuthSuccess() {
   const username = localStorage.getItem("userId");
 
   if (token && username && !authToken) {
-   //  console.log("✅ OAuth login detected, setting up user...");
+    //  console.log("✅ OAuth login detected, setting up user...");
     authToken = token;
     userId = username;
     showUserInfo();
@@ -511,7 +511,7 @@ function checkOAuthSuccess() {
       renderEnhancedActivityTracker();
     });
   } else {
-   //  console.log("🔐 No OAuth token found or user already logged in");
+    //  console.log("🔐 No OAuth token found or user already logged in");
   }
 }
 function checkOAuthCallback() {
@@ -559,7 +559,7 @@ async function checkAutoLogin() {
 
   if (savedToken && savedUserId) {
     try {
-     //  console.log("🔐 Checking auto-login...");
+      //  console.log("🔐 Checking auto-login...");
 
       // Verify token is still valid
       const response = await fetch(`${API_BASE_URL}/verify-token`, {
@@ -571,12 +571,12 @@ async function checkAutoLogin() {
       if (response.ok) {
         authToken = savedToken;
         userId = savedUserId;
-       //  console.log("✅ Auto-login successful for user:", userId);
+        //  console.log("✅ Auto-login successful for user:", userId);
         showUserInfo();
         return true;
       } else {
         // Token invalid, clear saved credentials BUT KEEP PROGRESS DATA
-       //  console.log("❌ Token invalid, clearing credentials");
+        //  console.log("❌ Token invalid, clearing credentials");
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("appVersion");
@@ -585,12 +585,12 @@ async function checkAutoLogin() {
         // Progress data remains in localStorage
       }
     } catch (error) {
-     //  console.log("❌ Auto-login check failed:", error);
+      //  console.log("❌ Auto-login check failed:", error);
       showLoginForm();
       // Progress data remains in localStorage
     }
   } else {
-   //  console.log("🔐 No saved credentials, showing login form");
+    //  console.log("🔐 No saved credentials, showing login form");
     showLoginForm();
   }
   return false;
@@ -951,17 +951,15 @@ async function handleLogin() {
   }
 }
 
-// the auth check to handle notifications
+// Enhanced login handler
 const originalHandleLogin = handleLogin;
 handleLogin = async function () {
   await originalHandleLogin();
 
-  // Initialize real-time notification manager after login
+  // Initialize notification system after login
   if (authToken) {
     setTimeout(() => {
-      if (!window.notificationManager) {
-        window.notificationManager = new NotificationManager();
-      }
+      initializeNotificationSystem();
     }, 1000);
   }
 };
@@ -1037,7 +1035,7 @@ async function handleLogout() {
     // Call server logout endpoint
     await fetch("/auth/logout", { method: "POST" });
   } catch (error) {
-   //  console.log("Logout request failed:", error);
+    //  console.log("Logout request failed:", error);
   }
 
   // Clear local state
@@ -1053,7 +1051,7 @@ async function handleLogout() {
   renderEnhancedActivityTracker();
 }
 
-// Update logout to clean up notifications
+// Enhanced logout handler
 const originalHandleLogout = handleLogout;
 handleLogout = function () {
   if (window.notificationManager) {
@@ -2234,7 +2232,7 @@ async function updateActivityTrackerWithUserData() {
         }
       }
     } catch (error) {
-     //  console.log("Error updating activity tracker with user data:", error);
+      //  console.log("Error updating activity tracker with user data:", error);
     }
   }
   return false;
@@ -3846,9 +3844,33 @@ class NotificationManager {
     this.setupEventListeners();
     this.initializeSocketConnection();
     this.startPolling();
+    this.startAutoRefresh(); // NEW: Auto-refresh notifications
   }
 
-  initializeElements() {
+  // NEW: Start automatic notification refresh
+  startAutoRefresh() {
+    // Clear any existing interval
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
+
+    // Refresh notifications every 30 seconds when panel is closed
+    this.autoRefreshInterval = setInterval(() => {
+      if (!this.isOpen && authToken) {
+        this.checkForNewNotifications();
+      }
+    }, 30000); // 30 seconds
+
+    // Also refresh immediately on initialization
+    setTimeout(() => {
+      if (authToken) {
+        this.loadNotifications();
+      }
+    }, 2000);
+  }
+
+  // ENHANCED: Initialize with automatic loading
+  async initializeElements() {
     this.bell = document.getElementById("notificationBell");
     this.badge = document.getElementById("notificationBadge");
     this.panel = document.getElementById("notificationPanel");
@@ -3859,8 +3881,14 @@ class NotificationManager {
 
     // Category elements
     this.categoryTabs = document.querySelectorAll(".category-tab");
+
+    // Load notifications automatically if user is authenticated
+    if (authToken) {
+      await this.loadNotifications();
+    }
   }
 
+  // ENHANCED: Setup event listeners with page visibility support
   setupEventListeners() {
     // Toggle notification panel
     this.bell.addEventListener("click", (e) => {
@@ -3907,6 +3935,20 @@ class NotificationManager {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && this.isOpen) {
         this.closePanel();
+      }
+    });
+
+    // NEW: Refresh notifications when page becomes visible
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && authToken && !this.isOpen) {
+        this.checkForNewNotifications();
+      }
+    });
+
+    // NEW: Refresh notifications when user comes back online
+    window.addEventListener("online", () => {
+      if (authToken) {
+        this.loadNotifications();
       }
     });
   }
@@ -4047,7 +4089,7 @@ class NotificationManager {
     `;
   }
 
-  // Update badge and category counters
+  // ENHANCED: Update badge with animation for new notifications
   updateBadge() {
     // Update main badge
     if (this.unreadCount > 0) {
@@ -4055,6 +4097,7 @@ class NotificationManager {
       this.badge.style.display = "flex";
       this.bell.classList.add("has-unread");
 
+      // Add pulse animation for new notifications
       if (this.unreadCount === 1) {
         this.bell.style.animation = "bell-pulse 2s infinite";
       }
@@ -4115,64 +4158,64 @@ class NotificationManager {
   }
 
   // In main.js - Fix the handleNotificationClick method in NotificationManager class
-async handleNotificationClick(notificationElement) {
-  const notificationId = notificationElement.dataset.id;
-  const notification = this.notifications.find(
-    (n) => n._id === notificationId
-  );
+  async handleNotificationClick(notificationElement) {
+    const notificationId = notificationElement.dataset.id;
+    const notification = this.notifications.find(
+      (n) => n._id === notificationId
+    );
 
-  if (!notification) return;
+    if (!notification) return;
 
-  console.log(`🖱️ Handling notification click:`, notification);
+    console.log(`🖱️ Handling notification click:`, notification);
 
-  // Mark as read on server
-  await this.markAsRead(notificationId);
+    // Mark as read on server
+    await this.markAsRead(notificationId);
 
-  // Update local state
-  notification.isRead = true;
-  this.unreadCount = Math.max(0, this.unreadCount - 1);
+    // Update local state
+    notification.isRead = true;
+    this.unreadCount = Math.max(0, this.unreadCount - 1);
 
-  // Handle navigation based on notification type
-  if (notification.url) {
-    console.log(`🔗 Navigating to: ${notification.url}`);
-    window.location.href = notification.url;
-    return;
-  }
-
-  // FIX: Handle like notifications specifically
-  if (notification.type === "like_on_blog" && notification.blogSlug) {
-    console.log(`❤️ Redirecting to blog: ${notification.blogSlug}`);
-    window.location.href = `/blogs/${notification.blogSlug}`;
-    return;
-  }
-
-  // Fallback navigation for other notification types
-  if (notification.blogSlug) {
-    let url = `/blogs/${notification.blogSlug}`;
-
-    // Add comment parameter for comment-related notifications
-    if (
-      notification.commentId &&
-      (notification.type === "comment_on_blog" ||
-        notification.type === "reply_to_comment" ||
-        notification.type === "mention_in_comment")
-    ) {
-      url += `?comment=${notification.commentId}`;
+    // Handle navigation based on notification type
+    if (notification.url) {
+      console.log(`🔗 Navigating to: ${notification.url}`);
+      window.location.href = notification.url;
+      return;
     }
 
-    console.log(`🔄 Fallback navigation to: ${url}`);
-    window.location.href = url;
-    return;
-  }
+    // FIX: Handle like notifications specifically
+    if (notification.type === "like_on_blog" && notification.blogSlug) {
+      console.log(`❤️ Redirecting to blog: ${notification.blogSlug}`);
+      window.location.href = `/blogs/${notification.blogSlug}`;
+      return;
+    }
 
-  // Update UI if no navigation occurred
-  this.updateBadge();
-  if (this.currentCategory === "unread" && this.unreadCount === 0) {
-    this.switchCategory("all");
-  } else {
-    this.renderNotifications();
+    // Fallback navigation for other notification types
+    if (notification.blogSlug) {
+      let url = `/blogs/${notification.blogSlug}`;
+
+      // Add comment parameter for comment-related notifications
+      if (
+        notification.commentId &&
+        (notification.type === "comment_on_blog" ||
+          notification.type === "reply_to_comment" ||
+          notification.type === "mention_in_comment")
+      ) {
+        url += `?comment=${notification.commentId}`;
+      }
+
+      console.log(`🔄 Fallback navigation to: ${url}`);
+      window.location.href = url;
+      return;
+    }
+
+    // Update UI if no navigation occurred
+    this.updateBadge();
+    if (this.currentCategory === "unread" && this.unreadCount === 0) {
+      this.switchCategory("all");
+    } else {
+      this.renderNotifications();
+    }
   }
-}
 
   // FIXED: Mark all as read with proper real-time updates
   async markAllAsRead() {
@@ -4193,7 +4236,7 @@ async handleNotificationClick(notificationElement) {
         });
         this.unreadCount = 0;
 
-       //  console.log("All notifications marked as read");
+        //  console.log("All notifications marked as read");
 
         // Update UI
         this.updateBadge();
@@ -4218,27 +4261,22 @@ async handleNotificationClick(notificationElement) {
     }
   }
 
-  // Handle real-time notifications with category awareness
+  // ENHANCED: Handle real-time notifications with visual feedback
   handleRealTimeNotification(notification) {
-   //  console.log("Handling real-time notification:", notification);
-
     // Add new notification to the beginning of the list
     this.notifications.unshift(notification);
 
     // Increment unread count
     this.unreadCount++;
 
-    // Update UI
+    // Update UI immediately
     this.updateBadge();
 
-    // Show visual alert
+    // Show real-time alert (even when panel is closed)
     this.showRealTimeNotificationAlert(notification);
 
-    // If panel is open and we're in relevant category, update the list
-    if (
-      this.isOpen &&
-      (this.currentCategory === "all" || this.currentCategory === "unread")
-    ) {
+    // Update the list if panel is open
+    if (this.isOpen) {
       this.renderNotifications();
     }
 
@@ -4251,14 +4289,10 @@ async handleNotificationClick(notificationElement) {
   // In main.js - Back to using main route
   async loadNotifications() {
     if (!authToken) {
-     //  console.log("🔐 No auth token, skipping notification load");
       return;
     }
 
     try {
-     //  console.log("📥 Loading notifications from server...");
-
-      // BACK TO MAIN ROUTE
       const response = await fetch(
         `${API_BASE_URL}/notifications?category=${this.currentCategory}`,
         {
@@ -4270,30 +4304,21 @@ async handleNotificationClick(notificationElement) {
 
       if (response.ok) {
         const result = await response.json();
-       //  console.log("📦 Notifications loaded:", result);
-
         if (result.success) {
           this.notifications = result.notifications || [];
           this.unreadCount = result.unreadCount || 0;
 
-          console.log(
-            `✅ Loaded ${this.notifications.length} notifications, ${this.unreadCount} unread`
-          );
-
-          this.renderNotifications();
+          // Update UI even if panel is closed
           this.updateBadge();
-        } else {
-          console.error("❌ Failed to load notifications:", result.error);
+
+          // Only render if panel is open
+          if (this.isOpen) {
+            this.renderNotifications();
+          }
         }
-      } else {
-        console.error("❌ HTTP error loading notifications:", response.status);
-        // Fallback to test data if main route fails
-        await this.loadFallbackNotifications();
       }
     } catch (error) {
-      console.error("❌ Error loading notifications:", error);
-      // Fallback to test data if main route fails
-      await this.loadFallbackNotifications();
+      // Silent fail for background updates
     }
   }
 
@@ -4438,6 +4463,7 @@ async handleNotificationClick(notificationElement) {
     }, 120000);
   }
 
+  // ENHANCED: Check for new notifications (optimized for background use)
   async checkForNewNotifications() {
     if (!authToken) return;
 
@@ -4454,15 +4480,19 @@ async handleNotificationClick(notificationElement) {
           const previousCount = this.unreadCount;
           this.unreadCount = result.unreadCount;
 
-          if (this.unreadCount > previousCount && previousCount > 0) {
-            this.showNewNotificationAlert();
-          }
+          // Update badge if count changed
+          if (this.unreadCount !== previousCount) {
+            this.updateBadge();
 
-          this.updateBadge();
+            // Show subtle visual feedback for new notifications
+            if (this.unreadCount > previousCount) {
+              this.showNewNotificationAlert();
+            }
+          }
         }
       }
     } catch (error) {
-      console.error("Error checking notifications:", error);
+      // Silent fail for background checks
     }
   }
 
@@ -4545,7 +4575,7 @@ async handleNotificationClick(notificationElement) {
   // Socket connection methods
   initializeSocketConnection() {
     if (!authToken) {
-     //  console.log("No auth token, skipping socket connection");
+      //  console.log("No auth token, skipping socket connection");
       return;
     }
 
@@ -4557,19 +4587,19 @@ async handleNotificationClick(notificationElement) {
       });
 
       this.socket.on("connect", () => {
-       //  console.log("🔌 Connected to real-time notifications");
+        //  console.log("🔌 Connected to real-time notifications");
         this.isConnected = true;
         this.updateConnectionStatus(true);
       });
 
       this.socket.on("disconnect", () => {
-       //  console.log("🔌 Disconnected from real-time notifications");
+        //  console.log("🔌 Disconnected from real-time notifications");
         this.isConnected = false;
         this.updateConnectionStatus(false);
       });
 
       this.socket.on("new-notification", (notification) => {
-       //  console.log("📢 Received real-time notification:", notification);
+        //  console.log("📢 Received real-time notification:", notification);
         this.handleRealTimeNotification(notification);
       });
 
@@ -4609,23 +4639,23 @@ async handleNotificationClick(notificationElement) {
   showSubscriptionUpdateFeedback(followingCount) {
     const feedback = document.createElement("div");
     feedback.className = "subscription-update-feedback";
-    feedback.innerHTML = `
-    <div style="
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--codeleaf-accent-primary);
-      color: white;
-      padding: 12px 16px;
-      border-radius: var(--codeleaf-radius-md);
-      box-shadow: var(--codeleaf-shadow-lg);
-      z-index: 10001;
-      font-size: var(--codeleaf-font-sm);
-      animation: slideInUp 0.3s ease;
-    ">
-      🔔 Now receiving real-time updates from ${followingCount} users
-    </div>
-  `;
+    //   feedback.innerHTML = `
+    //   <div style="
+    //     position: fixed;
+    //     bottom: 20px;
+    //     right: 20px;
+    //     background: var(--codeleaf-accent-primary);
+    //     color: white;
+    //     padding: 12px 16px;
+    //     border-radius: var(--codeleaf-radius-md);
+    //     box-shadow: var(--codeleaf-shadow-lg);
+    //     z-index: 10001;
+    //     font-size: var(--codeleaf-font-sm);
+    //     animation: slideInUp 0.3s ease;
+    //   ">
+    //     🔔 Now receiving real-time updates from ${followingCount} users
+    //   </div>
+    // `;
 
     document.body.appendChild(feedback);
     setTimeout(() => {
@@ -4710,9 +4740,33 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeApp();
 });
 
+// Enhanced notification initialization
+function initializeNotificationSystem() {
+  if (authToken && !window.notificationManager) {
+    try {
+      window.notificationManager = new NotificationManager();
+
+      // Set up periodic checks for notifications
+      setInterval(() => {
+        if (
+          authToken &&
+          window.notificationManager &&
+          !window.notificationManager.isOpen
+        ) {
+          window.notificationManager.checkForNewNotifications();
+        }
+      }, 60000); // Check every minute
+
+      console.log("🔔 Notification system initialized with auto-refresh");
+    } catch (error) {
+      console.error("❌ Error initializing notification system:", error);
+    }
+  }
+}
+
 async function initializeApp() {
   try {
-   //  console.log("🚀 Initializing FocusFlow...");
+    //  console.log("🚀 Initializing FocusFlow...");
 
     // First, set up all event listeners
     setupAuthEventListeners();
@@ -4731,13 +4785,18 @@ async function initializeApp() {
     renderTable();
     initializeActivityTracker();
 
-    // Initialize notification manager after auth check
-    setTimeout(() => {
-      if (authToken && !window.notificationManager) {
-        window.notificationManager = new NotificationManager();
-        initializeNotificationSubscriptions();
-      }
-    }, 1000);
+    // Initialize notification system after auth check
+    initializeNotificationSystem();
+
+    setupNotificationActivityRefresh();
+
+    // // Initialize notification manager after auth check
+    // setTimeout(() => {
+    //   if (authToken && !window.notificationManager) {
+    //     window.notificationManager = new NotificationManager();
+    //     initializeNotificationSubscriptions();
+    //   }
+    // }, 1000);
 
     // Start periodic sync
     setInterval(() => {
@@ -4746,10 +4805,36 @@ async function initializeApp() {
       }
     }, 20000);
 
-   //  console.log("✅ FocusFlow initialized successfully");
+    //  console.log("✅ FocusFlow initialized successfully");
   } catch (error) {
     console.error("❌ Error initializing app:", error);
   }
+}
+
+// Refresh notifications on user activity
+function setupNotificationActivityRefresh() {
+  let activityTimer;
+
+  const refreshOnActivity = () => {
+    if (activityTimer) {
+      clearTimeout(activityTimer);
+    }
+
+    activityTimer = setTimeout(() => {
+      if (
+        authToken &&
+        window.notificationManager &&
+        !window.notificationManager.isOpen
+      ) {
+        window.notificationManager.checkForNewNotifications();
+      }
+    }, 10000); // Refresh 10 seconds after user activity
+  };
+
+  // Listen for user interactions
+  ["click", "keypress", "scroll", "mousemove"].forEach((event) => {
+    document.addEventListener(event, refreshOnActivity, { passive: true });
+  });
 }
 
 // NEW: Initialize notification subscriptions with current following list
