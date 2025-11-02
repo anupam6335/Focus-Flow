@@ -4080,11 +4080,6 @@ class NotificationManager {
               : "Notifications will appear here"
           }
         </p>
-        ${
-          this.isConnected
-            ? '<div style="margin-top: var(--codeleaf-space-2); padding: var(--codeleaf-space-2); background: var(--codeleaf-bg-tertiary); border-radius: var(--codeleaf-radius-md); font-size: var(--codeleaf-font-xs); color: var(--codeleaf-accent-primary);">🔗 Real-time notifications enabled</div>'
-            : ""
-        }
       </div>
     `;
   }
@@ -4864,3 +4859,4 @@ async function initializeNotificationSubscriptions() {
     console.error("Error initializing notification subscriptions:", error);
   }
 }
+
