@@ -1,0 +1,699 @@
+/* ==========================================================================
+   Core Theme — Quiet Forest Library
+   Palette, typography, spacing, and soft motion tokens.
+   ========================================================================== */
+:root {
+  --bg: #1b1b1b; /* Soft Black — page background */
+  --paper: #232323; /* Panel base */
+  --ink: #e9e9e9; /* Soft Light Grey — primary text */
+  --muted: #cfcfcf; /* Secondary text */
+  --accent: #a3b18a; /* Sage Green — accents/buttons */
+  --line: rgba(233, 233, 233, 0.14); /* Subtle dividers */
+  --ring: rgba(163, 177, 138, 0.28); /* Focus ring */
+
+  --r: 18px;
+  --ease: cubic-bezier(0.25, 0.6, 0.2, 1); /* calm */
+  --shadow: 0 18px 80px rgba(0, 0, 0, 0.45);
+
+  --d-fade: 500ms;
+  --d-slide: 600ms;
+  --d-scale: 520ms;
+
+  /* NEW: spacing scale */
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --space-5: 22px;
+
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica Neue, Arial;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+a,
+button {
+  font: inherit;
+}
+
+/* ==========================================================================
+   Layout (single column, compact, no desktop scroll for key screens)
+   ========================================================================== */
+.stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3.8vw, 28px);
+}
+.sheet {
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  animation: fadeIn var(--d-fade) var(--ease) both;
+}
+.frame {
+  /* MORE AIR */
+  padding: clamp(20px, 4.6vw, 32px);
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3); /* added spacing */
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.seal {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: radial-gradient(circle at 30% 30%, var(--accent), transparent 60%),
+    radial-gradient(circle at 70% 70%, #6f7b59, transparent 60%);
+}
+.brand h1 {
+  margin: 0;
+  font-size: clamp(18px, 2.2vw, 22px);
+  letter-spacing: 0.4px;
+  font-weight: 700;
+}
+.mode .chip {
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   Story + Tabs (gentle slide on mode switch)
+   ========================================================================== */
+.story {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+  display: grid;
+  gap: var(--space-2);
+}
+.story p {
+  margin: 0;
+  line-height: 1.75;
+  color: #e9e9e9;
+}
+.mini-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  flex-wrap: wrap;
+}
+.t {
+  /* BUTTON REINFORCEMENT */
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #202020;
+  color: var(--muted);
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.t:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+}
+.t.primary {
+  background: var(--accent);
+  color: #1b1b1b;
+  border: none;
+}
+.step {
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* ==========================================================================
+   OAuth
+   ========================================================================== */
+.oauth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+@media (max-width: 420px) {
+  .oauth {
+    grid-template-columns: 1fr;
+  }
+}
+.oauth a {
+  /* BUTTON REINFORCEMENT */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #1b1b1b;
+  background: var(--accent);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  padding: 12px 16px;
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease),
+    opacity 200ms var(--ease);
+  position: relative;
+  line-height: 1;
+  white-space: nowrap;
+}
+.oauth a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+.oauth svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+.oauth .spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.28);
+  border-top-color: transparent;
+  display: none;
+  animation: spin 700ms linear infinite;
+  flex: 0 0 auto;
+}
+.oauth .loading .spinner {
+  display: inline-block;
+}
+.oauth .loading .oauth-label {
+  opacity: 0.6;
+}
+.helper {
+  margin-top: var(--space-1);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Status Banner (single-shot)
+   ========================================================================== */
+#status {
+  min-height: 0;
+  margin-top: var(--space-2);
+}
+.feedback {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  opacity: 1;
+  transition: opacity 350ms var(--ease);
+}
+.feedback.fade {
+  opacity: 0;
+}
+.ok {
+  background: rgba(163, 177, 138, 0.12);
+  border: 1px solid rgba(163, 177, 138, 0.28);
+  color: #e9e9e9;
+}
+.err {
+  background: rgba(255, 96, 96, 0.1);
+  border: 1px solid rgba(255, 96, 96, 0.22);
+  color: #ffdede;
+}
+.sheet.shake {
+  animation: shake 220ms ease;
+}
+
+/* ==========================================================================
+   Form Shell
+   ========================================================================== */
+.form {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-3);
+}
+label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 8px;
+} /* more label air */
+.label-icon {
+  margin-right: 6px;
+}
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2);
+  align-items: end;
+}
+.tools {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 40px; /* keep buttons from collapsing */
+}
+
+/* ==========================================================================
+   Inputs
+   ========================================================================== */
+.field {
+  position: relative;
+}
+input {
+  width: 100%;
+  background: #202020;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 46px 14px 16px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 180ms var(--ease), box-shadow 200ms var(--ease),
+    transform 120ms var(--ease);
+}
+input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+input.valid-soft {
+  box-shadow: 0 0 0 2px rgba(163, 177, 138, 0.22);
+  border-color: rgba(163, 177, 138, 0.38);
+  transition: box-shadow 600ms var(--ease), border-color 600ms var(--ease);
+}
+
+/* Caps Lock chip */
+.caps {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ffdede;
+}
+
+/* ==========================================================================
+   Generic Button (Check / Auto / Copy / Hide)
+   ========================================================================== */
+.btn {
+  /* BUTTON REINFORCEMENT */
+  appearance: none;
+  background: #202020;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease),
+    background 180ms var(--ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  min-height: 36px;
+  min-width: 64px;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+}
+.btn.primary {
+  background: var(--accent);
+  color: #1b1b1b;
+  border: none;
+  font-weight: 800;
+}
+.tools .btn {
+  flex-shrink: 0;
+} /* prevent collapse in grid */
+
+/* ==========================================================================
+   Password eye toggle (UNCHANGED visuals, reinforced sizing)
+   ========================================================================== */
+.eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #202020;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 180ms var(--ease);
+}
+.eye:hover {
+  transform: translateY(-50%) translateY(-1px);
+}
+.eye svg {
+  width: 20px;
+  height: 20px;
+}
+.eye .iris {
+  transition: transform 180ms var(--ease), opacity 180ms var(--ease);
+}
+.eye .slash {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 220ms var(--ease), opacity 220ms var(--ease);
+}
+.eye[data-state="visible"] .iris {
+  transform: scale(0.9);
+  opacity: 0.9;
+}
+.eye[data-state="visible"] .slash {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+/* ==========================================================================
+   OTP strip — compact but sturdy
+   ========================================================================== */
+.otp {
+  display: none;
+  margin-top: var(--space-2);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #1f1f1f;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
+    monospace;
+  font-weight: 800;
+  color: var(--accent);
+}
+.otp .tools {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.otp .btn {
+  min-width: 72px;
+}
+
+/* ==========================================================================
+   Footer actions
+   ========================================================================== */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: #1b1b1b;
+  font-weight: 900;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease),
+    opacity 180ms var(--ease);
+}
+.key:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+.key[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.key svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+.key-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.26);
+  border-top-color: transparent;
+  display: none;
+  animation: spin 700ms linear infinite;
+}
+.key.loading .key-spinner {
+  display: inline-block;
+}
+.links {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.link {
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Password Strength
+   ========================================================================== */
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  min-height: 28px;
+  animation: fadeSlideIn var(--d-slide) var(--ease) both;
+}
+.meter {
+  display: flex;
+  gap: 4px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #202020;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease);
+}
+.dot.on {
+  background: var(--accent);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+.note-s {
+  font-size: 12px;
+  color: var(--muted);
+}
+.breathe {
+  display: inline-block;
+  animation: gentleScale var(--d-scale) ease-in-out infinite;
+}
+
+/* Match chips */
+.match {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.match.ok {
+  color: #cfe7c7;
+}
+.match.bad {
+  color: #ffdede;
+}
+
+/* Session note */
+.session-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Create Account Layout (more breathing room)
+   ========================================================================== */
+#groupRegister .reg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  animation: fadeSlideIn var(--d-slide) var(--ease) both;
+  margin-top: 2px;
+}
+#groupRegister .reg-col {
+  display: grid;
+  gap: var(--space-2);
+}
+#groupRegister .tight {
+  margin-top: 0;
+}
+#groupRegister .row2.tight {
+  gap: var(--space-2);
+}
+#groupRegister .helper.single-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 4px;
+  min-height: 18px;
+}
+#groupRegister .strength-compact {
+  margin-top: 6px;
+}
+#groupRegister .strength-compact .note-s {
+  font-size: 12px;
+}
+#groupRegister label {
+  margin-bottom: 6px;
+}
+@media (max-width: 680px) {
+  #groupRegister .reg-grid {
+    grid-template-columns: 1fr;
+  }
+  #groupRegister .helper.single-line {
+    white-space: normal;
+  }
+  .tools {
+    justify-content: flex-start;
+  } /* keep buttons visible in narrow widths */
+}
+
+/* ==========================================================================
+   OTP and Reset compact
+   ========================================================================== */
+#groupOTP .field input {
+  letter-spacing: 0.08em;
+}
+#groupReset .field + .field {
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   Mobile spacing
+   ========================================================================== */
+@media (max-width: 560px) {
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .key {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Focus outlines (accessible yet quiet)
+   ========================================================================== */
+button:focus,
+a:focus,
+input:focus {
+  outline: 2px solid rgba(163, 177, 138, 0.28);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gentleScale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
