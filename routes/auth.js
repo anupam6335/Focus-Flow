@@ -624,8 +624,6 @@ router.post('/logout', (req, res) => {
   });
 });
 
-
-
 /**
  * @route   GET /api/auth/environment
  * @desc    Check current environment (for debugging)
@@ -640,37 +638,35 @@ router.get('/environment', (req, res) => {
   });
 });
 
-
 /**
  * @route   POST /api/auth/get-auth-provider
- * @desc    Get auth provider for an email (no authentication required)
+ * @desc    Return the auth provider for a given email (google | github | local | null)
  * @access  Public
  */
 router.post('/get-auth-provider', validateEmail, asyncHandler(async (req, res) => {
   const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      error: 'Email is required'
-    });
+  if (!email || !email.trim()) {
+    return res.status(400).json({ success: false, error: 'Email is required' });
   }
 
-  // Find user by email
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const v = email.trim().toLowerCase();
+  const user = await User.findOne({ email: v }).select('authProvider');
 
   if (!user) {
     return res.json({
       success: true,
+      exists: false,
       authProvider: null,
       message: 'No user found with this email'
     });
   }
 
-  res.json({
+  const provider = user.authProvider || 'local';
+  return res.json({
     success: true,
-    authProvider: user.authProvider || 'local',
-    message: `User uses ${user.authProvider || 'local'} authentication`
+    exists: true,
+    authProvider: provider,
+    message: `User uses ${provider} authentication`
   });
 }));
 

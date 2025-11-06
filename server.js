@@ -48,6 +48,10 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.get('/auth', (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // Static file serving
 app.use(express.static(path.join(__dirname, 'public')));
@@ -66,7 +70,7 @@ app.use('/api/social', socialRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/admin', adminNotificationRoutes);
 app.use('/api/admin', banManagementRoutes);
-app.use('/api', banManagementRoutes); // For user-facing ban routes
+app.use('/api', banManagementRoutes); 
 
 
 

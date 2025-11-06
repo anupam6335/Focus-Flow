@@ -1,22 +1,12 @@
 /**
  * FocusFlow — Quiet Auth (Forest Library Edition)
- * app.js orchestrates all interactions with a calm, minimal motion system.
- * The backend endpoints are already live; this file only handles UX flow.
- *
- * GLOBAL NOTE:
- * - All functions include top docs (what/where/IO).
- * - Network calls go through fx() for consistent handling.
- * - Animations are fade/slide/scale only—no flashing or color pulsing.
- * - New UX features are additive and frontend-only; no API changes.
+ * Page logic only. Shared utilities live in js/helper.js.
  */
 
 const API = "/api/auth";
-const TIMEOUT = 15000;
-const $ = (id) => document.getElementById(id);
+// const $ = window.Helper ? window.Helper.$ : (id) => document.getElementById(id);
 
-/* --------------------------------------------------------------------------
-   Element Cache — single-pass lookups for performance.
-   -------------------------------------------------------------------------- */
+/* Element Cache */
 const sheet = $("sheet");
 const chipMode = $("chipMode");
 const story = $("story");
@@ -77,7 +67,7 @@ const matchReg = $("matchReg"),
 const matchReset = $("matchReset"),
   matchResetText = $("matchResetText");
 
-/* Caps Lock chips */
+/* Caps */
 const capsLogin = $("capsLogin");
 const capsReg = $("capsReg");
 const capsReset = $("capsReset");
@@ -95,11 +85,11 @@ const eyePass = $("eyePass"),
   eyeNew = $("eyeNew"),
   eyeConfirmNew = $("eyeConfirmNew");
 
-/* OAuth buttons */
+/* OAuth */
 const btnOAuthGoogle = $("btnOAuthGoogle");
 const btnOAuthGitHub = $("btnOAuthGitHub");
 
-/* OTP reveal cluster */
+/* OTP reveal */
 const otpReveal = $("otpReveal"),
   otpValue = $("otpValue"),
   copyOtp = $("copyOtp"),
@@ -113,13 +103,59 @@ let mode = "login",
   noteTimerU = null,
   lastUCopy = "";
 let debounceEmailTimer = null;
+let verifiedEmail = "";
+let lastEmailChecked = "";
+let lastEmailResult = "";
 
-/* --------------------------------------------------------------------------
-   Utility: Query param cleanup for OAuth callback noise.
-   What:   Remove ?code=, ?state=, etc. to present a clean URL after redirects.
-   Where:  On page load (auth.html), harmless if not present.
-   I/O:    none
-   -------------------------------------------------------------------------- */
+const EMAIL_PROVIDERS = [
+  "gmail",
+  "yahoo",
+  "outlook",
+  "hotmail",
+  "live",
+  "icloud",
+  "proton",
+  "protonmail",
+  "gmx",
+  "yandex",
+  "aol",
+  "zoho",
+  "fastmail",
+  "tutanota",
+  "msn",
+  "hey",
+  "pmme",
+];
+const USERNAME_RE = /^[a-z0-9]{3,30}$/; // a–z, 0–9, 3–30
+
+function hasProviderToken(s) {
+  const v = (s || "").toLowerCase();
+  return EMAIL_PROVIDERS.some((p) => v.includes(p));
+}
+
+function validateUsernameStrict(raw) {
+  const n = (raw || "").toLowerCase().trim();
+  if (!n) return { ok: false, msg: "Enter a username." };
+  if (/@/.test(n))
+    return {
+      ok: false,
+      msg: "Usernames can’t be emails. Use letters and numbers only.",
+    };
+
+  const s = n.replace(/[^a-z0-9]/g, "");
+  if (s !== n) return { ok: false, msg: "Use only a–z and 0–9." };
+  if (s.length < 3 || s.length > 30)
+    return { ok: false, msg: "3–30 characters only." };
+  if (hasProviderToken(s))
+    return {
+      ok: false,
+      msg: "Don’t include email providers (gmail, outlook, yahoo).",
+    };
+  if (!USERNAME_RE.test(s)) return { ok: false, msg: "Use only a–z and 0–9." };
+  return { ok: true, value: s };
+}
+
+/* Clean OAuth query params */
 (function cleanQueryParams() {
   try {
     const u = new URL(location.href);
@@ -141,22 +177,29 @@ let debounceEmailTimer = null;
   } catch {}
 })();
 
-/* --------------------------------------------------------------------------
-   dotRefs(block)
-   -------------------------------------------------------------------------- */
-function dotRefs(block) {
-  if (!block.$wrap) return null;
-  if (!block.dots) {
-    block.dots = Array.from(block.$wrap.querySelectorAll(".dot"));
-  }
-  return block.dots;
+/* Friendly error mapper */
+function mapErrorToFriendly(msg = "") {
+  const t = (msg || "").toLowerCase();
+  if (t.includes("invalid username/email or password"))
+    return "That didn’t work. Please check your username/email and password.";
+  if (t.includes("passwords do not match"))
+    return "The two passwords don’t match.";
+  if (t.includes("email already registered"))
+    return "This email is already registered. Try Sign in or reset.";
+  if (
+    t.includes("username already exists") ||
+    t.includes("username already taken")
+  )
+    return "That username is taken.";
+  if (t.includes("use google") || t.includes("use github")) return msg;
+  if (t.includes("network timeout"))
+    return "Network is slow. Please try again.";
+  if (t.includes("network error"))
+    return "No internet? Please check your connection.";
+  return msg;
 }
 
-/* --------------------------------------------------------------------------
-   showMsg(text, ok)
-   What:   Display a single-shot status message that auto-fades out.
-           Adds gentle micro-shake on errors and inserts “try another way”.
-   -------------------------------------------------------------------------- */
+/* Status banner */
 function showMsg(text, ok = false, opts = {}) {
   clearTimeout(fadeTimer);
   const friendly = mapErrorToFriendly(text);
@@ -166,13 +209,13 @@ function showMsg(text, ok = false, opts = {}) {
       : "";
   statusEl.innerHTML = `<div class="feedback ${
     ok ? "ok" : "err"
-  }" id="fx">${escapeHtml(friendly)}${extra}</div>`;
+  }" id="fx">${Helper.escapeHtml(friendly)}${extra}</div>`;
   if (!ok) {
     sheet.classList.add("shake");
     setTimeout(() => sheet.classList.remove("shake"), 260);
   }
-  const fx = $("fx");
-  if (fx) {
+  const fxEl = $("fx");
+  if (fxEl) {
     $("inlineForgot") && ($("inlineForgot").onclick = () => setMode("forgot"));
     $("inlineGoogle") &&
       ($("inlineGoogle").onclick = () => btnOAuthGoogle.click());
@@ -191,66 +234,7 @@ function showMsg(text, ok = false, opts = {}) {
   );
 }
 
-/* --------------------------------------------------------------------------
-   mapErrorToFriendly
-   PURPOSE: Convert backend or technical errors to friendly copy.
-   -------------------------------------------------------------------------- */
-function mapErrorToFriendly(msg = "") {
-  const t = (msg || "").toLowerCase();
-  if (t.includes("invalid username/email or password"))
-    return "That didn’t work. Please check your username/email and password.";
-  if (t.includes("passwords do not match"))
-    return "The two passwords don’t match.";
-  if (t.includes("email already registered"))
-    return "This email is already registered. Try Sign in or reset.";
-  if (
-    t.includes("username already exists") ||
-    t.includes("username already taken")
-  )
-    return "That username is taken.";
-  if (t.includes("use google") || t.includes("use github")) return msg; // show provider name as-is
-  if (t.includes("network timeout"))
-    return "Network is slow. Please try again.";
-  if (t.includes("network error"))
-    return "No internet? Please check your connection.";
-  return msg;
-}
-
-/* --------------------------------------------------------------------------
-   fx(url, opts, timeout)
-   -------------------------------------------------------------------------- */
-async function fx(url, opts = {}, timeout = TIMEOUT) {
-  const ctl = new AbortController();
-  const id = setTimeout(() => ctl.abort(), timeout);
-  try {
-    const r = await fetch(url, {
-      ...opts,
-      credentials: "include",
-      signal: ctl.signal,
-    });
-    clearTimeout(id);
-    const t = await r.text();
-    let data = null;
-    try {
-      data = t ? JSON.parse(t) : null;
-    } catch {
-      data = { success: false, error: "Invalid server response" };
-    }
-    return { ok: r.ok, status: r.status, data };
-  } catch (e) {
-    clearTimeout(id);
-    throw new Error(
-      e.name === "AbortError"
-        ? "Network timeout. Try again."
-        : "Network error. Check connection."
-    );
-  }
-}
-
-/* --------------------------------------------------------------------------
-   setMode(name)
-   What:   Switch UI state, update copy/step cue, button text, and focus.
-   -------------------------------------------------------------------------- */
+/* Mode switcher (unchanged behavior) */
 function setMode(name) {
   mode = name;
   chipMode.textContent = {
@@ -260,7 +244,6 @@ function setMode(name) {
     otp: "Enter code",
     reset: "Reset password",
   }[name];
-
   groupLogin.hidden = name !== "login";
   groupRegister.hidden = name !== "register";
   groupForgot.hidden = name !== "forgot";
@@ -307,10 +290,9 @@ function setMode(name) {
       <button class="t ${
         name === "register" ? "primary" : ""
       }" id="tRegister2">Create account</button>
-    </div>
-  `;
-  document.getElementById("tLogin2").onclick = () => setMode("login");
-  document.getElementById("tRegister2").onclick = () => setMode("register");
+    </div>`;
+  $("tLogin2").onclick = () => setMode("login");
+  $("tRegister2").onclick = () => setMode("register");
 
   helper.textContent = {
     login:
@@ -330,94 +312,14 @@ function setMode(name) {
     reset: "Reset password",
   }[name];
 
-  /* subtle fade/slide entry */
   sheet.style.animation = "none";
   sheet.offsetHeight;
   sheet.style.animation = "fadeIn var(--d-fade) var(--ease) both";
-
-  /* Show login strength only on login */
   strengthLogin.$wrap.hidden = name !== "login";
-
-  /* Accessibility: move focus to first relevant field */
   focusFirstField(name);
 }
 
-/* --------------------------------------------------------------------------
-   escapeHtml(s)
-   -------------------------------------------------------------------------- */
-function escapeHtml(s) {
-  return s == null
-    ? ""
-    : String(s).replace(
-        /[&<>"']/g,
-        (m) =>
-          ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;",
-          }[m])
-      );
-}
-
-/* --------------------------------------------------------------------------
-   toggleEye(btn, input)  (UNCHANGED — required)
-   -------------------------------------------------------------------------- */
-function toggleEye(btn, input) {
-  const hidden = input.type === "password";
-  input.type = hidden ? "text" : "password";
-  btn.dataset.state = hidden ? "visible" : "hidden";
-  btn.setAttribute("aria-label", hidden ? "Hide password" : "Show password");
-}
-
-/* --------------------------------------------------------------------------
-   strengthScore(pw)
-   -------------------------------------------------------------------------- */
-function strengthScore(pw) {
-  let score = 0;
-  if (!pw)
-    return {
-      score,
-      label: "weak",
-      quip: "This password is so weak it needs a nap 💤",
-    };
-  const len = pw.length >= 12 ? 2 : pw.length >= 8 ? 1 : 0;
-  const variety = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].reduce(
-    (n, re) => n + (re.test(pw) ? 1 : 0),
-    0
-  );
-  score = Math.min(3, len + (variety >= 3 ? 2 : variety >= 2 ? 1 : 0));
-  if (score <= 1)
-    return { score: 1, label: "weak", quip: "Maybe give it some protein? 💪" };
-  if (score === 2)
-    return {
-      score: 2,
-      label: "medium",
-      quip: "Getting there — a few spices more 🌶️",
-    };
-  return {
-    score: 3,
-    label: "strong",
-    quip: "Balanced and ready — like a calm ninja 🥷",
-  };
-}
-
-/* --------------------------------------------------------------------------
-   paintStrength(block, pw)
-   -------------------------------------------------------------------------- */
-function paintStrength(block, pw) {
-  if (!block.$wrap) return;
-  const dots = dotRefs(block);
-  const { score, label, quip } = strengthScore(pw);
-  dots.forEach((d, i) => d.classList.toggle("on", i < score));
-  block.text.textContent = `${label.toUpperCase()}. ${quip}`;
-  block.emoji.textContent = score >= 3 ? "🍵" : score === 2 ? "🌿" : "🫧";
-}
-
-/* --------------------------------------------------------------------------
-   showUnameNote(text, type)
-   -------------------------------------------------------------------------- */
+/* Username helper notes */
 function showUnameNote(text, type) {
   if (text === lastUCopy) return;
   lastUCopy = text;
@@ -430,17 +332,35 @@ function showUnameNote(text, type) {
   }, 5000);
 }
 
-/* --------------------------------------------------------------------------
-   checkUsernameAvailability(name)
-   -------------------------------------------------------------------------- */
+/* Availability check */
 async function checkUsernameAvailability(name) {
-  const n = (name || "").toLowerCase().trim();
-  if (n.length < 3) {
+  const raw = name || "";
+  const sanitized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  if (username && sanitized !== raw) username.value = sanitized;
+
+  if (sanitized.length < 3) {
     btnAuto.style.display = "none";
-    showUnameNote("Username must be at least 3 characters.", "err");
+    showUnameNote("Min 3 chars. Letters/numbers only.", "err");
     return false;
   }
-  const r = await fx(`/api/auth/check-username/${encodeURIComponent(n)}`);
+  if (!USERNAME_RE.test(sanitized)) {
+    btnAuto.style.display = "none";
+    showUnameNote("Use only a–z and 0–9 (no @).", "err");
+    return false;
+  }
+  if (hasProviderToken(sanitized)) {
+    btnAuto.style.display = "none";
+    showUnameNote(
+      "Usernames can’t include email providers (e.g., gmail, outlook, yahoo).",
+      "err"
+    );
+    return false;
+  }
+
+  const r = await Helper.fx(
+    `${API}/check-username/${encodeURIComponent(sanitized)}`
+  );
   if (!r.ok) {
     btnAuto.style.display = "none";
     showUnameNote(
@@ -449,26 +369,34 @@ async function checkUsernameAvailability(name) {
     );
     return false;
   }
+
   if (r.data.available) {
     btnAuto.style.display = "none";
     showUnameNote("Username is available.", "ok");
-    pulseValid(username);
+    Helper.pulseValid(username);
     return true;
   }
+
   btnAuto.style.display = "inline-block";
   showUnameNote("Username is taken. Use Auto to pick one.", "err");
   return false;
 }
 
-/* --------------------------------------------------------------------------
-   autoGenerateUsername()
-   -------------------------------------------------------------------------- */
+/* Autogen username (unchanged) */
 async function autoGenerateUsername() {
-  const base =
+  const baseRaw =
     (username.value || "focus")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "")
       .slice(0, 15) || "flow";
+
+  // strip provider tokens from the base, just in case
+  const base =
+    EMAIL_PROVIDERS.reduce(
+      (acc, p) => acc.replace(new RegExp(p, "g"), ""),
+      baseRaw
+    ) || "flow";
+
   const tags = [
     "spark",
     "flow",
@@ -487,82 +415,209 @@ async function autoGenerateUsername() {
     "prime",
     "beam",
   ];
-  const picks = [
-    `${base}${Math.floor(Math.random() * 900 + 100)}`,
-    `${base}_${tags[Math.floor(Math.random() * tags.length)]}`,
-    `${tags[Math.floor(Math.random() * tags.length)]}_${base}`,
-    `${base}${new Date().getFullYear() % 100}`,
-    `${base}${Math.floor(Math.random() * 99 + 1)}`,
-  ];
-  for (const c of picks) {
+  const rand = (n) => Math.floor(Math.random() * n);
+  const pick = () => tags[rand(tags.length)];
+
+  const make = (s) => s.slice(0, 30);
+  const candidates = [
+    make(`${base}${100 + rand(900)}`),
+    make(`${base}${pick()}`),
+    make(`${pick()}${base}`),
+    make(`${base}${new Date().getFullYear() % 100}`),
+    make(`${base}${1 + rand(99)}`),
+  ].filter((c) => c.length >= 3 && !hasProviderToken(c));
+
+  for (const c of candidates) {
     if (await checkUsernameAvailability(c)) {
       username.value = c;
       btnAuto.style.display = "none";
       showUnameNote("Auto-generated username selected.", "ok");
-      pulseValid(username);
+      Helper.pulseValid(username);
       return;
     }
   }
   for (let i = 0; i < 10; i++) {
-    const c = `${base}${Math.floor(Math.random() * 9999)}`;
-    if (await checkUsernameAvailability(c)) {
+    const c = make(`${base}${rand(9999)}`);
+    if (
+      c.length >= 3 &&
+      !hasProviderToken(c) &&
+      (await checkUsernameAvailability(c))
+    ) {
       username.value = c;
       btnAuto.style.display = "none";
       showUnameNote("Auto-generated username selected.", "ok");
-      pulseValid(username);
+      Helper.pulseValid(username);
       return;
     }
   }
   showUnameNote("Could not find one now. Try another base.", "err");
 }
 
-/* --------------------------------------------------------------------------
-   instantEmailCheck(value)
-   PURPOSE: Immediate POST /check-email with debounce.
-   -------------------------------------------------------------------------- */
+/* -------- Login request guard: dedupe + cooldown -------- */
+const LoginGuard = (() => {
+  let lastAt = 0;
+  let cooldownUntil = 0;
+  const MIN_GAP = 1200; // min 1.2s between login requests
+  const FAIL_COOLDOWN = 2500; // short cooloff after a failure
+  const recentFail = new Map(); // sig -> { ts, message, status }
+  const inflight = new Map(); // sig -> Promise
+
+  const makeSig = (id, pw) => `${(id || "").trim().toLowerCase()}|${pw || ""}`; // short-lived in-memory signature
+
+  function canSend() {
+    const now = Date.now();
+    if (now < cooldownUntil) return { ok: false, reason: "cooldown" };
+    if (now - lastAt < MIN_GAP) return { ok: false, reason: "gap" };
+    return { ok: true };
+  }
+  function noteSend() {
+    lastAt = Date.now();
+  }
+
+  function startInflight(sig, p) {
+    inflight.set(sig, p);
+    p.finally(() => inflight.delete(sig));
+    return p;
+  }
+  function getInflight(sig) {
+    return inflight.get(sig) || null;
+  }
+
+  function rememberFail(sig, message, status) {
+    recentFail.set(sig, { ts: Date.now(), message, status });
+    cooldownUntil = Date.now() + FAIL_COOLDOWN;
+  }
+  function recallFail(sig, ttl = 5000) {
+    const hit = recentFail.get(sig);
+    if (!hit) return null;
+    if (Date.now() - hit.ts > ttl) {
+      recentFail.delete(sig);
+      return null;
+    }
+    return hit;
+  }
+
+  return {
+    makeSig,
+    canSend,
+    noteSend,
+    startInflight,
+    getInflight,
+    rememberFail,
+    recallFail,
+  };
+})();
+
+async function emailExistsAnyProvider(email) {
+  const v = (email || "").trim();
+  if (!v) return { exists: false, provider: null };
+
+  try {
+    const r = await Helper.cachedJson(
+      `${API}/get-auth-provider`,
+      { email: v },
+      { ttl: 5 * 60 * 1000 }
+    );
+    if (r.ok && r.data) {
+      return { exists: !!r.data.exists, provider: r.data.authProvider || null };
+    }
+  } catch (_) {}
+  // fail-open: don’t block the user if network hiccups
+  return { exists: false, provider: null };
+}
+
+//  instantEmailCheck with this debounced + cached version:
+
 async function instantEmailCheck(value) {
   const v = (value || "").trim();
+
   if (!v) {
     emailNote.textContent = "";
     return;
   }
-  if (debounceEmailTimer) clearTimeout(debounceEmailTimer);
-  debounceEmailTimer = setTimeout(async () => {
-    const r = await fx(`/api/auth/check-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: v }),
-    });
-    if (!r.ok) {
-      emailNote.textContent = "Could not validate email right now.";
+
+  // Skip early if format is clearly invalid (prevents 400 spam)
+  if (!Helper.isEmailLike(v)) {
+    emailNote.textContent = "Please enter a valid email address.";
+    emailNote.style.color = "#ffdede";
+    return;
+  }
+
+  // Reuse the very last result if the user toggled focus but value didn't change
+  if (v === lastEmailChecked && lastEmailResult) {
+    const { exists, provider, available } = lastEmailResult;
+    if (exists) {
+      if (provider === "local") {
+        emailNote.textContent =
+          "Email already registered. “Login” or use “Forgot Password”.";
+      } else {
+        emailNote.textContent = provider
+          ? `Email already used. Sign in with ${providerPretty(provider)}.`
+          : "Email already used. Sign in.";
+      }
       emailNote.style.color = "#ffdede";
       return;
     }
-    if (!r.data.available) {
-      emailNote.textContent =
-        "This email is already in use. Try a different one.";
-      emailNote.style.color = "#ffdede";
-    } else {
+    // Not found in /get-auth-provider → show availability from /check-email cache result if present
+    if (available === true) {
       emailNote.textContent = "Email is available.";
       emailNote.style.color = "#E9E9E9";
-      pulseValid(email);
+      Helper.pulseValid(email);
+      return;
     }
-  }, 300);
+  }
+
+  // 1) Authoritative cross-provider check (cached)
+  const pf = await emailExistsAnyProvider(v);
+  lastEmailChecked = v;
+
+  if (pf.exists) {
+    lastEmailResult = { exists: true, provider: pf.provider };
+    if (pf.provider === "local") {
+      emailNote.textContent =
+        "Email already registered. “Login” or use “Forgot Password”.";
+    } else {
+      emailNote.textContent = pf.provider
+        ? `Email already used. Sign in with ${providerPretty(pf.provider)}.`
+        : "Email already used. Sign in.";
+    }
+    emailNote.style.color = "#ffdede";
+    return;
+  }
+
+  // 2) Only if not found above, ask /check-email (cached)
+  const r = await Helper.cachedJson(
+    `${API}/check-email`,
+    { email: v },
+    { ttl: 5 * 60 * 1000 }
+  );
+  if (!r.ok) {
+    emailNote.textContent = "Could not validate email right now.";
+    emailNote.style.color = "#ffdede";
+    lastEmailResult = null;
+    return;
+  }
+
+  if (!r.data.available) {
+    emailNote.textContent = "Email already used. Sign in.";
+    emailNote.style.color = "#ffdede";
+    lastEmailResult = { exists: true, provider: "local" };
+  } else {
+    emailNote.textContent = "Email is available.";
+    emailNote.style.color = "#E9E9E9";
+    Helper.pulseValid(email);
+    lastEmailResult = { exists: false, provider: null, available: true };
+  }
 }
 
-/* --------------------------------------------------------------------------
-   requestForgot(v)
-   -------------------------------------------------------------------------- */
+/* Forgot flow */
 async function requestForgot(v) {
-  // First check the auth provider for this email
   try {
-    const authProviderCheck = await fx(`${API}/get-auth-provider`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: v }),
-    });
-
-    // Handle case where email doesn't exist
+    const authProviderCheck = await Helper.cachedJson(
+      `${API}/get-auth-provider`,
+      { email: v },
+      { ttl: 5 * 60 * 1000 } // cache 5 minutes
+    );
     if (
       authProviderCheck.ok &&
       authProviderCheck.data &&
@@ -570,32 +625,20 @@ async function requestForgot(v) {
     ) {
       showMsg(`This Email ID doesn't exist.`, false, {
         sticky: true,
-        duration: 15000, // Show for 15 seconds
+        duration: 15000,
       });
-
-      // Add links for registration and Google
       setTimeout(() => {
         const fx = $("fx");
         if (fx) {
-          const extraHtml = ` <span class="inline-alt">You can <span class="link" id="registerLinkForgot">register with this email</span> or use <span class="link" id="googleLinkForgot">Google</span> if you have this account.</span>`;
-          fx.innerHTML += extraHtml;
-
-          // Add click handlers
-          const registerLink = document.getElementById("registerLinkForgot");
-          const googleLink = document.getElementById("googleLinkForgot");
-
-          if (registerLink) {
-            registerLink.onclick = () => setMode("register");
-          }
-          if (googleLink) {
-            googleLink.onclick = () => btnOAuthGoogle.click();
-          }
+          fx.innerHTML += `<span class="inline-alt">You can <span class="link" id="registerLinkForgot">register with this email</span> or use <span class="link" id="googleLinkForgot">Google</span> if you have this account.</span>`;
+          $("registerLinkForgot") &&
+            ($("registerLinkForgot").onclick = () => setMode("register"));
+          $("googleLinkForgot") &&
+            ($("googleLinkForgot").onclick = () => btnOAuthGoogle.click());
         }
       }, 100);
-
       return;
     }
-
     if (
       authProviderCheck.ok &&
       authProviderCheck.data &&
@@ -604,45 +647,29 @@ async function requestForgot(v) {
     ) {
       const provider = authProviderCheck.data.authProvider;
       const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
-
-      // Use the EXACT same approach as login errors
       showMsg(
         `This account uses ${providerName} login. No reset code is needed.`,
         false,
-        {
-          sticky: true,
-          duration: 15000, // Show for 15 seconds
-        }
+        { sticky: true, duration: 15000 }
       );
-
-      // Manually add the extra HTML with links (same as login mode)
       setTimeout(() => {
         const fx = $("fx");
         if (fx) {
-          const extraHtml = ` <span class="inline-alt">Click <span class="link" id="oauthLinkForgot">here to sign in with ${providerName}</span>.</span>`;
-          fx.innerHTML += extraHtml;
-
-          // Add click handler
-          const oauthLink = document.getElementById("oauthLinkForgot");
-          if (oauthLink) {
+          fx.innerHTML += ` <span class="inline-alt">Click <span class="link" id="oauthLinkForgot">here to sign in with ${providerName}</span>.</span>`;
+          const oauthLink = $("oauthLinkForgot");
+          if (oauthLink)
             oauthLink.onclick = () => {
-              if (provider === "google") {
-                btnOAuthGoogle.click();
-              } else if (provider === "github") {
-                btnOAuthGitHub.click();
-              }
+              provider === "google"
+                ? btnOAuthGoogle.click()
+                : btnOAuthGitHub.click();
             };
-          }
         }
       }, 100);
-
-      return; // STOP - don't proceed to OTP
+      return;
     }
-  } catch (err) {
-    // If we can't check auth provider, continue with normal flow
-  }
+  } catch {}
 
-  const r = await fx(`${API}/forgot-password`, {
+  const r = await Helper.fx(`${API}/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: v }),
@@ -654,6 +681,7 @@ async function requestForgot(v) {
   showMsg("If registered, a calm reset code was sent.", true);
   lastOtp = r.data?.otp || null;
   emailOTP.value = v;
+  verifiedEmail = v;
   if (lastOtp) {
     otpValue.textContent = lastOtp;
     otpReveal.style.display = "flex";
@@ -661,11 +689,9 @@ async function requestForgot(v) {
   setMode("otp");
 }
 
-/* --------------------------------------------------------------------------
-   verifyOtp(vEmail, vCode)
-   -------------------------------------------------------------------------- */
+/* Verify OTP */
 async function verifyOtp(vEmail, vCode) {
-  const r = await fx(`${API}/verify-reset-otp`, {
+  const r = await Helper.fx(`${API}/verify-reset-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: vEmail, otp: vCode }),
@@ -675,14 +701,12 @@ async function verifyOtp(vEmail, vCode) {
     return false;
   }
   showMsg("Code verified — almost there.", true);
+  verifiedEmail = vEmail;
   setMode("reset");
   return true;
 }
 
-/* --------------------------------------------------------------------------
-   submitHandler(e)
-   Master submit gate; routes by current mode. Adds loading state.
-   -------------------------------------------------------------------------- */
+/* Submit gate */
 async function submitHandler(e) {
   e.preventDefault();
   if (busy) return;
@@ -692,25 +716,75 @@ async function submitHandler(e) {
   showMsg("Processing…", true);
   try {
     if (mode === "login") {
-      if (!identifier.value.trim() || !password.value)
-        throw new Error("Enter username/email and password.");
-      const r = await fx(`${API}/login`, {
+      const id = (identifier.value || "").trim();
+      const pw = password.value || "";
+
+      if (!id || !pw) throw new Error("Enter username/email and password.");
+
+      // signature for this exact attempt
+      const sig = LoginGuard.makeSig(id, pw);
+
+      // If we just failed with the same payload, reuse the message (no server call)
+      const prior = LoginGuard.recallFail(sig);
+      if (prior) {
+        showMsg(prior.message, false, { sticky: true });
+        return;
+      }
+
+      // If an identical request is already in-flight, just await it
+      const sameInflight = LoginGuard.getInflight(sig);
+      if (sameInflight) {
+        const r = await sameInflight;
+        if (!r.ok) {
+          const msg = r.data?.authProvider
+            ? `This account uses ${r.data.authProvider} login. Please continue with ${r.data.authProvider} above.`
+            : r.data?.error || `Login failed (${r.status}).`;
+          LoginGuard.rememberFail(sig, msg, r.status);
+          showMsg(msg, false, { sticky: true });
+          return;
+        }
+        // success path mirrors below
+        if (r.data?.token) {
+          const d = new Date();
+          d.setTime(d.getTime() + 7 * 864e5);
+          document.cookie = `ff_token=${encodeURIComponent(
+            r.data.token
+          )}; path=/; expires=${d.toUTCString()}; samesite=strict`;
+          try {
+            localStorage.setItem("ff_last_id", id);
+          } catch {}
+        }
+        showMsg("Welcome back. Gentle step — strong day. Redirecting…", true);
+        setTimeout(() => (location.href = "/"), 650);
+        return;
+      }
+
+      // Rate-limit bursts
+      const gate = LoginGuard.canSend();
+      if (!gate.ok) {
+        showMsg("Easy—one step at a time.", false);
+        return;
+      }
+
+      LoginGuard.noteSend();
+
+      // Send once; share result with any concurrent retries
+      const reqP = Helper.fx(`${API}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifier: identifier.value.trim(),
-          password: password.value,
-        }),
+        body: JSON.stringify({ identifier: id, password: pw }),
       });
+      const r = await LoginGuard.startInflight(sig, reqP);
+
       if (!r.ok) {
-        return showMsg(
-          r.data?.authProvider
-            ? `This account uses ${r.data.authProvider} login. Please continue with ${r.data.authProvider} above.`
-            : r.data?.error || `Login failed (${r.status}).`,
-          false,
-          { sticky: true }
-        );
+        const msg = r.data?.authProvider
+          ? `This account uses ${r.data.authProvider} login. Please continue with ${r.data.authProvider} above.`
+          : r.data?.error || `Login failed (${r.status}).`;
+        LoginGuard.rememberFail(sig, msg, r.status);
+        showMsg(msg, false, { sticky: true });
+        return;
       }
+
       if (r.data?.token) {
         const d = new Date();
         d.setTime(d.getTime() + 7 * 864e5);
@@ -718,7 +792,7 @@ async function submitHandler(e) {
           r.data.token
         )}; path=/; expires=${d.toUTCString()}; samesite=strict`;
         try {
-          localStorage.setItem("ff_last_id", identifier.value.trim());
+          localStorage.setItem("ff_last_id", id);
         } catch {}
       }
       showMsg("Welcome back. Gentle step — strong day. Redirecting…", true);
@@ -726,16 +800,33 @@ async function submitHandler(e) {
     }
 
     if (mode === "register") {
-      if (
-        !username.value.trim() ||
-        !email.value.trim() ||
-        !passwordReg.value ||
-        !confirmPassword.value
-      )
+      if (!email.value.trim() || !passwordReg.value || !confirmPassword.value) {
         throw new Error("Complete all fields.");
+      }
+
+      const uCheck = validateUsernameStrict(username.value);
+      if (!uCheck.ok) {
+        showUnameNote(uCheck.msg, "err");
+        return showMsg(uCheck.msg, false, { sticky: true }); // BLOCK creation until fixed
+      }
+
+      // normalize the username we send
+      const uname = uCheck.value;
       if (passwordReg.value !== confirmPassword.value)
         throw new Error("Passwords do not match.");
-      const r = await fx(`${API}/register`, {
+
+      const pf = await emailExistsAnyProvider(email.value);
+      if (pf.exists) {
+        return showMsg(
+          pf.provider
+            ? `Email already used. Sign in with ${providerPretty(pf.provider)}.`
+            : "Email already used. Try Sign in.",
+          false,
+          { sticky: true }
+        );
+      }
+
+      const r = await Helper.fx(`${API}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -744,35 +835,21 @@ async function submitHandler(e) {
           password: passwordReg.value,
         }),
       });
-      if (!r.ok) {
+      if (!r.ok)
         return showMsg(
           r.data?.error || `Registration failed (${r.status}).`,
           false
         );
-      }
       showMsg("Account created. Breathe in — let’s begin.", true);
       identifier.value = username.value.trim();
-      pulseValid(username);
-      pulseValid(email);
+      Helper.pulseValid(username);
+      Helper.pulseValid(email);
       setMode("login");
     }
 
     if (mode === "forgot") {
       const v = emailForgot.value.trim();
       if (!v) throw new Error("Enter your email.");
-      // Probe OAuth-only hint
-      const probe = await fx(`${API}/validate-credentials`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: v, password: "_probe_" }),
-      });
-      if (probe.ok && probe.data && probe.data.authProvider) {
-        const p = probe.data.authProvider;
-        return showMsg(
-          `This account uses ${p} login. No password needed — continue with ${p} above.`,
-          false
-        );
-      }
       await requestForgot(v);
     }
 
@@ -784,14 +861,22 @@ async function submitHandler(e) {
     }
 
     if (mode === "reset") {
-      const vEmail = emailOTP.value.trim() || emailForgot.value.trim() || "";
-      if (!vEmail || !newPassword.value || !confirmNewPassword.value)
-        throw new Error(
-          "Enter email (previous step), new password, and confirm."
+      const vEmail = (
+        verifiedEmail ||
+        emailOTP.value ||
+        emailForgot.value ||
+        ""
+      ).trim();
+      if (!vEmail)
+        return showMsg(
+          "We lost the previous step. Please go back one step.",
+          false
         );
+      if (!newPassword.value || !confirmNewPassword.value)
+        throw new Error("Enter new password and confirm.");
       if (newPassword.value !== confirmNewPassword.value)
         throw new Error("Passwords do not match.");
-      const r = await fx(`${API}/reset-password`, {
+      const r = await Helper.fx(`${API}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -800,9 +885,8 @@ async function submitHandler(e) {
           newPassword: newPassword.value,
         }),
       });
-      if (!r.ok) {
+      if (!r.ok)
         return showMsg(r.data?.error || `Reset failed (${r.status}).`, false);
-      }
       showMsg("Password updated. Light step forward.", true);
       setMode("login");
     }
@@ -815,23 +899,7 @@ async function submitHandler(e) {
   }
 }
 
-/* --------------------------------------------------------------------------
-   debounce(fn, ms)
-   -------------------------------------------------------------------------- */
-function debounce(fn, ms) {
-  let t;
-  return (...a) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...a), ms);
-  };
-}
-
-/* --------------------------------------------------------------------------
-   Keyboard-first flow
-   - Enter submits (native).
-   - Esc clears banner and blurs input.
-   - Logical Tab order is native; ensure links are next in DOM.
-   -------------------------------------------------------------------------- */
+/* Keyboard-first UX */
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     statusEl.innerHTML = "";
@@ -840,9 +908,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-/* --------------------------------------------------------------------------
-   Focus-aware helper: updates helper text based on focused field
-   -------------------------------------------------------------------------- */
+/* Focus-aware helper copy */
 const helperMap = {
   identifier: "Tip: You can use your username or email.",
   password: "Keep it private. Use reset if stuck.",
@@ -860,9 +926,6 @@ function attachHelperFocus(el, id) {
   el.addEventListener("focus", () => {
     helper.textContent = helperMap[id] || helper.textContent;
   });
-  el.addEventListener("blur", () => {
-    /* Keep last message; quiet UI */
-  });
 }
 [
   "identifier",
@@ -877,120 +940,74 @@ function attachHelperFocus(el, id) {
   "confirmNewPassword",
 ].forEach((id) => attachHelperFocus($(id), id));
 
-/* --------------------------------------------------------------------------
-   Caps Lock detection for password fields
-   -------------------------------------------------------------------------- */
-function capsDetector(e, chip) {
-  if (!chip) return;
-  const caps = e.getModifierState && e.getModifierState("CapsLock");
-  chip.hidden = !caps;
-}
+/* CapsLock detection */
 password &&
-  password.addEventListener("keyup", (e) => capsDetector(e, capsLogin));
+  password.addEventListener("keyup", (e) => Helper.capsDetector(e, capsLogin));
 passwordReg &&
-  passwordReg.addEventListener("keyup", (e) => capsDetector(e, capsReg));
+  passwordReg.addEventListener("keyup", (e) => Helper.capsDetector(e, capsReg));
 newPassword &&
-  newPassword.addEventListener("keyup", (e) => capsDetector(e, capsReset));
+  newPassword.addEventListener("keyup", (e) =>
+    Helper.capsDetector(e, capsReset)
+  );
 
-/* --------------------------------------------------------------------------
-   Password match chips (register & reset)
-   -------------------------------------------------------------------------- */
-function updateMatch(pw, conf, el, textEl) {
-  if (!el || !textEl) return;
-  if (!conf.value) {
-    el.classList.remove("ok", "bad");
-    textEl.textContent = "";
-    return;
-  }
-  if (pw.value && pw.value === conf.value) {
-    el.classList.add("ok");
-    el.classList.remove("bad");
-    textEl.textContent = "Match ✓";
-    pulseValid(conf);
-  } else {
-    el.classList.add("bad");
-    el.classList.remove("ok");
-    textEl.textContent = "Doesn’t match";
-  }
-}
+/* Match chips */
 confirmPassword &&
   confirmPassword.addEventListener("input", () =>
-    updateMatch(passwordReg, confirmPassword, matchReg, matchRegText)
+    Helper.updateMatch(passwordReg, confirmPassword, matchReg, matchRegText)
   );
 passwordReg &&
   passwordReg.addEventListener("input", () =>
-    updateMatch(passwordReg, confirmPassword, matchReg, matchRegText)
+    Helper.updateMatch(passwordReg, confirmPassword, matchReg, matchRegText)
   );
 confirmNewPassword &&
   confirmNewPassword.addEventListener("input", () =>
-    updateMatch(newPassword, confirmNewPassword, matchReset, matchResetText)
+    Helper.updateMatch(
+      newPassword,
+      confirmNewPassword,
+      matchReset,
+      matchResetText
+    )
   );
 newPassword &&
   newPassword.addEventListener("input", () =>
-    updateMatch(newPassword, confirmNewPassword, matchReset, matchResetText)
+    Helper.updateMatch(
+      newPassword,
+      confirmNewPassword,
+      matchReset,
+      matchResetText
+    )
   );
 
-/* --------------------------------------------------------------------------
-   Tiny completion glow
-   -------------------------------------------------------------------------- */
-function pulseValid(input) {
-  if (!input) return;
-  input.classList.add("valid-soft");
-  setTimeout(() => input.classList.remove("valid-soft"), 800);
-}
-
-/* --------------------------------------------------------------------------
-   Inline basic validation on blur (email format, required, username length)
-   -------------------------------------------------------------------------- */
-function isEmailLike(v) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
+/* Inline validation */
 username &&
   username.addEventListener("blur", () => {
-    const v = username.value.trim();
-    if (v.length >= 3) pulseValid(username);
+    const s = username.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (s !== username.value) username.value = s;
+    if (hasProviderToken(s)) {
+      showUnameNote("Usernames can’t include email providers.", "err");
+      return;
+    }
+    if (s.length >= 3 && USERNAME_RE.test(s)) Helper.pulseValid(username);
   });
 email &&
   email.addEventListener("blur", () => {
     const v = email.value.trim();
-    if (isEmailLike(v)) pulseValid(email);
+    if (Helper.isEmailLike(v)) Helper.pulseValid(email);
   });
 
-/* --------------------------------------------------------------------------
-   OAuth loading state — disable other provider to prevent double clicks
-   -------------------------------------------------------------------------- */
-// OAuth button handlers
+/* OAuth buttons */
 btnOAuthGoogle.addEventListener("click", (e) => {
   e.preventDefault();
-  oauthLoading(btnOAuthGoogle, btnOAuthGitHub);
-  // Direct navigation to OAuth endpoint
-  window.location.href = "/api/auth/google";
+  Helper.oauthLoading(btnOAuthGoogle, btnOAuthGitHub);
+  window.location.href = `${API}/google`;
 });
-
 btnOAuthGitHub.addEventListener("click", (e) => {
   e.preventDefault();
-  oauthLoading(btnOAuthGitHub, btnOAuthGoogle);
-  // Direct navigation to OAuth endpoint
-  window.location.href = "/api/auth/github";
+  Helper.oauthLoading(btnOAuthGitHub, btnOAuthGoogle);
+  window.location.href = `${API}/github`;
 });
 
-// Enhanced OAuth loading function
-function oauthLoading(btn, otherBtn) {
-  btn.classList.add("loading");
-  btn.setAttribute("aria-disabled", "true");
-  otherBtn.setAttribute("aria-disabled", "true");
-
-  // Re-enable buttons after 5 seconds in case of failure
-  setTimeout(() => {
-    btn.classList.remove("loading");
-    btn.removeAttribute("aria-disabled");
-    otherBtn.removeAttribute("aria-disabled");
-  }, 5000);
-}
-
-/* --------------------------------------------------------------------------
-   OTP paste support — clean to digits and truncate to maxlength
-   -------------------------------------------------------------------------- */
+/* OTP paste */
 otp &&
   otp.addEventListener("paste", (e) => {
     const t = (e.clipboardData?.getData("text") || "")
@@ -1002,47 +1019,61 @@ otp &&
     }
   });
 
-/* --------------------------------------------------------------------------
-   Eye toggles (UNCHANGED)
-   -------------------------------------------------------------------------- */
-eyePass.onclick = () => toggleEye(eyePass, password);
-eyePassReg.onclick = () => toggleEye(eyePassReg, passwordReg);
-eyeConfirm.onclick = () => toggleEye(eyeConfirm, confirmPassword);
-eyeNew.onclick = () => toggleEye(eyeNew, newPassword);
-eyeConfirmNew.onclick = () => toggleEye(eyeConfirmNew, confirmNewPassword);
+/* Eye toggles */
+eyePass.onclick = () => Helper.toggleEye(eyePass, password);
+eyePassReg.onclick = () => Helper.toggleEye(eyePassReg, passwordReg);
+eyeConfirm.onclick = () => Helper.toggleEye(eyeConfirm, confirmPassword);
+eyeNew.onclick = () => Helper.toggleEye(eyeNew, newPassword);
+eyeConfirmNew.onclick = () =>
+  Helper.toggleEye(eyeConfirmNew, confirmNewPassword);
 
-/* --------------------------------------------------------------------------
-   Username check/autogen, email check, strength paints
-   -------------------------------------------------------------------------- */
+/* Username check/autogen, email check, strength paints */
 btnCheck.onclick = () => checkUsernameAvailability(username.value);
 if (username) {
-  const debouncedUserCheck = debounce(
+  const debouncedUserCheck = Helper.debounce(
     () => checkUsernameAvailability(username.value),
     320
   );
+
   username.addEventListener("input", () => {
+    const v = username.value;
+    const s = v.toLowerCase().replace(/[^a-z0-9]/g, ""); // strip symbols, remove '@'
+
+    if (s !== v) username.value = s;
+
+    const gate = validateUsernameStrict(username.value);
+    if (!gate.ok) {
+      btnAuto.style.display = "none";
+      showUnameNote(gate.msg, "err");
+      return; // stop → do not call API yet
+    }
+
     btnAuto.style.display = "none";
-    debouncedUserCheck();
+    debouncedUserCheck(); // now safe and in scope
   });
 }
+
 btnAuto.onclick = autoGenerateUsername;
-if (email)
-  email.addEventListener("input", (e) => instantEmailCheck(e.target.value));
-if (passwordReg)
-  passwordReg.addEventListener("input", () =>
-    paintStrength(strengthReg, passwordReg.value)
+if (email) {
+  const debouncedEmailCheck = Helper.debounce(
+    () => instantEmailCheck(email.value),
+    450
   );
+  email.addEventListener("input", debouncedEmailCheck);
+}
+passwordReg &&
+  passwordReg.addEventListener("input", () =>
+    Helper.paintStrength(strengthReg, passwordReg.value)
+  );
+newPassword &&
+  newPassword.addEventListener("input", () =>
+    Helper.paintStrength(strengthReset, newPassword.value)
+  );
+Helper.dotRefs(strengthLogin);
+Helper.dotRefs(strengthReg);
+Helper.dotRefs(strengthReset);
 
-passwordReg.addEventListener("input", () =>
-  paintStrength(strengthReg, passwordReg.value)
-);
-newPassword.addEventListener("input", () =>
-  paintStrength(strengthReset, newPassword.value)
-);
-
-/* --------------------------------------------------------------------------
-   Copy/Hide OTP helpers
-   -------------------------------------------------------------------------- */
+/* Copy/Hide OTP */
 copyOtp.onclick = () => {
   if (!lastOtp) return showMsg("No code to copy");
   navigator.clipboard
@@ -1056,22 +1087,16 @@ hideOtp.onclick = () => {
   showMsg("Code hidden", true);
 };
 
-/* --------------------------------------------------------------------------
-   Links + Tabs
-   -------------------------------------------------------------------------- */
-document.getElementById("tLogin").onclick = () => setMode("login");
-document.getElementById("tRegister").onclick = () => setMode("register");
+/* Tabs & links */
+$("tLogin").onclick = () => setMode("login");
+$("tRegister").onclick = () => setMode("register");
 linkRegister.onclick = () => setMode("register");
 linkForgot.onclick = () => setMode("forgot");
 
-/* --------------------------------------------------------------------------
-   Form submit
-   -------------------------------------------------------------------------- */
+/* Submit */
 form.addEventListener("submit", submitHandler);
 
-/* --------------------------------------------------------------------------
-   Focus management
-   -------------------------------------------------------------------------- */
+/* Focus management */
 function focusFirstField(currentMode) {
   const map = {
     login: identifier,
@@ -1087,9 +1112,7 @@ function focusFirstField(currentMode) {
   }
 }
 
-/* --------------------------------------------------------------------------
-   Prefill last used identifier from localStorage for comfort
-   -------------------------------------------------------------------------- */
+/* Prefill last identifier */
 (function prefillIdentifier() {
   try {
     const last = localStorage.getItem("ff_last_id");
@@ -1100,9 +1123,7 @@ function focusFirstField(currentMode) {
   } catch {}
 })();
 
-/* --------------------------------------------------------------------------
-   Init
-   -------------------------------------------------------------------------- */
+/* Init */
 function initAutofocus() {
   if (identifier) {
     identifier.focus();
@@ -1110,7 +1131,4 @@ function initAutofocus() {
   }
 }
 setMode("login");
-dotRefs(strengthLogin);
-dotRefs(strengthReg);
-dotRefs(strengthReset);
 initAutofocus();
