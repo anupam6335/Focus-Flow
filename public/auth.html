@@ -1,7 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <!--
+  <head>
+    <!--
     FocusFlow — Quiet Auth (Forest Library Edition)
     HTML structure with clear sections and ARIA-friendly markup.
     Visuals are controlled in css/auth.css; behaviors in js/auth.js.
@@ -11,266 +11,621 @@
     - Preserves all API endpoints and request shapes.
     - Adds polished, user-facing features without changing backend logic.
   -->
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>FocusFlow — Quiet Auth</title>
-  <link rel="stylesheet" href="css/auth.css"/>
-</head>
-<body>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <!-- SEO -->
+    <title>FocusFlow — Quiet Auth</title>
+    <meta
+      name="description"
+      content="Calm and secure authentication for FocusFlow. Sign in with comfort and clarity."
+    />
+    <meta
+      name="keywords"
+      content="focusflow, login, auth, secure sign in, productivity"
+    />
 
-  <main class="stage">
-    <section class="sheet" id="sheet" aria-live="polite">
-      <div class="frame">
+    <!-- Do NOT index login pages -->
+    <meta name="robots" content="noindex, nofollow" />
 
-        <!-- Header -->
-        <header class="header" aria-label="Brand and Mode">
-          <div class="brand">
-            <span class="seal" aria-hidden="true"></span>
-            <h1>FocusFlow</h1>
-          </div>
-          <div class="mode">
-            <span class="chip" id="chipMode">Sign in</span>
-          </div>
-        </header>
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#1b1b1b" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="robots" content="noindex,nofollow" />
 
-        <!-- Story + Tabs (now includes tiny progress cue like “Step 1 of 3”) -->
-        <section class="story" id="story" aria-live="polite">
-          <p><strong>Guide:</strong>You’re in the right place. Sign in safely to continue.</p>
-          <p>You’re one calm step from momentum. <span class="step" id="stepCue" aria-live="polite">(Step 1 of 3)</span></p>
-          <div class="mini-tabs">
-            <button class="t primary" id="tLogin">Sign in</button>
-            <button class="t" id="tRegister">Create account</button>
-          </div>
-        </section>
+    <!-- Dynamic SEO (fills canonical + social preview URL at runtime) -->
+    <script>
+      (function () {
+        const origin = window.location.origin;
+        const path = window.location.pathname;
 
-        <!-- OAuth (clear + compact) -->
-        <div class="oauth" aria-label="Social sign-in">
-          <a id="btnOAuthGoogle" href="/api/auth/google" aria-label="Continue with Google" data-provider="Google" class="oauth-btn">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#1B1B1B" d="M21.6 12.23c0-.68-.06-1.18-.18-1.7H12v3.09h5.44c-.11.87-.73 2.18-2.1 3.06l-.02.14 3.05 2.35.21.02c1.9-1.75 2.98-4.32 2.98-7.96z"/>
-              <path fill="#1B1B1B" d="M12 22c2.7 0 4.97-.88 6.62-2.4l-3.16-2.43c-.85.57-1.98.97-3.46.97-2.64 0-4.88-1.75-5.68-4.17l-.12.01-3.23 2.5-.04.11C3.76 19.76 7.6 22 12 22z"/>
-              <path fill="#1B1B1B" d="M6.32 13.97A6.58 6.58 0 0 1 5.94 12c0-.68.12-1.32.32-1.97l-.01-.13-3.27-2.52-.11.05A10.01 10.01 0 0 0 2 12c0 1.58.38 3.06 1.03 4.36l3.29-2.39z"/>
-              <path fill="#1B1B1B" d="M12 5.38c1.88 0 3.16.8 3.89 1.47l2.84-2.77C16.96 2.9 14.7 2 12 2 7.6 2 3.76 4.24 2.03 7.64l3.29 2.39C6.12 7.6 8.36 5.38 12 5.38z"/>
-            </svg>
-            <span class="oauth-label">Google</span>
-            <span class="spinner" aria-hidden="true"></span>
-          </a>
-          <a id="btnOAuthGitHub" href="/api/auth/github" aria-label="Continue with GitHub" data-provider="GitHub" class="oauth-btn">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#1B1B1B" d="M12 .5a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.57v-2.01c-3.34.73-4.04-1.41-4.04-1.41-.55-1.39-1.35-1.76-1.35-1.76-1.1-.74.08-.73.08-.73 1.22.09 1.86 1.26 1.86 1.26 1.08 1.87 2.83 1.33 3.53 1.02.11-.8.42-1.33.77-1.64-2.67-.3-5.48-1.33-5.48-5.9 0-1.3.47-2.36 1.24-3.19-.12-.3-.54-1.53.12-3.19 0 0 1.01-.32 3.3 1.22a11.4 11.4 0 0 1 6 0c2.29-1.54 3.29-1.22 3.29-1.22.66 1.66.24 2.89.12 3.19.77.83 1.23 1.89 1.23 3.19 0 4.58-2.81 5.6-5.49 5.9.43.36.8 1.07.8 2.17v3.22c0 .31.21.68.82.57A12 12 0 0 0 12 .5z"/>
-            </svg>
-            <span class="oauth-label">GitHub</span>
-            <span class="spinner" aria-hidden="true"></span>
-          </a>
-        </div>
-        <div class="helper" id="helper">Prefer speed? Use Google or GitHub above.</div>
+        // Canonical link
+        const link = document.createElement("link");
+        link.rel = "canonical";
+        link.href = origin + path;
+        document.head.appendChild(link);
 
-        <!-- Single-shot status banner (error dictionary and inline “try another way” links handled in JS) -->
-        <div id="status" aria-live="polite"></div>
+        // OpenGraph (Share Preview)
+        const ogTags = [
+          ["og:title", "FocusFlow — Quiet Auth"],
+          ["og:description", "Return to your calm productivity space."],
+          ["og:type", "website"],
+          ["og:url", origin + path],
+          ["og:image", origin + "assets/auth_page_preview.png"],
+        ];
 
-        <!-- Form -->
-        <form class="form" id="form" novalidate>
-          <!-- Login -->
-          <div id="groupLogin">
-            <div id="gIdentifier">
-              <label for="identifier">Username or Email</label>
-              <div class="field">
-                <input id="identifier" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" inputmode="email"/>
-              </div>
+        ogTags.forEach(([property, content]) => {
+          const m = document.createElement("meta");
+          m.setAttribute("property", property);
+          m.setAttribute("content", content);
+          document.head.appendChild(m);
+        });
+      })();
+    </script>
+    <link rel="preload" href="css/helper.css" as="style" />
+    <link rel="preload" href="css/auth.css" as="style" />
+    <link rel="stylesheet" href="css/helper.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <section class="sheet" id="sheet" aria-live="polite">
+        <div class="frame">
+          <!-- Header -->
+          <header class="header" aria-label="Brand and Mode">
+            <div class="brand">
+              <span class="seal seal--leaf" aria-hidden="true"></span>
+              <h1>FocusFlow</h1>
             </div>
-
-            <div id="gPassword">
-              <label for="password">
-                <span class="label-icon" aria-hidden="true">🔒</span> Password
-              </label>
-              <div class="field">
-                <input id="password" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false"/>
-                <button type="button" class="eye" id="eyePass" data-state="hidden" aria-label="Show password">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/>
-                    <circle class="iris" cx="12" cy="12" r="3" fill="currentColor"/>
-                    <line class="slash" x1="5" y1="5" x2="19" y2="19" stroke-linecap="round" opacity="0"/>
-                  </svg>
-                </button>
-              </div>
-              <!-- Caps Lock hint -->
-              <div class="caps" id="capsLogin" hidden>Caps Lock is ON</div>
-
-              <!-- Password Strength Message (preview on login remains hidden until JS shows it) -->
-              <div class="strength" id="strengthLogin" aria-live="polite" hidden>
-                <div class="meter" aria-hidden="true">
-                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                </div>
-                <div class="note-s"><span class="breathe" id="emojiLogin">🌿</span> <span id="textLogin"></span></div>
-              </div>
+            <div class="mode">
+              <span class="chip" id="chipMode">Sign in</span>
             </div>
+          </header>
 
-            <!-- Tiny session info for trust -->
-            <div class="session-note" id="sessionNote">You’ll stay signed in for 7 days on this device.</div>
-          </div>
-
-          <!-- Create Account -->
-          <div id="groupRegister" hidden>
-            <!-- Compact two-column grid on desktop to avoid scrolling -->
-            <div class="reg-grid">
-              <!-- Column A -->
-              <div class="reg-col">
-                <div id="gUsername" class="row2 tight">
-                  <div>
-                    <label for="username">Username</label>
-                    <div class="field">
-                      <input id="username" type="text" autocomplete="username" autocapitalize="off" spellcheck="false"/>
-                    </div>
-                  </div>
-                  <div class="tools" style="align-self:end">
-                    <button class="btn" type="button" id="btnCheck">Check</button>
-                    <button class="btn" type="button" id="btnAuto" style="display:none">Auto</button>
-                  </div>
-                </div>
-                <div class="helper single-line" id="unameNote"></div>
-
-                <div id="gEmail" class="tight">
-                  <label for="email">Email</label>
-                  <div class="field">
-                    <input id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"/>
-                  </div>
-                  <div class="helper single-line" id="emailNote"></div>
-                </div>
-              </div>
-
-              <!-- Column B -->
-              <div class="reg-col">
-                <div id="gPasswordReg" class="tight">
-                  <label for="passwordReg"><span class="label-icon" aria-hidden="true">🔒</span> Password</label>
-                  <div class="field">
-                    <input id="passwordReg" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"/>
-                    <button type="button" class="eye" id="eyePassReg" data-state="hidden" aria-label="Show password">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/>
-                        <circle class="iris" cx="12" cy="12" r="3" fill="currentColor"/>
-                        <line class="slash" x1="5" y1="5" x2="19" y2="19" stroke-linecap="round" opacity="0"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <!-- Caps Lock hint -->
-                  <div class="caps" id="capsReg" hidden>Caps Lock is ON</div>
-
-                  <!-- Password Strength Message (compact) -->
-                  <div class="strength strength-compact" id="strengthReg" aria-live="polite">
-                    <div class="meter" aria-hidden="true">
-                      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                    </div>
-                    <div class="note-s"><span class="breathe" id="emojiReg">🌱</span> <span id="textReg">Create a steady key.</span></div>
-                  </div>
-                </div>
-
-                <div id="gConfirm" class="tight">
-                  <label for="confirmPassword"><span class="label-icon" aria-hidden="true">🔒</span> Confirm Password</label>
-                  <div class="field">
-                    <input id="confirmPassword" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"/>
-                    <button type="button" class="eye" id="eyeConfirm" data-state="hidden" aria-label="Show password">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/>
-                        <circle class="iris" cx="12" cy="12" r="3" fill="currentColor"/>
-                        <line class="slash" x1="5" y1="5" x2="19" y2="19" stroke-linecap="round" opacity="0"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="match" id="matchReg" aria-live="polite"> <span id="matchRegText"></span></div>
-                </div>
-              </div>
+          <!-- Story + Tabs (now includes tiny progress cue like “Step 1 of 3”) -->
+          <section class="story" id="story" aria-live="polite">
+            <p>
+              <strong>Guide:</strong>You’re in the right place. Sign in safely
+              to continue.
+            </p>
+            <p>
+              You’re one calm step from momentum.
+              <span class="step" id="stepCue" aria-live="polite"
+                >(Step 1 of 3)</span
+              >
+            </p>
+            <div class="mini-tabs">
+              <button class="t primary" id="tLogin">Sign in</button>
+              <button class="t" id="tRegister">Create account</button>
             </div>
-          </div>
-          <!-- Create Account End -->
+          </section>
 
-          <!-- Forgot -->
-          <div id="groupForgot" hidden>
-            <div id="gEmailForgot">
-              <label for="emailForgot">Email</label>
-              <div class="field"><input id="emailForgot" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"/></div>
-              <div class="helper">If this account was created with Google/GitHub, use those above.</div>
-            </div>
-          </div>
-
-          <!-- OTP -->
-          <div id="groupOTP" hidden>
-            <div id="gEmailOTP">
-              <label for="emailOTP">Email</label>
-              <div class="field"><input id="emailOTP" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"/></div>
-            </div>
-            <div id="gOtp">
-              <label for="otp">Reset Code</label>
-              <div class="field"><input id="otp" type="text" inputmode="numeric" maxlength="6" autocapitalize="off" spellcheck="false"/></div>
-            </div>
-            <div class="otp" id="otpReveal">
-              <div class="code" id="otpValue"></div>
-              <div class="tools">
-                <button class="btn" type="button" id="copyOtp">Copy</button>
-                <button class="btn" type="button" id="hideOtp">Hide</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Reset -->
-          <div id="groupReset" hidden>
-            <div id="gNew">
-              <label for="newPassword"><span class="label-icon" aria-hidden="true">🔒</span> New Password</label>
-              <div class="field">
-                <input id="newPassword" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"/>
-                <button type="button" class="eye" id="eyeNew" data-state="hidden" aria-label="Show password">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/>
-                    <circle class="iris" cx="12" cy="12" r="3" fill="currentColor"/>
-                    <line class="slash" x1="5" y1="5" x2="19" y2="19" stroke-linecap="round" opacity="0"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="caps" id="capsReset" hidden>Caps Lock is ON</div>
-
-              <!-- Password Strength (reset) -->
-              <div class="strength" id="strengthReset" aria-live="polite">
-                <div class="meter" aria-hidden="true">
-                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                </div>
-                <div class="note-s"><span class="breathe" id="emojiReset">🍵</span> <span id="textReset">Set a calm, strong key.</span></div>
-              </div>
-            </div>
-
-            <div id="gConfirmNew">
-              <label for="confirmNewPassword"><span class="label-icon" aria-hidden="true">🔒</span> Confirm New Password</label>
-              <div class="field">
-                <input id="confirmNewPassword" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"/>
-                <button type="button" class="eye" id="eyeConfirmNew" data-state="hidden" aria-label="Show password">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/>
-                    <circle class="iris" cx="12" cy="12" r="3" fill="currentColor"/>
-                    <line class="slash" x1="5" y1="5" x2="19" y2="19" stroke-linecap="round" opacity="0"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="match" id="matchReset" aria-live="polite">Passwords: <span id="matchResetText">—</span></div>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div class="actions">
-            <button id="submit" class="key" type="submit" aria-live="polite">
-              <span class="key-spinner" aria-hidden="true"></span>
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M2 12a5 5 0 1 1 9.9 1H12v4h2v2h2v-2h2v-2h-1.1A5 5 0 0 1 2 12z" fill="#1B1B1B"/>
+          <!-- OAuth (clear + compact) -->
+          <div class="oauth" aria-label="Social sign-in">
+            <a
+              id="btnOAuthGoogle"
+              href="/api/auth/google"
+              aria-label="Continue with Google"
+              data-provider="Google"
+              class="oauth-btn"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#1B1B1B"
+                  d="M21.6 12.23c0-.68-.06-1.18-.18-1.7H12v3.09h5.44c-.11.87-.73 2.18-2.1 3.06l-.02.14 3.05 2.35.21.02c1.9-1.75 2.98-4.32 2.98-7.96z"
+                />
+                <path
+                  fill="#1B1B1B"
+                  d="M12 22c2.7 0 4.97-.88 6.62-2.4l-3.16-2.43c-.85.57-1.98.97-3.46.97-2.64 0-4.88-1.75-5.68-4.17l-.12.01-3.23 2.5-.04.11C3.76 19.76 7.6 22 12 22z"
+                />
+                <path
+                  fill="#1B1B1B"
+                  d="M6.32 13.97A6.58 6.58 0 0 1 5.94 12c0-.68.12-1.32.32-1.97l-.01-.13-3.27-2.52-.11.05A10.01 10.01 0 0 0 2 12c0 1.58.38 3.06 1.03 4.36l3.29-2.39z"
+                />
+                <path
+                  fill="#1B1B1B"
+                  d="M12 5.38c1.88 0 3.16.8 3.89 1.47l2.84-2.77C16.96 2.9 14.7 2 12 2 7.6 2 3.76 4.24 2.03 7.64l3.29 2.39C6.12 7.6 8.36 5.38 12 5.38z"
+                />
               </svg>
-              <span id="submitText">Sign in</span>
-            </button>
-            <div class="links">
-              <span class="link" id="linkRegister">Create account</span>
-              <span class="link" id="linkForgot">Forgot?</span>
-            </div>
+              <span class="oauth-label">Google</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </a>
+            <a
+              id="btnOAuthGitHub"
+              href="/api/auth/github"
+              aria-label="Continue with GitHub"
+              data-provider="GitHub"
+              class="oauth-btn"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#1B1B1B"
+                  d="M12 .5a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.57v-2.01c-3.34.73-4.04-1.41-4.04-1.41-.55-1.39-1.35-1.76-1.35-1.76-1.1-.74.08-.73.08-.73 1.22.09 1.86 1.26 1.86 1.26 1.08 1.87 2.83 1.33 3.53 1.02.11-.8.42-1.33.77-1.64-2.67-.3-5.48-1.33-5.48-5.9 0-1.3.47-2.36 1.24-3.19-.12-.3-.54-1.53.12-3.19 0 0 1.01-.32 3.3 1.22a11.4 11.4 0 0 1 6 0c2.29-1.54 3.29-1.22 3.29-1.22.66 1.66.24 2.89.12 3.19.77.83 1.23 1.89 1.23 3.19 0 4.58-2.81 5.6-5.49 5.9.43.36.8 1.07.8 2.17v3.22c0 .31.21.68.82.57A12 12 0 0 0 12 .5z"
+                />
+              </svg>
+              <span class="oauth-label">GitHub</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </a>
           </div>
-        </form>
-      </div>
-    </section>
-  </main>
+          <div class="helper" id="helper">
+            Prefer speed? Use Google or GitHub above.
+          </div>
 
-  <script src="js/auth.js"></script>
-</body>
+          <!-- Single-shot status banner (error dictionary and inline “try another way” links handled in JS) -->
+          <div id="status" aria-live="polite"></div>
+
+          <!-- Form -->
+          <form class="form" id="form" novalidate>
+            <!-- Login -->
+            <div id="groupLogin">
+              <div id="gIdentifier">
+                <label for="identifier">Username or Email</label>
+                <div class="field">
+                  <input
+                    id="identifier"
+                    type="text"
+                    autocomplete="username"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    inputmode="email"
+                  />
+                </div>
+              </div>
+
+              <div id="gPassword">
+                <label for="password">
+                  <span class="label-icon" aria-hidden="true">🔒</span> Password
+                </label>
+                <div class="field">
+                  <input
+                    id="password"
+                    type="password"
+                    autocomplete="current-password"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                  <button
+                    type="button"
+                    class="eye"
+                    id="eyePass"
+                    data-state="hidden"
+                    aria-label="Show password"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                    >
+                      <path
+                        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"
+                      />
+                      <circle
+                        class="iris"
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="currentColor"
+                      />
+                      <line
+                        class="slash"
+                        x1="5"
+                        y1="5"
+                        x2="19"
+                        y2="19"
+                        stroke-linecap="round"
+                        opacity="0"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <!-- Caps Lock hint -->
+                <div class="caps" id="capsLogin" hidden>Caps Lock is ON</div>
+
+                <!-- Password Strength Message (preview on login remains hidden until JS shows it) -->
+                <div
+                  class="strength"
+                  id="strengthLogin"
+                  aria-live="polite"
+                  hidden
+                >
+                  <div class="meter" aria-hidden="true">
+                    <span class="dot"></span><span class="dot"></span
+                    ><span class="dot"></span>
+                  </div>
+                  <div class="note-s">
+                    <span class="breathe" id="emojiLogin">🌿</span>
+                    <span id="textLogin"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tiny session info for trust -->
+              <div class="session-note" id="sessionNote">
+                You’ll stay signed in for 7 days on this device.
+              </div>
+            </div>
+
+            <!-- Create Account -->
+            <div id="groupRegister" hidden>
+              <!-- Compact two-column grid on desktop to avoid scrolling -->
+              <div class="reg-grid">
+                <!-- Column A -->
+                <div class="reg-col">
+                  <div id="gUsername" class="row2 tight">
+                    <div>
+                      <label for="username">Username</label>
+                      <div class="field">
+                        <input
+                          id="username"
+                          type="text"
+                          autocomplete="username"
+                          autocapitalize="off"
+                          spellcheck="false"
+                        />
+                      </div>
+                    </div>
+                    <div class="tools" style="align-self: end">
+                      <button class="btn" type="button" id="btnCheck">
+                        Check
+                      </button>
+                      <button
+                        class="btn"
+                        type="button"
+                        id="btnAuto"
+                        style="display: none"
+                      >
+                        Auto
+                      </button>
+                    </div>
+                  </div>
+                  <div class="helper single-line" id="unameNote"></div>
+
+                  <div id="gEmail" class="tight">
+                    <label for="email">Email</label>
+                    <div class="field">
+                      <input
+                        id="email"
+                        type="email"
+                        autocomplete="email"
+                        inputmode="email"
+                        autocapitalize="off"
+                        spellcheck="false"
+                      />
+                    </div>
+                    <div class="helper single-line" id="emailNote"></div>
+                  </div>
+                </div>
+
+                <!-- Column B -->
+                <div class="reg-col">
+                  <div id="gPasswordReg" class="tight">
+                    <label for="passwordReg"
+                      ><span class="label-icon" aria-hidden="true">🔒</span>
+                      Password</label
+                    >
+                    <div class="field">
+                      <input
+                        id="passwordReg"
+                        type="password"
+                        autocomplete="new-password"
+                        autocapitalize="off"
+                        spellcheck="false"
+                      />
+                      <button
+                        type="button"
+                        class="eye"
+                        id="eyePassReg"
+                        data-state="hidden"
+                        aria-label="Show password"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                        >
+                          <path
+                            d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"
+                          />
+                          <circle
+                            class="iris"
+                            cx="12"
+                            cy="12"
+                            r="3"
+                            fill="currentColor"
+                          />
+                          <line
+                            class="slash"
+                            x1="5"
+                            y1="5"
+                            x2="19"
+                            y2="19"
+                            stroke-linecap="round"
+                            opacity="0"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <!-- Caps Lock hint -->
+                    <div class="caps" id="capsReg" hidden>Caps Lock is ON</div>
+
+                    <!-- Password Strength Message (compact) -->
+                    <div
+                      class="strength strength-compact"
+                      id="strengthReg"
+                      aria-live="polite"
+                    >
+                      <div class="meter" aria-hidden="true">
+                        <span class="dot"></span><span class="dot"></span
+                        ><span class="dot"></span>
+                      </div>
+                      <div class="note-s">
+                        <span class="breathe" id="emojiReg">🌱</span>
+                        <span id="textReg">Create a steady key.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="gConfirm" class="tight">
+                    <label for="confirmPassword"
+                      ><span class="label-icon" aria-hidden="true">🔒</span>
+                      Confirm Password</label
+                    >
+                    <div class="field">
+                      <input
+                        id="confirmPassword"
+                        type="password"
+                        autocomplete="new-password"
+                        autocapitalize="off"
+                        spellcheck="false"
+                      />
+                      <button
+                        type="button"
+                        class="eye"
+                        id="eyeConfirm"
+                        data-state="hidden"
+                        aria-label="Show password"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                        >
+                          <path
+                            d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"
+                          />
+                          <circle
+                            class="iris"
+                            cx="12"
+                            cy="12"
+                            r="3"
+                            fill="currentColor"
+                          />
+                          <line
+                            class="slash"
+                            x1="5"
+                            y1="5"
+                            x2="19"
+                            y2="19"
+                            stroke-linecap="round"
+                            opacity="0"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="match" id="matchReg" aria-live="polite">
+                      <span id="matchRegText"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Create Account End -->
+
+            <!-- Forgot -->
+            <div id="groupForgot" hidden>
+              <div id="gEmailForgot">
+                <label for="emailForgot">Email</label>
+                <div class="field">
+                  <input
+                    id="emailForgot"
+                    type="email"
+                    autocomplete="email"
+                    inputmode="email"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                </div>
+                <div class="helper">
+                  If this account was created with Google/GitHub, use those
+                  above.
+                </div>
+              </div>
+            </div>
+
+            <!-- OTP -->
+            <div id="groupOTP" hidden>
+              <div id="gEmailOTP">
+                <label for="emailOTP">Email</label>
+                <div class="field">
+                  <input
+                    id="emailOTP"
+                    type="email"
+                    autocomplete="email"
+                    inputmode="email"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                </div>
+              </div>
+              <div id="gOtp">
+                <label for="otp">Reset Code</label>
+                <div class="field">
+                  <input
+                    id="otp"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="4"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                </div>
+              </div>
+              <div class="otp" id="otpReveal">
+                <div class="code" id="otpValue"></div>
+                <div class="tools">
+                  <button class="btn" type="button" id="copyOtp">Copy</button>
+                  <button class="btn" type="button" id="hideOtp">Hide</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reset -->
+            <div id="groupReset" hidden>
+              <div id="gNew">
+                <label for="newPassword"
+                  ><span class="label-icon" aria-hidden="true">🔒</span> New
+                  Password</label
+                >
+                <div class="field">
+                  <input
+                    id="newPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                  <button
+                    type="button"
+                    class="eye"
+                    id="eyeNew"
+                    data-state="hidden"
+                    aria-label="Show password"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                    >
+                      <path
+                        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"
+                      />
+                      <circle
+                        class="iris"
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="currentColor"
+                      />
+                      <line
+                        class="slash"
+                        x1="5"
+                        y1="5"
+                        x2="19"
+                        y2="19"
+                        stroke-linecap="round"
+                        opacity="0"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="caps" id="capsReset" hidden>Caps Lock is ON</div>
+
+                <!-- Password Strength (reset) -->
+                <div class="strength" id="strengthReset" aria-live="polite">
+                  <div class="meter" aria-hidden="true">
+                    <span class="dot"></span><span class="dot"></span
+                    ><span class="dot"></span>
+                  </div>
+                  <div class="note-s">
+                    <span class="breathe" id="emojiReset">🍵</span>
+                    <span id="textReset">Set a calm, strong key.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="gConfirmNew">
+                <label for="confirmNewPassword"
+                  ><span class="label-icon" aria-hidden="true">🔒</span> Confirm
+                  New Password</label
+                >
+                <div class="field">
+                  <input
+                    id="confirmNewPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                  <button
+                    type="button"
+                    class="eye"
+                    id="eyeConfirmNew"
+                    data-state="hidden"
+                    aria-label="Show password"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                    >
+                      <path
+                        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"
+                      />
+                      <circle
+                        class="iris"
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="currentColor"
+                      />
+                      <line
+                        class="slash"
+                        x1="5"
+                        y1="5"
+                        x2="19"
+                        y2="19"
+                        stroke-linecap="round"
+                        opacity="0"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="match" id="matchReset" aria-live="polite">
+                  Passwords: <span id="matchResetText">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="actions">
+              <button id="submit" class="key" type="submit" aria-live="polite">
+                <span class="key-spinner" aria-hidden="true"></span>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 12a5 5 0 1 1 9.9 1H12v4h2v2h2v-2h2v-2h-1.1A5 5 0 0 1 2 12z"
+                    fill="#1B1B1B"
+                  />
+                </svg>
+                <span id="submitText">Sign in</span>
+              </button>
+              <div class="links">
+                <span class="link" id="linkRegister">Create account</span>
+                <span class="link" id="linkForgot">Forgot password?</span>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="js/helper.js"></script>
+    <script defer src="js/auth.js"></script>
+  </body>
 </html>

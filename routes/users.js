@@ -486,24 +486,4 @@ router.get('/profile/:username', asyncHandler(async (req, res) => {
   });
 }));
 
-
-/**
- * @route   GET /api/users/debug-current-user
- * @desc    Debug route to check who the current authenticated user is
- * @access  Private
- */
-router.get('/debug-current-user', authenticateToken, asyncHandler(async (req, res) => {
-  res.json({
-    success: true,
-    debug: {
-      tokenUser: req.user.username, // This should be testuser3
-      tokenUserId: req.user._id,
-      authProvider: req.user.authProvider,
-      email: req.user.email,
-      isAdmin: req.user.isAdmin
-    },
-    message: 'If tokenUser is not testuser3, there is an authentication issue'
-  });
-}));
-
 export default router;

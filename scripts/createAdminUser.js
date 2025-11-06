@@ -3,31 +3,28 @@
  * Run: node scripts/createAdminUser.js
  */
 
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
-import ChecklistData from '../models/ChecklistData.js';
-import config from '../config/environment.js';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
+import ChecklistData from "../models/ChecklistData.js";
+import config from "../config/environment.js";
 
 const createAdminUser = async () => {
   try {
     await mongoose.connect(config.MONGODB_URI);
-    console.log('Connected to database');
+    console.log("Connected to database");
 
-    const adminUsername = 'admin';
-    const adminEmail = 'admin@focusflow.com';
-    const adminPassword = 'admin123';
+    const adminUsername = "admin";
+    const adminEmail = "admin@focusflow.com";
+    const adminPassword = "admin123";
 
     // Check if admin already exists
-    const existingAdmin = await User.findOne({ 
-      $or: [
-        { username: adminUsername },
-        { email: adminEmail }
-      ]
+    const existingAdmin = await User.findOne({
+      $or: [{ username: adminUsername }, { email: adminEmail }],
     });
 
     if (existingAdmin) {
-      console.log('Admin user already exists:', existingAdmin.username);
+      console.log("Admin user already exists:", existingAdmin.username);
       await mongoose.disconnect();
       return;
     }
@@ -40,9 +37,9 @@ const createAdminUser = async () => {
       username: adminUsername,
       email: adminEmail,
       password: hashedPassword,
-      authProvider: 'local',
+      authProvider: "local",
       isAdmin: true,
-      isEmailVerified: true
+      isEmailVerified: true,
     });
 
     await adminUser.save();
@@ -50,17 +47,16 @@ const createAdminUser = async () => {
     // Create default data for admin
     await ChecklistData.getUserData(adminUsername);
 
-    console.log('✅ Admin user created successfully!');
-    console.log('Username:', adminUsername);
-    console.log('Email:', adminEmail);
-    console.log('Password:', adminPassword);
-    console.log('Please change the password after first login.');
-
+    console.log("✅ Admin user created successfully!");
+    console.log("Username:", adminUsername);
+    console.log("Email:", adminEmail);
+    console.log("Password:", adminPassword);
+    console.log("Please change the password after first login.");
   } catch (error) {
-    console.error('Error creating admin user:', error);
+    console.error("Error creating admin user:", error);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from database');
+    console.log("Disconnected from database");
   }
 };
 
