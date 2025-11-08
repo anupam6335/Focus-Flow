@@ -1,12 +1,573 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    Hello world
-    <a href="/auth"> Login </a>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>FocusFlow — Your Daily Progress</title>
+    <meta
+      name="description"
+      content="Track your DSA progress with calm focus and cinematic beauty"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1b1b1b" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- Dynamic SEO -->
+    <script>
+      (function () {
+        const origin = window.location.origin;
+        const path = window.location.pathname;
+        const link = document.createElement("link");
+        link.rel = "canonical";
+        link.href = origin + path;
+        document.head.appendChild(link);
+
+        const ogTags = [
+          ["og:title", "FocusFlow — Your Daily Progress"],
+          ["og:description", "Track your DSA journey with calm focus"],
+          ["og:type", "website"],
+          ["og:url", origin + path],
+          ["og:image", origin + "/assets/home_preview.png"],
+        ];
+
+        ogTags.forEach(([property, content]) => {
+          const m = document.createElement("meta");
+          m.setAttribute("property", property);
+          m.setAttribute("content", content);
+          document.head.appendChild(m);
+        });
+      })();
+    </script>
+
+    <link rel="preload" href="css/helper.css" as="style" />
+    <link rel="preload" href="css/main.css" as="style" />
+    <link rel="stylesheet" href="css/helper.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/main_public.css" />
+  </head>
+  <body>
+    <!-- Background Elements -->
+    <div class="background-elements">
+      <div class="lamp-container" id="lamp">
+        <svg class="lamp" viewBox="0 0 200 300" aria-hidden="true">
+          <!-- Lamp cord -->
+          <line
+            x1="100"
+            y1="0"
+            x2="100"
+            y2="80"
+            stroke="#8a795d"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <!-- Lamp shade -->
+          <path
+            d="M60 80 L140 80 L160 180 L40 180 Z"
+            fill="#d4c9b8"
+            stroke="#b8a993"
+            stroke-width="2"
+          />
+          <!-- Lamp base -->
+          <ellipse cx="100" cy="180" rx="60" ry="8" fill="#c4b6a1" />
+          <!-- Light glow (will be toggled) -->
+          <defs>
+            <radialGradient id="lampGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f9f3e9" stop-opacity="0.8" />
+              <stop offset="70%" stop-color="#f9f3e9" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#f9f3e9" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <ellipse
+            id="lamp-glow"
+            cx="100"
+            cy="180"
+            rx="120"
+            ry="40"
+            fill="url(#lampGlow)"
+            opacity="0"
+          />
+        </svg>
+      </div>
+      <div class="petals" id="petals" aria-hidden="true"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="brand">
+          <span class="seal seal--leaf" aria-hidden="true"></span>
+          <h1>FocusFlow</h1>
+        </div>
+
+        <div class="header-controls">
+          <!-- Motion Toggles -->
+          <div class="toggle-group">
+            <button class="toggle-btn" id="toggle-leaves" aria-pressed="true">
+              <svg
+                class="toggle-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M12 2C7.03 2 3 6.03 3 11c0 4.97 4.03 9 9 9 4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9z"
+                />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <span class="toggle-text">Leaves: On</span>
+            </button>
+
+            <button class="toggle-btn" id="toggle-lamp" aria-pressed="true">
+              <svg
+                class="toggle-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M9 18h6M10 22h4M12 2v1M12 21v1M4.22 4.22l.71.71M18.36 18.36l.71.71M1 12h1M21 12h1M4.22 19.78l.71-.71M18.36 5.64l.71-.71"
+                />
+              </svg>
+              <span class="toggle-text">Lamp: Light</span>
+            </button>
+          </div>
+
+          <!-- User Controls -->
+          <div class="user-controls">
+            <div class="notification-wrapper">
+              <button
+                class="icon-btn"
+                id="notifications-btn"
+                aria-label="Notifications"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span class="notification-badge" id="notification-count"
+                  >0</span
+                >
+              </button>
+              <div
+                class="dropdown notifications-dropdown"
+                id="notifications-dropdown"
+              >
+                <div class="dropdown-header">
+                  <h3>Notifications</h3>
+                </div>
+                <div class="dropdown-content" id="notifications-list">
+                  <div class="notification-item">
+                    <p>Welcome to FocusFlow! Start tracking your progress.</p>
+                    <span class="notification-time">Just now</span>
+                  </div>
+                </div>
+                <div class="dropdown-footer">
+                  <a href="/notifications" class="dropdown-link"
+                    >See all notifications</a
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-wrapper">
+              <button
+                class="icon-btn"
+                id="profile-btn"
+                aria-label="Profile menu"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </button>
+              <div class="dropdown profile-dropdown" id="profile-dropdown">
+                <div class="dropdown-content">
+                  <a href="/auth" class="dropdown-item" id="login-link">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Login
+                  </a>
+                  <button
+                    class="dropdown-item"
+                    id="logout-btn"
+                    style="display: none"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Left Column - Questions List -->
+        <div class="column-left">
+          <div class="date-section">
+            <h2 id="current-date">Today</h2>
+            <p id="current-day" class="date-subtitle">Loading...</p>
+          </div>
+
+          <div class="questions-section">
+            <div class="section-header">
+              <h3>Today's Questions</h3>
+              <button class="add-btn" id="add-question">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Question
+              </button>
+            </div>
+
+            <div class="questions-list" id="question-list">
+              <!-- Questions will be dynamically inserted here -->
+              <div class="empty-state">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1"
+                >
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                  />
+                  <polyline points="7.5 4.21 12 6.81 16.5 4.21" />
+                  <polyline points="7.5 19.79 7.5 14.6 3 12" />
+                  <polyline points="21 12 16.5 14.6 16.5 19.79" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+                <p>
+                  No questions yet. Add your first question to begin tracking.
+                </p>
+              </div>
+            </div>
+
+            <div class="previous-days-link">
+              <a href="#" class="text-link">See questions from previous days</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Sand Timer -->
+        <div class="column-right">
+          <div class="sand-timer-container">
+            <div class="sand-timer" id="sand-timer">
+              <div class="hourglass">
+                <div class="hourglass-frame"></div>
+
+                <!-- Top Sand -->
+                <div class="sand-top-container">
+                  <div class="sand-top-fill" id="sand-top-fill"></div>
+                </div>
+
+                <!-- Bottom Sand -->
+                <div class="sand-bottom-container">
+                  <div class="sand-bottom-fill" id="sand-bottom-fill"></div>
+                </div>
+
+                <!-- Neck with Falling Sand -->
+                <div class="hourglass-neck">
+                  <div class="sand-flow" id="sand-flow">
+                    <!-- Sand grains will be dynamically added here -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="sand-stand"></div>
+            </div>
+            <div class="progress-text">
+              <span id="progress-count">0</span> of
+              <span id="total-count">0</span> completed
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Toast Messages -->
+    <div class="toast-container" id="toast" aria-live="polite"></div>
+
+    <!-- Add Question Modal -->
+    <div class="modal-overlay" id="add-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Add New Question</h3>
+          <button class="modal-close" id="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="add-question-form">
+            <div class="form-group">
+              <label for="question-text">Question</label>
+              <input
+                type="text"
+                id="question-text"
+                placeholder="Enter question name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="question-link">Link (Optional)</label>
+              <input
+                type="url"
+                id="question-link"
+                placeholder="https://leetcode.com/problems/..."
+              />
+            </div>
+            <div class="form-group">
+              <label for="question-difficulty">Difficulty</label>
+              <div class="difficulty-selector">
+                <button
+                  type="button"
+                  class="difficulty-btn active"
+                  data-difficulty="Easy"
+                >
+                  Easy
+                </button>
+                <button
+                  type="button"
+                  class="difficulty-btn"
+                  data-difficulty="Medium"
+                >
+                  Medium
+                </button>
+                <button
+                  type="button"
+                  class="difficulty-btn"
+                  data-difficulty="Hard"
+                >
+                  Hard
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancel-add">Cancel</button>
+          <button class="btn-primary" id="save-question">Add Question</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Confirm Delete</h3>
+          <button class="modal-close" id="close-delete-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to delete this question? This action cannot be
+            undone.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancel-delete">Cancel</button>
+          <button class="btn-danger" id="confirm-delete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+<!-- Public Landing (shown when logged out) -->
+<div class="public-landing" id="public-landing">
+  <div class="cinematic-container">
+    <!-- Background Elements - Lamp & Leaves -->
+    <div class="landing-background">
+      <div class="floating-particles"></div>
+      <div class="glow-orbs">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+      </div>
+      
+      <!-- Lamp Container -->
+      <div class="landing-lamp-container" id="landing-lamp">
+        <svg class="landing-lamp" viewBox="0 0 200 300" aria-hidden="true">
+          <!-- Lamp cord -->
+          <line x1="100" y1="0" x2="100" y2="80" stroke="#8a795d" stroke-width="2" stroke-linecap="round"/>
+          <!-- Lamp shade -->
+          <path d="M60 80 L140 80 L160 180 L40 180 Z" fill="#d4c9b8" stroke="#b8a993" stroke-width="2"/>
+          <!-- Lamp base -->
+          <ellipse cx="100" cy="180" rx="60" ry="8" fill="#c4b6a1"/>
+          <!-- Light glow -->
+          <defs>
+            <radialGradient id="landingLampGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f9f3e9" stop-opacity="0.6"/>
+              <stop offset="70%" stop-color="#f9f3e9" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#f9f3e9" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <ellipse id="landing-lamp-glow" cx="100" cy="180" rx="120" ry="40" fill="url(#landingLampGlow)" opacity="0.4"/>
+        </svg>
+      </div>
+      
+      <!-- Petals Container -->
+      <div class="landing-petals" id="landing-petals" aria-hidden="true"></div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="landing-grid">
+      <!-- Left Column - Main Content (600px) -->
+      <div class="landing-left">
+        <div class="landing-content">
+          <!-- Logo -->
+          <div class="landing-brand">
+            <span class="seal seal--leaf" aria-hidden="true"></span>
+            <h1>FocusFlow</h1>
+          </div>
+
+          <!-- Headline -->
+          <div class="landing-headline">
+            <h2>The Art of Consistent Growth</h2>
+            <p>Every grain of practice builds mastery</p>
+          </div>
+
+          <!-- Sand Timer -->
+          <div class="landing-sand-timer-container">
+            <div class="landing-sand-timer">
+              <div class="landing-hourglass">
+                <div class="landing-frame"></div>
+                <div class="landing-sand-top">
+                  <div class="landing-sand-fill"></div>
+                </div>
+                <div class="landing-sand-bottom">
+                  <div class="landing-sand-fill"></div>
+                </div>
+                <div class="landing-neck">
+                  <div class="landing-sand-flow">
+                    <!-- Sand particles will be added by JS -->
+                  </div>
+                </div>
+              </div>
+              <div class="landing-stand"></div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="landing-actions">
+            <a href="/auth" class="landing-btn primary">
+              <span>Begin Journey</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+            <button class="landing-btn secondary" id="study-lamp-btn">
+              <span>Study Lamp</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18h6M10 22h4M12 2v1M12 21v1M4.22 4.22l.71.71M18.36 18.36l.71.71M1 12h1M21 12h1M4.22 19.78l.71-.71M18.36 5.64l.71-.71"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Motion Toggles -->
+          <div class="landing-toggles">
+            <button class="toggle-btn" id="landing-toggle-leaves" aria-pressed="true">
+              <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2C7.03 2 3 6.03 3 11c0 4.97 4.03 9 9 9 4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <span class="toggle-text">Leaves: On</span>
+            </button>
+
+            <button class="toggle-btn" id="landing-toggle-lamp" aria-pressed="true">
+              <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 18h6M10 22h4M12 2v1M12 21v1M4.22 4.22l.71.71M18.36 18.36l.71.71M1 12h1M21 12h1M4.22 19.78l.71-.71M18.36 5.64l.71-.71"/>
+              </svg>
+              <span class="toggle-text">Lamp: Light</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Real Story (500px) -->
+      <div class="landing-right">
+        <div class="real-story">
+          <div class="story-header">
+            <h3>Real Journey</h3>
+            <div class="story-meta">
+              <span class="story-author">John Carmack</span>
+              <span class="story-role">Programming Legend</span>
+            </div>
+          </div>
+          
+          <div class="story-content">
+            <blockquote>
+              "The focus required for deep programming work is a skill that must be cultivated. 
+              It's not about being smart - it's about being present and persistent."
+            </blockquote>
+            
+            <div class="story-insight">
+              <p>In his famous <a href="https://news.ycombinator.com/item?id=33503598" target="_blank" rel="noopener">HN post</a>, Carmack emphasized:</p>
+              <ul>
+                <li>Daily deliberate practice matters more than raw talent</li>
+                <li>Consistent focus builds neural pathways for complex problem-solving</li>
+                <li>The ability to maintain deep work separates good engineers from great ones</li>
+              </ul>
+            </div>
+            
+            <div class="story-cta">
+              <p><strong>This is why we built FocusFlow:</strong> To help you develop that consistent focus and turn daily practice into mastery.</p>
+            </div>
+          </div>
+          
+          <div class="story-footer">
+            <a href="https://news.ycombinator.com/item?id=33503598" target="_blank" rel="noopener" class="story-link">
+              Read original discussion
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <script defer src="js/helper.js"></script>
+    <script defer src="js/main.js"></script>
+    <script defer src="js/main_public.js"></script>
+  </body>
 </html>

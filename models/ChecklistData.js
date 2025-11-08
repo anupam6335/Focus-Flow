@@ -6,6 +6,11 @@
 import mongoose from 'mongoose';
 
 const questionSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+    auto: true
+  },
   text: { type: String, required: true },
   link: { type: String, default: '' },
   completed: { type: Boolean, default: false },

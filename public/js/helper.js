@@ -35,7 +35,7 @@ function debounce(fn, ms) {
 }
 
 /* Fetch wrapper with timeout + JSON fallbacks */
-async function fx(url, opts = {}, timeout = TIMEOUT) {
+/* async function fx(url, opts = {}, timeout = TIMEOUT) {
   const ctl = new AbortController();
   const id = setTimeout(() => ctl.abort(), timeout);
   try {
@@ -61,27 +61,76 @@ async function fx(url, opts = {}, timeout = TIMEOUT) {
         : "Network error. Check connection."
     );
   }
+} */
+
+
+  /* Fetch wrapper with timeout + JSON fallbacks
+   - Returns an object { ok, status, data, error, raw }
+   - Never throws (unless extremely unexpected) so callers can branch cleanly.
+   - Keeps credentials: 'include' so cookies (ff_token) are sent.
+*/
+async function fx(url, opts = {}, timeout = TIMEOUT) {
+  const ctl = new AbortController();
+  const id = setTimeout(() => ctl.abort(), timeout);
+
+  // Ensure defaults (do not overwrite explicitly provided opts)
+  const finalOpts = {
+    credentials: "include",
+    headers: { Accept: "application/json", ...(opts.headers || {}) },
+    method: opts.method || "GET",
+    ...opts,
+    signal: ctl.signal,
+  };
+
+  try {
+    const r = await fetch(url, finalOpts);
+    clearTimeout(id);
+
+    const text = await r.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (parseErr) {
+      // Not valid JSON — surface friendly error but keep raw text
+      data = text;
+    }
+
+    return { ok: r.ok, status: r.status, data, raw: r, error: null };
+  } catch (e) {
+    // Provide a friendly, inspectable error object instead of throwing.
+    clearTimeout(id);
+    const friendly = e.name === "AbortError" ? "Network timeout. Try again." : "Network error. Check connection.";
+    console.debug("Helper.fx network error:", e, { url, opts: finalOpts });
+    return { ok: false, status: 0, data: null, raw: null, error: friendly };
+  }
 }
 
 /* -------- Request cache (dedupe + TTL) -------- */
 const ReqCache = (() => {
-  const store = new Map();   // key -> { ts, data }
+  const store = new Map(); // key -> { ts, data }
   const inflight = new Map(); // key -> Promise
   const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
   const makeKey = (url, opts = {}) => {
-    const method = (opts.method || 'GET').toUpperCase();
-    const body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body || null);
-    return `${method} ${url} :: ${body || ''}`;
+    const method = (opts.method || "GET").toUpperCase();
+    const body =
+      typeof opts.body === "string"
+        ? opts.body
+        : JSON.stringify(opts.body || null);
+    return `${method} ${url} :: ${body || ""}`;
   };
 
-  async function getOrFetch(url, opts = {}, { ttl = DEFAULT_TTL, bypass = false } = {}) {
+  async function getOrFetch(
+    url,
+    opts = {},
+    { ttl = DEFAULT_TTL, bypass = false } = {}
+  ) {
     const key = makeKey(url, opts);
     const now = Date.now();
 
     if (!bypass) {
       const hit = store.get(key);
-      if (hit && (now - hit.ts) < ttl) return hit.data;
+      if (hit && now - hit.ts < ttl) return hit.data;
 
       if (inflight.has(key)) return inflight.get(key);
     }
@@ -109,11 +158,15 @@ const ReqCache = (() => {
 
 /* Cached JSON POST helper */
 async function cachedJson(url, payload, { ttl, bypassCache } = {}) {
-  return ReqCache.getOrFetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload || {}),
-  }, { ttl, bypass: !!bypassCache });
+  return ReqCache.getOrFetch(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
+    },
+    { ttl, bypass: !!bypassCache }
+  );
 }
 
 function providerPretty(p) {
@@ -223,13 +276,19 @@ function oauthLoading(btn, otherBtn) {
   }, 5000);
 }
 
-/* Optional: expose as a namespaced helper as well (for other pages) */
+// quick token verify helper (returns structured result)
+async function verifyToken() {
+  return await fx("/api/auth/verify-token");
+}
+
+/*  expose as a namespaced helper as well (for other pages) */
 window.Helper = {
   TIMEOUT,
   $,
   escapeHtml,
   debounce,
   fx,
+  verifyToken,
   cachedJson,
   toggleEye,
   strengthScore,

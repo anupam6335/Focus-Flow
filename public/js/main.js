@@ -1,4862 +1,1199 @@
-// Initialize app data
-let appData = [];
-const TOTAL_DAYS = 1;
-let APP_START_DATE = new Date();
+/**
+ * FocusFlow — Home Page Interactions
+ * Cinematic, realistic DSA tracking with Japanese calm aesthetic
+ */
 
-// NEW: Search functionality variables with debounce
-let searchFilter = "";
-let filteredData = [];
-let searchTimeout = null;
-const SEARCH_DEBOUNCE_TIME = 300; // 300ms debounce
+// State Management
+let state = {
+  isLoggedIn: false,
+  questions: [],
+  currentDay: 1,
+  leavesAnimation: true,
+  lampLight: true,
+  editingQuestionId: null,
+  deletingQuestionId: null,
+  leavesInterval: null,
+};
 
-const DEFAULT_QUESTIONS = [
-  {
-    text: "Two Sum",
-    link: "https://leetcode.com/problems/two-sum/",
-    difficulty: "Easy",
-  },
-  {
-    text: "Reverse a Linked List",
-    link: "https://leetcode.com/problems/reverse-linked-list/",
-    difficulty: "Medium",
-  },
-  {
-    text: "Binary Search",
-    link: "https://leetcode.com/problems/binary-search/",
-    difficulty: "Medium",
-  },
-];
+// DOM Elements
+let elements = {};
 
-// MongoDB configuration
-const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
-let userId = "default-user";
-let authToken = null;
+// Initialize the application
+async function init() {
+  try {
+    console.log("Initializing application...");
+    initializeElements();
+    setupEventListeners();
+    updateDateDisplay();
+    setupAnimations();
+    setupSandTimer();
 
-// Add day number information to the header or somewhere visible
-const header = document.querySelector("header h1");
-if (header) {
-  const dayInfo = document.createElement("div");
-  dayInfo.style.fontSize = "0.8rem";
-  dayInfo.style.opacity = "0.7";
-  dayInfo.style.marginTop = "5px";
-  dayInfo.style.marginLeft = "10px";
+    // Check auth status first
+    await checkAuthStatus();
 
-  // Format the date
-  const d = new Date();
-  const day = d.getDate();
-  const suffix =
-    day > 3 && day < 21 ? "th" : ["th", "st", "nd", "rd"][day % 10] || "th";
-  const month = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sept",
-    "Oct",
-    "Nov",
-    "Dec",
-  ][d.getMonth()];
-  const formattedDate = `${day}${suffix} ${month}, ${d.getFullYear()}`;
+    // If logged in, load questions immediately
+    if (state.isLoggedIn) {
+      console.log("User is authenticated, loading questions...");
+      await loadQuestions();
+    } else {
+      console.log("User not authenticated, showing public landing");
+      showPublicLanding();
+    }
 
-  dayInfo.textContent = formattedDate;
-
-  header.parentElement.insertBefore(dayInfo, header.nextSibling);
+    console.log("Application initialized successfully");
+  } catch (error) {
+    console.error("Initialization failed:", error);
+  }
 }
 
-// Sync state management
-let currentVersion = 1;
-let lastUpdated = new Date().toISOString();
-let isSyncing = false;
-let pendingChanges = false;
+// Initialize DOM elements after page load
+function initializeElements() {
+  console.log("Initializing DOM elements...");
 
-// DOM elements
-const tableBody = document.getElementById("tableBody");
-// const themeToggle = document.getElementById("themeToggle");
-const linkModal = document.getElementById("linkModal");
-const closeModal = document.getElementById("closeModal");
-const cancelModal = document.getElementById("cancelModal");
-const saveLink = document.getElementById("saveLink");
-const questionTextInput = document.getElementById("questionTextInput");
-const questionLinkInput = document.getElementById("questionLinkInput");
-const syncButton = document.getElementById("syncButton");
-const syncStatus = document.getElementById("syncStatus");
+  elements = {
+    // Toggles
+    toggleLeaves: document.getElementById("toggle-leaves"),
+    toggleLamp: document.getElementById("toggle-lamp"),
 
-// NEW: Search bar elements
-const searchBar = document.getElementById("searchBar");
-const searchInfo = document.getElementById("searchInfo");
+    // User Controls
+    profileBtn: document.getElementById("profile-btn"),
+    profileDropdown: document.getElementById("profile-dropdown"),
+    notificationsBtn: document.getElementById("notifications-btn"),
+    notificationsDropdown: document.getElementById("notifications-dropdown"),
+    loginLink: document.getElementById("login-link"),
+    logoutBtn: document.getElementById("logout-btn"),
 
-// Auth DOM elements
-const authSection = document.getElementById("authSection");
-const loginForm = document.getElementById("loginForm");
-const registerForm = document.getElementById("registerForm");
-const userInfo = document.getElementById("userInfo");
-const usernameInput = document.getElementById("usernameInput");
-const passwordInput = document.getElementById("passwordInput");
-const loginBtn = document.getElementById("loginBtn");
-const showRegisterBtn = document.getElementById("showRegisterBtn");
-const regUsernameInput = document.getElementById("regUsernameInput");
-const regPasswordInput = document.getElementById("regPasswordInput");
-const regConfirmPasswordInput = document.getElementById(
-  "regConfirmPasswordInput"
-);
-const registerBtn = document.getElementById("registerBtn");
-const showLoginBtn = document.getElementById("showLoginBtn");
-const currentUsername = document.getElementById("currentUsername");
-const logoutBtn = document.getElementById("logoutBtn");
+    // Content
+    currentDate: document.getElementById("current-date"),
+    currentDay: document.getElementById("current-day"),
+    questionList: document.getElementById("question-list"),
+    addQuestion: document.getElementById("add-question"),
 
-// Forgot Password DOM elements
-const forgotPasswordForm = document.getElementById("forgotPasswordForm");
-const showForgotPasswordBtn = document.getElementById("showForgotPasswordBtn");
-const showLoginFromForgotBtn = document.getElementById(
-  "showLoginFromForgotBtn"
-);
-const forgotUsernameInput = document.getElementById("forgotUsernameInput");
-const sendResetCodeBtn = document.getElementById("sendResetCodeBtn");
-const resetCodeSection = document.getElementById("resetCodeSection");
-const resetCodeInput = document.getElementById("resetCodeInput");
-const newPasswordInput = document.getElementById("newPasswordInput");
-const confirmNewPasswordInput = document.getElementById(
-  "confirmNewPasswordInput"
-);
-const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+    // Sand Timer
+    sandTimer: document.getElementById("sand-timer"),
+    sandTop: document.getElementById("sand-top-fill"), // Updated ID
+    sandBottom: document.getElementById("sand-bottom-fill"), // Updated ID
+    progressCount: document.getElementById("progress-count"),
+    totalCount: document.getElementById("total-count"),
 
-// Current editing question info
-let currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
-// NEW: Search functionality with debounce
-function setupSearchFunctionality() {
-  searchBar.addEventListener("input", function (e) {
-    const searchValue = e.target.value.trim();
+    // Modals
+    addModal: document.getElementById("add-modal"),
+    deleteModal: document.getElementById("delete-modal"),
+    closeModal: document.getElementById("close-modal"),
+    closeDeleteModal: document.getElementById("close-delete-modal"),
+    cancelAdd: document.getElementById("cancel-add"),
+    cancelDelete: document.getElementById("cancel-delete"),
+    saveQuestion: document.getElementById("save-question"),
+    confirmDelete: document.getElementById("confirm-delete"),
 
-    // Clear previous timeout
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    // Forms
+    addQuestionForm: document.getElementById("add-question-form"),
+    questionText: document.getElementById("question-text"),
+    questionLink: document.getElementById("question-link"),
 
-    // Set new timeout for debounce
-    searchTimeout = setTimeout(() => {
-      searchFilter = searchValue;
-      filterTableData();
-      renderTable();
-      updateSearchInfo();
-    }, SEARCH_DEBOUNCE_TIME);
-  });
+    // Public Landing
+    publicLanding: document.getElementById("public-landing"),
 
-  // Clear search when Escape key is pressed
-  searchBar.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") {
-      searchBar.value = "";
-      searchFilter = "";
+    // Toast
+    toast: document.getElementById("toast"),
+  };
 
-      // Clear any pending search timeout
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-        searchTimeout = null;
-      }
-
-      filterTableData();
-      renderTable();
-      updateSearchInfo();
+  // Log which elements were found
+  Object.keys(elements).forEach((key) => {
+    if (elements[key]) {
+      console.log(`✓ Found element: ${key}`);
+    } else {
+      console.warn(`✗ Missing element: ${key}`);
     }
   });
 
-  // Clear search when input is cleared manually (backspace, delete, etc.)
-  searchBar.addEventListener("input", function (e) {
+  console.log("DOM elements initialization completed");
+}
+
+// Event Listeners Setup
+function setupEventListeners() {
+  console.log("Setting up event listeners...");
+
+  // Toggle buttons
+  if (elements.toggleLeaves) {
+    elements.toggleLeaves.addEventListener("click", toggleLeavesAnimation);
+    console.log("Leaves toggle listener added");
+  }
+
+  if (elements.toggleLamp) {
+    elements.toggleLamp.addEventListener("click", toggleLampLight);
+    console.log("Lamp toggle listener added");
+  }
+
+  // User controls
+  if (elements.profileBtn) {
+    elements.profileBtn.addEventListener("click", toggleProfileDropdown);
+    console.log("Profile button listener added");
+  }
+
+  if (elements.notificationsBtn) {
+    elements.notificationsBtn.addEventListener(
+      "click",
+      toggleNotificationsDropdown
+    );
+    console.log("Notifications button listener added");
+  }
+
+  if (elements.logoutBtn) {
+    elements.logoutBtn.addEventListener("click", handleLogout);
+    console.log("Logout button listener added");
+  }
+
+  // Question actions - CRITICAL: Make sure these are set
+  if (elements.addQuestion) {
+    elements.addQuestion.addEventListener("click", showAddModal);
+    console.log("Add question button listener added");
+  } else {
+    console.error("Add question button element not found!");
+  }
+
+  if (elements.closeModal) {
+    elements.closeModal.addEventListener("click", hideAddModal);
+  }
+
+  if (elements.cancelAdd) {
+    elements.cancelAdd.addEventListener("click", hideAddModal);
+  }
+
+  if (elements.saveQuestion) {
+    elements.saveQuestion.addEventListener("click", handleAddQuestion);
+    console.log("Save question button listener added");
+  }
+
+  if (elements.closeDeleteModal) {
+    elements.closeDeleteModal.addEventListener("click", hideDeleteModal);
+  }
+
+  if (elements.cancelDelete) {
+    elements.cancelDelete.addEventListener("click", hideDeleteModal);
+  }
+
+  if (elements.confirmDelete) {
+    elements.confirmDelete.addEventListener("click", handleDeleteQuestion);
+  }
+
+  // Form submission
+  if (elements.addQuestionForm) {
+    elements.addQuestionForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      handleAddQuestion();
+    });
+    console.log("Add question form listener added");
+  }
+
+  // Difficulty selector - use event delegation
+  document.addEventListener("click", function (e) {
     if (
-      e.inputType &&
-      e.inputType.includes("delete") &&
-      !searchBar.value.trim()
+      e.target.classList.contains("difficulty-btn") &&
+      !e.target.closest(".edit-difficulty")
     ) {
-      // Clear any pending search timeout
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-        searchTimeout = null;
-      }
-
-      searchFilter = "";
-      filterTableData();
-      renderTable();
-      updateSearchInfo();
+      document
+        .querySelectorAll(".difficulty-btn")
+        .forEach((b) => b.classList.remove("active"));
+      e.target.classList.add("active");
     }
   });
-}
 
-// NEW: Filter table data based on search input - IMPROVED VERSION
-function filterTableData() {
-  if (!searchFilter) {
-    filteredData = [...appData].sort((a, b) => a.day - b.day); // Show all data when no filter
-    return;
-  }
-
-  // Filter by day number - support exact and partial matches
-  filteredData = appData
-    .filter((dayData) => {
-      const dayString = dayData.day.toString();
-      // Return true if the search filter matches the day number
-      return dayString.includes(searchFilter);
-    }) // Sort the filtered results by day number
-    .sort((a, b) => a.day - b.day);
-}
-
-// NEW: Update search info text
-function updateSearchInfo() {
-  if (!searchFilter) {
-    searchInfo.textContent =
-      "Type a day number to filter. Clear to show all days.";
-    searchInfo.style.color = "";
-  } else {
-    const resultCount = filteredData.length;
-    searchInfo.textContent = `Showing ${resultCount} day${
-      resultCount !== 1 ? "s" : ""
-    } matching "${searchFilter}"`;
-    searchInfo.style.color =
-      resultCount > 0 ? "var(--success-color)" : "var(--danger-color)";
-  }
-}
-
-// Add this function to enhance question buttons with CodeLeaf styling
-function enhanceQuestionButtonsWithCodeLeaf() {
-  const questionItems = document.querySelectorAll(".question-item");
-
-  questionItems.forEach((item) => {
-    const questionText = item.querySelector(".question-text");
-    const editBtn = item.querySelector('button[title="Edit link"]');
-    const deleteBtn = item.querySelector('button[title="Delete question"]');
-
-    if (questionText && (editBtn || deleteBtn)) {
-      // Create actions container
-      const actionsContainer = document.createElement("div");
-      actionsContainer.className = "question-actions";
-
-      // Move buttons into the container with proper styling
-      if (editBtn) {
-        editBtn.className = "edit-link-btn";
-        editBtn.innerHTML = "🔗";
-        editBtn.title = "Edit question link";
-        actionsContainer.appendChild(editBtn);
-      }
-
-      if (deleteBtn) {
-        deleteBtn.className = "delete-question-btn";
-        deleteBtn.innerHTML = "🗑️";
-        deleteBtn.title = "Delete question";
-        actionsContainer.appendChild(deleteBtn);
-      }
-
-      // Add container to question text
-      questionText.appendChild(actionsContainer);
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", (e) => {
+    if (elements.profileDropdown && !e.target.closest(".profile-wrapper")) {
+      elements.profileDropdown.classList.remove("show");
+    }
+    if (
+      elements.notificationsDropdown &&
+      !e.target.closest(".notification-wrapper")
+    ) {
+      elements.notificationsDropdown.classList.remove("show");
     }
   });
-}
 
-// Enhanced renderTable function without status column
-function enhanceTableWithCardLayout() {
-  const tableBody = document.getElementById("tableBody");
-  if (!tableBody) return;
-
-  // Add CSS class to trigger card layout
-  tableBody.classList.add("card-layout-enabled");
-
-  // Add smooth transition effects
-  const rows = tableBody.querySelectorAll("tr");
-  rows.forEach((row, index) => {
-    // Add data attributes for styling
-    row.setAttribute(
-      "data-day-type",
-      row.classList.contains("current-day") ? "current" : "past"
-    );
-
-    // Enhanced hover effects
-    row.addEventListener("mouseenter", function () {
-      this.style.transform = "translateY(-2px)";
-    });
-
-    row.addEventListener("mouseleave", function () {
-      this.style.transform = "translateY(0)";
-    });
-
-    // Remove any status cells if they exist
-    const statusCell = row.querySelector(".status-cell");
-    if (statusCell) {
-      statusCell.remove();
+  // Escape key to close modals
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      hideAddModal();
+      hideDeleteModal();
     }
   });
-}
-// Initialize the enhanced layout when DOM is loaded
-document.addEventListener("DOMContentLoaded", function () {
-  // Wait for table to be rendered
-  setTimeout(() => {
-    enhanceTableWithCardLayout();
-  }, 100);
-});
 
-// Re-apply layout when table is re-rendered
-const originalRenderTable = renderTable;
-renderTable = function () {
-  originalRenderTable();
-  setTimeout(enhanceTableWithCardLayout, 50);
-};
-
-// Initialize the app
-async function initApp() {
-  await initializeApp();
+  console.log("All event listeners setup completed");
 }
 
-// Update the isEditable function to use dynamic APP_START_DATE
-function isEditable(dayNumber) {
-  const startDate = new Date(APP_START_DATE);
-  const dayDate = new Date(startDate);
-  dayDate.setDate(startDate.getDate() + (dayNumber - 1));
-
-  const today = new Date();
-
-  // Compare dates without time components
-  const isToday = dayDate.toDateString() === today.toDateString();
-
-  return isToday;
-}
-
-// Replace the setAppStartDateFromUser function with this corrected version:
-async function setAppStartDateFromUser() {
-  if (authToken && userId !== "default-user") {
-    try {
-      ////  console.log("🔄 Fetching user info to set APP_START_DATE...");
-      ////  console.log("📝 User ID:", userId);
-      ////  console.log("🔑 Auth token exists:", !!authToken);
-
-      const response = await fetch(`${API_BASE_URL}/user-info`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      ////  console.log("📡 API Response status:", response.status);
-
-      if (response.ok) {
-        const result = await response.json();
-        ////  console.log("📦 API Response data:", result);
-
-        if (result.success && result.user && result.user.accountCreated) {
-          // Use the user's account creation date as APP_START_DATE
-          const userCreatedAt = new Date(result.user.accountCreated);
-          // Ensure we get the date in YYYY-MM-DD format
-          const year = userCreatedAt.getFullYear();
-          const month = String(userCreatedAt.getMonth() + 1).padStart(2, "0");
-          const day = String(userCreatedAt.getDate()).padStart(2, "0");
-          APP_START_DATE = `${year}-${month}-${day}`;
-
-          ////  console.log("📅 Parsed dates:", {
-          //     original: result.user.accountCreated,
-          //     jsDate: userCreatedAt,
-          //     formatted: APP_START_DATE
-          // });
-
-          // Update the activity tracker subtitle
-          updateActivityTrackerSubtitle();
-
-          // console.log(`✅ APP_START_DATE set to user creation date: ${APP_START_DATE}`);
-          return true;
-        } else {
-          //  console.log("❌ User data missing in response:", result);
-        }
-      } else {
-        const errorText = await response.text();
-        ////  console.log("❌ API Error response:", errorText);
-      }
-    } catch (error) {
-      //  console.log("❌ Error fetching user info:", error);
-    }
-  } else {
-    //  console.log("ℹ️ User not authenticated, using default start date");
-  }
-
-  // Use fallback date
-  // console.log(`🔄 Using default APP_START_DATE: ${APP_START_DATE}`);
-  updateActivityTrackerSubtitle();
-  return false;
-}
-// Function to update the activity tracker subtitle
-function updateActivityTrackerSubtitle() {
-  const subtitle = document.querySelector(".activity-tracker-subtitle");
-  if (subtitle) {
-    const formattedDate = formatDateForDisplay(APP_START_DATE);
-    subtitle.textContent = `Your journey started on ${formattedDate} ( Day 1 )`;
-    // console.log(
-    //   `📝 Updated subtitle to: Starting from ${formattedDate} ( Day 1 )`
-    // );
-  } else {
-    //  console.log("❌ Could not find activity tracker subtitle element");
-  }
-}
-
-// Helper function to format date for display
-function formatDateForDisplay(dateString) {
+// Authentication
+async function checkAuthStatus() {
   try {
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/,/g, "");
-  } catch (error) {
-    //  console.log("❌ Error formatting date:", error);
-    return dateString; // Return original string if parsing fails
-  }
-}
-
-// Add this function to verify the date change
-function verifyDateChange() {
-  // Test with a specific day
-  const testDay = 1;
-  console.log(`📊 Is day ${testDay} editable?`, isEditable(testDay));
-
-  updateActivityTrackerSubtitle();
-}
-
-// Get current day number based on dynamic start date
-function getCurrentDayNumber() {
-  const startDate = new Date(APP_START_DATE);
-  const today = new Date();
-
-  // Reset times to compare only dates
-  const start = new Date(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate()
-  );
-  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const diffTime = now - start;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  return Math.max(1, diffDays); // Ensure at least day 1
-}
-
-// Guard function to prevent API calls for non-editable days
-function shouldAllowMutation(dayIndex) {
-  const dayNumber = appData[dayIndex]?.day;
-  if (!dayNumber) return false;
-
-  const editable = isEditable(dayNumber);
-
-  if (!editable) {
-    // console.warn(
-    //   `Attempted to mutate non-editable day ${dayNumber}. Action blocked.`
-    // );
-    toastManager.warning(
-      "Only today's items are editable.",
-      "Editing Restricted"
-    );
-  }
-
-  return editable;
-}
-
-// Safe OAuth initialization
-function initOAuth() {
-  const googleBtn = document.getElementById("googleSignIn");
-  const githubBtn = document.getElementById("githubSignIn");
-  const legacyAuthBtn = document.getElementById("showLegacyAuth");
-
-  if (googleBtn) {
-    googleBtn.addEventListener("click", () => {
-      //  console.log("Initiating Google OAuth...");
-      window.location.href = "/auth/google";
-    });
-  }
-
-  if (githubBtn) {
-    githubBtn.addEventListener("click", () => {
-      //  console.log("Initiating GitHub OAuth...");
-      window.location.href = "/auth/github";
-    });
-  }
-
-  if (legacyAuthBtn) {
-    legacyAuthBtn.addEventListener("click", () => {
-      const legacyAuth = document.querySelector(".legacy-auth");
-      if (legacyAuth) {
-        if (legacyAuth.style.display === "none") {
-          legacyAuth.style.display = "block";
-        } else {
-          legacyAuth.style.display = "none";
-        }
-      }
-    });
-  }
-
-  // Check for OAuth success on page load
-  checkOAuthSuccess();
-}
-
-function checkOAuthSuccess() {
-  // Check if we have a token from OAuth redirect
-  const token = localStorage.getItem("authToken");
-  const username = localStorage.getItem("userId");
-
-  if (token && username && !authToken) {
-    //  console.log("✅ OAuth login detected, setting up user...");
-    authToken = token;
-    userId = username;
-    showUserInfo();
-
-    // Load user data
-    loadData().then(() => {
-      setAppStartDateFromUser();
-      renderTable();
-      renderEnhancedActivityTracker();
-    });
-  } else {
-    //  console.log("🔐 No OAuth token found or user already logged in");
-  }
-}
-function checkOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get("token");
-  const user = urlParams.get("user");
-
-  if (token && user) {
-    // OAuth login successful
-    authToken = token;
-    userId = user;
-
-    // Save for auto-login
-    localStorage.setItem("authToken", authToken);
-    localStorage.setItem("userId", userId);
-
-    showUserInfo();
-
-    // Load data and initialize app
-    loadData().then(() => {
-      setAppStartDateFromUser();
-      renderTable();
-      renderEnhancedActivityTracker();
-    });
-
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-
-  // Check for auth errors
-  const authError = urlParams.get("auth_error");
-  if (authError) {
-    toastManager.error(
-      `Authentication failed with ${authError}. Please try again.`,
-      "Login Failed"
-    );
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}
-
-// Fixed checkAutoLogin function
-async function checkAutoLogin() {
-  const savedToken = localStorage.getItem("authToken");
-  const savedUserId = localStorage.getItem("userId");
-
-  if (savedToken && savedUserId) {
-    try {
-      //  console.log("🔐 Checking auto-login...");
-
-      // Verify token is still valid
-      const response = await fetch(`${API_BASE_URL}/verify-token`, {
-        headers: {
-          Authorization: `Bearer ${savedToken}`,
-        },
-      });
-
-      if (response.ok) {
-        authToken = savedToken;
-        userId = savedUserId;
-        //  console.log("✅ Auto-login successful for user:", userId);
-        showUserInfo();
-        return true;
-      } else {
-        // Token invalid, clear saved credentials BUT KEEP PROGRESS DATA
-        //  console.log("❌ Token invalid, clearing credentials");
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("appVersion");
-        localStorage.removeItem("lastUpdated");
-        showLoginForm();
-        // Progress data remains in localStorage
-      }
-    } catch (error) {
-      //  console.log("❌ Auto-login check failed:", error);
-      showLoginForm();
-      // Progress data remains in localStorage
-    }
-  } else {
-    //  console.log("🔐 No saved credentials, showing login form");
-    showLoginForm();
-  }
-  return false;
-}
-
-// Fixed showLoginForm function
-function showLoginForm() {
-  const authSection = document.getElementById("authSection");
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  const userInfo = document.getElementById("userInfo");
-  const table = document.querySelector("table");
-
-  if (authSection) authSection.style.display = "block";
-  if (loginForm) loginForm.style.display = "block";
-  if (registerForm) registerForm.style.display = "none";
-  if (userInfo) userInfo.style.display = "none";
-
-  // Show table but disable interactions
-  if (table) {
-    table.style.opacity = "0.6";
-    table.style.pointerEvents = "none";
-  }
-
-  // Clear any reset form state if elements exist
-  const resetCodeSection = document.getElementById("resetCodeSection");
-  const forgotUsernameInput = document.getElementById("forgotUsernameInput");
-  const resetCodeInput = document.getElementById("resetCodeInput");
-  const newPasswordInput = document.getElementById("newPasswordInput");
-  const confirmNewPasswordInput = document.getElementById(
-    "confirmNewPasswordInput"
-  );
-
-  if (resetCodeSection) resetCodeSection.style.display = "none";
-  if (forgotUsernameInput) forgotUsernameInput.value = "";
-  if (resetCodeInput) resetCodeInput.value = "";
-  if (newPasswordInput) newPasswordInput.value = "";
-  if (confirmNewPasswordInput) confirmNewPasswordInput.value = "";
-}
-
-// Fixed showUserInfo function
-function showUserInfo() {
-  const authSection = document.getElementById("authSection");
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  const userInfo = document.getElementById("userInfo");
-  const currentUsername = document.getElementById("currentUsername");
-  const table = document.querySelector("table");
-
-  if (authSection) authSection.style.display = "block";
-  if (loginForm) loginForm.style.display = "none";
-  if (registerForm) registerForm.style.display = "none";
-  if (userInfo) userInfo.style.display = "block";
-
-  if (currentUsername) {
-    currentUsername.textContent = userId;
-  }
-
-  // Enable table interactions
-  if (table) {
-    table.style.opacity = "1";
-    table.style.pointerEvents = "auto";
-  }
-}
-
-function setupAuthEventListeners() {
-  const loginBtn = document.getElementById("loginBtn");
-  const showRegisterBtn = document.getElementById("showRegisterBtn");
-  const registerBtn = document.getElementById("registerBtn");
-  const showLoginBtn = document.getElementById("showLoginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  // Only add event listeners if elements exist
-  if (loginBtn) {
-    loginBtn.addEventListener("click", handleLogin);
-  }
-
-  if (showRegisterBtn) {
-    showRegisterBtn.addEventListener("click", () => {
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      if (loginForm) loginForm.style.display = "none";
-      if (registerForm) registerForm.style.display = "block";
-    });
-  }
-
-  if (registerBtn) {
-    registerBtn.addEventListener("click", handleRegister);
-  }
-
-  if (showLoginBtn) {
-    showLoginBtn.addEventListener("click", () => {
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      if (registerForm) registerForm.style.display = "none";
-      if (loginForm) loginForm.style.display = "block";
-    });
-  }
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", handleLogout);
-  }
-
-  // Enter key support for login
-  const passwordInput = document.getElementById("passwordInput");
-  if (passwordInput) {
-    passwordInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") handleLogin();
-    });
-  }
-
-  // Enter key support for registration
-  const regPasswordInput = document.getElementById("regPasswordInput");
-  const regConfirmPasswordInput = document.getElementById(
-    "regConfirmPasswordInput"
-  );
-
-  if (regPasswordInput) {
-    regPasswordInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") handleRegister();
-    });
-  }
-
-  if (regConfirmPasswordInput) {
-    regConfirmPasswordInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") handleRegister();
-    });
-  }
-}
-
-// Toast Notification System
-class ToastManager {
-  constructor() {
-    this.container = document.getElementById("toastContainer");
-    this.toastId = 0;
-  }
-
-  showToast(message, type = "info", title = "", duration = 5000) {
-    const toastId = this.toastId++;
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.id = `toast-${toastId}`;
-
-    const icon = this.getIcon(type);
-    const progressBar =
-      duration > 0 ? '<div class="toast-progress"></div>' : "";
-
-    toast.innerHTML = `
-            <div class="toast-icon">${icon}</div>
-            <div class="toast-content">
-              ${title ? `<div class="toast-title">${title}</div>` : ""}
-              <div class="toast-message">${message}</div>
-            </div>
-            <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
-            ${progressBar}
-          `;
-
-    this.container.appendChild(toast);
-
-    // Animate in
-    setTimeout(() => toast.classList.add("show"), 10);
-
-    // Auto-hide if duration is set
-    if (duration > 0) {
-      const progress = toast.querySelector(".toast-progress");
-      if (progress) {
-        setTimeout(() => progress.classList.add("hide"), 10);
-      }
-
-      setTimeout(() => this.hideToast(toastId), duration);
-    }
-
-    return toastId;
-  }
-
-  hideToast(toastId) {
-    const toast = document.getElementById(`toast-${toastId}`);
-    if (toast) {
-      toast.classList.remove("show");
-      toast.classList.add("hide");
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
-    }
-  }
-
-  getIcon(type) {
-    const icons = {
-      success: "✓",
-      error: "⚠",
-      warning: "⚠",
-      info: "ℹ",
-    };
-    return icons[type] || icons.info;
-  }
-
-  // Convenience methods
-  success(message, title = "Success", duration = 5000) {
-    return this.showToast(message, "success", title, duration);
-  }
-
-  error(message, title = "Error", duration = 7000) {
-    return this.showToast(message, "error", title, duration);
-  }
-
-  warning(message, title = "Warning", duration = 6000) {
-    return this.showToast(message, "warning", title, duration);
-  }
-
-  info(message, title = "Info", duration = 4000) {
-    return this.showToast(message, "info", title, duration);
-  }
-}
-
-// Confirmation Dialog System - FIXED VERSION
-class ConfirmDialog {
-  constructor() {
-    this.dialog = document.getElementById("confirmDialog");
-    this.title = document.getElementById("confirmTitle");
-    this.message = document.getElementById("confirmMessage");
-    this.okButton = document.getElementById("confirmOk");
-    this.cancelButton = document.getElementById("confirmCancel");
-
-    this.promiseResolver = null;
-    this.setupEventListeners();
-  }
-
-  setupEventListeners() {
-    this.okButton.addEventListener("click", () => this.onConfirm(true));
-    this.cancelButton.addEventListener("click", () => this.onConfirm(false));
-
-    // Close when clicking outside
-    this.dialog.addEventListener("click", (e) => {
-      if (e.target === this.dialog) {
-        this.onConfirm(false);
-      }
-    });
-
-    // Escape key support
-    document.addEventListener("keydown", (e) => {
-      if (this.isVisible() && e.key === "Escape") {
-        this.onConfirm(false);
-      }
-    });
-  }
-
-  show(title, message) {
-    this.title.textContent = title;
-    this.message.textContent = message;
-    this.dialog.classList.add("show");
-
-    // Focus the cancel button for accessibility
-    setTimeout(() => this.cancelButton.focus(), 100);
-
-    return new Promise((resolve) => {
-      this.promiseResolver = resolve;
-    });
-  }
-
-  onConfirm(result) {
-    this.hide();
-    if (this.promiseResolver) {
-      this.promiseResolver(result);
-      this.promiseResolver = null;
-    }
-  }
-
-  hide() {
-    this.dialog.classList.remove("show");
-  }
-
-  isVisible() {
-    return this.dialog.classList.contains("show");
-  }
-}
-
-// Initialize toast and confirmation systems
-const toastManager = new ToastManager();
-const confirmDialog = new ConfirmDialog();
-
-// Handle user login - OPTIMIZED VERSION
-async function handleLogin() {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if (!username || !password) {
-    toastManager.warning(
-      "Please enter both username and password",
-      "Login Required"
-    );
-    return;
-  }
-
-  try {
-    // Show loading state
-    loginBtn.textContent = "Logging in...";
-    loginBtn.disabled = true;
-
-    const response = await fetch(`${API_BASE_URL}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const result = await response.json();
-
-    // Inside handleLogin function, after successful login - ENHANCED VERSION
-    if (result.success) {
-      toastManager.success("Login successful!", "Welcome Back");
-      authToken = result.token;
-      userId = username;
-
-      // Save for auto-login
-      localStorage.setItem("authToken", authToken);
-      localStorage.setItem("userId", userId);
-
-      showUserInfo();
-
-      // Load both main data and activity tracker data with proper sequencing
-      await loadData();
-      await setAppStartDateFromUser();
-      await loadActivityTrackerData();
-
-      // Render everything with the new data
-      renderTable();
-      renderEnhancedActivityTracker();
-
-      // Show immediate sync status
-      updateSyncStatus("synced", "Data loaded successfully");
-
-      // NEW: Check if we have a return URL stored
-      const returnUrl = localStorage.getItem("returnUrl");
-      if (returnUrl && returnUrl !== window.location.href) {
-        localStorage.removeItem("returnUrl");
-        setTimeout(() => {
-          window.location.href = returnUrl;
-        }, 1000);
-        return; // Stop further execution
-      }
-      // Force a sync to ensure we have the latest data
-      setTimeout(() => {
-        syncWithMongoDB();
-      }, 1000);
+    const response = await Helper.fx("/api/auth/verify-token");
+    state.isLoggedIn = response.ok;
+
+    if (state.isLoggedIn) {
+      if (elements.publicLanding) elements.publicLanding.style.display = "none";
+      if (elements.logoutBtn) elements.logoutBtn.style.display = "flex";
+      if (elements.loginLink) elements.loginLink.style.display = "none";
+      console.log("User authenticated successfully");
+      return true;
     } else {
-      toastManager.error(result.error || "Login failed", "Login Error");
+      showPublicLanding();
+      console.log("User not authenticated");
+      return false;
     }
   } catch (error) {
-    console.error("Login error:", error);
-    toastManager.error("Login failed. Please try again.", "Network Error");
-  } finally {
-    // Reset login button state
-    loginBtn.textContent = "Login";
-    loginBtn.disabled = false;
+    console.error("Auth check failed:", error);
+    showPublicLanding();
+    return false;
   }
 }
 
-// Enhanced login handler
-const originalHandleLogin = handleLogin;
-handleLogin = async function () {
-  await originalHandleLogin();
-
-  // Initialize notification system after login
-  if (authToken) {
-    setTimeout(() => {
-      initializeNotificationSystem();
-    }, 1000);
-  }
-};
-
-// Handle user registration
-async function handleRegister() {
-  const username = regUsernameInput.value.trim();
-  const password = regPasswordInput.value.trim();
-  const confirmPassword = regConfirmPasswordInput.value.trim();
-
-  if (!username || !password) {
-    toastManager.warning(
-      "Please enter both username and password",
-      "Registration"
-    );
-
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    toastManager.error("Passwords do not match", "Registration Error");
-    return;
-  }
-
-  if (password.length < 4) {
-    toastManager.warning(
-      "Password must be at least 4 characters long",
-      "Password Requirement"
-    );
-
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      toastManager.success(
-        "Registration successful! Please login.",
-        "Welcome!"
-      );
-      regUsernameInput.value = "";
-      regPasswordInput.value = "";
-      regConfirmPasswordInput.value = "";
-      registerForm.style.display = "none";
-      loginForm.style.display = "block";
-    } else {
-      toastManager.error(
-        result.error || "Registration failed",
-        "Registration Error"
-      );
-    }
-  } catch (error) {
-    console.error("Registration error:", error);
-    toastManager.error(
-      "Registration failed. Please try again.",
-      "Network Error"
-    );
-  }
+function showPublicLanding() {
+  if (elements.publicLanding) elements.publicLanding.style.display = "flex";
+  if (elements.logoutBtn) elements.logoutBtn.style.display = "none";
+  if (elements.loginLink) elements.loginLink.style.display = "flex";
 }
 
-// Update logout to use OAuth logout
 async function handleLogout() {
   try {
-    // Call server logout endpoint
-    await fetch("/auth/logout", { method: "POST" });
-  } catch (error) {
-    //  console.log("Logout request failed:", error);
-  }
-
-  // Clear local state
-  authToken = null;
-  userId = "default-user";
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("appVersion");
-  localStorage.removeItem("lastUpdated");
-
-  showLoginForm();
-  renderTable();
-  renderEnhancedActivityTracker();
-}
-
-// Enhanced logout handler
-const originalHandleLogout = handleLogout;
-handleLogout = function () {
-  if (window.notificationManager) {
-    window.notificationManager.destroy();
-    window.notificationManager = null;
-  }
-  originalHandleLogout();
-};
-
-// Show forgot password form
-function showForgotPasswordForm() {
-  loginForm.style.display = "none";
-  registerForm.style.display = "none";
-  forgotPasswordForm.style.display = "block";
-  userInfo.style.display = "none";
-  resetCodeSection.style.display = "none";
-  forgotUsernameInput.value = "";
-  resetCodeInput.value = "";
-  newPasswordInput.value = "";
-  confirmNewPasswordInput.value = "";
-}
-
-// Handle send reset code
-async function handleSendResetCode() {
-  const username = forgotUsernameInput.value.trim();
-
-  if (!username) {
-    toastManager.warning("Please enter your username", "Username Required");
-    return;
-  }
-
-  try {
-    sendResetCodeBtn.textContent = "Sending...";
-    sendResetCodeBtn.disabled = true;
-
-    const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+    const response = await Helper.fx("/api/auth/logout", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      toastManager.success(result.message, "Reset Code Sent", 5000);
-
-      // Show reset code section
-      resetCodeSection.style.display = "block";
-
-      // For demo purposes - show the code (remove this in production)
-      if (result.demoCode) {
-        toastManager.info(`OTP reset code: ${result.demoCode}`, "OTP", 10000);
-      }
-    } else {
-      toastManager.error(result.error, "Error");
-    }
-  } catch (error) {
-    console.error("Send reset code error:", error);
-    toastManager.error(
-      "Failed to send reset code. Please try again.",
-      "Network Error"
-    );
-  } finally {
-    sendResetCodeBtn.textContent = "Send Reset Code";
-    sendResetCodeBtn.disabled = false;
-  }
-}
-
-// Handle reset password - FIXED VERSION
-async function handleResetPassword() {
-  const username = forgotUsernameInput.value.trim();
-  const resetCode = resetCodeInput.value.trim();
-  const newPassword = newPasswordInput.value.trim();
-  const confirmPassword = confirmNewPasswordInput.value.trim();
-
-  if (!username || !resetCode || !newPassword || !confirmPassword) {
-    toastManager.warning("Please fill in all fields", "All Fields Required");
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    toastManager.error("Passwords do not match", "Password Mismatch");
-    return;
-  }
-
-  if (newPassword.length < 4) {
-    toastManager.warning(
-      "Password must be at least 4 characters long",
-      "Password Requirement"
-    );
-    return;
-  }
-
-  try {
-    resetPasswordBtn.textContent = "Resetting...";
-    resetPasswordBtn.disabled = true;
-
-    const response = await fetch(`${API_BASE_URL}/reset-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        resetCode,
-        newPassword,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      toastManager.success(
-        "Password reset successfully! Please login with your new password.",
-        "Password Reset"
-      );
-
-      // FIX: Automatically show login form and clear reset form
-      showLoginForm(); // This will hide the forgot password form
-
-      // Clear the reset form fields
-      forgotUsernameInput.value = "";
-      resetCodeInput.value = "";
-      newPasswordInput.value = "";
-      confirmNewPasswordInput.value = "";
-      resetCodeSection.style.display = "none";
-    } else {
-      toastManager.error(result.error, "Reset Failed");
-    }
-  } catch (error) {
-    console.error("Reset password error:", error);
-    toastManager.error(
-      "Failed to reset password. Please try again.",
-      "Network Error"
-    );
-  } finally {
-    resetPasswordBtn.textContent = "Reset Password";
-    resetPasswordBtn.disabled = false;
-  }
-}
-
-// Load data from localStorage and MongoDB - OPTIMIZED VERSION
-async function loadData() {
-  // Load sync state from localStorage
-  const savedVersion = localStorage.getItem("appVersion");
-  const savedLastUpdated = localStorage.getItem("lastUpdated");
-
-  if (savedVersion) currentVersion = parseInt(savedVersion);
-  if (savedLastUpdated) lastUpdated = savedLastUpdated;
-
-  // First try to load from localStorage (existing logic)
-  const savedData = localStorage.getItem("dsaChecklistData");
-  if (savedData) {
-    appData = JSON.parse(savedData);
-    // Ensure linksArray exists for all days (migration for existing data)
-    appData.forEach((dayData) => {
-      if (!dayData.linksArray) {
-        dayData.linksArray = [];
-        // Migrate existing links text to linksArray if it exists
-        if (dayData.links && dayData.links.trim() !== "") {
-          const links = dayData.links
-            .split("\n")
-            .filter((link) => link.trim() !== "");
-          links.forEach((link) => {
-            dayData.linksArray.push({
-              url: link.trim(),
-              text: extractDisplayText(link.trim()),
-            });
-          });
-        }
-      }
-    });
-
-    // IMMEDIATELY sync with MongoDB if logged in (removed the 1-second delay)
-    if (authToken) {
-      await syncWithMongoDB(); // Changed from setTimeout to immediate await
-    }
-  } else {
-    // If no localStorage data, try to load from MongoDB if logged in
-    if (authToken) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/data?userId=${userId}`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        const result = await response.json();
-        if (result.success) {
-          appData = result.data;
-          currentVersion = result.version || 1;
-          lastUpdated = result.lastUpdated || new Date().toISOString();
-
-          // Save to localStorage for offline use
-          localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-          localStorage.setItem("appVersion", currentVersion.toString());
-          localStorage.setItem("lastUpdated", lastUpdated);
-
-          updateSyncStatus("synced", "Data loaded from cloud");
-        } else {
-          throw new Error(result.error);
-        }
-      } catch (error) {
-        // console.log(
-        //   "Failed to load from MongoDB, using default data:",
-        //   error
-        // );
-        // Initialize with default data for 100 days
-        initializeDefaultData();
-      }
-    } else {
-      // Not logged in, use default data
-      initializeDefaultData();
-    }
-  }
-}
-
-// Initialize default data - FIXED VERSION
-function initializeDefaultData() {
-  // Check if we already have data in localStorage
-  const savedData = localStorage.getItem("dsaChecklistData");
-  if (savedData) {
-    appData = JSON.parse(savedData);
-    // Ensure data structure is correct
-    ensureDataStructure();
-    return; // Use existing data instead of resetting
-  }
-
-  // Only create default data if none exists
-  appData = [];
-  for (let day = 1; day <= TOTAL_DAYS; day++) {
-    appData.push({
-      day: day,
-      questions: DEFAULT_QUESTIONS.map((q) => ({
-        text: q.text,
-        link: q.link,
-        completed: false,
-      })),
-      tags: [],
-      links: "",
-      linksArray: [],
-    });
-  }
-  saveData();
-}
-
-// Helper function to ensure data structure is correct
-function ensureDataStructure() {
-  appData.forEach((dayData) => {
-    // Ensure questions have completed property
-    if (dayData.questions) {
-      dayData.questions.forEach((question) => {
-        if (typeof question.completed === "undefined") {
-          question.completed = false;
-        }
-      });
-    }
-
-    // Ensure linksArray exists
-    if (!dayData.linksArray) {
-      dayData.linksArray = [];
-    }
-  });
-}
-
-// Save data to both localStorage and MongoDB - FIXED VERSION
-async function saveData() {
-  ////  console.log("💾 saveData() called");
-
-  // Mark that we have pending changes
-  pendingChanges = true;
-
-  try {
-    // Save to localStorage (existing logic)
-    localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-    localStorage.setItem("appVersion", currentVersion.toString());
-    localStorage.setItem("lastUpdated", lastUpdated);
-
-    ////  console.log("💾 Local storage updated");
-
-    // Update filtered data if search is active
-    if (searchFilter) {
-      filterTableData();
-    }
-
-    // Also save to MongoDB if logged in
-    if (authToken) {
-      ////  console.log("💾 Saving main data to MongoDB...");
-      await saveToMongoDB();
-      ////  console.log("💾 Main data saved to MongoDB");
-
-      // Now save activity tracker data
-      ////  console.log("💾 Now saving activity tracker data...");
-      // await saveActivityTrackerData();
-    } else {
-      ////  console.log("💾 User not logged in, only saving locally");
-      updateSyncStatus("offline", "Changes saved locally");
-    }
-  } catch (error) {
-    console.error("💾 Error in saveData:", error);
-  }
-
-  // Always update the activity tracker display
-  renderEnhancedActivityTracker();
-
-  ////  console.log("💾 saveData() completed");
-}
-
-// Save data to MongoDB with conflict detection
-async function saveToMongoDB() {
-  if (isSyncing) {
-    ////  console.log("Already syncing, skipping...");
-    return;
-  }
-
-  isSyncing = true;
-
-  try {
-    updateSyncStatus("syncing", "Syncing...");
-
-    const response = await fetch(`${API_BASE_URL}/data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        userId: userId,
-        data: appData,
-        clientVersion: currentVersion,
-        lastUpdated: lastUpdated,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Update local version with server version
-      currentVersion = result.version;
-      lastUpdated = result.lastUpdated;
-
-      // Save updated version info
-      localStorage.setItem("appVersion", currentVersion.toString());
-      localStorage.setItem("lastUpdated", lastUpdated);
-
-      pendingChanges = false;
-      updateSyncStatus("synced", "Data synced with cloud");
-    } else if (result.error === "CONFLICT: Your local data is outdated") {
-      // Handle conflict - server data is newer
-      handleSyncConflict(result);
-    } else {
-      throw new Error(result.error || "Sync failed");
-    }
-  } catch (error) {
-    ////  console.log("Failed to save to MongoDB:", error);
-    updateSyncStatus("error", "Failed to sync with cloud");
-
-    // Retry after 5 seconds
-    setTimeout(() => {
-      if (authToken && pendingChanges) {
-        saveToMongoDB();
-      }
-    }, 5);
-  } finally {
-    isSyncing = false;
-  }
-}
-
-// Update the initializeEnhancedActivityTracker function
-function initializeEnhancedActivityTracker() {
-  ////  console.log("Initializing enhanced activity tracker with auto-sync...");
-
-  // Initialize activity tracker data
-  if (!window.activityTrackerData) {
-    window.activityTrackerData = {
-      currentStreak: 0,
-      totalSolved: 0,
-      averageDaily: 0,
-      maxStreak: 0,
-      heatmapData: {},
-      activityHistory: [],
-    };
-  }
-
-  // Set up automatic syncing
-  hookIntoSaveOperations();
-  setupAutomaticSyncListeners();
-
-  // Load existing data
-  loadActivityTrackerData().then(() => {
-    ////  console.log("Activity tracker data loaded with auto-sync enabled");
-    renderEnhancedActivityTracker();
-  });
-
-  // Periodic sync as backup (every 1 minutes)
-  setInterval(() => {
-    if (authToken && !isSyncing) {
-      ////  console.log("🕒 Periodic background sync...");
-      saveActivityTrackerData();
-    }
-  }, 60000); // 1 minutes
-}
-// Hook into all operations that should trigger activity tracker save - FIXED VERSION
-function hookIntoSaveOperations() {
-  ////  console.log("🔗 Setting up automatic activity tracker sync...");
-
-  // Store original functions
-  const originalFunctions = {
-    toggleQuestionCompletion: window.toggleQuestionCompletion,
-    addNewQuestion: window.addNewQuestion,
-    deleteQuestion: window.deleteQuestion,
-    addNewDay: window.addNewDay,
-    addNewTag: window.addNewTag,
-    addNewLink: window.addNewLink,
-    removeLink: window.removeLink,
-    saveQuestionLink: window.saveQuestionLink,
-    saveData: window.saveData,
-  };
-
-  // Debounce function to prevent too many sync requests
-  let syncTimeout = null;
-  function debouncedSync() {
-    if (syncTimeout) clearTimeout(syncTimeout);
-    syncTimeout = setTimeout(() => {
-      if (authToken) {
-        ////  console.log("🔄 Auto-saving activity tracker data...");
-        saveActivityTrackerData();
-      }
-    }, 1000); // 1 second debounce
-  }
-
-  // Override toggleQuestionCompletion
-  window.toggleQuestionCompletion = function (dayIndex, questionIndex) {
-    const result = originalFunctions.toggleQuestionCompletion(
-      dayIndex,
-      questionIndex
-    );
-    debouncedSync();
-    return result;
-  };
-
-  // Override addNewQuestion
-  window.addNewQuestion = function (dayIndex) {
-    originalFunctions.addNewQuestion(dayIndex);
-    debouncedSync();
-  };
-
-  // Override deleteQuestion
-  window.deleteQuestion = async function (dayIndex, questionIndex) {
-    await originalFunctions.deleteQuestion(dayIndex, questionIndex);
-    debouncedSync();
-  };
-
-  // Override addNewDay
-  window.addNewDay = function () {
-    originalFunctions.addNewDay();
-    debouncedSync();
-  };
-
-  // Override addNewTag
-  window.addNewTag = function (dayIndex, tagText) {
-    originalFunctions.addNewTag(dayIndex, tagText);
-    debouncedSync();
-  };
-
-  // Override addNewLink
-  window.addNewLink = function (dayIndex, linkText) {
-    originalFunctions.addNewLink(dayIndex, linkText);
-    debouncedSync();
-  };
-
-  // Override removeLink
-  window.removeLink = function (dayIndex, linkIndex) {
-    originalFunctions.removeLink(dayIndex, linkIndex);
-    debouncedSync();
-  };
-
-  // Override saveQuestionLink
-  window.saveQuestionLink = function () {
-    originalFunctions.saveQuestionLink();
-    debouncedSync();
-  };
-
-  // Override saveData to include activity tracker save
-  const originalSaveData = window.saveData;
-  window.saveData = async function () {
-    await originalSaveData();
-    debouncedSync();
-  };
-
-  ////  console.log("✅ Automatic activity tracker sync enabled");
-}
-
-// This new function for direct event listening as backup
-function setupAutomaticSyncListeners() {
-  ////  console.log("🎯 Setting up automatic sync listeners...");
-
-  let syncDebounceTimer = null;
-
-  function triggerAutoSync() {
-    if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
-    syncDebounceTimer = setTimeout(() => {
-      if (authToken && !isSyncing) {
-        ////  console.log("🔄 Auto-sync triggered by user action");
-        saveActivityTrackerData();
-      }
-    }, 800); // 800ms debounce
-  }
-
-  // Listen for all user interactions that modify data
-  document.addEventListener("change", function (e) {
-    if (
-      e.target.classList.contains("question-checkbox") ||
-      e.target.classList.contains("add-tag-input") ||
-      e.target.classList.contains("add-link-input")
-    ) {
-      triggerAutoSync();
-    }
-  });
-
-  document.addEventListener("click", function (e) {
-    if (
-      e.target.classList.contains("add-question-btn") ||
-      e.target.classList.contains("tag-remove") ||
-      e.target.classList.contains("personal-info-remove-btn") ||
-      e.target.closest(".question-item")
-    ) {
-      triggerAutoSync();
-    }
-  });
-
-  document.addEventListener("input", function (e) {
-    if (
-      e.target.classList.contains("question-text") ||
-      e.target.classList.contains("links-textarea")
-    ) {
-      triggerAutoSync();
-    }
-  });
-
-  // Keyboard events for tag/link input
-  document.addEventListener("keypress", function (e) {
-    if (
-      e.key === "Enter" &&
-      (e.target.classList.contains("add-tag-input") ||
-        e.target.classList.contains("add-link-input"))
-    ) {
-      triggerAutoSync();
-    }
-  });
-
-  ////  console.log("✅ Automatic sync listeners activated");
-}
-
-// Load activity tracker data from MongoDB - FIXED VERSION
-async function loadActivityTrackerData() {
-  if (!authToken) {
-    // Initialize with local data if not logged in
-    window.activityTrackerData = {
-      currentStreak: 0,
-      totalSolved: 0,
-      averageDaily: 0,
-      maxStreak: 0,
-      heatmapData: getActivityData(), // Calculate from current appData
-      activityHistory: getActivityHistory(),
-    };
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (result.success && result.activityData) {
-      // Merge with current activity data
-      window.activityTrackerData = {
-        ...window.activityTrackerData,
-        ...result.activityData,
-      };
-    } else {
-      // Initialize with calculated data if no server data
-      window.activityTrackerData = {
-        currentStreak: 0,
-        totalSolved: 0,
-        averageDaily: 0,
-        maxStreak: 0,
-        heatmapData: getActivityData(),
-        activityHistory: getActivityHistory(),
-      };
-    }
-  } catch (error) {
-    // console.log(
-    //   "Failed to load activity tracker data from MongoDB:",
-    //   error
-    // );
-    // Initialize with calculated data on error
-    window.activityTrackerData = {
-      currentStreak: 0,
-      totalSolved: 0,
-      averageDaily: 0,
-      maxStreak: 0,
-      heatmapData: getActivityData(),
-      activityHistory: getActivityHistory(),
-    };
-  }
-}
-
-// Save activity tracker data to MongoDB - FIXED VERSION
-// Enhanced saveActivityTrackerData function with better error handling
-async function saveActivityTrackerData() {
-  if (!authToken) {
-    ////  console.log("🔐 Not logged in, skipping activity tracker save");
-    return;
-  }
-
-  if (isSyncing) {
-    ////  console.log("⏳ Sync already in progress, skipping...");
-    return;
-  }
-
-  isSyncing = true;
-
-  try {
-    ////  console.log("💾 Starting automatic activity tracker save...");
-
-    // Calculate fresh data
-    const analytics = calculateAnalytics();
-    const heatmapData = getActivityData();
-    const activityHistory = getActivityHistory();
-
-    const trackerData = {
-      currentStreak: analytics.currentStreak,
-      totalSolved: analytics.totalSolved,
-      averageDaily: analytics.averageDaily,
-      maxStreak: analytics.maxStreak,
-      heatmapData: heatmapData,
-      activityHistory: activityHistory,
-    };
-
-    ////  console.log("💾 Activity data to save:", trackerData);
-
-    const response = await fetch(`${API_BASE_URL}/activity-tracker`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        activityData: trackerData,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      ////  console.log("✅ Activity tracker data saved automatically");
-      // Update local copy
-      window.activityTrackerData = trackerData;
-      // Update sync status briefly
-      updateSyncStatus("synced", "Auto-saved");
-      setTimeout(() => updateSyncStatus("synced", "Synced"), 2000);
-    } else {
-      console.error("❌ Auto-save failed:", result.error);
-      updateSyncStatus("error", "Auto-save failed");
-    }
-  } catch (error) {
-    console.error("❌ Auto-save error:", error);
-    updateSyncStatus("offline", "Working offline");
-  } finally {
-    isSyncing = false;
-  }
-}
-
-// Get activity history for MongoDB storage
-function getActivityHistory() {
-  const activityHistory = [];
-  const startDate = new Date("2025-09-25");
-
-  appData.forEach((dayData) => {
-    const solvedCount = dayData.questions.filter((q) => q.completed).length;
-    if (solvedCount > 0) {
-      const dayDate = new Date(startDate);
-      dayDate.setDate(startDate.getDate() + (dayData.day - 1));
-
-      activityHistory.push({
-        date: dayDate.toISOString(),
-        day: dayData.day,
-        solvedCount: solvedCount,
-        totalQuestions: dayData.questions.length,
-      });
-    }
-  });
-
-  return activityHistory;
-}
-
-function renderEnhancedActivityTracker() {
-  updateAnalyticsDashboard();
-  renderHeatmap();
-}
-
-function updateAnalyticsDashboard() {
-  // Calculate fresh analytics with the corrected logic
-  const analytics = calculateAnalytics();
-
-  // Update the UI
-  document.getElementById("currentStreak").textContent =
-    analytics.currentStreak;
-  document.getElementById("totalSolved").textContent = analytics.totalSolved;
-  document.getElementById("averageDaily").textContent =
-    analytics.averageDaily.toFixed(1);
-  document.getElementById("maxStreak").textContent = analytics.maxStreak;
-
-  // Update the stored data with fresh calculations
-  if (window.activityTrackerData) {
-    window.activityTrackerData.currentStreak = analytics.currentStreak;
-    window.activityTrackerData.totalSolved = analytics.totalSolved;
-    window.activityTrackerData.averageDaily = analytics.averageDaily;
-    window.activityTrackerData.maxStreak = analytics.maxStreak;
-    window.activityTrackerData.heatmapData = getActivityData();
-    window.activityTrackerData.activityHistory = getActivityHistory();
-  }
-}
-
-function calculateAnalytics() {
-  const startDate = new Date(APP_START_DATE); // Now uses dynamic date
-
-  const today = new Date();
-  const activityData = getActivityData();
-
-  // Get all dates with activity and sort them
-  const activeDates = Object.keys(activityData)
-    .map((dateStr) => new Date(dateStr))
-    .sort((a, b) => a - b); // Sort in ascending order
-
-  // Calculate streaks
-  let currentStreak = 0;
-  let maxStreak = 0;
-  let tempStreak = 0;
-
-  // Calculate current streak (ending at today)
-  if (activeDates.length > 0) {
-    // Start from the most recent date and move backwards
-    const sortedDates = [...activeDates].sort((a, b) => b - a); // Sort in descending order
-
-    const todayKey = formatDateKey(today);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = formatDateKey(yesterday);
-
-    // Check if we have activity today or yesterday to start the streak
-    if (activityData[todayKey] > 0) {
-      currentStreak = 1;
-      // Continue backwards from yesterday
-      let checkDate = new Date(yesterday);
-      while (true) {
-        const checkDateKey = formatDateKey(checkDate);
-        if (activityData[checkDateKey] > 0) {
-          currentStreak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-    } else if (activityData[yesterdayKey] > 0) {
-      // If no activity today, but activity yesterday, check backwards from yesterday
-      currentStreak = 1;
-      let checkDate = new Date(yesterday);
-      checkDate.setDate(checkDate.getDate() - 1);
-      while (true) {
-        const checkDateKey = formatDateKey(checkDate);
-        if (activityData[checkDateKey] > 0) {
-          currentStreak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-    }
-    // If no activity today or yesterday, current streak is 0
-  }
-
-  // Calculate max streak (longest consecutive period)
-  if (activeDates.length > 0) {
-    tempStreak = 1;
-    for (let i = 1; i < activeDates.length; i++) {
-      const prevDate = activeDates[i - 1];
-      const currDate = activeDates[i];
-
-      // Check if consecutive
-      const expectedDate = new Date(prevDate);
-      expectedDate.setDate(expectedDate.getDate() + 1);
-
-      if (formatDateKey(expectedDate) === formatDateKey(currDate)) {
-        tempStreak++;
-      } else {
-        maxStreak = Math.max(maxStreak, tempStreak);
-        tempStreak = 1;
-      }
-    }
-    maxStreak = Math.max(maxStreak, tempStreak);
-  }
-
-  // Calculate totals
-  const totalSolved = Object.values(activityData).reduce(
-    (sum, count) => sum + count,
-    0
-  );
-  const daysSinceStart =
-    Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-  const averageDaily = daysSinceStart > 0 ? totalSolved / daysSinceStart : 0;
-
-  return {
-    currentStreak,
-    totalSolved,
-    averageDaily,
-    maxStreak,
-    activeDays: activeDates.length,
-    totalDays: daysSinceStart,
-  };
-}
-
-function getActivityData() {
-  const activityData = {};
-  const startDate = new Date(APP_START_DATE); // Now uses dynamic date
-
-  appData.forEach((dayData) => {
-    const solvedCount = dayData.questions.filter((q) => q.completed).length;
-    if (solvedCount > 0) {
-      const dayDate = new Date(startDate);
-      dayDate.setDate(startDate.getDate() + (dayData.day - 1));
-      const dateKey = formatDateKey(dayDate);
-      activityData[dateKey] = solvedCount;
-    }
-  });
-
-  return activityData;
-}
-
-function formatDateKey(date) {
-  return date.toISOString().split("T")[0];
-}
-
-function isConsecutiveDay(date1, date2) {
-  const oneDay = 24 * 60 * 60 * 1000;
-  const diffDays = Math.round(Math.abs((date2 - date1) / oneDay));
-  return diffDays === 1;
-}
-
-function renderHeatmap() {
-  const heatmapGrid = document.getElementById("heatmapGrid");
-  const monthsRow = document.querySelector(".months-row");
-
-  if (!heatmapGrid) return;
-
-  heatmapGrid.innerHTML = "";
-  monthsRow.innerHTML = "";
-
-  const startDate = new Date(APP_START_DATE); // Now uses dynamic date
-
-  const today = new Date();
-
-  // ALWAYS use current activity data, not stored data
-  const activityData = getActivityData();
-
-  // Rest of the function remains the same...
-  // Generate month labels
-  const monthLabels = generateMonthLabels(startDate, today);
-  monthLabels.forEach((month) => {
-    const monthLabel = document.createElement("div");
-    monthLabel.className = "month-label";
-    monthLabel.textContent = month;
-    monthsRow.appendChild(monthLabel);
-  });
-
-  // Generate heatmap cells (52 weeks)
-  let currentDate = new Date(startDate);
-  const cells = [];
-
-  for (let week = 0; week < 52; week++) {
-    for (let day = 0; day < 7; day++) {
-      const dateKey = formatDateKey(currentDate);
-      const activityCount = activityData[dateKey] || 0;
-      const activityLevel = getActivityLevel(activityCount);
-
-      const cell = document.createElement("div");
-      cell.className = `heatmap-cell level-${activityLevel}`;
-      cell.setAttribute("tabindex", "0");
-      cell.setAttribute("role", "button");
-      cell.setAttribute(
-        "aria-label",
-        `Date: ${formatDisplayDate(
-          currentDate
-        )}, Problems solved: ${activityCount}`
-      );
-
-      // Tooltip
-      const tooltip = document.createElement("div");
-      tooltip.className = "heatmap-tooltip";
-      tooltip.textContent = `${formatDisplayDate(
-        currentDate
-      )}: ${activityCount} problem${activityCount !== 1 ? "s" : ""} solved`;
-      cell.appendChild(tooltip);
-
-      // Keyboard navigation
-      cell.addEventListener("keydown", (e) => {
-        handleHeatmapKeyboardNav(e, cells, week * 7 + day);
-      });
-
-      cell.addEventListener("focus", () => {
-        cell.classList.add("focused");
-      });
-
-      cell.addEventListener("blur", () => {
-        cell.classList.remove("focused");
-      });
-
-      cells.push(cell);
-      currentDate.setDate(currentDate.getDate() + 1);
-
-      // Stop if we reach today
-      if (currentDate > today) break;
-    }
-    if (currentDate > today) break;
-  }
-
-  // cells to grid
-  cells.forEach((cell) => {
-    heatmapGrid.appendChild(cell);
-  });
-}
-
-function generateMonthLabels(startDate, endDate) {
-  const labels = [];
-  const currentDate = new Date(startDate);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  while (currentDate <= endDate) {
-    // Only show label if it's the first week of the month or if it's the start date
-    if (
-      currentDate.getDate() <= 7 ||
-      currentDate.getTime() === startDate.getTime()
-    ) {
-      labels.push(months[currentDate.getMonth()]);
-    } else {
-      labels.push("");
-    }
-    currentDate.setDate(currentDate.getDate() + 7);
-  }
-
-  return labels.slice(0, 52); // Ensure we don't exceed 52 weeks
-}
-
-function getActivityLevel(count) {
-  if (count === 0) return 0;
-  if (count === 1) return 1;
-  if (count === 2) return 2;
-  if (count === 3) return 3;
-  return 4; // 4+ problems
-}
-
-function formatDisplayDate(date) {
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function handleHeatmapKeyboardNav(event, cells, currentIndex) {
-  const key = event.key;
-  let newIndex = currentIndex;
-
-  switch (key) {
-    case "ArrowLeft":
-      newIndex = Math.max(0, currentIndex - 1);
-      break;
-    case "ArrowRight":
-      newIndex = Math.min(cells.length - 1, currentIndex + 1);
-      break;
-    case "ArrowUp":
-      newIndex = Math.max(0, currentIndex - 7);
-      break;
-    case "ArrowDown":
-      newIndex = Math.min(cells.length - 1, currentIndex + 7);
-      break;
-    case "Home":
-      newIndex = 0;
-      break;
-    case "End":
-      newIndex = cells.length - 1;
-      break;
-    default:
-      return; // Do nothing for other keys
-  }
-
-  if (newIndex !== currentIndex) {
-    event.preventDefault();
-    cells[newIndex].focus();
-  }
-}
-
-if (typeof renderActivityCalendar !== "undefined") {
-  delete window.renderActivityCalendar;
-}
-if (typeof initializeActivityTracker !== "undefined") {
-  delete window.initializeActivityTracker;
-}
-// Handle sync conflict when server has newer data - IMPROVED VERSION
-async function handleSyncConflict(conflictResult) {
-  ////  console.log("🔄 Handling sync conflict...");
-
-  // Check if this is a minor conflict that can be auto-merged
-  if (!conflictResult.requiresUserResolution) {
-    // Auto-merge case - just accept server data with notification
-    appData = conflictResult.serverData;
-    currentVersion = conflictResult.serverVersion;
-    lastUpdated = conflictResult.serverLastUpdated;
-
-    localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-    localStorage.setItem("appVersion", currentVersion.toString());
-    localStorage.setItem("lastUpdated", lastUpdated);
-
-    renderTable();
-    updateSyncStatus("synced", "Auto-synced with server");
-
-    // Show gentle notification instead of confirmation dialog
-    toastManager.info(
-      "Your data was automatically synced with the cloud",
-      "Auto-Sync Complete",
-      3000
-    );
-    return;
-  }
-
-  // Only show confirmation for significant conflicts
-  updateSyncStatus("error", "Conflict detected");
-
-  const userChoice = await confirmDialog.show(
-    "Sync Conflict Detected",
-    "Significant changes were detected between your local data and the server. " +
-      "Would you like to load the server data? Choosing 'Cancel' will keep your local changes."
-  );
-
-  if (userChoice) {
-    // User wants to use server data
-    appData = conflictResult.serverData;
-    currentVersion = conflictResult.serverVersion;
-    lastUpdated = conflictResult.serverLastUpdated;
-
-    localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-    localStorage.setItem("appVersion", currentVersion.toString());
-    localStorage.setItem("lastUpdated", lastUpdated);
-
-    renderTable();
-    updateSyncStatus("synced", "Loaded server data");
-    toastManager.success("Data synchronized with server", "Sync Complete");
-  } else {
-    // User wants to keep local data - force push with retry logic
-    await forcePushToServer();
-  }
-}
-
-// Improved sync function with debouncing and smarter conflict detection
-let syncTimeout = null;
-let lastSyncTime = 0;
-const SYNC_DEBOUNCE_TIME = 2000; // 2 seconds
-// Sync with MongoDB (for conflict resolution) - UPDATED VERSION
-async function syncWithMongoDB() {
-  if (isSyncing || !authToken) return;
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/data?userId=${userId}&t=${Date.now()}`,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      const serverVersion = result.version || 1;
-      const serverLastUpdated = result.lastUpdated;
-
-      // Check if server has newer data
-      if (serverVersion > currentVersion) {
-        appData = result.data;
-        currentVersion = serverVersion;
-        lastUpdated = serverLastUpdated;
-
-        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-        localStorage.setItem("appVersion", currentVersion.toString());
-        localStorage.setItem("lastUpdated", lastUpdated);
-
-        // CRITICAL: Force reload the activity tracker data
-        await setAppStartDateFromUser();
-
-        // CRITICAL: Re-render everything with the new data
-        renderTable();
-        renderEnhancedActivityTracker();
-
-        updateSyncStatus("synced", "Data updated from cloud");
-
-        // Show immediate feedback to user
-        toastManager.info(
-          "Data synchronized with cloud",
-          "Background Sync Complete"
-        );
-      } else if (pendingChanges) {
-        // We have local changes that need to be pushed
-        await saveToMongoDB();
-      } else {
-        updateSyncStatus("synced", "Data is up to date");
-      }
-    }
-  } catch (error) {
-    updateSyncStatus("offline", "Working offline");
-
-    if (!error.message.includes("Failed to fetch")) {
-      toastManager.warning("Sync failed, using local data", "Offline Mode");
-    }
-  }
-}
-
-// Enhanced function to update activity tracker with user data
-async function updateActivityTrackerWithUserData() {
-  if (authToken && userId !== "default-user") {
-    try {
-      const response = await fetch(`${API_BASE_URL}/user-info`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.user && result.user.accountCreated) {
-          const userCreatedAt = new Date(result.user.accountCreated);
-          const year = userCreatedAt.getFullYear();
-          const month = String(userCreatedAt.getMonth() + 1).padStart(2, "0");
-          const day = String(userCreatedAt.getDate()).padStart(2, "0");
-          APP_START_DATE = `${year}-${month}-${day}`;
-
-          // Update the activity tracker subtitle
-          updateActivityTrackerSubtitle();
-
-          // Force recalculation of analytics with new start date
-          renderEnhancedActivityTracker();
-
-          return true;
-        }
-      }
-    } catch (error) {
-      //  console.log("Error updating activity tracker with user data:", error);
-    }
-  }
-  return false;
-}
-// Improved save function with better change detection
-async function saveData() {
-  ////  console.log("💾 saveData() called");
-
-  // Better change detection - only mark as pending if there are actual changes
-  const previousData = JSON.parse(
-    localStorage.getItem("dsaChecklistData") || "[]"
-  );
-  const currentDataString = JSON.stringify(appData);
-
-  // Check if there are meaningful changes
-  if (JSON.stringify(previousData) === currentDataString) {
-    ////  console.log("💾 No meaningful changes detected, skipping save");
-    return;
-  }
-
-  pendingChanges = true;
-
-  try {
-    // Save to localStorage
-    localStorage.setItem("dsaChecklistData", currentDataString);
-    localStorage.setItem("appVersion", currentVersion.toString());
-    localStorage.setItem("lastUpdated", lastUpdated);
-
-    ////  console.log("💾 Local storage updated");
-
-    // Save to MongoDB if logged in (with improved error handling)
-    if (authToken) {
-      ////  console.log("💾 Saving to MongoDB...");
-      await saveToMongoDB();
-    } else {
-      ////  console.log("💾 User not logged in, only saving locally");
-      updateSyncStatus("offline", "Changes saved locally");
-    }
-  } catch (error) {
-    console.error("💾 Error in saveData:", error);
-  }
-
-  // Update activity tracker
-  renderEnhancedActivityTracker();
-}
-
-// Improved force push with better error handling
-async function forcePushToServer() {
-  try {
-    updateSyncStatus("syncing", "Saving changes...");
-
-    // Increment version appropriately
-    currentVersion = (currentVersion || 1) + 1;
-    lastUpdated = new Date().toISOString();
-
-    const response = await fetch(`${API_BASE_URL}/data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        userId: userId,
-        data: appData,
-        clientVersion: currentVersion,
-        lastUpdated: lastUpdated,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      currentVersion = result.version;
-      lastUpdated = result.lastUpdated;
-
-      localStorage.setItem("appVersion", currentVersion.toString());
-      localStorage.setItem("lastUpdated", lastUpdated);
-
-      pendingChanges = false;
-      updateSyncStatus("synced", "Changes saved to cloud");
-      toastManager.success("Changes saved successfully", "Saved");
-    } else {
-      throw new Error(result.error || "Save failed");
-    }
-  } catch (error) {
-    ////  console.log("Force push failed:", error);
-    updateSyncStatus("error", "Save failed");
-
-    // Show appropriate error message
-    if (error.message.includes("CONFLICT")) {
-      toastManager.error(
-        "Could not save due to conflict. Please refresh and try again.",
-        "Save Failed"
-      );
-    } else {
-      toastManager.error(
-        "Failed to save changes. Please check your connection.",
-        "Save Error"
-      );
-    }
-
-    // Restore previous version on failure
-    const savedVersion = localStorage.getItem("appVersion");
-    const savedLastUpdated = localStorage.getItem("lastUpdated");
-    if (savedVersion) currentVersion = parseInt(savedVersion);
-    if (savedLastUpdated) lastUpdated = savedLastUpdated;
-  }
-}
-// Force push local data to server (overwrite server data)
-async function forcePushToServer() {
-  try {
-    updateSyncStatus("syncing", "Force pushing changes...");
-
-    // Increment version to indicate this is a forced update
-    currentVersion = (currentVersion || 1) + 1000; // Large increment to ensure it's seen as newer
-    lastUpdated = new Date().toISOString();
-
-    const response = await fetch(`${API_BASE_URL}/data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        userId: userId,
-        data: appData,
-        clientVersion: currentVersion,
-        lastUpdated: lastUpdated,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      currentVersion = result.version;
-      lastUpdated = result.lastUpdated;
-
-      localStorage.setItem("appVersion", currentVersion.toString());
-      localStorage.setItem("lastUpdated", lastUpdated);
-
-      pendingChanges = false;
-      updateSyncStatus("synced", "Changes force pushed to cloud");
-    } else {
-      throw new Error(result.error || "Force push failed");
-    }
-  } catch (error) {
-    ////  console.log("Force push failed:", error);
-    updateSyncStatus("error", "Force push failed");
-  }
-}
-
-// Sync with MongoDB (for conflict resolution) - OPTIMIZED VERSION
-async function syncWithMongoDB() {
-  if (isSyncing || !authToken) return;
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/data?userId=${userId}&t=${Date.now()}`,
-      {
-        // Added cache busting
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      const serverVersion = result.version || 1;
-      const serverLastUpdated = result.lastUpdated;
-
-      // Check if server has newer data
-      if (serverVersion > currentVersion) {
-        // console.log(
-        //   "Server has newer data, updating local copy immediately"
-        // );
-        appData = result.data;
-        currentVersion = serverVersion;
-        lastUpdated = serverLastUpdated;
-
-        localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-        localStorage.setItem("appVersion", currentVersion.toString());
-        localStorage.setItem("lastUpdated", lastUpdated);
-
-        renderTable();
-        updateSyncStatus("synced", "Data updated from cloud");
-
-        // Show immediate feedback to user
-        toastManager.info("Data synchronized with cloud", "Sync Complete");
-      } else if (pendingChanges) {
-        // We have local changes that need to be pushed
-        await saveToMongoDB();
-      } else {
-        updateSyncStatus("synced", "Data is up to date");
-      }
-    }
-  } catch (error) {
-    ////  console.log("Background sync failed:", error);
-    updateSyncStatus("offline", "Working offline");
-
-    // Don't show error toast for background sync failures to avoid annoying users
-    if (!error.message.includes("Failed to fetch")) {
-      toastManager.warning("Sync failed, using local data", "Offline Mode");
-    }
-  }
-}
-
-// Force sync from server (manual sync button) - UPDATED VERSION
-async function forceSyncFromServer() {
-  if (!authToken) {
-    toastManager.warning("Please log in to sync with cloud", "Login Required");
-    return;
-  }
-
-  try {
-    updateSyncStatus("syncing", "Syncing from server...");
-
-    // Show immediate feedback
-    toastManager.info("Syncing latest data from cloud...", "Sync Started");
-
-    const response = await fetch(`${API_BASE_URL}/force-sync`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({ userId: userId }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Update local data with server data
-      appData = result.data;
-      currentVersion = result.version || 1;
-      lastUpdated = result.lastUpdated || new Date().toISOString();
-
-      // Save to localStorage
-      localStorage.setItem("dsaChecklistData", JSON.stringify(appData));
-      localStorage.setItem("appVersion", currentVersion.toString());
-      localStorage.setItem("lastUpdated", lastUpdated);
-
-      // CRITICAL: Force reload the activity tracker data
-      await setAppStartDateFromUser();
-
-      // CRITICAL: Re-render everything with the new data
-      renderTable();
-      renderEnhancedActivityTracker();
-
-      // Update filtered data if search is active
-      if (searchFilter) {
-        filterTableData();
-      }
-
-      updateSyncStatus("synced", "Data synced from cloud");
-
-      // Show success message with updated info
-      const totalQuestions = appData.reduce(
-        (total, day) => total + day.questions.length,
-        0
-      );
-      const solvedQuestions = appData.reduce(
-        (total, day) => total + day.questions.filter((q) => q.completed).length,
-        0
-      );
-    } else {
-      throw new Error(result.error || "Sync failed");
-    }
-  } catch (error) {
-    console.error("Force sync failed:", error);
-    updateSyncStatus("error", "Sync failed");
-    toastManager.error(
-      "Failed to sync with cloud. Please check your connection.",
-      "Sync Error"
-    );
-  }
-}
-// Update sync status indicator
-function updateSyncStatus(status, message) {
-  const syncDot = syncStatus.querySelector(".sync-dot");
-  const statusText = syncStatus.querySelector("span");
-
-  // Remove all status classes
-  syncDot.classList.remove("synced", "syncing", "error", "offline");
-
-  switch (status) {
-    case "synced":
-      syncDot.classList.add("synced");
-      statusText.textContent = message || "Synced";
-      break;
-    case "syncing":
-      syncDot.classList.add("syncing");
-      statusText.textContent = message || "Syncing...";
-      break;
-    case "error":
-      syncDot.classList.add("error");
-      statusText.textContent = message || "Sync failed";
-      break;
-    case "offline":
-      syncDot.classList.add("offline");
-      statusText.textContent = message || "Offline";
-      break;
-  }
-}
-
-// Add this helper function to get today's date in the same format as APP_START_DATE
-function getTodayDateString() {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
-}
-
-// Add this function to check if a day is the current day
-function isCurrentDay(dayNumber) {
-  const startDate = new Date(APP_START_DATE);
-  const dayDate = new Date(startDate);
-  dayDate.setDate(startDate.getDate() + (dayNumber - 1));
-
-  const today = new Date();
-
-  // Compare dates without time components
-  return dayDate.toDateString() === today.toDateString();
-}
-
-// Add this function to check if a day is completed (all questions done)
-function isDayCompleted(dayData) {
-  return (
-    dayData.questions.length > 0 && dayData.questions.every((q) => q.completed)
-  );
-}
-
-// MODIFIED: renderTable function to sort with current day first and completed days in chronological order
-function renderTable() {
-  tableBody.innerHTML = "";
-  const currentDay = getCurrentDayNumber();
-
-  // Use filteredData for rendering when search is active, otherwise use appData
-  const dataToRender = searchFilter ? filteredData : appData;
-
-  // Sort the data: current day first, then incomplete days in chronological order, then completed days in chronological order
-  const sortedData = [...dataToRender].sort((a, b) => {
-    const aIsCurrent = isCurrentDay(a.day);
-    const bIsCurrent = isCurrentDay(b.day);
-    const aIsCompleted = isDayCompleted(a);
-    const bIsCompleted = isDayCompleted(b);
-
-    // Current day always comes first
-    if (aIsCurrent && !bIsCurrent) return -1;
-    if (!aIsCurrent && bIsCurrent) return 1;
-
-    // If both are current day, maintain order
-    if (aIsCurrent && bIsCurrent) return a.day - b.day;
-
-    // Among non-current days, incomplete days come before completed days
-    if (!aIsCompleted && bIsCompleted) return -1;
-    if (aIsCompleted && !bIsCompleted) return 1;
-
-    // If both are completed or both are incomplete, sort by day number
-    return a.day - b.day;
-  });
-
-  sortedData.forEach((dayData, displayIndex) => {
-    // Find the original index in appData for data manipulation
-    const originalIndex = appData.findIndex((d) => d.day === dayData.day);
-    const isEditableDay = isEditable(dayData.day);
-    const isCurrent = isCurrentDay(dayData.day);
-
-    const row = document.createElement("tr");
-
-    // Apply non-editable class to entire row if not today
-    if (!isEditableDay) {
-      row.classList.add("non-editable-day");
-    }
-
-    // Add current-day class for styling if it's the current day
-    if (isCurrent) {
-      row.classList.add("current-day");
-    }
-
-    // Day column
-    const dayCell = document.createElement("td");
-    dayCell.className = "day-cell";
-    dayCell.style.cursor = "pointer"; // Add this line
-
-    // Add click event to redirect to day-details
-    dayCell.addEventListener("click", () => {
-      window.location.href = `/day-details?day=${dayData.day}`;
-    });
-
-    // Add current day indicator
-    if (isCurrent) {
-      const dayWrapper = document.createElement("div");
-      dayWrapper.style.display = "flex";
-      dayWrapper.style.flexDirection = "column";
-      dayWrapper.style.alignItems = "center";
-      dayWrapper.style.gap = "4px";
-
-      const dayNumber = document.createElement("span");
-      dayNumber.textContent = dayData.day;
-
-      const currentBadge = document.createElement("span");
-      currentBadge.textContent = "📍 Today";
-      currentBadge.style.fontSize = "0.7rem";
-      currentBadge.style.color = "var(--accent-color)";
-      currentBadge.style.fontWeight = "bold";
-
-      dayWrapper.appendChild(dayNumber);
-      dayWrapper.appendChild(currentBadge);
-      dayCell.appendChild(dayWrapper);
-    } else {
-      dayCell.textContent = dayData.day;
-    }
-
-    // Add screen reader information
-    const srText = document.createElement("span");
-    srText.className = "sr-only";
-    if (!isEditableDay) {
-      srText.textContent = " - Non-editable day";
-    }
-    if (isCurrent) {
-      srText.textContent = srText.textContent
-        ? srText.textContent + " - Current day"
-        : " - Current day";
-    }
-    dayCell.appendChild(srText);
-
-    row.appendChild(dayCell);
-
-    // Questions column - MODIFIED to use originalIndex for data manipulation
-    const questionsCell = document.createElement("td");
-    questionsCell.className = "questions-cell";
-
-    dayData.questions.forEach((question, qIndex) => {
-      const questionItem = document.createElement("div");
-      questionItem.className = "question-item";
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = `question-checkbox ${
-        isEditableDay ? "editable-control" : "non-editable-control"
-      }`;
-      checkbox.checked = question.completed;
-      checkbox.disabled = !isEditableDay;
-      checkbox.setAttribute("aria-disabled", !isEditableDay);
-
-      if (isEditableDay) {
-        checkbox.addEventListener("change", () => {
-          // Use originalIndex to modify the actual data in appData
-          toggleQuestionCompletion(originalIndex, qIndex);
-        });
-      } else {
-        checkbox.tabIndex = -1;
-      }
-
-      const questionContent = document.createElement("div");
-      questionContent.className = "question-content";
-
-      const questionText = document.createElement("span");
-      questionText.className = "question-text";
-
-      if (question.link) {
-        const questionLink = document.createElement("a");
-        questionLink.href = question.link;
-        questionLink.target = "_blank";
-        questionLink.rel = "noopener noreferrer";
-        questionLink.textContent = question.text;
-        questionLink.className = "question-link";
-        questionText.appendChild(questionLink);
-      } else {
-        questionText.textContent = question.text;
-      }
-
-      // Add difficulty badge
-      const difficulty = question.difficulty || "Medium";
-      const difficultyBadge = document.createElement("span");
-      difficultyBadge.className = `difficulty-badge ${difficulty.toLowerCase()}`;
-      difficultyBadge.textContent = difficulty;
-      questionText.appendChild(difficultyBadge);
-      // setupDifficultySelector();
-
-      // Only make text editable for today
-      if (isEditableDay) {
-        questionText.addEventListener("click", (e) => {
-          if (!e.target.classList.contains("question-link")) {
-            editQuestionText(originalIndex, qIndex, questionText);
-          }
-        });
-      }
-
-      // Edit link button - only for editable days
-      const editLinkBtn = document.createElement("button");
-      editLinkBtn.textContent = "🔗";
-      editLinkBtn.style.background = "none";
-      editLinkBtn.style.border = "none";
-      editLinkBtn.style.cursor = isEditableDay ? "pointer" : "not-allowed";
-      editLinkBtn.style.marginLeft = "8px";
-      editLinkBtn.style.opacity = isEditableDay ? "0.7" : "0.3";
-      editLinkBtn.title = isEditableDay
-        ? "Edit link"
-        : "Only today's items are editable";
-      editLinkBtn.disabled = !isEditableDay;
-      editLinkBtn.setAttribute("aria-disabled", !isEditableDay);
-
-      if (isEditableDay) {
-        editLinkBtn.addEventListener("click", () => {
-          openLinkModal(originalIndex, qIndex);
-        });
-      } else {
-        editLinkBtn.tabIndex = -1;
-        // Add tooltip for non-editable days
-        const tooltipContainer = document.createElement("div");
-        tooltipContainer.className = "tooltip-container";
-        tooltipContainer.appendChild(editLinkBtn);
-
-        const tooltip = document.createElement("span");
-        tooltip.className = "tooltip-text";
-        tooltip.textContent = "Only today's items are editable.";
-        tooltipContainer.appendChild(tooltip);
-
-        questionText.appendChild(tooltipContainer);
-      }
-
-      // DELETE QUESTION BUTTON - only for editable days
-      const deleteQuestionBtn = document.createElement("button");
-      deleteQuestionBtn.className = "delete-question-btn"; // This class is crucial
-
-      deleteQuestionBtn.textContent = "🗑️";
-      deleteQuestionBtn.style.background = "none";
-      deleteQuestionBtn.style.border = "none";
-      deleteQuestionBtn.style.cursor = isEditableDay
-        ? "pointer"
-        : "not-allowed";
-      deleteQuestionBtn.style.marginLeft = "4px";
-      deleteQuestionBtn.style.opacity = isEditableDay ? "0.7" : "0.3";
-      deleteQuestionBtn.title = isEditableDay
-        ? "Delete question"
-        : "Only today's items are editable";
-      deleteQuestionBtn.disabled = !isEditableDay;
-      deleteQuestionBtn.setAttribute("aria-disabled", !isEditableDay);
-
-      if (isEditableDay) {
-        deleteQuestionBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          deleteQuestion(originalIndex, qIndex);
-        });
-      } else {
-        deleteQuestionBtn.tabIndex = -1;
-        // Add tooltip for non-editable days
-        const tooltipContainer = document.createElement("div");
-        tooltipContainer.className = "tooltip-container";
-        tooltipContainer.appendChild(deleteQuestionBtn);
-
-        const tooltip = document.createElement("span");
-        tooltip.className = "tooltip-text";
-        tooltip.textContent = "Only today's items are editable.";
-        tooltipContainer.appendChild(tooltip);
-
-        questionText.appendChild(tooltipContainer);
-      }
-
-      if (isEditableDay) {
-        questionText.appendChild(editLinkBtn);
-        questionText.appendChild(deleteQuestionBtn);
-      }
-
-      questionContent.appendChild(questionText);
-      questionItem.appendChild(checkbox);
-      questionItem.appendChild(questionContent);
-      questionsCell.appendChild(questionItem);
-    });
-
-    // Add question button - only for editable days
-    const addQuestionBtn = document.createElement("button");
-    addQuestionBtn.className = `add-question-btn ${
-      isEditableDay ? "editable-control" : "non-editable-control"
-    }`;
-    addQuestionBtn.textContent = "+ Add Question";
-    addQuestionBtn.disabled = !isEditableDay;
-    addQuestionBtn.setAttribute("aria-disabled", !isEditableDay);
-
-    if (isEditableDay) {
-      addQuestionBtn.addEventListener("click", () => {
-        addNewQuestion(originalIndex);
-      });
-    } else {
-      addQuestionBtn.tabIndex = -1;
-      // Add tooltip
-      const tooltipContainer = document.createElement("div");
-      tooltipContainer.className = "tooltip-container";
-      tooltipContainer.style.width = "100%";
-      tooltipContainer.appendChild(addQuestionBtn);
-
-      const tooltip = document.createElement("span");
-      tooltip.className = "tooltip-text";
-      tooltip.textContent = "Only today's items are editable.";
-      tooltipContainer.appendChild(tooltip);
-
-      questionsCell.appendChild(tooltipContainer);
-    }
-
-    questionsCell.appendChild(
-      isEditableDay ? addQuestionBtn : addQuestionBtn.parentElement
-    );
-    row.appendChild(questionsCell);
-
-    // Status column
-
-    // Tags column - MODIFIED for editable state and proper indexing
-    const tagsCell = document.createElement("td");
-    tagsCell.className = "tags-cell";
-
-    dayData.tags.forEach((tag, tagIndex) => {
-      const tagElement = document.createElement("span");
-      tagElement.className = "tag";
-      tagElement.style.backgroundColor = tag.color;
-
-      // Only show remove button for editable days
-      if (isEditableDay) {
-        tagElement.innerHTML = `${tag.text} <span class="tag-remove" data-day="${originalIndex}" data-tag-index="${tagIndex}">×</span>`;
-      } else {
-        tagElement.textContent = tag.text;
-        tagElement.style.opacity = "0.7";
-      }
-
-      tagsCell.appendChild(tagElement);
-    });
-
-    // Tag input - only for editable days
-    const addTagInput = document.createElement("input");
-    addTagInput.type = "text";
-    addTagInput.className = `add-tag-input ${
-      isEditableDay ? "editable-control" : "non-editable-control"
-    }`;
-    addTagInput.placeholder = isEditableDay
-      ? "Add tag..."
-      : "Only today editable";
-    addTagInput.disabled = !isEditableDay;
-    addTagInput.setAttribute("aria-disabled", !isEditableDay);
-
-    if (isEditableDay) {
-      addTagInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter" && addTagInput.value.trim() !== "") {
-          addNewTag(originalIndex, addTagInput.value.trim());
-          addTagInput.value = "";
-        }
-      });
-    } else {
-      addTagInput.tabIndex = -1;
-    }
-
-    tagsCell.appendChild(addTagInput);
-    row.appendChild(tagsCell);
-
-    tableBody.appendChild(row);
-  });
-
-  // Update tag removal event listeners
-  setupTagRemovalListeners();
-
-  // Always render activity tracker when table is rendered
-  renderEnhancedActivityTracker();
-
-  // Update add day button state
-  updateAddDayButton();
-}
-
-// Also add this CSS for the current day styling
-const style = document.createElement("style");
-style.textContent = `
-  .current-day {
-    background-color: rgba(88, 166, 255, 0.1) !important;
-    border-left: 3px solid var(--accent-color);
-  }
-  
-  .current-day td {
-    border-bottom: 2px solid var(--accent-color);
-  }
-`;
-document.head.appendChild(style);
-
-// NEW: Setup tag removal listeners after table render
-function setupTagRemovalListeners() {
-  tableBody.addEventListener("click", (e) => {
-    if (e.target.classList.contains("tag-remove")) {
-      const dayIndex = parseInt(e.target.dataset.day);
-      if (!shouldAllowMutation(dayIndex)) return;
-
-      const tagIndex = parseInt(e.target.dataset.tagIndex);
-      appData[dayIndex].tags.splice(tagIndex, 1);
-      saveData();
-      // Re-filter data if search is active
-      if (searchFilter) {
-        filterTableData();
-      }
-      renderTable();
-    }
-  });
-}
-
-// Update the deleteQuestion function to ensure modal closes
-async function deleteQuestion(dayIndex, questionIndex) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  const questionText = appData[dayIndex].questions[questionIndex].text;
-  const confirmed = await confirmDialog.show(
-    "Delete Question",
-    `Are you sure you want to delete "${questionText}"? This action cannot be undone.`
-  );
-
-  if (confirmed) {
-    appData[dayIndex].questions.splice(questionIndex, 1);
-    saveData();
-    renderTable();
-    toastManager.info("Question deleted successfully", "Deleted");
-  }
-}
-
-// FIXED: Add new day function - adds only the current day
-function addNewDay() {
-  const currentDay = getCurrentDayNumber();
-  const maxDay =
-    appData.length > 0 ? Math.max(...appData.map((day) => day.day)) : 0;
-
-  // Only add the current day if it doesn't exist yet
-  const currentDayExists = appData.some((day) => day.day === currentDay);
-
-  if (!currentDayExists) {
-    const newDay = {
-      day: currentDay,
-      questions: [],
-      tags: [],
-      links: "",
-      linksArray: [],
-    };
-
-    appData.push(newDay);
-    saveData();
-    renderTable();
-
-    toastManager.success(
-      `Day ${currentDay} added successfully`,
-      "New Day Added"
-    );
-  } else {
-    // If current day already exists, just focus on it
-    const currentDayRow = Array.from(tableBody.querySelectorAll("tr")).find(
-      (row) => {
-        const dayCell = row.querySelector(".day-cell");
-        return dayCell && parseInt(dayCell.textContent) === currentDay;
-      }
-    );
-
-    if (currentDayRow) {
-      currentDayRow.scrollIntoView({ behavior: "smooth" });
-      toastManager.info(`Day ${currentDay} already exists`, "Day Found");
-    }
-  }
-}
-
-// Update add day button to show current day info
-function updateAddDayButton() {
-  const addDayBtn = document.getElementById("addDayBtn");
-  if (!addDayBtn) return;
-
-  const currentDay = getCurrentDayNumber();
-  const currentDayExists = appData.some((day) => day.day === currentDay);
-
-  if (currentDayExists) {
-    addDayBtn.textContent = `📌 Go to Day ${currentDay}`;
-    addDayBtn.title = "Scroll to today's day";
-
-    // Remove any existing tooltip
-    const tooltipContainer = addDayBtn.parentElement;
-    if (
-      tooltipContainer &&
-      tooltipContainer.classList.contains("tooltip-container")
-    ) {
-      const parent = tooltipContainer.parentElement;
-      parent.insertBefore(addDayBtn, tooltipContainer);
-      parent.removeChild(tooltipContainer);
-    }
-  } else {
-    addDayBtn.textContent = `+ Add Day ${currentDay}`;
-    addDayBtn.title = "Add today's day";
-
-    // Remove any existing tooltip
-    const tooltipContainer = addDayBtn.parentElement;
-    if (
-      tooltipContainer &&
-      tooltipContainer.classList.contains("tooltip-container")
-    ) {
-      const parent = tooltipContainer.parentElement;
-      parent.insertBefore(addDayBtn, tooltipContainer);
-      parent.removeChild(tooltipContainer);
-    }
-  }
-}
-
-// // Modify all mutation functions to include guards
-// function toggleQuestionCompletion(dayIndex, questionIndex) {
-//   if (!shouldAllowMutation(dayIndex)) return;
-
-//   appData[dayIndex].questions[questionIndex].completed =
-//     !appData[dayIndex].questions[questionIndex].completed;
-//   saveData();
-//   updateStatusCell(dayIndex);
-// }
-// MODIFIED: Enhanced toggleQuestionCompletion function with instant status updates
-function toggleQuestionCompletion(dayIndex, questionIndex) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  // Toggle the completion status
-  appData[dayIndex].questions[questionIndex].completed =
-    !appData[dayIndex].questions[questionIndex].completed;
-
-  // Save data first
-  saveData();
-
-  // Update the status cell INSTANTLY
-  updateStatusCellInstantly(dayIndex);
-
-  // Check for celebration after toggling completion
-  checkAndCelebrateAchievements(dayIndex);
-}
-
-// NEW: Function to instantly update status cell without full table re-render
-
-// Modify the toggleQuestionCompletion function to include celebration check
-const originalToggleQuestionCompletion = toggleQuestionCompletion;
-toggleQuestionCompletion = function (dayIndex, questionIndex) {
-  originalToggleQuestionCompletion(dayIndex, questionIndex);
-
-  // Check for celebration after toggling completion
-  checkAndCelebrateAchievements(dayIndex);
-};
-
-// Add celebration check when loading data to handle already completed questions - FIXED
-function checkExistingAchievements() {
-  // Wait for table to be fully rendered
-  setTimeout(() => {
-    appData.forEach((dayData, dayIndex) => {
-      const solvedCount = dayData.questions.filter((q) => q.completed).length;
-      if (solvedCount >= 5) {
-        changeStatusColorToDarkGreen(dayIndex);
-      }
-    });
-  }, 200);
-}
-
-// Call this function after loading data and rendering table
-setTimeout(() => {
-  checkExistingAchievements();
-}, 100);
-
-// Edit question text
-function editQuestionText(dayIndex, questionIndex, element) {
-  const currentText = appData[dayIndex].questions[questionIndex].text;
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = currentText;
-  input.className = "question-text editing";
-
-  element.parentNode.replaceChild(input, element);
-  input.focus();
-
-  const saveEdit = () => {
-    const newText = input.value.trim();
-    if (newText !== "") {
-      appData[dayIndex].questions[questionIndex].text = newText;
-      saveData();
-
-      // Re-render the table to update the question display
-      renderTable();
-    } else {
-      // If empty, revert to original text
-      input.parentNode.replaceChild(element, input);
-    }
-  };
-
-  input.addEventListener("blur", saveEdit);
-  input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      saveEdit();
-    }
-  });
-}
-
-// BUGFIX: Ensure new questions have default difficulty
-// MODIFY AT addNewQuestion function
-function addNewQuestion(dayIndex) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  appData[dayIndex].questions.push({
-    text: "New Question",
-    link: "",
-    completed: false,
-    difficulty: "Medium", // Default difficulty
-  });
-  saveData();
-  renderTable();
-}
-// Update status cell based on question completion
-
-// MODIFIED: Enhanced getStatusEmoji function with better logic
-
-// Add a new tag to a day
-function addNewTag(dayIndex, tagText) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  // Check for duplicates
-  if (appData[dayIndex].tags.some((tag) => tag.text === tagText)) {
-    return;
-  }
-
-  const colors = [
-    "#58A6FF",
-    "#3FB950",
-    "#D29922",
-    "#DB61A2",
-    "#8E6CDF",
-    "#F85149",
-    "#FF8C37",
-    "#1F6FEB",
-  ];
-  const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-  appData[dayIndex].tags.push({
-    text: tagText,
-    color: randomColor,
-  });
-  saveData();
-  renderTable();
-}
-
-// Update links for a day
-function updateLinks(dayIndex, linksText) {
-  appData[dayIndex].links = linksText;
-  saveData();
-}
-
-// Add a new link tag when Enter is pressed
-
-function addNewLink(dayIndex, linkText) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  if (!linkText.trim()) return;
-
-  if (!appData[dayIndex].linksArray) {
-    appData[dayIndex].linksArray = [];
-  }
-
-  if (
-    appData[dayIndex].linksArray.some((link) => link.url === linkText.trim())
-  ) {
-    return;
-  }
-
-  appData[dayIndex].linksArray.push({
-    url: linkText.trim(),
-    text: extractDisplayText(linkText.trim()),
-  });
-  saveData();
-  renderLinksCell(dayIndex);
-}
-
-// Remove a link tag
-function removeLink(dayIndex, linkIndex) {
-  if (!shouldAllowMutation(dayIndex)) return;
-
-  if (appData[dayIndex].linksArray) {
-    appData[dayIndex].linksArray.splice(linkIndex, 1);
-    saveData();
-    renderLinksCell(dayIndex);
-  }
-}
-
-// Extract display text from URL
-function extractDisplayText(url) {
-  try {
-    const urlObj = new URL(url);
-    return urlObj.hostname.replace("www.", "");
-  } catch (e) {
-    return url.substring(0, 20) + (url.length > 20 ? "..." : "");
-  }
-}
-
-// Render links as clickable tags
-function renderLinksCell(dayIndex) {
-  const rows = tableBody.querySelectorAll("tr");
-  if (rows[dayIndex]) {
-    const linksCell = rows[dayIndex].querySelector(".links-cell");
-    if (linksCell) {
-      // Clear existing content
-      linksCell.innerHTML = "";
-
-      // Create input for adding new links
-      const linkInput = document.createElement("input");
-      linkInput.type = "text";
-      linkInput.className = "add-link-input";
-      linkInput.placeholder = "Enter URL and press Enter to add...";
-      linkInput.style.width = "100%";
-      linkInput.style.marginBottom = "8px";
-      linkInput.style.padding = "6px 8px";
-      linkInput.style.background = "var(--bg-color)";
-      linkInput.style.border = "1px solid var(--border-color)";
-      linkInput.style.borderRadius = "4px";
-      linkInput.style.color = "var(--text-color)";
-
-      linkInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter" && linkInput.value.trim() !== "") {
-          addNewLink(dayIndex, linkInput.value.trim());
-          linkInput.value = "";
-        }
-      });
-
-      linksCell.appendChild(linkInput);
-
-      // Create tags container
-      const tagsContainer = document.createElement("div");
-      tagsContainer.className = "link-tags-container";
-
-      // Display existing links as tags
-      if (
-        appData[dayIndex].linksArray &&
-        appData[dayIndex].linksArray.length > 0
-      ) {
-        appData[dayIndex].linksArray.forEach((link, index) => {
-          const linkTag = document.createElement("div");
-          linkTag.className = "link-tag-container";
-          linkTag.style.display = "inline-block";
-          linkTag.style.marginRight = "6px";
-          linkTag.style.marginBottom = "6px";
-
-          const tagElement = document.createElement("a");
-          tagElement.href = link.url;
-          tagElement.target = "_blank";
-          tagElement.rel = "noopener noreferrer";
-          tagElement.style.display = "inline-flex";
-          tagElement.style.alignItems = "center";
-          tagElement.style.backgroundColor = "var(--tag-bg)";
-          tagElement.style.color = "white";
-          tagElement.style.padding = "4px 8px";
-          tagElement.style.borderRadius = "12px";
-          tagElement.style.fontSize = "0.8rem";
-          tagElement.style.textDecoration = "none";
-          tagElement.style.cursor = "pointer";
-          tagElement.style.transition = "opacity 0.2s";
-
-          tagElement.textContent = link.text;
-          tagElement.title = link.url;
-
-          tagElement.addEventListener("mouseenter", () => {
-            tagElement.style.opacity = "0.8";
-          });
-
-          tagElement.addEventListener("mouseleave", () => {
-            tagElement.style.opacity = "1";
-          });
-
-          // Add remove button
-          const removeBtn = document.createElement("span");
-          removeBtn.innerHTML = " &times;";
-          removeBtn.style.cursor = "pointer";
-          removeBtn.style.marginLeft = "4px";
-          removeBtn.style.fontWeight = "bold";
-          removeBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            removeLink(dayIndex, index);
-          });
-
-          tagElement.appendChild(removeBtn);
-          linkTag.appendChild(tagElement);
-          tagsContainer.appendChild(linkTag);
-        });
-      }
-
-      linksCell.appendChild(tagsContainer);
-    }
-  }
-}
-
-// BUGFIX: Improved openLinkModal function to handle difficulty selector properly
-// MODIFY AT openLinkModal function
-function openLinkModal(dayIndex, questionIndex) {
-  currentEditingQuestion = { dayIndex, questionIndex };
-  const question = appData[dayIndex].questions[questionIndex];
-
-  questionTextInput.value = question.text;
-  questionLinkInput.value = question.link || "";
-
-  // Initialize difficulty selector and set current value
-  const difficultyContainer = setupDifficultySelector();
-  const currentDifficulty = question.difficulty || "Medium";
-  const difficultyOption = difficultyContainer.querySelector(
-    `[data-difficulty="${currentDifficulty}"]`
-  );
-  if (difficultyOption) {
-    const options = difficultyContainer.querySelectorAll(".difficulty-option");
-    options.forEach((opt) => opt.classList.remove("selected"));
-    difficultyOption.classList.add("selected");
-  }
-
-  linkModal.style.display = "flex";
-  questionLinkInput.focus();
-}
-
-// BUGFIX: Fix multiple difficulty selectors issue in modal
-// MODIFY AT setupDifficultySelector function
-function setupDifficultySelector() {
-  // First, remove any existing difficulty selector to prevent duplicates
-  const existingSelector = document.querySelector(".difficulty-selector");
-  if (existingSelector) {
-    existingSelector.remove();
-  }
-
-  const difficultyContainer = document.createElement("div");
-  difficultyContainer.className = "difficulty-selector";
-  difficultyContainer.innerHTML = `
-    <span style="font-size: var(--codeleaf-font-sm); color: var(--codeleaf-text-secondary); margin-right: var(--codeleaf-space-2);">Difficulty:</span>
-    <div class="difficulty-option" data-difficulty="Easy">Easy 🌱</div>
-    <div class="difficulty-option" data-difficulty="Medium">Medium 🔥</div>
-    <div class="difficulty-option" data-difficulty="Hard">Hard 💀</div>
-  `;
-
-  // Insert after question text input in modal
-  const modalBody = document.querySelector(".modal-body");
-  const questionLinkInput = document.getElementById("questionLinkInput");
-  modalBody.insertBefore(difficultyContainer, questionLinkInput);
-
-  // Add event listeners for difficulty options
-  difficultyContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("difficulty-option")) {
-      const options =
-        difficultyContainer.querySelectorAll(".difficulty-option");
-      options.forEach((opt) => opt.classList.remove("selected"));
-      e.target.classList.add("selected");
-    }
-  });
-
-  return difficultyContainer;
-}
-
-// BUGFIX: Get selected difficulty with proper fallback
-function getSelectedDifficulty() {
-  const selectedOption = document.querySelector(".difficulty-option.selected");
-  return selectedOption ? selectedOption.dataset.difficulty : "Medium";
-}
-
-// BUGFIX: Also clean up difficulty selector when closing modal
-// MODIFY AT closeLinkModal function
-function closeLinkModal() {
-  linkModal.style.display = "none";
-  currentEditingQuestion = { dayIndex: -1, questionIndex: -1 };
-
-  // Optional: Remove difficulty selector when modal closes to ensure clean state
-  const existingSelector = document.querySelector(".difficulty-selector");
-  if (existingSelector) {
-    existingSelector.remove();
-  }
-}
-
-// BUGFIX: Save difficulty value when saving question
-// MODIFY AT saveQuestionLink function
-function saveQuestionLink() {
-  const { dayIndex, questionIndex } = currentEditingQuestion;
-  if (dayIndex === -1 || questionIndex === -1) return;
-
-  if (!shouldAllowMutation(dayIndex)) {
-    closeLinkModal();
-    return;
-  }
-
-  const newText = questionTextInput.value.trim();
-  const newLink = questionLinkInput.value.trim();
-  const difficulty = getSelectedDifficulty();
-
-  if (newText !== "") {
-    appData[dayIndex].questions[questionIndex].text = newText;
-    appData[dayIndex].questions[questionIndex].link = newLink;
-    appData[dayIndex].questions[questionIndex].difficulty = difficulty; // Save difficulty
-    saveData();
-    renderTable();
-  }
-
-  closeLinkModal();
-}
-
-// Setup event listeners
-function setupEventListeners() {
-  // Theme toggle
-  // themeToggle.addEventListener("click", () => {
-  //   document.body.classList.toggle("light-theme");
-  //   if (document.body.classList.contains("light-theme")) {
-  //     themeToggle.textContent = "Switch to Dark Theme";
-  //   } else {
-  //     themeToggle.textContent = "Switch to Light Theme";
-  //   }
-  // });
-
-  // Sync button - updated to use force sync
-  syncButton.addEventListener("click", async () => {
-    if (authToken) {
-      await forceSyncFromServer();
-    } else {
-      updateSyncStatus("offline", "Login required to sync");
-    }
-  });
-
-  // NEW: Add Day button
-  const addDayBtn = document.getElementById("addDayBtn");
-  // Update the add day button event listener
-  if (addDayBtn) {
-    addDayBtn.addEventListener("click", function () {
-      const currentDay = getCurrentDayNumber();
-      const currentDayExists = appData.some((day) => day.day === currentDay);
-
-      if (currentDayExists) {
-        // Scroll to current day if it exists
-        const currentDayRow = Array.from(tableBody.querySelectorAll("tr")).find(
-          (row) => {
-            const dayCell = row.querySelector(".day-cell");
-            return dayCell && parseInt(dayCell.textContent) === currentDay;
-          }
-        );
-
-        if (currentDayRow) {
-          currentDayRow.scrollIntoView({ behavior: "smooth" });
-          // Add highlight effect
-          currentDayRow.style.backgroundColor = "rgba(88, 166, 255, 0.2)";
-          setTimeout(() => {
-            currentDayRow.style.backgroundColor = "";
-          }, 2000);
-        }
-      } else {
-        // Add new day if it doesn't exist
-        addNewDay();
-      }
-    });
-  }
-
-  // Modify the tag removal event listener to include guard
-  tableBody.addEventListener("click", (e) => {
-    if (e.target.classList.contains("tag-remove")) {
-      const dayIndex = parseInt(e.target.dataset.day);
-      if (!shouldAllowMutation(dayIndex)) return;
-
-      const tagIndex = parseInt(e.target.dataset.tagIndex);
-      appData[dayIndex].tags.splice(tagIndex, 1);
-      saveData();
-      // Re-filter data if search is active
-      if (searchFilter) {
-        filterTableData();
-      }
-      renderTable();
-    }
-  });
-
-  // Modal event listeners
-  closeModal.addEventListener("click", closeLinkModal);
-  cancelModal.addEventListener("click", closeLinkModal);
-  saveLink.addEventListener("click", saveQuestionLink);
-
-  // Close modal when clicking outside
-  linkModal.addEventListener("click", (e) => {
-    if (e.target === linkModal) {
-      closeLinkModal();
-    }
-  });
-
-  // Allow saving with Enter key
-  questionLinkInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      saveQuestionLink();
-    }
-  });
-}
-
-// Activity Tracker Functionality - FIXED VERSION
-function initializeActivityTracker() {
-  renderActivityCalendar();
-
-  // Re-render calendar when data changes - FIXED to use the correct reference
-  const originalSaveData = saveData;
-  window.saveData = function () {
-    const result = originalSaveData.apply(this, arguments);
-    renderActivityCalendar();
-    return result;
-  };
-}
-
-// Handle the celebration logic
-function checkAndCelebrateAchievements(dayIndex) {
-  const solvedCount = appData[dayIndex].questions.filter(
-    (q) => q.completed
-  ).length;
-
-  if (solvedCount == 5 || solvedCount == 10) {
-    // Change status color to darker green
-    changeStatusColorToDarkGreen(dayIndex);
-
-    // Show congratulatory popup
-    showCelebrationPopup(solvedCount);
-
-    // Trigger party popper animation
-    triggerPartyPopperAnimation();
-  }
-}
-
-// Function to change status color to darker green - FIXED VERSION
-function changeStatusColorToDarkGreen(dayIndex) {
-  // Wait for table to be rendered
-  setTimeout(() => {
-    const rows = tableBody.querySelectorAll("tr");
-    if (rows[dayIndex]) {
-      const statusCell = rows[dayIndex].querySelector(".status-cell");
-      if (statusCell) {
-        statusCell.style.color = "#216e39"; // Darker green color
-        statusCell.style.fontWeight = "bold";
-        statusCell.style.textShadow = "0 0 10px rgba(33, 110, 57, 0.5)";
-      }
-    }
-  }, 100);
-}
-
-// Function to show celebration popup
-function showCelebrationPopup(solvedCount) {
-  // Create popup element
-  const popup = document.createElement("div");
-  popup.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(135deg, #216e39, #3fb950);
-        color: white;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        z-index: 10000;
-        text-align: center;
-        max-width: 400px;
-        animation: popupBounce 0.5s ease-out;
-    `;
-
-  popup.innerHTML = `
-        <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
-        <h3 style="margin: 0 0 10px 0; font-size: 1.5rem;">Amazing Work!</h3>
-        <p style="margin: 0; font-size: 1.1rem;">You've solved ${solvedCount} problems today! Keep up the great progress! 🚀</p>
-        <button onclick="this.parentElement.remove()" style="
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid white;
-            color: white;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        ">Continue Coding</button>
-    `;
-
-  //  CSS animation
-  const style = document.createElement("style");
-  style.textContent = `
-        @keyframes popupBounce {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            70% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-    `;
-  document.head.appendChild(style);
-
-  document.body.appendChild(popup);
-
-  // Auto-remove after 5 seconds
-  setTimeout(() => {
-    if (popup.parentElement) {
-      popup.remove();
-    }
-  }, 5000);
-}
-
-// Function to trigger party popper animation
-function triggerPartyPopperAnimation() {
-  // Create confetti elements
-  for (let i = 0; i < 100; i++) {
-    createConfetti();
-  }
-
-  // celebration sound (optional - silent unless user interacts first)
-  playCelebrationSound();
-}
-
-// Function to create individual confetti pieces
-function createConfetti() {
-  const confetti = document.createElement("div");
-  const colors = [
-    "#216e39",
-    "#3fb950",
-    "#58a6ff",
-    "#db61a2",
-    "#f0883e",
-    "#f0d33c",
-  ];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-
-  confetti.style.cssText = `
-        position: fixed;
-        width: 10px;
-        height: 10px;
-        background: ${color};
-        top: -10px;
-        left: ${Math.random() * 100}vw;
-        border-radius: ${Math.random() > 0.5 ? "50%" : "0"};
-        pointer-events: none;
-        z-index: 9999;
-        animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
-    `;
-
-  // CSS animation for confetti
-  const style = document.createElement("style");
-  if (!document.querySelector("#confetti-animation")) {
-    style.id = "confetti-animation";
-    style.textContent = `
-            @keyframes confettiFall {
-                0% {
-                    transform: translateY(0) rotate(0deg);
-                    opacity: 1;
-                }
-                100% {
-                    transform: translateY(100vh) rotate(${
-                      360 + Math.random() * 360
-                    }deg);
-                    opacity: 0;
-                }
-            }
-        `;
-    document.head.appendChild(style);
-  }
-
-  document.body.appendChild(confetti);
-
-  // Remove confetti after animation
-  setTimeout(() => {
-    if (confetti.parentElement) {
-      confetti.remove();
-    }
-  }, 5000);
-}
-
-// Function to play celebration sound (user interaction required)
-function playCelebrationSound() {
-  // Only play sound if user has interacted with the page
-  try {
-    const audioContext = new (window.AudioContext ||
-      window.webkitAudioContext)();
-
-    // Create a simple celebration sound
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      1760,
-      audioContext.currentTime + 0.1
-    );
-
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.3
-    );
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
-  } catch (error) {
-    // Silent fail if audio context is not supported or user hasn't interacted
-    ////  console.log("Audio not available or user interaction required");
-  }
-}
-
-function renderActivityCalendar() {
-  const calendarContainer = document.getElementById("activityCalendar");
-  if (!calendarContainer) return;
-
-  const startDate = new Date("2025-09-25");
-  const today = new Date();
-  const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-  const totalDays = Math.max(daysDiff, 1); // At least 1 day
-
-  // Calculate questions solved per day
-  const questionsPerDay = calculateQuestionsPerDay();
-
-  calendarContainer.innerHTML = "";
-
-  for (let day = 1; day <= totalDays; day++) {
-    const dayElement = document.createElement("div");
-    dayElement.className = "activity-day";
-
-    const questionsSolved = questionsPerDay[day] || 0;
-    let activityClass = "blank";
-
-    if (questionsSolved === 1) {
-      activityClass = "green";
-    } else if (questionsSolved >= 2) {
-      activityClass = "dark-green";
-    }
-
-    dayElement.classList.add(activityClass);
-
-    //  tooltip
-    const tooltip = document.createElement("div");
-    tooltip.className = "activity-tooltip";
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + day - 1);
-    tooltip.textContent = `Day ${day} (${formatDate(
-      currentDate
-    )}): ${questionsSolved} question${questionsSolved !== 1 ? "s" : ""} solved`;
-    dayElement.appendChild(tooltip);
-
-    calendarContainer.appendChild(dayElement);
-  }
-}
-
-function calculateQuestionsPerDay() {
-  const questionsPerDay = {};
-
-  appData.forEach((dayData) => {
-    const dayNumber = dayData.day;
-    const solvedCount = dayData.questions.filter((q) => q.completed).length;
-
-    if (solvedCount > 0) {
-      questionsPerDay[dayNumber] = solvedCount;
-    }
-  });
-
-  return questionsPerDay;
-}
-
-function formatDate(date) {
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
-// Set up direct event listeners as backup
-function setupDirectEventListeners() {
-  ////  console.log("🎯 Setting up direct event listeners...");
-
-  // Listen for clicks on checkboxes
-  document.addEventListener("change", function (e) {
-    if (e.target.classList.contains("question-checkbox")) {
-      ////  console.log("🎯 Checkbox change detected");
-      setTimeout(() => {
-        saveActivityTrackerData();
-      }, 1000);
-    }
-  });
-
-  // Listen for clicks on add question buttons
-  document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("add-question-btn")) {
-      ////  console.log("🎯 Add question button click detected");
-      setTimeout(() => {
-        saveActivityTrackerData();
-      }, 1000);
-    }
-  });
-
-  // Listen for Enter key in tag and link inputs
-  document.addEventListener("keypress", function (e) {
-    if (
-      e.key === "Enter" &&
-      (e.target.classList.contains("add-tag-input") ||
-        e.target.classList.contains("add-link-input"))
-    ) {
-      ////  console.log("🎯 Tag/link input Enter key detected");
-      setTimeout(() => {
-        saveActivityTrackerData();
-      }, 1000);
-    }
-  });
-
-  ////  console.log("✅ Direct event listeners set up");
-}
-
-// ===== ENHANCED REAL-TIME NOTIFICATION SYSTEM =====
-class NotificationManager {
-  constructor() {
-    this.isOpen = false;
-    this.notifications = [];
-    this.unreadCount = 0;
-    this.currentCategory = "all";
-    this.pollingInterval = null;
-    this.socket = null;
-    this.isConnected = false;
-
-    this.initializeElements();
-    this.setupEventListeners();
-    this.initializeSocketConnection();
-    this.startPolling();
-    this.startAutoRefresh(); // NEW: Auto-refresh notifications
-  }
-
-  // NEW: Start automatic notification refresh
-  startAutoRefresh() {
-    // Clear any existing interval
-    if (this.autoRefreshInterval) {
-      clearInterval(this.autoRefreshInterval);
-    }
-
-    // Refresh notifications every 30 seconds when panel is closed
-    this.autoRefreshInterval = setInterval(() => {
-      if (!this.isOpen && authToken) {
-        this.checkForNewNotifications();
-      }
-    }, 30000); // 30 seconds
-
-    // Also refresh immediately on initialization
-    setTimeout(() => {
-      if (authToken) {
-        this.loadNotifications();
-      }
-    }, 2000);
-  }
-
-  // ENHANCED: Initialize with automatic loading
-  async initializeElements() {
-    this.bell = document.getElementById("notificationBell");
-    this.badge = document.getElementById("notificationBadge");
-    this.panel = document.getElementById("notificationPanel");
-    this.list = document.getElementById("notificationList");
-    this.markAllReadBtn = document.getElementById("markAllRead");
-    this.closeBtn = document.getElementById("closeNotifications");
-    this.viewAllBtn = document.getElementById("viewAllNotifications");
-
-    // Category elements
-    this.categoryTabs = document.querySelectorAll(".category-tab");
-
-    // Load notifications automatically if user is authenticated
-    if (authToken) {
-      await this.loadNotifications();
-    }
-  }
-
-  // ENHANCED: Setup event listeners with page visibility support
-  setupEventListeners() {
-    // Toggle notification panel
-    this.bell.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.togglePanel();
-    });
-
-    // Mark all as read
-    this.markAllReadBtn.addEventListener("click", () => {
-      this.markAllAsRead();
-    });
-
-    // Close panel
-    this.closeBtn.addEventListener("click", () => {
-      this.closePanel();
-    });
-
-    // View all notifications
-    this.viewAllBtn.addEventListener("click", () => {
-      this.viewAllNotifications();
-    });
-
-    // Category tab event listeners
-    this.categoryTabs.forEach((tab) => {
-      tab.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const category = e.currentTarget.dataset.category;
-        this.switchCategory(category);
-      });
-    });
-
-    // Close panel when clicking outside
-    document.addEventListener("click", (e) => {
-      if (
-        this.isOpen &&
-        !this.panel.contains(e.target) &&
-        e.target !== this.bell
-      ) {
-        this.closePanel();
-      }
-    });
-
-    // Close on Escape key
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.isOpen) {
-        this.closePanel();
-      }
-    });
-
-    // NEW: Refresh notifications when page becomes visible
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && authToken && !this.isOpen) {
-        this.checkForNewNotifications();
-      }
-    });
-
-    // NEW: Refresh notifications when user comes back online
-    window.addEventListener("online", () => {
-      if (authToken) {
-        this.loadNotifications();
-      }
-    });
-  }
-
-  // Switch between notification categories
-  switchCategory(category) {
-    if (this.currentCategory === category) return;
-
-    console.log(`Switching to category: ${category}`);
-
-    // Update active tab
-    this.categoryTabs.forEach((tab) => {
-      tab.classList.remove("active");
-      if (tab.dataset.category === category) {
-        tab.classList.add("active");
-      }
-    });
-
-    this.currentCategory = category;
-
-    // Add switching animation
-    this.list.classList.add("switching");
-
-    // Re-render notifications for the selected category
-    setTimeout(() => {
-      this.renderNotifications();
-      this.list.classList.remove("switching");
-    }, 150);
-  }
-
-  // Render notifications with category filtering
-  renderNotifications() {
-    console.log(
-      `Rendering notifications for category: ${this.currentCategory}`
-    );
-
-    // Filter notifications based on current category
-    let filteredNotifications = [...this.notifications];
-
-    if (this.currentCategory === "unread") {
-      filteredNotifications = this.notifications.filter((n) => !n.isRead);
-    } else if (this.currentCategory === "read") {
-      filteredNotifications = this.notifications.filter((n) => n.isRead);
-    }
-
-    console.log(`Filtered notifications: ${filteredNotifications.length}`);
-
-    if (filteredNotifications.length === 0) {
-      this.renderEmptyState();
-      return;
-    }
-
-    // In renderNotifications method - update the HTML template
-    this.list.innerHTML = filteredNotifications
-      .map((notification) => {
-        const isUnread = !notification.isRead;
-        return `
-    <div class="notification-item ${
-      isUnread ? "unread" : "read"
-    } clickable-notification" 
-         data-id="${notification._id}" 
-         data-type="${notification.type}"
-         title="Click to view">
-      <div class="notification-content">
-        <div class="notification-type">
-          <span class="notification-type-icon">${this.getTypeIcon(
-            notification.type
-          )}</span>
-          ${this.getTypeLabel(notification.type)}
-        </div>
-        <p class="notification-message">${notification.message}</p>
-        <div class="notification-meta">
-          <span class="notification-author">@${notification.sender}</span>
-          <span class="notification-time">${this.formatTime(
-            notification.timestamp
-          )}</span>
-        </div>
-        ${
-          isUnread
-            ? '<div class="notification-live-indicator">🟢 Live</div>'
-            : ""
-        }
-        ${
-          notification.url
-            ? '<div class="notification-url-hint">🔗 Click to view</div>'
-            : ""
-        }
-      </div>
-    </div>
-  `;
-      })
-      .join("");
-
-    // Add click handlers
-    this.list.querySelectorAll(".notification-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        this.handleNotificationClick(item);
-      });
-    });
-  }
-
-  // Render empty state for categories
-  renderEmptyState() {
-    let emptyMessage = "";
-    let emptyIcon = "🔔";
-
-    switch (this.currentCategory) {
-      case "unread":
-        emptyMessage = "No unread notifications";
-        emptyIcon = "📭";
-        break;
-      case "read":
-        emptyMessage = "No read notifications";
-        emptyIcon = "📖";
-        break;
-      default:
-        emptyMessage = "No notifications yet";
-        emptyIcon = "🔔";
-    }
-
-    this.list.innerHTML = `
-      <div class="notification-empty">
-        <div class="notification-empty-icon">${emptyIcon}</div>
-        <p>${emptyMessage}</p>
-        <p style="font-size: var(--codeleaf-font-sm); margin-top: var(--codeleaf-space-2);">
-          ${
-            this.currentCategory === "all"
-              ? "Follow users to see their activity here"
-              : "Notifications will appear here"
-          }
-        </p>
-      </div>
-    `;
-  }
-
-  // ENHANCED: Update badge with animation for new notifications
-  updateBadge() {
-    // Update main badge
-    if (this.unreadCount > 0) {
-      this.badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
-      this.badge.style.display = "flex";
-      this.bell.classList.add("has-unread");
-
-      // Add pulse animation for new notifications
-      if (this.unreadCount === 1) {
-        this.bell.style.animation = "bell-pulse 2s infinite";
-      }
-    } else {
-      this.badge.style.display = "none";
-      this.bell.classList.remove("has-unread");
-      this.bell.style.animation = "none";
-    }
-
-    // Update category counters
-    this.updateCategoryCounters();
-  }
-
-  // Update counters on category tabs
-  updateCategoryCounters() {
-    const totalCount = this.notifications.length;
-    const unreadCount = this.notifications.filter((n) => !n.isRead).length;
-    const readCount = totalCount - unreadCount;
-
-    console.log(
-      `Updating counters - Total: ${totalCount}, Unread: ${unreadCount}, Read: ${readCount}`
-    );
-
-    // Update counters for each category
-    this.updateCategoryCounter("all", totalCount);
-    this.updateCategoryCounter("unread", unreadCount);
-    this.updateCategoryCounter("read", readCount);
-
-    // Add/remove unread indicator from unread tab
-    const unreadTab = document.querySelector('[data-category="unread"]');
-    if (unreadCount > 0) {
-      unreadTab.classList.add("has-unread");
-    } else {
-      unreadTab.classList.remove("has-unread");
-    }
-  }
-
-  // Helper to update category counter
-  updateCategoryCounter(category, count) {
-    const tab = document.querySelector(`[data-category="${category}"]`);
-    if (!tab) {
-      console.error(`Tab for category ${category} not found`);
-      return;
-    }
-
-    let counter = tab.querySelector(".category-counter");
-
-    if (count > 0) {
-      if (!counter) {
-        counter = document.createElement("span");
-        counter.className = "category-counter";
-        tab.appendChild(counter);
-      }
-      counter.textContent = count;
-    } else if (counter) {
-      counter.remove();
-    }
-  }
-
-  // In main.js - Fix the handleNotificationClick method in NotificationManager class
-  async handleNotificationClick(notificationElement) {
-    const notificationId = notificationElement.dataset.id;
-    const notification = this.notifications.find(
-      (n) => n._id === notificationId
-    );
-
-    if (!notification) return;
-
-    console.log(`🖱️ Handling notification click:`, notification);
-
-    // Mark as read on server
-    await this.markAsRead(notificationId);
-
-    // Update local state
-    notification.isRead = true;
-    this.unreadCount = Math.max(0, this.unreadCount - 1);
-
-    // Handle navigation based on notification type
-    if (notification.url) {
-      console.log(`🔗 Navigating to: ${notification.url}`);
-      window.location.href = notification.url;
-      return;
-    }
-
-    // FIX: Handle like notifications specifically
-    if (notification.type === "like_on_blog" && notification.blogSlug) {
-      console.log(`❤️ Redirecting to blog: ${notification.blogSlug}`);
-      window.location.href = `/blogs/${notification.blogSlug}`;
-      return;
-    }
-
-    // Fallback navigation for other notification types
-    if (notification.blogSlug) {
-      let url = `/blogs/${notification.blogSlug}`;
-
-      // Add comment parameter for comment-related notifications
-      if (
-        notification.commentId &&
-        (notification.type === "comment_on_blog" ||
-          notification.type === "reply_to_comment" ||
-          notification.type === "mention_in_comment")
-      ) {
-        url += `?comment=${notification.commentId}`;
-      }
-
-      console.log(`🔄 Fallback navigation to: ${url}`);
-      window.location.href = url;
-      return;
-    }
-
-    // Update UI if no navigation occurred
-    this.updateBadge();
-    if (this.currentCategory === "unread" && this.unreadCount === 0) {
-      this.switchCategory("all");
-    } else {
-      this.renderNotifications();
-    }
-  }
-
-  // FIXED: Mark all as read with proper real-time updates
-  async markAllAsRead() {
-    if (!authToken || this.unreadCount === 0) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        // Update local state
-        this.notifications.forEach((notification) => {
-          notification.isRead = true;
-        });
-        this.unreadCount = 0;
-
-        //  console.log("All notifications marked as read");
-
-        // Update UI
-        this.updateBadge();
-
-        // FIXED: Handle category switching based on current view
-        if (this.currentCategory === "unread") {
-          // If we're viewing unread and mark all as read, switch to all
-          this.switchCategory("all");
-        } else {
-          // Otherwise just re-render the current view
-          this.renderNotifications();
-        }
-
-        toastManager.success(
-          "All notifications marked as read",
-          "Notifications"
-        );
-      }
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      toastManager.error("Failed to mark all as read", "Error");
-    }
-  }
-
-  // ENHANCED: Handle real-time notifications with visual feedback
-  handleRealTimeNotification(notification) {
-    // Add new notification to the beginning of the list
-    this.notifications.unshift(notification);
-
-    // Increment unread count
-    this.unreadCount++;
-
-    // Update UI immediately
-    this.updateBadge();
-
-    // Show real-time alert (even when panel is closed)
-    this.showRealTimeNotificationAlert(notification);
-
-    // Update the list if panel is open
-    if (this.isOpen) {
-      this.renderNotifications();
-    }
-
-    // Auto-close notification after 5 seconds
-    setTimeout(() => {
-      this.hideRealTimeNotificationAlert();
-    }, 5000);
-  }
-
-  // In main.js - Back to using main route
-  async loadNotifications() {
-    if (!authToken) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/notifications?category=${this.currentCategory}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          this.notifications = result.notifications || [];
-          this.unreadCount = result.unreadCount || 0;
-
-          // Update UI even if panel is closed
-          this.updateBadge();
-
-          // Only render if panel is open
-          if (this.isOpen) {
-            this.renderNotifications();
-          }
-        }
-      }
-    } catch (error) {
-      // Silent fail for background updates
-    }
-  }
-
-  // Keep fallback as backup
-  async loadFallbackNotifications() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications-fallback`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          this.notifications = result.notifications;
-          this.unreadCount = result.unreadCount;
-          this.renderNotifications();
-          this.updateBadge();
-        }
-      }
-    } catch (error) {
-      console.error("Fallback also failed:", error);
-    }
-  }
-
-  getTypeLabel(type) {
-    const labels = {
-      new_blog: "New Blog",
-      comment_on_blog: "Comment on Blog",
-      reply_to_comment: "Reply to Comment",
-      like_on_blog: "Like on Blog",
-      like_on_comment: "Like on Comment", // NEW
-      mention_in_blog: "Mention in Blog",
-      mention_in_comment: "Mention in Comment",
-      comments_disabled: "Comments Disabled",
-      user_activity: "Activity",
-    };
-    return labels[type] || "Notification";
-  }
-
-  // Add icon for comment likes
-  getTypeIcon(type) {
-    const icons = {
-      new_blog: "📝",
-      comment_on_blog: "💬",
-      reply_to_comment: "↩️",
-      like_on_blog: "❤️",
-      like_on_comment: "👍", // NEW: Different icon for comment likes
-      mention_in_blog: "📌",
-      mention_in_comment: "📌",
-      comments_disabled: "🚫",
-      user_activity: "🔔",
-    };
-    return icons[type] || "🔔";
-  }
-
-  // In main.js - Fix the formatTime method in NotificationManager
-  formatTime(timestamp) {
-    try {
-      // Handle both string and Date objects
-      const time = new Date(timestamp);
-
-      // Check if the date is valid
-      if (isNaN(time.getTime())) {
-        // console.warn("Invalid timestamp:", timestamp);
-        return "Recently";
-      }
-
-      const now = new Date();
-      const diffMs = now - time;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-
-      if (diffMins < 1) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-
-      // For older dates, use a more readable format
-      return time.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: time.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-      });
-    } catch (error) {
-      console.error("Error formatting time:", error, "Timestamp:", timestamp);
-      return "Recently";
-    }
-  }
-
-  async togglePanel() {
-    if (this.isOpen) {
-      this.closePanel();
-    } else {
-      await this.openPanel();
-    }
-  }
-
-  async openPanel() {
-    this.isOpen = true;
-    this.panel.classList.add("open");
-    await this.loadNotifications();
-  }
-
-  closePanel() {
-    this.isOpen = false;
-    this.panel.classList.remove("open");
-  }
-
-  viewAllNotifications() {
-    this.closePanel();
-    toastManager.info("Notifications page coming soon!", "Feature Preview");
-  }
-
-  async markAsRead(notificationId) {
-    if (!authToken) return;
-
-    try {
-      await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-    }
-  }
-
-  showNewNotificationAlert() {
-    this.bell.style.animation = "none";
-    setTimeout(() => {
-      this.bell.style.animation = "bell-pulse 1s ease 2";
-    }, 10);
-  }
-
-  startPolling() {
-    this.pollingInterval = setInterval(() => {
-      if (authToken && !this.isOpen && !this.isConnected) {
-        this.checkForNewNotifications();
-      }
-    }, 120000);
-  }
-
-  // ENHANCED: Check for new notifications (optimized for background use)
-  async checkForNewNotifications() {
-    if (!authToken) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications/count`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          const previousCount = this.unreadCount;
-          this.unreadCount = result.unreadCount;
-
-          // Update badge if count changed
-          if (this.unreadCount !== previousCount) {
-            this.updateBadge();
-
-            // Show subtle visual feedback for new notifications
-            if (this.unreadCount > previousCount) {
-              this.showNewNotificationAlert();
-            }
-          }
-        }
-      }
-    } catch (error) {
-      // Silent fail for background checks
-    }
-  }
-
-  // Real-time notification alert methods
-  showRealTimeNotificationAlert(notification) {
-    const alert = document.createElement("div");
-    alert.className = "real-time-notification-alert";
-    alert.innerHTML = `
-      <div class="notification-alert-content">
-        <div class="notification-alert-header">
-          <span class="notification-alert-type">${this.getTypeLabel(
-            notification.type
-          )}</span>
-          <button class="notification-alert-close">&times;</button>
-        </div>
-        <div class="notification-alert-message">${notification.message}</div>
-        <div class="notification-alert-time">Just now</div>
-      </div>
-    `;
-
-    alert.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 350px;
-      background: var(--codeleaf-bg-primary);
-      border: 1px solid var(--codeleaf-border-light);
-      border-left: 4px solid var(--codeleaf-accent-primary);
-      border-radius: var(--codeleaf-radius-lg);
-      box-shadow: var(--codeleaf-shadow-lg);
-      z-index: 10000;
-      animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 4.7s forwards;
-      cursor: pointer;
-    `;
-
-    alert
-      .querySelector(".notification-alert-close")
-      .addEventListener("click", (e) => {
-        e.stopPropagation();
-        alert.remove();
-      });
-
-    alert.addEventListener("click", () => {
-      if (notification.blogSlug) {
-        window.location.href = `/blogs/${notification.blogSlug}`;
-      }
-      alert.remove();
-    });
-
-    document.body.appendChild(alert);
-    this.addNotificationAlertStyles();
-  }
-
-  addNotificationAlertStyles() {
-    if (!document.getElementById("notification-alert-styles")) {
-      const styles = document.createElement("style");
-      styles.id = "notification-alert-styles";
-      styles.textContent = `
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(100%); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideOutRight {
-          from { opacity: 1; transform: translateX(0); }
-          to { opacity: 0; transform: translateX(100%); }
-        }
-      `;
-      document.head.appendChild(styles);
-    }
-  }
-
-  hideRealTimeNotificationAlert() {
-    const alerts = document.querySelectorAll(".real-time-notification-alert");
-    alerts.forEach((alert) => {
-      alert.style.animation = "slideOutRight 0.3s ease forwards";
-      setTimeout(() => alert.remove(), 300);
-    });
-  }
-
-  // Socket connection methods
-  initializeSocketConnection() {
-    if (!authToken) {
-      //  console.log("No auth token, skipping socket connection");
-      return;
-    }
-
-    try {
-      this.socket = io({
-        auth: {
-          token: authToken,
-        },
-      });
-
-      this.socket.on("connect", () => {
-        //  console.log("🔌 Connected to real-time notifications");
-        this.isConnected = true;
-        this.updateConnectionStatus(true);
-      });
-
-      this.socket.on("disconnect", () => {
-        //  console.log("🔌 Disconnected from real-time notifications");
-        this.isConnected = false;
-        this.updateConnectionStatus(false);
-      });
-
-      this.socket.on("new-notification", (notification) => {
-        //  console.log("📢 Received real-time notification:", notification);
-        this.handleRealTimeNotification(notification);
-      });
-
-      this.socket.on("notification-count-updated", (data) => {
-        if (data.increment) {
-          this.unreadCount++;
-          this.updateBadge();
-          this.showNewNotificationAlert();
-        }
-      });
-    } catch (error) {
-      console.error("Error initializing socket connection:", error);
-    }
-  }
-
-  updateConnectionStatus(connected) {
-    if (connected) {
-      this.bell.title = "Notifications (Real-time)";
-      this.bell.style.color = "var(--codeleaf-accent-primary)";
-    } else {
-      this.bell.title = "Notifications (Offline)";
-      this.bell.style.color = "var(--codeleaf-text-tertiary)";
-    }
-  }
-
-  updateFollowingList(followingList) {
-    this.followingList = followingList || [];
-    if (this.socket && this.isConnected) {
-      this.socket.emit("update-following", this.followingList);
-      console.log(
-        `🔔 Updated real-time subscriptions for ${this.followingList.length} followed users`
-      );
-    }
-    this.showSubscriptionUpdateFeedback(this.followingList.length);
-  }
-
-  showSubscriptionUpdateFeedback(followingCount) {
-    const feedback = document.createElement("div");
-    feedback.className = "subscription-update-feedback";
-    //   feedback.innerHTML = `
-    //   <div style="
-    //     position: fixed;
-    //     bottom: 20px;
-    //     right: 20px;
-    //     background: var(--codeleaf-accent-primary);
-    //     color: white;
-    //     padding: 12px 16px;
-    //     border-radius: var(--codeleaf-radius-md);
-    //     box-shadow: var(--codeleaf-shadow-lg);
-    //     z-index: 10001;
-    //     font-size: var(--codeleaf-font-sm);
-    //     animation: slideInUp 0.3s ease;
-    //   ">
-    //     🔔 Now receiving real-time updates from ${followingCount} users
-    //   </div>
-    // `;
-
-    document.body.appendChild(feedback);
-    setTimeout(() => {
-      if (feedback.parentNode) {
-        feedback.parentNode.removeChild(feedback);
-      }
-    }, 3000);
-    this.addSubscriptionUpdateStyles();
-  }
-
-  addSubscriptionUpdateStyles() {
-    if (!document.getElementById("subscription-update-styles")) {
-      const styles = document.createElement("style");
-      styles.id = "subscription-update-styles";
-      styles.textContent = `
-        @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `;
-      document.head.appendChild(styles);
-    }
-  }
-
-  destroy() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
-    if (this.socket) {
-      this.socket.disconnect();
-    }
-  }
-}
-
-// Initialize notification manager when DOM is loaded
-let notificationManager;
-
-// Scroll to Top Functionality
-function initScrollToTop() {
-  const scrollToTopBtn = document.getElementById("scrollToTop");
-
-  if (!scrollToTopBtn) return;
-
-  // Show/hide button based on scroll position
-  function toggleScrollToTop() {
-    if (window.pageYOffset > 300) {
-      scrollToTopBtn.classList.add("visible");
-    } else {
-      scrollToTopBtn.classList.remove("visible");
-    }
-  }
-
-  // Smooth scroll to top
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
-  // Event listeners
-  window.addEventListener("scroll", toggleScrollToTop);
-  scrollToTopBtn.addEventListener("click", scrollToTop);
-
-  // Keyboard accessibility
-  scrollToTopBtn.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      scrollToTop();
-    }
-  });
-
-  // Initialize
-  toggleScrollToTop();
-}
-
-// Initialize scroll to top when DOM is loaded
-document.addEventListener("DOMContentLoaded", initScrollToTop);
-
-// Initialize the app when DOM is fully loaded
-document.addEventListener("DOMContentLoaded", function () {
-  initializeApp();
-});
-
-// Enhanced notification initialization
-function initializeNotificationSystem() {
-  if (authToken && !window.notificationManager) {
-    try {
-      window.notificationManager = new NotificationManager();
-
-      // Set up periodic checks for notifications
-      setInterval(() => {
-        if (
-          authToken &&
-          window.notificationManager &&
-          !window.notificationManager.isOpen
-        ) {
-          window.notificationManager.checkForNewNotifications();
-        }
-      }, 60000); // Check every minute
-
-      console.log("🔔 Notification system initialized with auto-refresh");
-    } catch (error) {
-      console.error("❌ Error initializing notification system:", error);
-    }
-  }
-}
-
-async function initializeApp() {
-  try {
-    //  console.log("🚀 Initializing FocusFlow...");
-
-    // First, set up all event listeners
-    setupAuthEventListeners();
-    initOAuth();
-    setupSearchFunctionality();
-    setupEventListeners();
-
-    // Then check authentication
-    await checkAutoLogin();
-
-    // Then load data and initialize components
-    await loadData();
-    await setAppStartDateFromUser();
-
-    filterTableData();
-    renderTable();
-    initializeActivityTracker();
-
-    // Initialize notification system after auth check
-    initializeNotificationSystem();
-
-    setupNotificationActivityRefresh();
-
-    // // Initialize notification manager after auth check
-    // setTimeout(() => {
-    //   if (authToken && !window.notificationManager) {
-    //     window.notificationManager = new NotificationManager();
-    //     initializeNotificationSubscriptions();
-    //   }
-    // }, 1000);
-
-    // Start periodic sync
-    setInterval(() => {
-      if (authToken && !isSyncing) {
-        syncWithMongoDB();
-      }
-    }, 20000);
-
-    //  console.log("✅ FocusFlow initialized successfully");
-  } catch (error) {
-    console.error("❌ Error initializing app:", error);
-  }
-}
-
-// Refresh notifications on user activity
-function setupNotificationActivityRefresh() {
-  let activityTimer;
-
-  const refreshOnActivity = () => {
-    if (activityTimer) {
-      clearTimeout(activityTimer);
-    }
-
-    activityTimer = setTimeout(() => {
-      if (
-        authToken &&
-        window.notificationManager &&
-        !window.notificationManager.isOpen
-      ) {
-        window.notificationManager.checkForNewNotifications();
-      }
-    }, 10000); // Refresh 10 seconds after user activity
-  };
-
-  // Listen for user interactions
-  ["click", "keypress", "scroll", "mousemove"].forEach((event) => {
-    document.addEventListener(event, refreshOnActivity, { passive: true });
-  });
-}
-
-// NEW: Initialize notification subscriptions with current following list
-async function initializeNotificationSubscriptions() {
-  try {
-    const token = localStorage.getItem("authToken");
-    if (!token || !window.notificationManager) return;
-
-    const response = await fetch(`${API_BASE_URL}/user-info`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
 
     if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.user) {
-        const followingList = result.user.social?.following || [];
-        window.notificationManager.updateFollowingList(followingList);
-
-        console.log(
-          `🎯 Initialized real-time notifications for ${followingList.length} followed users`
-        );
-      }
+      showToast("Signed out");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   } catch (error) {
-    console.error("Error initializing notification subscriptions:", error);
+    console.error("Logout failed:", error);
+    showToast("Error during logout");
   }
 }
 
+// Date Display
+function updateDateDisplay() {
+  const now = new Date();
+  const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  if (elements.currentDate) elements.currentDate.textContent = "Today";
+  if (elements.currentDay)
+    elements.currentDay.textContent = now.toLocaleDateString("en-US", options);
+}
+
+// Animation Controls
+// Enhanced animation setup
+function setupAnimations() {
+  // Start with animations enabled by default
+  state.leavesAnimation = true;
+  state.lampLight = true;
+
+  // Start animations immediately
+  startLeavesAnimation();
+  enableLampLight();
+
+  // Update UI state
+  updateAnimationUI();
+}
+
+function updateAnimationUI() {
+  if (elements.toggleLeaves) {
+    elements.toggleLeaves.setAttribute("aria-pressed", "true");
+    const toggleText = elements.toggleLeaves.querySelector(".toggle-text");
+    if (toggleText) toggleText.textContent = "Leaves: On";
+  }
+
+  if (elements.toggleLamp) {
+    elements.toggleLamp.setAttribute("aria-pressed", "true");
+    const toggleText = elements.toggleLamp.querySelector(".toggle-text");
+    if (toggleText) toggleText.textContent = "Lamp: Light";
+  }
+}
+
+function toggleLeavesAnimation() {
+  state.leavesAnimation = !state.leavesAnimation;
+  if (elements.toggleLeaves) {
+    elements.toggleLeaves.setAttribute("aria-pressed", state.leavesAnimation);
+
+    const toggleText = elements.toggleLeaves.querySelector(".toggle-text");
+    if (toggleText) {
+      toggleText.textContent = `Leaves: ${
+        state.leavesAnimation ? "On" : "Off"
+      }`;
+    }
+  }
+
+  if (state.leavesAnimation) {
+    startLeavesAnimation();
+  } else {
+    stopLeavesAnimation();
+  }
+}
+
+function toggleLampLight() {
+  state.lampLight = !state.lampLight;
+  if (elements.toggleLamp) {
+    elements.toggleLamp.setAttribute("aria-pressed", state.lampLight);
+
+    const toggleText = elements.toggleLamp.querySelector(".toggle-text");
+    if (toggleText) {
+      toggleText.textContent = `Lamp: ${state.lampLight ? "Light" : "Dim"}`;
+    }
+  }
+
+  if (state.lampLight) {
+    enableLampLight();
+  } else {
+    disableLampLight();
+  }
+}
+
+// Enhanced leaves animation with better mobile support
+function startLeavesAnimation() {
+  const petalsContainer = document.getElementById("petals");
+  if (!petalsContainer) return;
+
+  petalsContainer.innerHTML = "";
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+
+  // Create initial petals
+  for (let i = 0; i < 25; i++) {
+    createPetal(true);
+  }
+
+  // Continuous petal creation
+  state.leavesInterval = setInterval(() => {
+    const currentPetals = document.querySelectorAll(".petal").length;
+    if (currentPetals < 35) {
+      createPetal();
+    }
+  }, 1200);
+}
+
+function createPetal(initial = false) {
+  const petalsContainer = document.getElementById("petals");
+  if (!petalsContainer) return;
+
+  const petal = document.createElement("div");
+  petal.className = "petal";
+
+  // More natural random values with mobile consideration
+  const isMobile = window.innerWidth < 768;
+  const left = isMobile
+    ? 10 + Math.random() * 80 // More centered on mobile
+    : 5 + Math.random() * 90; // Wider distribution on desktop
+
+  const delay = initial ? Math.random() * 8 : 0;
+  const duration = isMobile
+    ? 10 + Math.random() * 6 // Slower on mobile
+    : 8 + Math.random() * 8; // Variable on desktop
+
+  const size = 0.6 + Math.random() * 0.8;
+  const horizontalDrift = (Math.random() - 0.5) * (isMobile ? 40 : 60);
+
+  petal.style.cssText = `
+        left: ${left}%;
+        animation: petal-fall ${duration}s linear ${delay}s forwards;
+        transform: translateX(${horizontalDrift}px) scale(${size});
+        opacity: 0;
+    `;
+
+  petalsContainer.appendChild(petal);
+
+  // Fade in quickly
+  setTimeout(() => {
+    petal.style.opacity = "0.8";
+  }, 50);
+
+  // Remove after animation
+  setTimeout(() => {
+    if (petal.parentNode) {
+      petal.parentNode.removeChild(petal);
+    }
+  }, (duration + delay) * 1000);
+}
+
+function stopLeavesAnimation() {
+  if (state.leavesInterval) {
+    clearInterval(state.leavesInterval);
+    state.leavesInterval = null;
+  }
+
+  // Gracefully fade out existing petals
+  document.querySelectorAll(".petal").forEach((petal) => {
+    petal.style.opacity = "0";
+    setTimeout(() => {
+      if (petal.parentNode) {
+        petal.parentNode.removeChild(petal);
+      }
+    }, 1000);
+  });
+}
+
+function enableLampLight() {
+  const lampGlow = document.getElementById("lamp-glow");
+  if (lampGlow) {
+    document.body.classList.remove("dim-mode");
+    document.body.classList.add("light-mode");
+    lampGlow.style.opacity = "0.8";
+  }
+}
+
+function disableLampLight() {
+  const lampGlow = document.getElementById("lamp-glow");
+  if (lampGlow) {
+    document.body.classList.remove("light-mode");
+    document.body.classList.add("dim-mode");
+    lampGlow.style.opacity = "0.15";
+  }
+}
+
+// Question Management
+async function loadQuestions() {
+  if (!state.isLoggedIn) {
+    console.log("User not logged in, skipping question load");
+    return;
+  }
+
+  try {
+    console.log("Loading questions from API...");
+    const response = await Helper.fx("/api/data");
+
+    if (response.ok) {
+      console.log("API response received:", response);
+
+      // Handle the API response structure
+      const apiData = response.data;
+
+      if (apiData && apiData.success !== false) {
+        const daysData = apiData.data || apiData;
+
+        if (Array.isArray(daysData) && daysData.length > 0) {
+          // Use the first day's questions
+          const firstDay = daysData[0];
+          console.log("First day data:", firstDay);
+
+          if (firstDay.questions && Array.isArray(firstDay.questions)) {
+            // Transform questions to handle MongoDB ObjectId
+            state.questions = firstDay.questions.map((question) => {
+              const questionId = question._id?.$oid || question._id;
+              return {
+                _id: questionId,
+                text: question.text || "",
+                link: question.link || "",
+                completed: question.completed || false,
+                difficulty: question.difficulty || "Medium",
+              };
+            });
+
+            state.currentDay = firstDay.day || 1;
+            console.log(`Loaded ${state.questions.length} questions`);
+          } else {
+            console.log("No questions array found in day data");
+            state.questions = [];
+          }
+        } else {
+          console.log("No days data found in response");
+          state.questions = [];
+        }
+      } else {
+        console.log("API response indicates failure");
+        state.questions = [];
+      }
+    } else {
+      console.log("API request failed");
+      state.questions = [];
+    }
+
+    // Always update UI
+    renderQuestions();
+    updateSandTimer();
+  } catch (error) {
+    console.error("Failed to load questions:", error);
+    state.questions = [];
+    renderQuestions();
+    updateSandTimer();
+  }
+}
+
+function renderQuestions() {
+  if (!elements.questionList) {
+    console.error("Question list element not found");
+    return;
+  }
+
+  // Ensure state.questions is always an array
+  if (!state.questions || !Array.isArray(state.questions)) {
+    console.warn("state.questions is not an array, resetting to empty array");
+    state.questions = [];
+  }
+
+  console.log("Rendering questions, count:", state.questions.length);
+
+  if (state.questions.length === 0) {
+    elements.questionList.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="7.5 4.21 12 6.81 16.5 4.21" />
+                    <polyline points="7.5 19.79 7.5 14.6 3 12" />
+                    <polyline points="21 12 16.5 14.6 16.5 19.79" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+                <p>No questions yet. Add your first question to begin tracking.</p>
+            </div>
+        `;
+    return;
+  }
+
+  // Render the questions list
+  const questionsHTML = state.questions
+    .map((question) => {
+      // Ensure all required properties exist
+      const questionId = question._id || generateTempId();
+      const questionText = question.text || "Untitled Question";
+      const questionLink = question.link || "";
+      const questionDifficulty = question.difficulty || "Medium";
+      const isCompleted = question.completed || false;
+
+      if (!questionId) {
+        console.error("Question missing ID:", question);
+      }
+
+      const isEditing = state.editingQuestionId === questionId;
+
+      return `
+        <div class="question-item ${
+          isCompleted ? "completed" : ""
+        }" data-id="${questionId}">
+            <div class="question-checkbox ${isCompleted ? "checked" : ""}" 
+                 onclick="app.toggleQuestionCompletion('${questionId}')">
+            </div>
+            <div class="question-content">
+                ${
+                  isEditing
+                    ? /* EDIT MODE - Show all editable fields */
+                      `
+                    <div class="question-edit-form">
+                        <div class="form-group">
+                            <input type="text" class="question-text editing" 
+                                   value="${Helper.escapeHtml(questionText)}" 
+                                   placeholder="Question text"
+                                   id="edit-text-${questionId}">
+                        </div>
+                        <div class="form-group">
+                            <label>Difficulty</label>
+                            <div class="difficulty-selector edit-difficulty">
+                                <button type="button" class="difficulty-btn ${
+                                  questionDifficulty === "Easy" ? "active" : ""
+                                }" 
+                                        data-difficulty="Easy" onclick="app.setEditDifficulty('${questionId}', 'Easy')">
+                                    Easy
+                                </button>
+                                <button type="button" class="difficulty-btn ${
+                                  questionDifficulty === "Medium"
+                                    ? "active"
+                                    : ""
+                                }" 
+                                        data-difficulty="Medium" onclick="app.setEditDifficulty('${questionId}', 'Medium')">
+                                    Medium
+                                </button>
+                                <button type="button" class="difficulty-btn ${
+                                  questionDifficulty === "Hard" ? "active" : ""
+                                }" 
+                                        data-difficulty="Hard" onclick="app.setEditDifficulty('${questionId}', 'Hard')">
+                                    Hard
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Problem Link</label>
+                            <input type="url" class="question-link editing" 
+                                   value="${Helper.escapeHtml(questionLink)}" 
+                                   placeholder="https://leetcode.com/problems/..."
+                                   id="edit-link-${questionId}">
+                        </div>
+                        <div class="edit-actions">
+                            <button class="btn-secondary" onclick="app.cancelEdit('${questionId}')">Cancel</button>
+                            <button class="btn-primary" onclick="app.saveQuestionEdit('${questionId}')">Save</button>
+                        </div>
+                    </div>
+                    `
+                    : /* VIEW MODE - Show read-only display */
+                      `
+                    <p class="question-text">${Helper.escapeHtml(
+                      questionText
+                    )}</p>
+                    <div class="question-meta">
+                        <span class="difficulty-tag ${questionDifficulty.toLowerCase()}">${questionDifficulty}</span>
+                        ${
+                          questionLink
+                            ? `<a href="${questionLink}" target="_blank" class="question-link">Problem Link</a>`
+                            : ""
+                        }
+                    </div>
+                    `
+                }
+            </div>
+            ${
+              !isEditing
+                ? `
+            <div class="question-actions">
+                <button class="action-btn" onclick="app.startQuestionEdit('${questionId}')" title="Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="app.showDeleteModal('${questionId}')" title="Delete">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+            </div>
+            `
+                : ""
+            }
+        </div>
+    `;
+    })
+    .join("");
+
+  elements.questionList.innerHTML = questionsHTML;
+  console.log("Questions rendered successfully");
+}
+
+// Make functions available globally
+window.app = {
+  toggleQuestionCompletion,
+  startQuestionEdit,
+  showDeleteModal,
+  saveQuestionEdit,
+  setEditDifficulty,
+  cancelEdit,
+  handleAddQuestion,
+  showAddModal,
+  hideAddModal,
+};
+
+async function toggleQuestionCompletion(questionId) {
+  if (!state.isLoggedIn) {
+    showToast("Please sign in to continue");
+    return;
+  }
+
+  try {
+    // Find the question in current state
+    const questionIndex = state.questions.findIndex(
+      (q) => (q._id?.$oid || q._id) === questionId
+    );
+
+    if (questionIndex === -1) {
+      console.error("Question not found in state:", questionId);
+      return;
+    }
+
+    const question = state.questions[questionIndex];
+    const newCompletedStatus = !question.completed;
+
+    const response = await Helper.fx(
+      `/api/data/checklist/question/${questionId}/complete`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          completed: newCompletedStatus,
+          day: state.currentDay,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      // Update local state immediately
+      question.completed = newCompletedStatus;
+      state.questions[questionIndex] = question;
+
+      // Update UI
+      renderQuestions();
+      updateSandTimer();
+      showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
+    } else {
+      showToast("Something went wrong—try again");
+    }
+  } catch (error) {
+    console.error("Failed to toggle completion:", error);
+    showToast("Something went wrong—try again");
+  }
+}
+
+// Modal Management
+function showAddModal() {
+  console.log("Show add modal called");
+
+  if (!state.isLoggedIn) {
+    showToast("Please sign in to continue");
+    return;
+  }
+
+  if (elements.addModal) {
+    elements.addModal.style.display = "flex";
+    console.log("Add modal displayed");
+
+    // Reset form and focus
+    if (elements.addQuestionForm) {
+      elements.addQuestionForm.reset();
+    }
+
+    // Set default difficulty
+    document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+      btn.classList.remove("active");
+      if (btn.textContent === "Medium") {
+        btn.classList.add("active");
+      }
+    });
+
+    if (elements.questionText) {
+      elements.questionText.focus();
+    }
+  } else {
+    console.error("Add modal element not found");
+  }
+}
+
+function hideAddModal() {
+  console.log("Hide add modal called");
+  if (elements.addModal) {
+    elements.addModal.style.display = "none";
+  }
+}
+
+function showDeleteModal(questionId) {
+  console.log("Show delete modal called for question:", questionId);
+
+  if (!state.isLoggedIn) {
+    showToast("Please sign in to continue");
+    return;
+  }
+
+  state.deletingQuestionId = questionId;
+  if (elements.deleteModal) {
+    elements.deleteModal.style.display = "flex";
+  }
+}
+
+function hideDeleteModal() {
+  console.log("Hide delete modal called");
+  if (elements.deleteModal) {
+    elements.deleteModal.style.display = "none";
+  }
+  state.deletingQuestionId = null;
+}
+
+// Question CRUD Operations
+async function handleAddQuestion() {
+  const text = elements.questionText ? elements.questionText.value.trim() : "";
+  const link = elements.questionLink ? elements.questionLink.value.trim() : "";
+  const activeDifficulty = document.querySelector(".difficulty-btn.active");
+  const difficulty = activeDifficulty
+    ? activeDifficulty.dataset.difficulty
+    : "Medium";
+
+  if (!text) {
+    showToast("This field is required");
+    if (elements.questionText) elements.questionText.focus();
+    return;
+  }
+
+  try {
+    console.log("Adding question:", {
+      text,
+      link,
+      difficulty,
+      day: state.currentDay,
+    });
+
+    const response = await Helper.fx("/api/data/checklist/question", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        day: state.currentDay,
+        questionText: text,
+        link: link,
+        difficulty: difficulty,
+      }),
+    });
+
+    console.log("Add question response:", response);
+
+    if (response.ok) {
+      hideAddModal();
+      showToast("Added");
+
+      // Wait a moment and reload questions from server to ensure consistency
+      setTimeout(async () => {
+        await loadQuestions();
+      }, 500);
+    } else {
+      const errorMessage =
+        response.data?.error || "Something went wrong—try again";
+      console.error("Add question failed:", errorMessage);
+      showToast(errorMessage);
+    }
+  } catch (error) {
+    console.error("Failed to add question:", error);
+    showToast("Something went wrong—try again");
+  }
+}
+
+// Helper function to generate temporary ID if needed
+function generateTempId() {
+  return "temp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+}
+
+async function handleDeleteQuestion() {
+  if (!state.deletingQuestionId) return;
+
+  try {
+    const response = await Helper.fx(
+      `/api/data/checklist/question/${state.deletingQuestionId}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ day: state.currentDay }),
+      }
+    );
+
+    if (response.ok) {
+      hideDeleteModal();
+      showToast("Removed");
+      // Reload questions from server
+      setTimeout(() => {
+        loadQuestions();
+      }, 300);
+    } else {
+      showToast("Something went wrong—try again");
+    }
+  } catch (error) {
+    console.error("Failed to delete question:", error);
+    showToast("Something went wrong—try again");
+  }
+}
+
+function startQuestionEdit(questionId) {
+  if (!state.isLoggedIn) {
+    showToast("Please sign in to continue");
+    return;
+  }
+
+  state.editingQuestionId = questionId;
+  renderQuestions();
+
+  // Focus the text input field after rendering
+  setTimeout(() => {
+    const input = document.getElementById(`edit-text-${questionId}`);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 100);
+}
+
+// function handleEditKeypress(event, questionId) {
+//   if (event.key === "Enter") {
+//     event.target.blur();
+//   }
+// }
+
+function setEditDifficulty(questionId, difficulty) {
+  // Update all difficulty buttons for this question
+  const buttons = document.querySelectorAll(
+    `[data-id="${questionId}"] .edit-difficulty .difficulty-btn`
+  );
+  buttons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.difficulty === difficulty);
+  });
+
+  // Store the selected difficulty in a data attribute
+  const questionElement = document.querySelector(`[data-id="${questionId}"]`);
+  if (questionElement) {
+    questionElement.dataset.editDifficulty = difficulty;
+  }
+}
+
+function cancelEdit(questionId) {
+  state.editingQuestionId = null;
+  renderQuestions();
+}
+
+async function saveQuestionEdit(questionId) {
+  const questionElement = document.querySelector(`[data-id="${questionId}"]`);
+  if (!questionElement) {
+    showToast("Question not found");
+    return;
+  }
+
+  const textInput = document.getElementById(`edit-text-${questionId}`);
+  const linkInput = document.getElementById(`edit-link-${questionId}`);
+
+  const newText = textInput ? textInput.value.trim() : "";
+  const newLink = linkInput ? linkInput.value.trim() : "";
+  const newDifficulty = questionElement.dataset.editDifficulty || "Medium";
+
+  if (!newText) {
+    showToast("Question text is required");
+    if (textInput) textInput.focus();
+    return;
+  }
+
+  try {
+    const response = await Helper.fx(
+      `/api/data/checklist/question/${questionId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionText: newText,
+          link: newLink,
+          difficulty: newDifficulty,
+          day: state.currentDay,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      state.editingQuestionId = null;
+      showToast("Saved");
+      // Reload to ensure consistency with server
+      setTimeout(() => {
+        loadQuestions();
+      }, 300);
+    } else {
+      showToast("Something went wrong—try again");
+    }
+  } catch (error) {
+    console.error("Failed to edit question:", error);
+    showToast("Something went wrong—try again");
+  }
+}
+
+// Sand Timer
+
+// Enhanced sand timer system
+function setupSandTimer() {
+  createContinuousSandFlow();
+  updateSandTimer(); // Initial update
+}
+
+function createContinuousSandFlow() {
+  const sandFlow = document.getElementById("sand-flow");
+  if (!sandFlow) return;
+
+  sandFlow.innerHTML = "";
+
+  // Create multiple sand grains for continuous flow
+  for (let i = 0; i < 8; i++) {
+    createSandGrain(i * 0.5);
+  }
+}
+
+function createSandGrain(delay = 0) {
+  const sandFlow = document.getElementById("sand-flow");
+  if (!sandFlow) return;
+
+  const grain = document.createElement("div");
+  grain.className = "sand-grain";
+
+  const duration = 2 + Math.random() * 1;
+  const startDelay = delay + Math.random() * 1;
+
+  grain.style.cssText = `
+        animation: sand-flow-fall ${duration}s linear ${startDelay}s infinite;
+        top: ${-10 - Math.random() * 5}px;
+    `;
+
+  sandFlow.appendChild(grain);
+}
+
+function updateSandTimer() {
+  const completed = state.questions.filter((q) => q.completed).length;
+  const total = state.questions.length;
+
+  if (elements.progressCount) elements.progressCount.textContent = completed;
+  if (elements.totalCount) elements.totalCount.textContent = total;
+
+  if (total === 0) {
+    resetSandTimer();
+    return;
+  }
+
+  const percentage = (completed / total) * 100;
+  updateSandLevels(percentage);
+
+  // Adjust sand flow intensity based on progress
+  adjustSandFlow(percentage);
+}
+
+function resetSandTimer() {
+  const sandTop = document.getElementById("sand-top-fill");
+  const sandBottom = document.getElementById("sand-bottom-fill");
+
+  if (sandTop) {
+    sandTop.style.height = "100%";
+    sandTop.style.transition = "none";
+  }
+  if (sandBottom) {
+    sandBottom.style.height = "0%";
+    sandBottom.style.transition = "none";
+  }
+}
+
+function updateSandLevels(percentage) {
+  const sandTop = document.getElementById("sand-top-fill");
+  const sandBottom = document.getElementById("sand-bottom-fill");
+
+  if (sandTop) {
+    sandTop.style.transition = "height 2500ms cubic-bezier(0.65, 0, 0.35, 1)";
+    sandTop.style.height = `${100 - percentage}%`;
+  }
+
+  if (sandBottom) {
+    sandBottom.style.transition =
+      "height 2500ms cubic-bezier(0.65, 0, 0.35, 1)";
+    sandBottom.style.height = `${percentage}%`;
+  }
+}
+
+function adjustSandFlow(percentage) {
+  const sandFlow = document.getElementById("sand-flow");
+  if (!sandFlow) return;
+
+  const grains = sandFlow.querySelectorAll(".sand-grain");
+
+  if (percentage >= 100) {
+    // Stop animation when complete
+    grains.forEach((grain) => {
+      grain.style.animationPlayState = "paused";
+      grain.style.opacity = "0";
+    });
+  } else {
+    // Adjust flow based on remaining sand
+    const remaining = 100 - percentage;
+    const intensity = Math.max(0.3, remaining / 100);
+
+    grains.forEach((grain) => {
+      grain.style.animationPlayState = "running";
+      grain.style.opacity = intensity.toString();
+      grain.style.animationDuration = `${2 + (remaining / 100) * 2}s`;
+    });
+  }
+}
+
+// Add dynamic sand particles
+function addSandParticles() {
+  if (!elements.sandTop || state.questions.length === 0) return;
+
+  const completed = state.questions.filter((q) => q.completed).length;
+  const total = state.questions.length;
+  const percentage = (completed / total) * 100;
+
+  // Add particles proportional to remaining sand
+  const remainingPercentage = 100 - percentage;
+  const particleCount = Math.floor((remainingPercentage / 100) * 8);
+
+  for (let i = 0; i < particleCount; i++) {
+    setTimeout(() => {
+      if (elements.sandTop) {
+        const particle = document.createElement("div");
+        particle.className = "sand-particle";
+        particle.style.cssText = `
+                    --delay: ${Math.random() * 2}s;
+                    --duration: ${3 + Math.random() * 2}s;
+                    left: ${20 + Math.random() * 60}%;
+                `;
+        elements.sandTop.appendChild(particle);
+
+        // Remove particle after animation
+        setTimeout(() => {
+          if (particle.parentNode) {
+            particle.parentNode.removeChild(particle);
+          }
+        }, (parseFloat(particle.style.getPropertyValue("--duration")) + parseFloat(particle.style.getPropertyValue("--delay"))) * 1000);
+      }
+    }, i * 300);
+  }
+}
+
+// Dropdown Management
+function toggleProfileDropdown() {
+  if (elements.profileDropdown) {
+    const isShowing = elements.profileDropdown.classList.toggle("show");
+    if (isShowing && elements.notificationsDropdown) {
+      elements.notificationsDropdown.classList.remove("show");
+    }
+  }
+}
+
+function toggleNotificationsDropdown() {
+  if (elements.notificationsDropdown) {
+    const isShowing = elements.notificationsDropdown.classList.toggle("show");
+    if (isShowing && elements.profileDropdown) {
+      elements.profileDropdown.classList.remove("show");
+    }
+  }
+}
+
+// Toast Messages
+function showToast(message) {
+  if (!elements.toast) return;
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+
+  elements.toast.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => toast.classList.add("show"), 10);
+
+  // Auto dismiss
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 400);
+  }, 2000);
+}
+
+// Fix the DOM content loaded handler
+function checkHelperLoaded() {
+  if (typeof Helper !== "undefined") {
+    console.log("Helper.js loaded, initializing application...");
+    init();
+  } else {
+    console.log("Waiting for helper.js...");
+    setTimeout(checkHelperLoaded, 100);
+  }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("DOM fully loaded and parsed");
+  checkHelperLoaded();
+});
+
+// Also expose a manual reload function
+window.reloadQuestions = function () {
+  console.log("Manual reload triggered");
+  loadQuestions();
+};

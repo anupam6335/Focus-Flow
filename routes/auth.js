@@ -156,6 +156,15 @@ router.post('/login', asyncHandler(async (req, res) => {
   // Update last active timestamp
   await user.updateLastActive();
 
+  // Set cookie so browser will include it on subsequent API calls.
+  // Match same options used for OAuth callbacks.
+  res.cookie('ff_token', token, {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
+
   res.json({
     success: true,
     token,
@@ -618,7 +627,16 @@ router.get('/github/callback', passport.authenticate('github', {
 });
 
 router.post('/logout', (req, res) => {
-  res.json({
+  // Clear the JWT cookie
+  res.clearCookie('ff_token', {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/', // must match how you set it
+  });
+
+  // Send a single response
+  return res.json({
     success: true,
     message: 'Logged out successfully'
   });
