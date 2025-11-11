@@ -91,7 +91,13 @@ checklistDataSchema.statics.getUserData = async function(userId) {
   return data;
 };
 
-// Helper function (moved from server.js)
+const getCurrentKolkataDate = () => {
+  const now = new Date();
+  const kolkataOffset = 5.5 * 60 * 60 * 1000;
+  const kolkataTime = new Date(now.getTime() + kolkataOffset);
+  return kolkataTime.toISOString().split('T')[0];
+};
+
 const generateDefaultData = () => {
   const TOTAL_DAYS = 1;
   const DEFAULT_QUESTIONS = [
@@ -114,7 +120,7 @@ const generateDefaultData = () => {
 
   return Array.from({ length: TOTAL_DAYS }, (_, index) => ({
     day: index + 1,
-    date: new Date().toISOString().split('T')[0],
+    date: getCurrentKolkataDate(), // Use Kolkata date instead of UTC
     questions: DEFAULT_QUESTIONS.map(q => ({
       text: q.text,
       link: q.link,

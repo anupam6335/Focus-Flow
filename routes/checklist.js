@@ -1,7 +1,4 @@
-/**
- * Checklist Routes
- * Handles CRUD operations for checklist questions and completion tracking
- */
+
 
 import express from 'express';
 import ChecklistData from '../models/ChecklistData.js';
@@ -12,21 +9,120 @@ import { validateQuestionData, validateQuestionId } from '../middleware/checklis
 
 const router = express.Router();
 
+// Helper function to get current date in Asia/Kolkata timezone
+const getCurrentKolkataDate = () => {
+  const now = new Date();
+  // Convert to Asia/Kolkata timezone (UTC+5:30)
+  const kolkataOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+  const kolkataTime = new Date(now.getTime() + kolkataOffset);
+  return kolkataTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+};
+
+/**
+ * @route   GET /api/day
+ * @desc    Get questions for a specific date (default: today in Asia/Kolkata)
+ * @access  Private
+ */
+router.get('/day', authenticateToken, asyncHandler(async (req, res) => {
+  const userId = req.user.username;
+  const { date = getCurrentKolkataDate() } = req.query;
+
+  // Validate date format (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid date format. Use YYYY-MM-DD'
+    });
+  }
+
+  let checklistData = await ChecklistData.findOne({ userId });
+  
+  if (!checklistData) {
+    // Return empty array if no data exists
+    return res.json({
+      success: true,
+      date: date,
+      questions: [],
+      message: 'No data found for this date'
+    });
+  }
+
+  // Find the day with the specified date
+  const dayData = checklistData.data.find(day => day.date === date);
+  
+  if (!dayData) {
+    // Return empty array if no data for this date
+    return res.json({
+      success: true,
+      date: date,
+      questions: [],
+      message: 'No data found for this date'
+    });
+  }
+
+  res.json({
+    success: true,
+    date: date,
+    questions: dayData.questions,
+    day: dayData.day // Keep for backward compatibility
+  });
+}));
+
+/**
+ * @route   GET /api/days/previous
+ * @desc    Get all days before today (Asia/Kolkata timezone)
+ * @access  Private
+ */
+router.get('/days/previous', authenticateToken, asyncHandler(async (req, res) => {
+  const userId = req.user.username;
+  const today = getCurrentKolkataDate();
+
+  const checklistData = await ChecklistData.findOne({ userId });
+  
+  if (!checklistData) {
+    return res.json({
+      success: true,
+      days: []
+    });
+  }
+
+  // Filter days that are strictly before today
+  const previousDays = checklistData.data.filter(day => {
+    return day.date < today; // Lexicographical comparison works for YYYY-MM-DD
+  });
+
+  // Sort by date descending (most recent first)
+  previousDays.sort((a, b) => b.date.localeCompare(a.date));
+
+  res.json({
+    success: true,
+    days: previousDays.map(day => ({
+      date: day.date,
+      day: day.day,
+      questions: day.questions,
+      tags: day.tags,
+      linksArray: day.linksArray
+    }))
+  });
+}));
+
 /**
  * @route   POST /api/data/checklist/question
  * @route   POST /api/checklist
- * @desc    Add a new question to checklist
+ * @desc    Add a new question to checklist for today's date
  * @access  Private
  */
-router.post(['/data/checklist/question', '/checklist'], authenticateToken,validateQuestionData, asyncHandler(async (req, res) => {
+router.post(['/data/checklist/question', '/checklist'], authenticateToken, validateQuestionData, asyncHandler(async (req, res) => {
   const userId = req.user.username;
-  const { day, questionText, link, difficulty = 'Medium' } = req.body;
+  const { questionText, link, difficulty = 'Medium' } = req.body;
+  
+  // Use today's date in Asia/Kolkata timezone
+  const today = getCurrentKolkataDate();
 
-  // Validate required fields
-  if (!day || !questionText) {
+  if (!questionText) {
     return res.status(400).json({
       success: false,
-      error: 'Day and question text are required'
+      error: 'Question text is required'
     });
   }
 
@@ -43,16 +139,27 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken,valida
 
   if (!checklistData) {
     checklistData = await ChecklistData.getUserData(userId);
+    // Update the first day's date to today
+    if (checklistData.data.length > 0) {
+      checklistData.data[0].date = today;
+    }
   }
 
-  // Find the specific day
-  const dayIndex = checklistData.data.findIndex(d => d.day === parseInt(day));
+  // Find or create today's data
+  let todayData = checklistData.data.find(day => day.date === today);
   
-  if (dayIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      error: `Day ${day} not found`
-    });
+  if (!todayData) {
+    // Create new day entry for today
+    const lastDay = checklistData.data.reduce((max, day) => Math.max(max, day.day), 0);
+    todayData = {
+      day: lastDay + 1,
+      date: today,
+      questions: [],
+      tags: [],
+      links: '',
+      linksArray: []
+    };
+    checklistData.data.push(todayData);
   }
 
   // Create new question
@@ -63,8 +170,8 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken,valida
     difficulty: difficulty
   };
 
-  // Add question to the day
-  checklistData.data[dayIndex].questions.push(newQuestion);
+  // Add question to today's data
+  todayData.questions.push(newQuestion);
   checklistData.lastUpdated = new Date();
 
   await checklistData.save();
@@ -73,21 +180,20 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken,valida
     success: true,
     message: 'Question added successfully',
     question: newQuestion,
-    day: day
+    date: today
   });
 }));
 
 /**
  * @route   PUT /api/data/checklist/question/:id
  * @route   PUT /api/checklist/:id
- * @desc    Edit an existing question
+ * @desc    Edit an existing question (searches across all dates)
  * @access  Private
  */
-router.put(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken, validateQuestionId,
-  validateQuestionData, asyncHandler(async (req, res) => {
+router.put(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken, validateQuestionId, validateQuestionData, asyncHandler(async (req, res) => {
   const userId = req.user.username;
   const questionId = req.params.id;
-  const { questionText, link, difficulty, day } = req.body;
+  const { questionText, link, difficulty } = req.body;
 
   if (!questionId) {
     return res.status(400).json({
@@ -105,34 +211,23 @@ router.put(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken
     });
   }
 
-  // If day is provided, we need to find the question in that specific day
-  let targetDayIndex = -1;
+  // Search across all days for the question
+  let targetDay = null;
   let targetQuestionIndex = -1;
 
-  if (day) {
-    // Search in specific day
-    targetDayIndex = checklistData.data.findIndex(d => d.day === parseInt(day));
-    if (targetDayIndex !== -1) {
-      targetQuestionIndex = checklistData.data[targetDayIndex].questions.findIndex(
-        q => q._id.toString() === questionId
-      );
-    }
-  } else {
-    // Search across all days
-    for (let dayIndex = 0; dayIndex < checklistData.data.length; dayIndex++) {
-      const questionIndex = checklistData.data[dayIndex].questions.findIndex(
-        q => q._id && q._id.toString() === questionId
-      );
-      
-      if (questionIndex !== -1) {
-        targetDayIndex = dayIndex;
-        targetQuestionIndex = questionIndex;
-        break;
-      }
+  for (const day of checklistData.data) {
+    const questionIndex = day.questions.findIndex(
+      q => q._id && q._id.toString() === questionId
+    );
+    
+    if (questionIndex !== -1) {
+      targetDay = day;
+      targetQuestionIndex = questionIndex;
+      break;
     }
   }
 
-  if (targetDayIndex === -1 || targetQuestionIndex === -1) {
+  if (!targetDay || targetQuestionIndex === -1) {
     return res.status(404).json({
       success: false,
       error: 'Question not found'
@@ -140,7 +235,7 @@ router.put(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken
   }
 
   // Update question fields
-  const question = checklistData.data[targetDayIndex].questions[targetQuestionIndex];
+  const question = targetDay.questions[targetQuestionIndex];
   
   if (questionText !== undefined) {
     question.text = questionText.trim();
@@ -168,20 +263,19 @@ router.put(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken
     success: true,
     message: 'Question updated successfully',
     question: question,
-    day: checklistData.data[targetDayIndex].day
+    date: targetDay.date
   });
 }));
 
 /**
  * @route   DELETE /api/data/checklist/question/:id
  * @route   DELETE /api/checklist/:id
- * @desc    Delete a question
+ * @desc    Delete a question (searches across all dates)
  * @access  Private
  */
-router.delete(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken,  validateQuestionId, asyncHandler(async (req, res) => {
+router.delete(['/data/checklist/question/:id', '/checklist/:id'], authenticateToken, validateQuestionId, asyncHandler(async (req, res) => {
   const userId = req.user.username;
   const questionId = req.params.id;
-  const { day } = req.body; // Optional: specify day for faster lookup
 
   if (!questionId) {
     return res.status(400).json({
@@ -199,33 +293,23 @@ router.delete(['/data/checklist/question/:id', '/checklist/:id'], authenticateTo
     });
   }
 
-  let targetDayIndex = -1;
+  // Search across all days for the question
+  let targetDay = null;
   let targetQuestionIndex = -1;
 
-  if (day) {
-    // Search in specific day
-    targetDayIndex = checklistData.data.findIndex(d => d.day === parseInt(day));
-    if (targetDayIndex !== -1) {
-      targetQuestionIndex = checklistData.data[targetDayIndex].questions.findIndex(
-        q => q._id.toString() === questionId
-      );
-    }
-  } else {
-    // Search across all days
-    for (let dayIndex = 0; dayIndex < checklistData.data.length; dayIndex++) {
-      const questionIndex = checklistData.data[dayIndex].questions.findIndex(
-        q => q._id && q._id.toString() === questionId
-      );
-      
-      if (questionIndex !== -1) {
-        targetDayIndex = dayIndex;
-        targetQuestionIndex = questionIndex;
-        break;
-      }
+  for (const day of checklistData.data) {
+    const questionIndex = day.questions.findIndex(
+      q => q._id && q._id.toString() === questionId
+    );
+    
+    if (questionIndex !== -1) {
+      targetDay = day;
+      targetQuestionIndex = questionIndex;
+      break;
     }
   }
 
-  if (targetDayIndex === -1 || targetQuestionIndex === -1) {
+  if (!targetDay || targetQuestionIndex === -1) {
     return res.status(404).json({
       success: false,
       error: 'Question not found'
@@ -233,10 +317,10 @@ router.delete(['/data/checklist/question/:id', '/checklist/:id'], authenticateTo
   }
 
   // Store question info for response
-  const deletedQuestion = checklistData.data[targetDayIndex].questions[targetQuestionIndex];
+  const deletedQuestion = targetDay.questions[targetQuestionIndex];
 
   // Remove the question
-  checklistData.data[targetDayIndex].questions.splice(targetQuestionIndex, 1);
+  targetDay.questions.splice(targetQuestionIndex, 1);
   checklistData.lastUpdated = new Date();
 
   await checklistData.save();
@@ -247,21 +331,20 @@ router.delete(['/data/checklist/question/:id', '/checklist/:id'], authenticateTo
     deletedQuestion: {
       text: deletedQuestion.text,
       difficulty: deletedQuestion.difficulty,
-      day: checklistData.data[targetDayIndex].day
+      date: targetDay.date
     }
   });
 }));
 
 /**
- * @route   POST /api/activity-tracker
- * @route   PUT /api/data/checklist/question/:id/complete
- * @desc    Toggle question completion status and update activity tracker
+ * @route   POST /api/data/checklist/question/:id/complete
+ * @desc    Toggle question completion status
  * @access  Private
  */
 router.post(['/activity-tracker', '/data/checklist/question/:id/complete'], authenticateToken, asyncHandler(async (req, res) => {
   const userId = req.user.username;
   const questionId = req.params.id;
-  const { completed, day } = req.body;
+  const { completed } = req.body;
 
   // For POST /api/activity-tracker, we need questionId in body
   const actualQuestionId = questionId || req.body.questionId;
@@ -282,40 +365,30 @@ router.post(['/activity-tracker', '/data/checklist/question/:id/complete'], auth
     });
   }
 
-  let targetDayIndex = -1;
+  // Search across all days for the question
+  let targetDay = null;
   let targetQuestionIndex = -1;
 
-  if (day) {
-    // Search in specific day
-    targetDayIndex = checklistData.data.findIndex(d => d.day === parseInt(day));
-    if (targetDayIndex !== -1) {
-      targetQuestionIndex = checklistData.data[targetDayIndex].questions.findIndex(
-        q => q._id.toString() === actualQuestionId
-      );
-    }
-  } else {
-    // Search across all days
-    for (let dayIndex = 0; dayIndex < checklistData.data.length; dayIndex++) {
-      const questionIndex = checklistData.data[dayIndex].questions.findIndex(
-        q => q._id && q._id.toString() === actualQuestionId
-      );
-      
-      if (questionIndex !== -1) {
-        targetDayIndex = dayIndex;
-        targetQuestionIndex = questionIndex;
-        break;
-      }
+  for (const day of checklistData.data) {
+    const questionIndex = day.questions.findIndex(
+      q => q._id && q._id.toString() === actualQuestionId
+    );
+    
+    if (questionIndex !== -1) {
+      targetDay = day;
+      targetQuestionIndex = questionIndex;
+      break;
     }
   }
 
-  if (targetDayIndex === -1 || targetQuestionIndex === -1) {
+  if (!targetDay || targetQuestionIndex === -1) {
     return res.status(404).json({
       success: false,
       error: 'Question not found'
     });
   }
 
-  const question = checklistData.data[targetDayIndex].questions[targetQuestionIndex];
+  const question = targetDay.questions[targetQuestionIndex];
   
   // Toggle completion status if not explicitly provided
   const newCompletedStatus = completed !== undefined ? completed : !question.completed;
@@ -376,15 +449,11 @@ router.post(['/activity-tracker', '/data/checklist/question/:id/complete'], auth
       completed: question.completed,
       difficulty: question.difficulty
     },
-    day: checklistData.data[targetDayIndex].day
+    date: targetDay.date
   });
 }));
 
-/**
- * @route   GET /api/checklist/stats
- * @desc    Get checklist statistics
- * @access  Private
- */
+// Existing stats route remains the same...
 router.get('/checklist/stats', authenticateToken, asyncHandler(async (req, res) => {
   const userId = req.user.username;
 
@@ -407,7 +476,7 @@ router.get('/checklist/stats', authenticateToken, asyncHandler(async (req, res) 
     });
   }
 
-  // Calculate statistics
+  // Calculate statistics from ALL days
   let totalQuestions = 0;
   let completedQuestions = 0;
   const byDifficulty = { Easy: 0, Medium: 0, Hard: 0 };

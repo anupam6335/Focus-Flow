@@ -248,15 +248,22 @@ async function handleLogout() {
 // Date Display
 function updateDateDisplay() {
   const now = new Date();
+  const kolkataDate = getCurrentKolkataDate();
+  
+  // Format for display
+  const displayDate = new Date(kolkataDate + 'T00:00:00+05:30'); // Create date object for formatting
   const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Kolkata'
   };
+  
   if (elements.currentDate) elements.currentDate.textContent = "Today";
-  if (elements.currentDay)
-    elements.currentDay.textContent = now.toLocaleDateString("en-US", options);
+  if (elements.currentDay) {
+    elements.currentDay.textContent = displayDate.toLocaleDateString("en-IN", options);
+  }
 }
 
 // Animation Controls
@@ -458,6 +465,14 @@ function disableLampLight() {
   }
 }
 
+function getCurrentKolkataDate() {
+  const now = new Date();
+  // Convert to Asia/Kolkata timezone (UTC+5:30)
+  const kolkataOffset = 5.5 * 60 * 60 * 1000;
+  const kolkataTime = new Date(now.getTime() + kolkataOffset);
+  return kolkataTime.toISOString().split('T')[0];
+}
+
 // Question Management
 async function loadQuestions() {  
   if (!state.isLoggedIn) {
@@ -465,39 +480,30 @@ async function loadQuestions() {
   }
 
   try {
-    const response = await Helper.fx("/api/data");
+    // Get today's date in Asia/Kolkata
+    const today = getCurrentKolkataDate();
+    
+    // Request only today's data
+    const response = await Helper.fx(`/api/day?date=${today}`);
 
     if (response.ok) {
-      // Handle the API response structure
       const apiData = response.data;
 
       if (apiData && apiData.success !== false) {
-        const daysData = apiData.data || apiData;
-
-        if (Array.isArray(daysData) && daysData.length > 0) {
-          // Use the first day's questions
-          const firstDay = daysData[0];
-
-          if (firstDay.questions && Array.isArray(firstDay.questions)) {
-            // Transform questions to handle MongoDB ObjectId
-            state.questions = firstDay.questions.map((question) => {
-              const questionId = question._id?.$oid || question._id;
-              return {
-                _id: questionId,
-                text: question.text || "",
-                link: question.link || "",
-                completed: question.completed || false,
-                difficulty: question.difficulty || "Medium",
-              };
-            });
-
-            state.currentDay = firstDay.day || 1;
-          } else {
-            state.questions = [];
-          }
-        } else {
-          state.questions = [];
-        }
+        // Use the questions from the specific date
+        state.questions = apiData.questions || [];
+        
+        // Transform questions to handle MongoDB ObjectId
+        state.questions = state.questions.map((question) => {
+          const questionId = question._id?.$oid || question._id;
+          return {
+            _id: questionId,
+            text: question.text || "",
+            link: question.link || "",
+            completed: question.completed || false,
+            difficulty: question.difficulty || "Medium",
+          };
+        });
       } else {
         state.questions = [];
       }
@@ -514,6 +520,7 @@ async function loadQuestions() {
     updateSandTimer();
   }
 }
+
 
 function renderQuestions() {
   if (!elements.questionList) {
