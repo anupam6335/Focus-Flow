@@ -674,3 +674,90 @@ input:focus {
   }
 }
 
+/* ==========================================================================
+   Custom Scrollbar Styling - Global
+   Available across all pages
+   ========================================================================== */
+
+/* Custom scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 3px;
+    transition: background 200ms var(--ease);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+}
+
+/* Custom scrollbar for specific containers with different widths */
+.questions-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.todo-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dropdown-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dropdown-content::-webkit-scrollbar-track {
+    background: var(--paper);
+}
+
+/* Firefox scrollbar styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) var(--bg);
+}
+
+/* Smooth scrolling for all scrollable elements */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced smooth scrolling for content areas */
+.questions-list,
+.todo-list,
+.todo-list-container,
+.dropdown-content {
+    scroll-behavior: smooth;
+}
+
+/* Mobile-optimized scrollbars */
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 3px; /* Thinner on mobile */
+    }
+    
+    * {
+        scrollbar-width: thin;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    html,
+    .questions-list,
+    .todo-list,
+    .todo-list-container,
+    .dropdown-content {
+        scroll-behavior: auto;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        transition: none;
+    }
+}
+

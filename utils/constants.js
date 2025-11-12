@@ -111,3 +111,17 @@ export const OTP_CONFIG = {
   EXPIRY_MINUTES: 10,
   MAX_ATTEMPTS: 5,
 };
+
+
+// TODOS
+export const TODO_CONSTANTS = {
+  MAX_TITLE_LENGTH: 200,
+  MAX_NOTES_LENGTH: 2000,
+  AUTO_GENERATE_LIMIT: 3,
+  BULK_UPDATE_LIMIT: 100,
+  PAGINATION_LIMIT: 50,
+  STATUS: {
+    PENDING: 'pending',
+    DONE: 'done'
+  }
+};

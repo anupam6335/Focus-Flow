@@ -1,539 +1,745 @@
 /**
- * FocusFlow — Home Page Interactions
- * Cinematic, realistic DSA tracking with Japanese calm aesthetic
+ * FocusFlow - Main Application Controller
+ *
  */
 
-// State Management
-let state = {
-  isLoggedIn: false,
-  questions: [],
-  currentDay: 1,
-  leavesAnimation: true,
-  lampLight: true,
-  editingQuestionId: null,
-  deletingQuestionId: null,
-  leavesInterval: null,
-};
+class FocusFlowApp {
+  constructor() {
+    this.state = {
+      isLoggedIn: false,
+      questions: [],
+      todos: [],
+      currentDay: 1,
+      leavesAnimation: this.getStoredPreference("leavesAnimation", false),
+      lampLight: this.getStoredPreference("lampLight", true),
+      editingQuestionId: null,
+      deletingQuestionId: null,
+      editingTodoId: null,
+      deletingTodoId: null,
+      leavesInterval: null,
+      originalQuestionValues: new Map(),
+      originalTodoValues: new Map(),
+    };
 
-// DOM Elements
-let elements = {};
+    this.elements = {};
 
-// Initialize the application
-async function init() {
-  try {
-    initializeElements();
-    setupEventListeners();
-    updateDateDisplay();
-    setupAnimations();
-    setupSandTimer();
+    this.init();
+  }
 
-    // Check auth status first
-    await checkAuthStatus();
+  /**
+   * Get stored preference from localStorage with fallback to default
+   */
+  getStoredPreference(key, defaultValue) {
+    try {
+      const stored = localStorage.getItem(`focusFlow-${key}`);
+      return stored !== null ? JSON.parse(stored) : defaultValue;
+    } catch (error) {
+      console.warn(`Failed to load preference ${key}:`, error);
+      return defaultValue;
+    }
+  }
 
-    // If logged in, load questions immediately
-    if (state.isLoggedIn) {
-      await loadQuestions();
+  /**
+   * Save preference to localStorage
+   */
+  savePreference(key, value) {
+    try {
+      localStorage.setItem(`focusFlow-${key}`, JSON.stringify(value));
+    } catch (error) {
+      console.warn(`Failed to save preference ${key}:`, error);
+    }
+  }
+
+  /**
+   * Initialize the application
+   */
+  async init() {
+    try {
+      this.initializeElements();
+      this.setupEventListeners();
+      this.updateDateDisplay();
+      this.setupAnimationsWithStoredState();
+
+      await this.checkAuthStatus();
+
+      if (this.state.isLoggedIn) {
+        await this.loadQuestions();
+        await this.loadTodos();
+      } else {
+        this.showPublicLanding();
+      }
+    } catch (error) {
+      console.error("Initialization failed:", error);
+      this.showToast("Failed to initialize application");
+    }
+  }
+
+  /**
+   * Setup animations with stored user preferences
+   */
+  setupAnimationsWithStoredState() {
+    if (this.state.leavesAnimation) {
+      this.startLeavesAnimation();
     } else {
-      showPublicLanding();
+      this.stopLeavesAnimation();
     }
-  } catch (error) {
-    console.error("Initialization failed:", error);
-  }
-}
 
-// Initialize DOM elements after page load
-function initializeElements() {
-  elements = {
-    // Toggles
-    toggleLeaves: document.getElementById("toggle-leaves"),
-    toggleLamp: document.getElementById("toggle-lamp"),
-
-    // User Controls
-    profileBtn: document.getElementById("profile-btn"),
-    profileDropdown: document.getElementById("profile-dropdown"),
-    notificationsBtn: document.getElementById("notifications-btn"),
-    notificationsDropdown: document.getElementById("notifications-dropdown"),
-    loginLink: document.getElementById("login-link"),
-    logoutBtn: document.getElementById("logout-btn"),
-
-    // Content
-    currentDate: document.getElementById("current-date"),
-    currentDay: document.getElementById("current-day"),
-    questionList: document.getElementById("question-list"),
-    addQuestion: document.getElementById("add-question"),
-
-    // Sand Timer
-    sandTimer: document.getElementById("sand-timer"),
-    sandTop: document.getElementById("sand-top-fill"),
-    sandBottom: document.getElementById("sand-bottom-fill"),
-    progressCount: document.getElementById("progress-count"),
-    totalCount: document.getElementById("total-count"),
-
-    // Modals
-    addModal: document.getElementById("add-modal"),
-    deleteModal: document.getElementById("delete-modal"),
-    closeModal: document.getElementById("close-modal"),
-    closeDeleteModal: document.getElementById("close-delete-modal"),
-    cancelAdd: document.getElementById("cancel-add"),
-    cancelDelete: document.getElementById("cancel-delete"),
-    saveQuestion: document.getElementById("save-question"),
-    confirmDelete: document.getElementById("confirm-delete"),
-
-    // Forms
-    addQuestionForm: document.getElementById("add-question-form"),
-    questionText: document.getElementById("question-text"),
-    questionLink: document.getElementById("question-link"),
-
-    // Public Landing
-    publicLanding: document.getElementById("public-landing"),
-
-    // Toast
-    toast: document.getElementById("toast"),
-  };
-
-  // Log which elements were found
-  Object.keys(elements).forEach((key) => {
-    if (elements[key]) {
+    if (this.state.lampLight) {
+      this.enableLampLight();
+    } else {
+      this.disableLampLight();
     }
-  });
-}
 
-// Event Listeners Setup
-function setupEventListeners() {
-  // Toggle buttons
-  if (elements.toggleLeaves) {
-    elements.toggleLeaves.addEventListener("click", toggleLeavesAnimation);
+    this.updateAnimationUI();
   }
 
-  if (elements.toggleLamp) {
-    elements.toggleLamp.addEventListener("click", toggleLampLight);
+  /**
+   * Cache DOM elements for better performance
+   */
+  initializeElements() {
+    const elementIds = [
+      "toggle-leaves",
+      "toggle-lamp",
+      "profile-btn",
+      "profile-dropdown",
+      "notifications-btn",
+      "notifications-dropdown",
+      "login-link",
+      "logout-btn",
+      "current-date",
+      "current-day",
+      "question-list",
+      "add-question",
+      "progress-count",
+      "total-count",
+      "add-modal",
+      "delete-modal",
+      "close-modal",
+      "close-delete-modal",
+      "cancel-add",
+      "cancel-delete",
+      "save-question",
+      "confirm-delete",
+      "add-question-form",
+      "question-text",
+      "question-link",
+      "public-landing",
+      "toast",
+    ];
+
+    elementIds.forEach((id) => {
+      this.elements[id] = document.getElementById(id);
+    });
+
+    // Todo-specific elements
+    this.elements.autoTodoBtn = document.getElementById("auto-todo");
+    this.elements.createTodoBtn = document.getElementById("create-todo");
+    this.elements.todoList = document.getElementById("todo-list");
   }
 
-  // User controls
-  if (elements.profileBtn) {
-    elements.profileBtn.addEventListener("click", toggleProfileDropdown);
+  /**
+   * Set up all event listeners
+   */
+  setupEventListeners() {
+    this.setupToggleListeners();
+    this.setupUserControlListeners();
+    this.setupQuestionListeners();
+    this.setupModalListeners();
+    this.setupTodoListeners();
+    this.setupGlobalListeners();
   }
 
-  if (elements.notificationsBtn) {
-    elements.notificationsBtn.addEventListener(
-      "click",
-      toggleNotificationsDropdown
+  /**
+   * Setup toggle button listeners
+   */
+  setupToggleListeners() {
+    if (this.elements["toggle-leaves"]) {
+      this.elements["toggle-leaves"].addEventListener("click", () =>
+        this.toggleLeavesAnimation()
+      );
+    }
+
+    if (this.elements["toggle-lamp"]) {
+      this.elements["toggle-lamp"].addEventListener("click", () =>
+        this.toggleLampLight()
+      );
+    }
+  }
+
+  /**
+   * Setup user control listeners (profile, notifications)
+   */
+  setupUserControlListeners() {
+    if (this.elements["profile-btn"]) {
+      this.elements["profile-btn"].addEventListener("click", () =>
+        this.toggleProfileDropdown()
+      );
+    }
+
+    if (this.elements["notifications-btn"]) {
+      this.elements["notifications-btn"].addEventListener("click", () =>
+        this.toggleNotificationsDropdown()
+      );
+    }
+
+    if (this.elements["logout-btn"]) {
+      this.elements["logout-btn"].addEventListener("click", () =>
+        this.handleLogout()
+      );
+    }
+  }
+
+  /**
+   * Setup question-related listeners
+   */
+  setupQuestionListeners() {
+    if (this.elements["add-question"]) {
+      this.elements["add-question"].addEventListener("click", () =>
+        this.showAddModal()
+      );
+    }
+
+    // Use event delegation for dynamic question elements
+    document.addEventListener("click", (e) => {
+      // Difficulty selector
+      if (
+        e.target.classList.contains("difficulty-btn") &&
+        !e.target.closest(".edit-difficulty")
+      ) {
+        this.handleDifficultySelection(e.target);
+      }
+    });
+  }
+
+  /**
+   * Setup modal listeners
+   */
+  setupModalListeners() {
+    const modalActions = [
+      { element: "close-modal", handler: () => this.hideAddModal() },
+      { element: "cancel-add", handler: () => this.hideAddModal() },
+      { element: "save-question", handler: () => this.handleAddQuestion() },
+      { element: "close-delete-modal", handler: () => this.hideDeleteModal() },
+      { element: "cancel-delete", handler: () => this.hideDeleteModal() },
+      { element: "confirm-delete", handler: () => this.handleDeleteQuestion() },
+    ];
+
+    modalActions.forEach(({ element, handler }) => {
+      if (this.elements[element]) {
+        this.elements[element].addEventListener("click", handler);
+      }
+    });
+
+    // Form submission
+    if (this.elements["add-question-form"]) {
+      this.elements["add-question-form"].addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleAddQuestion();
+      });
+    }
+  }
+
+  /**
+   * Setup todo-related listeners
+   */
+  setupTodoListeners() {
+    if (this.elements.autoTodoBtn) {
+      this.elements.autoTodoBtn.addEventListener("click", () =>
+        this.autoGenerateTodo()
+      );
+    }
+
+    if (this.elements.createTodoBtn) {
+      this.elements.createTodoBtn.addEventListener("click", () =>
+        this.createTodo()
+      );
+    }
+
+    // Event delegation for dynamic todo elements
+    document.addEventListener("click", (e) => {
+      if (
+        e.target.classList.contains("todo-text") &&
+        !e.target.classList.contains("editing")
+      ) {
+        const todoItem = e.target.closest(".todo-item");
+        if (todoItem) {
+          const todoId = todoItem.dataset.id;
+          this.startTodoEdit(todoId);
+        }
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      // Enter key in todo editing
+      if (
+        e.key === "Enter" &&
+        e.target.classList.contains("todo-text") &&
+        e.target.classList.contains("editing")
+      ) {
+        e.preventDefault();
+        const todoItem = e.target.closest(".todo-item");
+        if (todoItem) {
+          const todoId = todoItem.dataset.id;
+          this.saveTodoEdit(todoId);
+        }
+      }
+
+      // Escape key in todo editing
+      if (e.key === "Escape" && this.state.editingTodoId) {
+        this.cancelTodoEdit(this.state.editingTodoId);
+      }
+    });
+  }
+
+  /**
+   * Setup global listeners (dropdowns, escape key)
+   */
+  setupGlobalListeners() {
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        this.elements["profile-dropdown"] &&
+        !e.target.closest(".profile-wrapper")
+      ) {
+        this.elements["profile-dropdown"].classList.remove("show");
+      }
+      if (
+        this.elements["notifications-dropdown"] &&
+        !e.target.closest(".notification-wrapper")
+      ) {
+        this.elements["notifications-dropdown"].classList.remove("show");
+      }
+    });
+
+    // Escape key to close modals
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.hideAddModal();
+        this.hideDeleteModal();
+      }
+    });
+  }
+
+  /**
+   * Handle difficulty selection in forms
+   */
+  handleDifficultySelection(target) {
+    document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+    target.classList.add("active");
+  }
+
+  // ============================
+  // AUTHENTICATION MANAGEMENT
+  // ============================
+
+  /**
+   * Check user authentication status
+   */
+  async checkAuthStatus() {
+    try {
+      const response = await Helper.fx("/api/auth/verify-token");
+      this.state.isLoggedIn = response.ok;
+
+      if (this.state.isLoggedIn) {
+        this.showAuthenticatedUI();
+        return true;
+      } else {
+        this.showPublicLanding();
+        return false;
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      this.showPublicLanding();
+      return false;
+    }
+  }
+
+  /**
+   * Update UI for authenticated users
+   */
+  showAuthenticatedUI() {
+    if (this.elements["public-landing"]) {
+      this.elements["public-landing"].style.display = "none";
+    }
+    if (this.elements["logout-btn"]) {
+      this.elements["logout-btn"].style.display = "flex";
+    }
+    if (this.elements["login-link"]) {
+      this.elements["login-link"].style.display = "none";
+    }
+  }
+
+  /**
+   * Show public landing page for unauthenticated users
+   */
+  showPublicLanding() {
+    if (this.elements["public-landing"]) {
+      this.elements["public-landing"].style.display = "flex";
+    }
+    if (this.elements["logout-btn"]) {
+      this.elements["logout-btn"].style.display = "none";
+    }
+    if (this.elements["login-link"]) {
+      this.elements["login-link"].style.display = "flex";
+    }
+  }
+
+  /**
+   * Handle user logout
+   */
+  async handleLogout() {
+    try {
+      const response = await Helper.fx("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        this.showToast("Signed out");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        this.showToast("Error during logout");
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+      this.showToast("Error during logout");
+    }
+  }
+
+  // ============================
+  // DATE & UI MANAGEMENT
+  // ============================
+
+  /**
+   * Update date display with Kolkata timezone
+   */
+  updateDateDisplay() {
+    const kolkataDate = this.getCurrentKolkataDate();
+    const displayDate = new Date(kolkataDate + "T00:00:00+05:30");
+
+    const options = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    };
+
+    if (this.elements["current-date"]) {
+      this.elements["current-date"].textContent = "Today";
+    }
+    if (this.elements["current-day"]) {
+      this.elements["current-day"].textContent = displayDate.toLocaleDateString(
+        "en-IN",
+        options
+      );
+    }
+  }
+
+  /**
+   * Get current date in Kolkata timezone
+   */
+  getCurrentKolkataDate() {
+    const now = new Date();
+    const kolkataOffset = 5.5 * 60 * 60 * 1000;
+    const kolkataTime = new Date(now.getTime() + kolkataOffset);
+    return kolkataTime.toISOString().split("T")[0];
+  }
+
+  // ============================
+  // ANIMATION CONTROLS
+  // ============================
+
+  /**
+   * Update animation toggle UI state
+   */
+  updateAnimationUI() {
+    const updateToggle = (element, enabled, text) => {
+      if (element) {
+        element.setAttribute("aria-pressed", enabled);
+        const toggleText = element.querySelector(".toggle-text");
+        if (toggleText) toggleText.textContent = text;
+      }
+    };
+
+    updateToggle(
+      this.elements["toggle-leaves"],
+      this.state.leavesAnimation,
+      `Leaves: ${this.state.leavesAnimation ? "On" : "Off"}`
+    );
+    updateToggle(
+      this.elements["toggle-lamp"],
+      this.state.lampLight,
+      `Lamp: ${this.state.lampLight ? "Light" : "Dim"}`
     );
   }
 
-  if (elements.logoutBtn) {
-    elements.logoutBtn.addEventListener("click", handleLogout);
-  }
+  /**
+   * Toggle leaves animation
+   */
+  toggleLeavesAnimation() {
+    this.state.leavesAnimation = !this.state.leavesAnimation;
+    this.savePreference("leavesAnimation", this.state.leavesAnimation);
 
-  // Question actions - CRITICAL: Make sure these are set
-  if (elements.addQuestion) {
-    elements.addQuestion.addEventListener("click", showAddModal);
-  } else {
-    console.error("Add question button element not found!");
-  }
+    const toggleText = this.state.leavesAnimation ? "On" : "Off";
+    this.updateToggleUI(
+      "toggle-leaves",
+      this.state.leavesAnimation,
+      `Leaves: ${toggleText}`
+    );
 
-  if (elements.closeModal) {
-    elements.closeModal.addEventListener("click", hideAddModal);
-  }
-
-  if (elements.cancelAdd) {
-    elements.cancelAdd.addEventListener("click", hideAddModal);
-  }
-
-  if (elements.saveQuestion) {
-    elements.saveQuestion.addEventListener("click", handleAddQuestion);
-  }
-
-  if (elements.closeDeleteModal) {
-    elements.closeDeleteModal.addEventListener("click", hideDeleteModal);
-  }
-
-  if (elements.cancelDelete) {
-    elements.cancelDelete.addEventListener("click", hideDeleteModal);
-  }
-
-  if (elements.confirmDelete) {
-    elements.confirmDelete.addEventListener("click", handleDeleteQuestion);
-  }
-
-  // Form submission
-  if (elements.addQuestionForm) {
-    elements.addQuestionForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      handleAddQuestion();
-    });
-  }
-
-  // Difficulty selector - use event delegation
-  document.addEventListener("click", function (e) {
-    if (
-      e.target.classList.contains("difficulty-btn") &&
-      !e.target.closest(".edit-difficulty")
-    ) {
-      document
-        .querySelectorAll(".difficulty-btn")
-        .forEach((b) => b.classList.remove("active"));
-      e.target.classList.add("active");
-    }
-  });
-
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", (e) => {
-    if (elements.profileDropdown && !e.target.closest(".profile-wrapper")) {
-      elements.profileDropdown.classList.remove("show");
-    }
-    if (
-      elements.notificationsDropdown &&
-      !e.target.closest(".notification-wrapper")
-    ) {
-      elements.notificationsDropdown.classList.remove("show");
-    }
-  });
-
-  // Escape key to close modals
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      hideAddModal();
-      hideDeleteModal();
-    }
-  });
-}
-
-// Authentication
-async function checkAuthStatus() {
-  try {
-    const response = await Helper.fx("/api/auth/verify-token");
-    state.isLoggedIn = response.ok;
-
-    if (state.isLoggedIn) {
-      if (elements.publicLanding) elements.publicLanding.style.display = "none";
-      if (elements.logoutBtn) elements.logoutBtn.style.display = "flex";
-      if (elements.loginLink) elements.loginLink.style.display = "none";
-
-      return true;
+    if (this.state.leavesAnimation) {
+      this.startLeavesAnimation();
     } else {
-      showPublicLanding();
-
-      return false;
-    }
-  } catch (error) {
-    showPublicLanding();
-    return false;
-  }
-}
-
-function showPublicLanding() {
-  if (elements.publicLanding) elements.publicLanding.style.display = "flex";
-  if (elements.logoutBtn) elements.logoutBtn.style.display = "none";
-  if (elements.loginLink) elements.loginLink.style.display = "flex";
-}
-
-async function handleLogout() {
-  try {
-    const response = await Helper.fx("/api/auth/logout", {
-      method: "POST",
-    });
-
-    if (response.ok) {
-      showToast("Signed out");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
-  } catch (error) {
-    showToast("Error during logout");
-  }
-}
-
-// Date Display
-function updateDateDisplay() {
-  const now = new Date();
-  const kolkataDate = getCurrentKolkataDate();
-  
-  // Format for display
-  const displayDate = new Date(kolkataDate + 'T00:00:00+05:30'); // Create date object for formatting
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'Asia/Kolkata'
-  };
-  
-  if (elements.currentDate) elements.currentDate.textContent = "Today";
-  if (elements.currentDay) {
-    elements.currentDay.textContent = displayDate.toLocaleDateString("en-IN", options);
-  }
-}
-
-// Animation Controls
-// Enhanced animation setup
-function setupAnimations() {
-  // Start with animations enabled by default
-  state.leavesAnimation = true;
-  state.lampLight = true;
-
-  // Start animations immediately
-  startLeavesAnimation();
-  enableLampLight();
-
-  // Update UI state
-  updateAnimationUI();
-}
-
-function updateAnimationUI() {
-  if (elements.toggleLeaves) {
-    elements.toggleLeaves.setAttribute("aria-pressed", "true");
-    const toggleText = elements.toggleLeaves.querySelector(".toggle-text");
-    if (toggleText) toggleText.textContent = "Leaves: On";
-  }
-
-  if (elements.toggleLamp) {
-    elements.toggleLamp.setAttribute("aria-pressed", "true");
-    const toggleText = elements.toggleLamp.querySelector(".toggle-text");
-    if (toggleText) toggleText.textContent = "Lamp: Light";
-  }
-}
-
-function toggleLeavesAnimation() {
-  state.leavesAnimation = !state.leavesAnimation;
-  if (elements.toggleLeaves) {
-    elements.toggleLeaves.setAttribute("aria-pressed", state.leavesAnimation);
-
-    const toggleText = elements.toggleLeaves.querySelector(".toggle-text");
-    if (toggleText) {
-      toggleText.textContent = `Leaves: ${
-        state.leavesAnimation ? "On" : "Off"
-      }`;
+      this.stopLeavesAnimation();
     }
   }
 
-  if (state.leavesAnimation) {
-    startLeavesAnimation();
-  } else {
-    stopLeavesAnimation();
-  }
-}
+  /**
+   * Toggle lamp light
+   */
+  toggleLampLight() {
+    this.state.lampLight = !this.state.lampLight;
+    this.savePreference("lampLight", this.state.lampLight);
 
-function toggleLampLight() {
-  state.lampLight = !state.lampLight;
-  if (elements.toggleLamp) {
-    elements.toggleLamp.setAttribute("aria-pressed", state.lampLight);
+    const toggleText = this.state.lampLight ? "Light" : "Dim";
+    this.updateToggleUI(
+      "toggle-lamp",
+      this.state.lampLight,
+      `Lamp: ${toggleText}`
+    );
 
-    const toggleText = elements.toggleLamp.querySelector(".toggle-text");
-    if (toggleText) {
-      toggleText.textContent = `Lamp: ${state.lampLight ? "Light" : "Dim"}`;
+    if (this.state.lampLight) {
+      this.enableLampLight();
+    } else {
+      this.disableLampLight();
     }
   }
 
-  if (state.lampLight) {
-    enableLampLight();
-  } else {
-    disableLampLight();
-  }
-}
-
-// Enhanced leaves animation with better mobile support
-function startLeavesAnimation() {
-  const petalsContainer = document.getElementById("petals");
-  if (!petalsContainer) return;
-
-  petalsContainer.innerHTML = "";
-
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return;
-  }
-
-  // Create initial petals
-  for (let i = 0; i < 25; i++) {
-    createPetal(true);
-  }
-
-  // Continuous petal creation
-  state.leavesInterval = setInterval(() => {
-    const currentPetals = document.querySelectorAll(".petal").length;
-    if (currentPetals < 35) {
-      createPetal();
+  /**
+   * Update toggle button UI
+   */
+  updateToggleUI(elementId, isActive, text) {
+    const element = this.elements[elementId];
+    if (element) {
+      element.setAttribute("aria-pressed", isActive);
+      const toggleText = element.querySelector(".toggle-text");
+      if (toggleText) toggleText.textContent = text;
     }
-  }, 1200);
-}
-
-function createPetal(initial = false) {
-  const petalsContainer = document.getElementById("petals");
-  if (!petalsContainer) return;
-
-  const petal = document.createElement("div");
-  petal.className = "petal";
-
-  const isMobile = window.innerWidth < 768;
-  const left = isMobile ? 10 + Math.random() * 80 : 5 + Math.random() * 90;
-  const delay = initial ? Math.random() * 8 : 0;
-  const duration = isMobile ? 10 + Math.random() * 6 : 8 + Math.random() * 8;
-  const size = 0.6 + Math.random() * 0.8;
-  const horizontalDrift = (Math.random() - 0.5) * (isMobile ? 40 : 60);
-
-  // Choose random leaf style and color
-  const leafType = Math.floor(Math.random() * 3) + 1; // 3 different leaf styles
-  const leafColor = Math.floor(Math.random() * 4) + 1; // 4 color variations
-
-  petal.innerHTML = getLeafSVG(leafType, leafColor);
-
-  petal.style.cssText = `
-        left: ${left}%;
-        animation: petal-fall ${duration}s linear ${delay}s forwards;
-        transform: translateX(${horizontalDrift}px) scale(${size});
-        opacity: 0;
-    `;
-
-  petalsContainer.appendChild(petal);
-
-  // Fade in quickly
-  setTimeout(() => {
-    petal.style.opacity = "0.8";
-  }, 50);
-
-  // Remove after animation
-  setTimeout(() => {
-    if (petal.parentNode) {
-      petal.parentNode.removeChild(petal);
-    }
-  }, (duration + delay) * 1000);
-}
-
-function getLeafSVG(type, colorClass) {
-  const leafSVGs = {
-    // ORIGINAL
-    1: `<svg class="leaf-svg leaf-\${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="scale(1.25)">
-          <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
-          <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
-        </g>
-      </svg>`,
-
-    // MIRRORED
-    2: `<svg class="leaf-svg leaf-\${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(20,0) scale(-1.25,1.25)">
-          <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
-          <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
-        </g>
-      </svg>`,
-
-    // ROTATED SLIGHTLY
-    3: `<svg class="leaf-svg leaf-\${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(10,10) rotate(-18) translate(-10,-10) scale(1.25)">
-          <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
-          <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
-        </g>
-      </svg>`,
-  };
-
-  return leafSVGs[type] || leafSVGs[1];
-}
-
-function stopLeavesAnimation() {
-  if (state.leavesInterval) {
-    clearInterval(state.leavesInterval);
-    state.leavesInterval = null;
   }
 
-  // Gracefully fade out existing petals
-  document.querySelectorAll(".petal").forEach((petal) => {
-    petal.style.opacity = "0";
+  /**
+   * Start leaves animation with petals
+   */
+  startLeavesAnimation() {
+    const petalsContainer = document.getElementById("petals");
+    if (!petalsContainer) return;
+
+    petalsContainer.innerHTML = "";
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    // Create initial petals
+    for (let i = 0; i < 25; i++) {
+      this.createPetal(true);
+    }
+
+    // Continuous petal creation
+    this.state.leavesInterval = setInterval(() => {
+      const currentPetals = document.querySelectorAll(".petal").length;
+      if (currentPetals < 35) {
+        this.createPetal();
+      }
+    }, 1200);
+  }
+
+  /**
+   * Create individual petal with random properties
+   */
+  createPetal(initial = false) {
+    const petalsContainer = document.getElementById("petals");
+    if (!petalsContainer) return;
+
+    const petal = document.createElement("div");
+    petal.className = "petal";
+
+    const isMobile = window.innerWidth < 768;
+    const left = isMobile ? 10 + Math.random() * 80 : 5 + Math.random() * 90;
+    const delay = initial ? Math.random() * 8 : 0;
+    const duration = isMobile ? 10 + Math.random() * 6 : 8 + Math.random() * 8;
+    const size = 0.6 + Math.random() * 0.8;
+    const horizontalDrift = (Math.random() - 0.5) * (isMobile ? 40 : 60);
+
+    const leafType = Math.floor(Math.random() * 3) + 1;
+    const leafColor = Math.floor(Math.random() * 4) + 1;
+
+    petal.innerHTML = this.getLeafSVG(leafType, leafColor);
+
+    petal.style.cssText = `
+            left: ${left}%;
+            animation: petal-fall ${duration}s linear ${delay}s forwards;
+            transform: translateX(${horizontalDrift}px) scale(${size});
+            opacity: 0;
+        `;
+
+    petalsContainer.appendChild(petal);
+
+    // Fade in quickly
+    setTimeout(() => {
+      petal.style.opacity = "0.8";
+    }, 50);
+
+    // Remove after animation
     setTimeout(() => {
       if (petal.parentNode) {
         petal.parentNode.removeChild(petal);
       }
-    }, 1000);
-  });
-}
-
-function enableLampLight() {
-  const lampGlow = document.getElementById("lamp-glow");
-  if (lampGlow) {
-    document.body.classList.remove("dim-mode");
-    document.body.classList.add("light-mode");
-    lampGlow.style.opacity = "0.8";
-  }
-}
-
-function disableLampLight() {
-  const lampGlow = document.getElementById("lamp-glow");
-  if (lampGlow) {
-    document.body.classList.remove("light-mode");
-    document.body.classList.add("dim-mode");
-    lampGlow.style.opacity = "0.15";
-  }
-}
-
-function getCurrentKolkataDate() {
-  const now = new Date();
-  // Convert to Asia/Kolkata timezone (UTC+5:30)
-  const kolkataOffset = 5.5 * 60 * 60 * 1000;
-  const kolkataTime = new Date(now.getTime() + kolkataOffset);
-  return kolkataTime.toISOString().split('T')[0];
-}
-
-// Question Management
-async function loadQuestions() {  
-  if (!state.isLoggedIn) {
-    return;
+    }, (duration + delay) * 1000);
   }
 
-  try {
-    // Get today's date in Asia/Kolkata
-    const today = getCurrentKolkataDate();
-    
-    // Request only today's data
-    const response = await Helper.fx(`/api/day?date=${today}`);
+  /**
+   * Get SVG for different leaf types
+   */
+  getLeafSVG(type, colorClass) {
+    const leafSVGs = {
+      1: `<svg class="leaf-svg leaf-${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <g transform="scale(1.25)">
+                    <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
+                    <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
+                </g>
+            </svg>`,
+      2: `<svg class="leaf-svg leaf-${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(20,0) scale(-1.25,1.25)">
+                    <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
+                    <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
+                </g>
+            </svg>`,
+      3: `<svg class="leaf-svg leaf-${colorClass}" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(10,10) rotate(-18) translate(-10,-10) scale(1.25)">
+                    <path d="M12.295,14.201 C12.43,14.088 12.557,13.969 12.676,13.847 C10.687,12.944 9.178,11.848 7.818,10.739 C6.194,10.735 4.52,10.321 3.663,9.262 C4.94,9.905 6.284,9.908 6.737,9.847 C2.898,6.381 1.835,2.992 1.835,2.992 C3.149,5.052 4.536,6.644 5.894,7.908 C5.325,6.82 5.658,4.808 5.658,4.808 C6.765,8.706 6.895,8.768 6.822,8.802 C7.722,9.531 8.697,10.216 9.509,10.739 C9.217,10.059 9.01,9.068 9.037,7.37 C9.037,7.37 9.759,10.932 10.893,11.809 C11.796,12.33 12.591,12.734 13.207,13.041 C14.183,11.585 14.188,7.703 11.796,6.144 C9.218,4.462 4.871,4.398 0.474,0.096 C-0.841,-1.191 1.603,10.132 5.144,13.289 C7.32,15.234 10.152,15.99 12.295,14.201 Z"/>
+                    <path d="M11.266,14.064 C11.266,14.064 12.446,14.677 13.8,15.275 C15.154,15.873 15.803,15.752 15.879,15.9 C15.957,16.05 15.918,14.258 15.918,14.258 C15.918,14.258 14.09,14.691 12.055,13.562 L11.266,14.064 Z"/>
+                </g>
+            </svg>`,
+    };
 
-    if (response.ok) {
-      const apiData = response.data;
+    return leafSVGs[type] || leafSVGs[1];
+  }
 
-      if (apiData && apiData.success !== false) {
-        // Use the questions from the specific date
-        state.questions = apiData.questions || [];
-        
-        // Transform questions to handle MongoDB ObjectId
-        state.questions = state.questions.map((question) => {
-          const questionId = question._id?.$oid || question._id;
-          return {
-            _id: questionId,
-            text: question.text || "",
-            link: question.link || "",
-            completed: question.completed || false,
-            difficulty: question.difficulty || "Medium",
-          };
-        });
-      } else {
-        state.questions = [];
-      }
-    } else {
-      state.questions = [];
+  /**
+   * Stop leaves animation
+   */
+  stopLeavesAnimation() {
+    if (this.state.leavesInterval) {
+      clearInterval(this.state.leavesInterval);
+      this.state.leavesInterval = null;
     }
 
-    // Always update UI
-    renderQuestions();
-    updateSandTimer();
-  } catch (error) {
-    state.questions = [];
-    renderQuestions();
-    updateSandTimer();
-  }
-}
-
-
-function renderQuestions() {
-  if (!elements.questionList) {
-    return;
+    // Gracefully fade out existing petals
+    document.querySelectorAll(".petal").forEach((petal) => {
+      petal.style.opacity = "0";
+      setTimeout(() => {
+        if (petal.parentNode) {
+          petal.parentNode.removeChild(petal);
+        }
+      }, 1000);
+    });
   }
 
-  // Ensure state.questions is always an array
-  if (!state.questions || !Array.isArray(state.questions)) {
-    state.questions = [];
+  /**
+   * Enable lamp light
+   */
+  enableLampLight() {
+    const lampGlow = document.getElementById("lamp-glow");
+    if (lampGlow) {
+      document.body.classList.remove("dim-mode");
+      document.body.classList.add("light-mode");
+      lampGlow.style.opacity = "0.8";
+    }
   }
 
-  if (state.questions.length === 0) {
-    elements.questionList.innerHTML = `
+  /**
+   * Disable lamp light
+   */
+  disableLampLight() {
+    const lampGlow = document.getElementById("lamp-glow");
+    if (lampGlow) {
+      document.body.classList.remove("light-mode");
+      document.body.classList.add("dim-mode");
+      lampGlow.style.opacity = "0.15";
+    }
+  }
+
+  // ============================
+  // QUESTION MANAGEMENT
+  // ============================
+
+  /**
+   * Load questions from API
+   */
+  async loadQuestions() {
+    if (!this.state.isLoggedIn) return;
+
+    try {
+      const today = this.getCurrentKolkataDate();
+      const response = await Helper.fx(`/api/day?date=${today}`);
+
+      if (response.ok) {
+        const apiData = response.data;
+        this.state.questions = this.transformQuestions(apiData);
+      } else {
+        this.state.questions = [];
+      }
+    } catch (error) {
+      console.error("Failed to load questions:", error);
+      this.state.questions = [];
+    }
+
+    this.renderQuestions();
+  }
+
+  /**
+   * Transform API response to consistent question format
+   */
+  transformQuestions(apiData) {
+    if (!apiData || apiData.success === false) {
+      return [];
+    }
+
+    return (apiData.questions || []).map((question) => ({
+      _id: question._id?.$oid || question._id,
+      text: question.text || "",
+      link: question.link || "",
+      completed: question.completed || false,
+      difficulty: question.difficulty || "Medium",
+    }));
+  }
+
+  /**
+   * Render questions list
+   */
+  renderQuestions() {
+    if (!this.elements["question-list"]) return;
+
+    if (!this.state.questions || this.state.questions.length === 0) {
+      this.renderEmptyQuestionsState();
+      return;
+    }
+
+    this.elements["question-list"].innerHTML = this.state.questions
+      .map((question) => this.renderQuestionItem(question))
+      .join("");
+  }
+
+  /**
+   * Render empty questions state
+   */
+  renderEmptyQuestionsState() {
+    this.elements["question-list"].innerHTML = `
             <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -546,1371 +752,984 @@ function renderQuestions() {
                 <p>No questions yet. Add your first question to begin tracking.</p>
             </div>
         `;
-    return;
   }
 
-  // Render the questions list
-  const questionsHTML = state.questions
-    .map((question) => {
-      // Ensure all required properties exist
-      const questionId = question._id || generateTempId();
-      const questionText = question.text || "Untitled Question";
-      const questionLink = question.link || "";
-      const questionDifficulty = question.difficulty || "Medium";
-      const isCompleted = question.completed || false;
+  /**
+   * Render individual question item
+   */
+  renderQuestionItem(question) {
+    const questionId = question._id || this.generateTempId();
+    const isEditing = this.state.editingQuestionId === questionId;
+    const isCompleted = question.completed || false;
 
-      const isEditing = state.editingQuestionId === questionId;
-
-      return `
-        <div class="question-item ${
-          isCompleted ? "completed" : ""
-        }" data-id="${questionId}">
-            <div class="question-checkbox ${isCompleted ? "checked" : ""}" 
-                 onclick="app.toggleQuestionCompletion('${questionId}')">
+    return `
+            <div class="question-item ${
+              isCompleted ? "completed" : ""
+            }" data-id="${questionId}">
+                <div class="question-checkbox ${isCompleted ? "checked" : ""}" 
+                     onclick="app.toggleQuestionCompletion('${questionId}')">
+                </div>
+                <div class="question-content">
+                    ${
+                      isEditing
+                        ? this.renderQuestionEditForm(question)
+                        : this.renderQuestionView(question)
+                    }
+                </div>
+                ${!isEditing ? this.renderQuestionActions(questionId) : ""}
             </div>
-            <div class="question-content">
+        `;
+  }
+
+  /**
+   * Render question edit form
+   */
+  renderQuestionEditForm(question) {
+    const questionId = question._id || this.generateTempId();
+    return `
+            <div class="question-edit-form">
+                <div class="form-group">
+                    <input type="text" class="question-text editing" 
+                           value="${Helper.escapeHtml(question.text)}" 
+                           placeholder="Question text"
+                           id="edit-text-${questionId}">
+                </div>
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <div class="difficulty-selector edit-difficulty">
+                        ${["Easy", "Medium", "Hard"]
+                          .map(
+                            (diff) => `
+                            <button type="button" class="difficulty-btn ${
+                              question.difficulty === diff ? "active" : ""
+                            }" 
+                                    data-difficulty="${diff}" onclick="app.setEditDifficulty('${questionId}', '${diff}')">
+                                ${diff}
+                            </button>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Problem Link</label>
+                    <input type="url" class="question-link editing" 
+                           value="${Helper.escapeHtml(question.link)}" 
+                           placeholder="https://leetcode.com/problems/..."
+                           id="edit-link-${questionId}">
+                </div>
+                <div class="edit-actions">
+                    <button class="btn-secondary" onclick="app.cancelEdit('${questionId}')">Cancel</button>
+                    <button class="btn-primary" onclick="app.saveQuestionEdit('${questionId}')">Save</button>
+                </div>
+            </div>
+        `;
+  }
+
+  /**
+   * Render question view (read-only)
+   */
+  renderQuestionView(question) {
+    return `
+            <p class="question-text">${Helper.escapeHtml(question.text)}</p>
+            <div class="question-meta">
+                <span class="difficulty-tag ${question.difficulty.toLowerCase()}">${
+      question.difficulty
+    }</span>
                 ${
-                  isEditing
-                    ? /* EDIT MODE - Show all editable fields */
-                      `
-                    <div class="question-edit-form">
-                        <div class="form-group">
-                            <input type="text" class="question-text editing" 
-                                   value="${Helper.escapeHtml(questionText)}" 
-                                   placeholder="Question text"
-                                   id="edit-text-${questionId}">
-                        </div>
-                        <div class="form-group">
-                            <label>Difficulty</label>
-                            <div class="difficulty-selector edit-difficulty">
-                                <button type="button" class="difficulty-btn ${
-                                  questionDifficulty === "Easy" ? "active" : ""
-                                }" 
-                                        data-difficulty="Easy" onclick="app.setEditDifficulty('${questionId}', 'Easy')">
-                                    Easy
-                                </button>
-                                <button type="button" class="difficulty-btn ${
-                                  questionDifficulty === "Medium"
-                                    ? "active"
-                                    : ""
-                                }" 
-                                        data-difficulty="Medium" onclick="app.setEditDifficulty('${questionId}', 'Medium')">
-                                    Medium
-                                </button>
-                                <button type="button" class="difficulty-btn ${
-                                  questionDifficulty === "Hard" ? "active" : ""
-                                }" 
-                                        data-difficulty="Hard" onclick="app.setEditDifficulty('${questionId}', 'Hard')">
-                                    Hard
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Problem Link</label>
-                            <input type="url" class="question-link editing" 
-                                   value="${Helper.escapeHtml(questionLink)}" 
-                                   placeholder="https://leetcode.com/problems/..."
-                                   id="edit-link-${questionId}">
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-secondary" onclick="app.cancelEdit('${questionId}')">Cancel</button>
-                            <button class="btn-primary" onclick="app.saveQuestionEdit('${questionId}')">Save</button>
-                        </div>
-                    </div>
-                    `
-                    : /* VIEW MODE - Show read-only display */
-                      `
-                    <p class="question-text">${Helper.escapeHtml(
-                      questionText
-                    )}</p>
-                    <div class="question-meta">
-                        <span class="difficulty-tag ${questionDifficulty.toLowerCase()}">${questionDifficulty}</span>
-                        ${
-                          questionLink
-                            ? `<a href="${questionLink}" target="_blank" class="question-link">Problem Link</a>`
-                            : ""
-                        }
-                    </div>
-                    `
+                  question.link
+                    ? `<a href="${question.link}" target="_blank" class="question-link">Problem Link</a>`
+                    : ""
                 }
             </div>
-            ${
-              !isEditing
-                ? `
+        `;
+  }
+
+  /**
+   * Render question action buttons
+   */
+  renderQuestionActions(questionId) {
+    return `
             <div class="question-actions">
-                <button class="action-btn" onclick="app.startQuestionEdit('${questionId}')" title="Edit">
+                <button class="action-btn action-btn-edit" onclick="app.startQuestionEdit('${questionId}')" title="Edit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                 </button>
-                <button class="action-btn" onclick="app.showDeleteModal('${questionId}')" title="Delete">
+                <button class="action-btn action-btn-delete" onclick="app.showDeleteModal('${questionId}')" title="Delete">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                 </button>
             </div>
-            `
-                : ""
-            }
-        </div>
-    `;
-    })
-    .join("");
-
-  elements.questionList.innerHTML = questionsHTML;
-}
-
-// Make functions available globally
-window.app = {
-  toggleQuestionCompletion,
-  startQuestionEdit,
-  showDeleteModal,
-  saveQuestionEdit,
-  setEditDifficulty,
-  cancelEdit,
-  handleAddQuestion,
-  showAddModal,
-  hideAddModal,
-};
-
-async function toggleQuestionCompletion(questionId) {
-  if (!state.isLoggedIn) {
-    showToast("Please sign in to continue");
-    return;
+        `;
   }
 
-  try {
-    const questionIndex = state.questions.findIndex(
-      (q) => (q._id?.$oid || q._id) === questionId
-    );
-
-    if (questionIndex === -1) {
+  /**
+   * Toggle question completion status
+   */
+  async toggleQuestionCompletion(questionId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
       return;
     }
 
-    const question = state.questions[questionIndex];
-    const newCompletedStatus = !question.completed;
+    try {
+      const questionIndex = this.state.questions.findIndex(
+        (q) => (q._id?.$oid || q._id) === questionId
+      );
 
-    const response = await Helper.fx(
-      `/api/data/checklist/question/${questionId}/complete`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          completed: newCompletedStatus,
-          day: state.currentDay,
-        }),
-      }
-    );
+      if (questionIndex === -1) return;
 
-    if (response.ok) {
-      // Update local state immediately
-      question.completed = newCompletedStatus;
-      state.questions[questionIndex] = question;
+      const question = this.state.questions[questionIndex];
+      const newCompletedStatus = !question.completed;
 
-      // Get updated counts
-      const completed = state.questions.filter((q) => q.completed).length;
-      const total = state.questions.length;
-
-      // Trigger appropriate animation
-      if (newCompletedStatus) {
-        // Question was completed - trigger sand falling
-        triggerSandAnimation(completed, total);
-      } else {
-        // Question was unchecked - reverse sand animation
-        reverseSandAnimation(completed, total);
+      // Only make API call if status actually changed
+      if (question.completed === newCompletedStatus) {
+        return; // No change needed
       }
 
-      // Update UI
-      renderQuestions();
-      updateSandTimer();
-      showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
-    } else {
-      showToast("Something went wrong—try again");
-    }
-  } catch (error) {
-    showToast("Something went wrong—try again");
-  }
-}
-
-// Modal Management
-function showAddModal() {
-  if (!state.isLoggedIn) {
-    showToast("Please sign in to continue");
-    return;
-  }
-
-  if (elements.addModal) {
-    elements.addModal.style.display = "flex";
-
-    // Reset form and focus
-    if (elements.addQuestionForm) {
-      elements.addQuestionForm.reset();
-    }
-
-    // Set default difficulty
-    document.querySelectorAll(".difficulty-btn").forEach((btn) => {
-      btn.classList.remove("active");
-      if (btn.textContent === "Medium") {
-        btn.classList.add("active");
-      }
-    });
-
-    if (elements.questionText) {
-      elements.questionText.focus();
-    }
-  }
-}
-
-function hideAddModal() {
-  if (elements.addModal) {
-    elements.addModal.style.display = "none";
-  }
-}
-
-function showDeleteModal(questionId) {
-  if (!state.isLoggedIn) {
-    showToast("Please sign in to continue");
-    return;
-  }
-
-  state.deletingQuestionId = questionId;
-  if (elements.deleteModal) {
-    elements.deleteModal.style.display = "flex";
-  }
-}
-
-function hideDeleteModal() {
-  if (elements.deleteModal) {
-    elements.deleteModal.style.display = "none";
-  }
-  state.deletingQuestionId = null;
-}
-
-// Question CRUD Operations
-async function handleAddQuestion() {
-  const text = elements.questionText ? elements.questionText.value.trim() : "";
-  const link = elements.questionLink ? elements.questionLink.value.trim() : "";
-  const activeDifficulty = document.querySelector(".difficulty-btn.active");
-  const difficulty = activeDifficulty
-    ? activeDifficulty.dataset.difficulty
-    : "Medium";
-
-  if (!text) {
-    showToast("This field is required");
-    if (elements.questionText) elements.questionText.focus();
-    return;
-  }
-
-  try {
-    const response = await Helper.fx("/api/data/checklist/question", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        day: state.currentDay,
-        questionText: text,
-        link: link,
-        difficulty: difficulty,
-      }),
-    });
-
-    if (response.ok) {
-      hideAddModal();
-      showToast("Added");
-
-      // Wait a moment and reload questions from server to ensure consistency
-      setTimeout(async () => {
-        await loadQuestions();
-      }, 500);
-    } else {
-      const errorMessage =
-        response.data?.error || "Something went wrong—try again";
-
-      showToast(errorMessage);
-    }
-  } catch (error) {
-    showToast("Something went wrong—try again");
-  }
-}
-
-// Helper function to generate temporary ID if needed
-function generateTempId() {
-  return "temp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-}
-
-async function handleDeleteQuestion() {
-  if (!state.deletingQuestionId) return;
-
-  try {
-    const response = await Helper.fx(
-      `/api/data/checklist/question/${state.deletingQuestionId}`,
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ day: state.currentDay }),
-      }
-    );
-
-    if (response.ok) {
-      hideDeleteModal();
-      showToast("Removed");
-      // Reload questions from server
-      setTimeout(() => {
-        loadQuestions();
-      }, 300);
-    } else {
-      showToast("Something went wrong—try again");
-    }
-  } catch (error) {
-    showToast("Something went wrong—try again");
-  }
-}
-
-function startQuestionEdit(questionId) {
-  if (!state.isLoggedIn) {
-    showToast("Please sign in to continue");
-    return;
-  }
-
-  state.editingQuestionId = questionId;
-  renderQuestions();
-
-  // Focus the text input field after rendering
-  setTimeout(() => {
-    const input = document.getElementById(`edit-text-${questionId}`);
-    if (input) {
-      input.focus();
-      input.select();
-    }
-  }, 100);
-}
-
-// function handleEditKeypress(event, questionId) {
-//   if (event.key === "Enter") {
-//     event.target.blur();
-//   }
-// }
-
-function setEditDifficulty(questionId, difficulty) {
-  // Update all difficulty buttons for this question
-  const buttons = document.querySelectorAll(
-    `[data-id="${questionId}"] .edit-difficulty .difficulty-btn`
-  );
-  buttons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.difficulty === difficulty);
-  });
-
-  // Store the selected difficulty in a data attribute
-  const questionElement = document.querySelector(`[data-id="${questionId}"]`);
-  if (questionElement) {
-    questionElement.dataset.editDifficulty = difficulty;
-  }
-}
-
-function cancelEdit(questionId) {
-  state.editingQuestionId = null;
-  renderQuestions();
-}
-
-async function saveQuestionEdit(questionId) {
-  const questionElement = document.querySelector(`[data-id="${questionId}"]`);
-  if (!questionElement) {
-    showToast("Question not found");
-    return;
-  }
-
-  const textInput = document.getElementById(`edit-text-${questionId}`);
-  const linkInput = document.getElementById(`edit-link-${questionId}`);
-
-  const newText = textInput ? textInput.value.trim() : "";
-  const newLink = linkInput ? linkInput.value.trim() : "";
-  const newDifficulty = questionElement.dataset.editDifficulty || "Medium";
-
-  if (!newText) {
-    showToast("Question text is required");
-    if (textInput) textInput.focus();
-    return;
-  }
-
-  try {
-    const response = await Helper.fx(
-      `/api/data/checklist/question/${questionId}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionText: newText,
-          link: newLink,
-          difficulty: newDifficulty,
-          day: state.currentDay,
-        }),
-      }
-    );
-
-    if (response.ok) {
-      state.editingQuestionId = null;
-      showToast("Saved");
-      // Reload to ensure consistency with server
-      setTimeout(() => {
-        loadQuestions();
-      }, 300);
-    } else {
-      showToast("Something went wrong—try again");
-    }
-  } catch (error) {
-    showToast("Something went wrong—try again");
-  }
-}
-
-// Sand Timer
-// Enhanced Sand Timer with Gradual Progress
-let sandAnimationState = {
-  currentProgress: 0,
-  totalQuestions: 0,
-  isAnimating: false,
-  activeParticles: new Set(),
-};
-
-function setupSandTimer() {
-  sandAnimationState.currentProgress = 0;
-  sandAnimationState.totalQuestions = 0;
-  sandAnimationState.isAnimating = false;
-  sandAnimationState.activeParticles.clear();
-}
-
-// Sand Timer State Management
-function updateSandTimer() {
-  const completed = state.questions.filter((q) => q.completed).length;
-  const total = state.questions.length || 1;
-
-  if (elements.progressCount) elements.progressCount.textContent = completed;
-  if (elements.totalCount)
-    elements.totalCount.textContent = state.questions.length;
-
-  sandAnimationState.totalQuestions = state.questions.length;
-
-  // Calculate progress percentage (0 to 1)
-  const progress = total > 0 ? completed / total : 0;
-
-  // Update sand visuals based on actual progress
-  updateSandVisuals(completed, total, progress);
-  updateContinuousSandFlow(completed, total);
-}
-
-function toggleHourglassState(completed, total) {
-  const fullSvg = document.querySelector(".hourglass-full");
-  const flowSvg = document.querySelector(".hourglass-flow");
-
-  if (!fullSvg || !flowSvg) return;
-
-  if (completed === 0) {
-    // Show full state (top sand full, bottom empty)
-    fullSvg.style.display = "block";
-    flowSvg.style.display = "none";
-  } else {
-    // Show flowing state (top empty, bottom accumulating)
-    fullSvg.style.display = "none";
-    flowSvg.style.display = "block";
-  }
-}
-
-// Enhanced sand animation
-function triggerSandAnimation(completed, total) {
-  if (sandAnimationState.isAnimating) return;
-
-  sandAnimationState.isAnimating = true;
-  const previousCompleted = sandAnimationState.currentProgress;
-  sandAnimationState.currentProgress = completed;
-
-  // Calculate the exact progress (0 to 1)
-  const progress = total > 0 ? completed / total : 0;
-  const previousProgress = total > 0 ? previousCompleted / total : 0;
-
-  // Calculate how many questions were just completed
-  const newlyCompleted = completed - previousCompleted;
-
-  // Create particles proportional to the newly completed questions
-  const particlesPerQuestion = 4;
-  const totalParticles = Math.max(
-    particlesPerQuestion,
-    Math.floor(newlyCompleted * particlesPerQuestion)
-  );
-
-  // Update sand visuals FIRST to ensure correct state
-  updateSandVisuals(completed, total, progress, true);
-
-  // Then create particles for visual effect
-  createGradualSandParticles(totalParticles, progress);
-  updateContinuousSandFlow(completed, total);
-
-  if (completed === total && total > 0) {
-    triggerCompletionCelebration();
-  }
-
-  setTimeout(() => {
-    sandAnimationState.isAnimating = false;
-  }, 2500);
-}
-
-function createGradualSandParticles(particleCount, progress) {
-  const particlesContainer = document.getElementById("sand-particles-overlay");
-  if (!particlesContainer) return;
-
-  particlesContainer.innerHTML = "";
-
-  const batchSize = 2;
-  const batches = Math.ceil(particleCount / batchSize);
-
-  for (let batch = 0; batch < batches; batch++) {
-    setTimeout(() => {
-      for (
-        let i = 0;
-        i < batchSize && batch * batchSize + i < particleCount;
-        i++
-      ) {
-        createProgressBasedSandParticle(
-          particlesContainer,
-          batch * batchSize + i,
-          progress
-        );
-      }
-    }, batch * 400);
-  }
-}
-
-function createProgressBasedSandParticle(container, index, progress) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
-
-  // Start from the neck area
-  const neckCenterX = 50;
-  const neckWidth = 6;
-  const startX = neckCenterX - neckWidth / 2 + Math.random() * neckWidth;
-
-  // Slower physics for gradual feel
-  const size = 0.15 + Math.random() * 0.3;
-  const mass = size;
-  const gravity = 0.05 + mass * 0.03;
-  const initialVelocity = 0.03 + Math.random() * 0.1;
-  const horizontalDrift = (Math.random() - 0.5) * 0.2;
-
-  const brightness = 45 + Math.random() * 25;
-  const saturation = 12 + Math.random() * 8;
-  const particleColor = `hsl(85, ${saturation}%, ${brightness}%)`;
-
-  particle.style.cssText = `
-    left: ${startX}%;
-    width: ${size * 3}px;
-    height: ${size * 3}px;
-    background: ${particleColor};
-    box-shadow: 0 0 ${size * 1.5}px ${particleColor}60;
-    opacity: 0;
-    border-radius: 50%;
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    filter: blur(0.5px);
-    top: 40%;
-  `;
-
-  container.appendChild(particle);
-  sandAnimationState.activeParticles.add(particle);
-
-  let startTime = null;
-  let currentY = 0;
-  let velocity = initialVelocity;
-  let currentX = startX;
-
-  function animateParticle(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-
-    velocity += gravity;
-    velocity *= 0.999;
-    currentY += velocity;
-
-    currentX = startX + horizontalDrift * Math.min(elapsed / 3000, 1);
-
-    particle.style.transform = `translate(${
-      currentX - startX
-    }%, ${currentY}px) scale(${size})`;
-    particle.style.opacity = Math.min(0.7, elapsed / 600);
-
-    if (currentY < 100 && elapsed < 4500) {
-      requestAnimationFrame(animateParticle);
-    } else {
-      particle.style.opacity = "0";
-      particle.style.transition = "opacity 1s ease-out";
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-          sandAnimationState.activeParticles.delete(particle);
+      const response = await Helper.fx(
+        `/api/data/checklist/question/${questionId}/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            completed: newCompletedStatus,
+            day: this.state.currentDay,
+          }),
         }
-      }, 1000);
+      );
+
+      if (response.ok) {
+        question.completed = newCompletedStatus;
+        this.state.questions[questionIndex] = question;
+
+        this.renderQuestions();
+        this.showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
+      } else {
+        this.showToast("Something went wrong—try again");
+      }
+    } catch (error) {
+      console.error("Toggle question completion failed:", error);
+      this.showToast("Something went wrong—try again");
     }
   }
 
-  requestAnimationFrame(animateParticle);
-}
+  // ============================
+  // TODO MANAGEMENT
+  // ============================
 
-async function toggleQuestionCompletion(questionId) {
-  if (!state.isLoggedIn) {
-    showToast("Please sign in to continue");
-    return;
+  /**
+   * Load todos from API
+   */
+  async loadTodos() {
+    if (!this.state.isLoggedIn) return;
+
+    try {
+      const response = await Helper.fx("/api/todos");
+
+      if (response.ok && response.data && response.data.success) {
+        this.state.todos = response.data.todos || [];
+      } else {
+        this.state.todos = [];
+      }
+    } catch (error) {
+      console.error("Failed to load todos:", error);
+      this.state.todos = [];
+    }
+
+    this.renderTodos();
   }
 
-  try {
-    // Find the question in current state
-    const questionIndex = state.questions.findIndex(
-      (q) => (q._id?.$oid || q._id) === questionId
-    );
+  /**
+   * Render todos list
+   */
+  renderTodos() {
+    if (!this.elements.todoList) return;
 
-    if (questionIndex === -1) {
+    if (!this.state.todos || this.state.todos.length === 0) {
+      this.renderEmptyTodosState();
       return;
     }
 
-    const question = state.questions[questionIndex];
-    const newCompletedStatus = !question.completed;
+    this.elements.todoList.innerHTML = this.state.todos
+      .map((todo) => this.renderTodoItem(todo))
+      .join("");
+  }
 
-    const response = await Helper.fx(
-      `/api/data/checklist/question/${questionId}/complete`,
-      {
+  /**
+   * Render empty todos state
+   */
+  renderEmptyTodosState() {
+    this.elements.todoList.innerHTML = `
+            <div class="todo-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>
+                </svg>
+                <p>No todos yet. Create one to get started.</p>
+            </div>
+        `;
+  }
+
+  /**
+   * Render individual todo item
+   */
+  renderTodoItem(todo) {
+    const isEditing = this.state.editingTodoId === todo._id;
+
+    return `
+            <li class="todo-item ${
+              todo.autoGenerated ? "auto-generated" : ""
+            } ${isEditing ? "editing" : ""}" data-id="${todo._id}">
+                <div class="todo-checkbox ${
+                  todo.status === "done" ? "checked" : ""
+                }" 
+                     onclick="app.toggleTodoCompletion('${todo._id}')">
+                </div>
+                <div class="todo-content">
+                    ${
+                      isEditing
+                        ? `<textarea class="todo-text editing" placeholder="Enter todo...">${Helper.escapeHtml(
+                            todo.title
+                          )}</textarea>`
+                        : `<p class="todo-text" onclick="app.startTodoEdit('${
+                            todo._id
+                          }')">${Helper.escapeHtml(todo.title)}</p>`
+                    }
+                </div>
+                <div class="todo-actions">
+                    ${
+                      !isEditing
+                        ? this.renderTodoViewActions(todo._id)
+                        : this.renderTodoEditActions(todo._id)
+                    }
+                </div>
+            </li>
+        `;
+  }
+
+  /**
+   * Render todo view mode actions
+   */
+  renderTodoViewActions(todoId) {
+    return `
+            <button class="todo-action-btn delete-btn" onclick="app.showTodoDeleteConfirmation('${todoId}')" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+            </button>
+        `;
+  }
+
+  /**
+   * Render todo edit mode actions
+   */
+  renderTodoEditActions(todoId) {
+    return `
+            <button class="todo-action-btn" onclick="app.saveTodoEdit('${todoId}')" title="Save" style="opacity: 1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+            </button>
+            <button class="todo-action-btn" onclick="app.cancelTodoEdit('${todoId}')" title="Cancel" style="opacity: 1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        `;
+  }
+
+  /**
+   * Create a new todo
+   */
+  async createTodo(title = "") {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    const todoTitle = title || "New todo";
+
+    // Check for duplicate todo (case insensitive)
+    const isDuplicate = this.state.todos.some(
+      (t) => t.title.toLowerCase() === todoTitle.toLowerCase()
+    );
+
+    if (isDuplicate && title) {
+      // Only check for duplicates if we have a specific title
+      this.showToast("This todo already exists");
+      return;
+    }
+
+    try {
+      const response = await Helper.fx("/api/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          completed: newCompletedStatus,
-          day: state.currentDay,
+          title: todoTitle,
+          notes: "",
+          dueDate: new Date().toISOString().split("T")[0],
         }),
+      });
+
+      if (response.ok && response.data && response.data.success) {
+        this.showToast("Todo created");
+        await this.loadTodos();
+
+        // Start editing if it's a blank todo
+        if (!title) {
+          const newTodo = response.data.todo;
+          if (newTodo && newTodo._id) {
+            setTimeout(() => {
+              this.startTodoEdit(newTodo._id);
+            }, 100);
+          }
+        }
+      } else {
+        this.showToast("Failed to create todo");
       }
+    } catch (error) {
+      console.error("Create todo failed:", error);
+      this.showToast("Failed to create todo");
+    }
+  }
+
+  /**
+   * Auto-generate todo
+   */
+  async autoGenerateTodo() {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    try {
+      const response = await Helper.fx("/api/todos/auto-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok && response.data && response.data.success) {
+        this.showToast("Auto-generated todo created");
+        await this.loadTodos();
+      } else {
+        const errorMessage = response.data?.error || "Failed to generate todo";
+        this.showToast(errorMessage);
+      }
+    } catch (error) {
+      console.error("Auto-generate todo failed:", error);
+      this.showToast("Failed to generate todo");
+    }
+  }
+
+  /**
+   * Toggle todo completion status
+   */
+  async toggleTodoCompletion(todoId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    try {
+      const todo = this.state.todos.find((t) => t._id === todoId);
+      if (!todo) return;
+
+      const newStatus = todo.status === "done" ? "pending" : "done";
+
+      // Only make API call if status actually changed
+      if (todo.status === newStatus) {
+        return; // No change needed
+      }
+
+      const response = await Helper.fx(`/api/todos/${todoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      if (response.ok && response.data && response.data.success) {
+        this.showToast(
+          newStatus === "done" ? "Completed" : "Marked incomplete"
+        );
+        await this.loadTodos();
+      } else {
+        this.showToast("Failed to update todo");
+      }
+    } catch (error) {
+      console.error("Toggle todo completion failed:", error);
+      this.showToast("Failed to update todo");
+    }
+  }
+
+  /**
+   * Start editing a todo
+   */
+  startTodoEdit(todoId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    const todo = this.state.todos.find((t) => t._id === todoId);
+    if (!todo) return;
+
+    // Store original value for comparison
+    this.state.originalTodoValues.set(todoId, todo.title);
+
+    this.state.editingTodoId = todoId;
+    this.renderTodos();
+
+    // Focus the textarea
+    setTimeout(() => {
+      const textarea = document.querySelector(
+        `[data-id="${todoId}"] .todo-text.editing`
+      );
+      if (textarea) {
+        textarea.focus();
+        textarea.select();
+      }
+    }, 100);
+  }
+
+  /**
+   * Cancel todo editing
+   */
+  cancelTodoEdit(todoId) {
+    // Clear stored original value
+    this.state.originalTodoValues.delete(todoId);
+    this.state.editingTodoId = null;
+    this.renderTodos();
+  }
+
+  /**
+   * Save todo edits
+   */
+  async saveTodoEdit(todoId) {
+    const textarea = document.querySelector(
+      `[data-id="${todoId}"] .todo-text.editing`
+    );
+    if (!textarea) return;
+
+    const newTitle = textarea.value.trim();
+    if (!newTitle) {
+      this.showToast("Todo text is required");
+      textarea.focus();
+      return;
+    }
+
+    // Get original value
+    const originalTitle = this.state.originalTodoValues.get(todoId);
+
+    // Check if anything actually changed
+    if (newTitle === originalTitle) {
+      // No changes made, just cancel edit
+      this.showToast("No changes to save");
+      this.cancelTodoEdit(todoId);
+      return;
+    }
+
+    try {
+      const response = await Helper.fx(`/api/todos/${todoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTitle,
+        }),
+      });
+
+      if (response.ok && response.data && response.data.success) {
+        // Clear stored original value
+        this.state.originalTodoValues.delete(todoId);
+        this.state.editingTodoId = null;
+        this.showToast("Todo updated");
+        await this.loadTodos();
+      } else {
+        this.showToast("Failed to update todo");
+      }
+    } catch (error) {
+      console.error("Save todo edit failed:", error);
+      this.showToast("Failed to update todo");
+    }
+  }
+
+  /**
+   * Show todo delete confirmation
+   */
+  showTodoDeleteConfirmation(todoId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    this.state.deletingTodoId = todoId;
+
+    const modal = document.createElement("div");
+    modal.className = "delete-confirmation";
+    modal.innerHTML = `
+            <div class="delete-confirmation-modal">
+                <p>Are you sure you want to delete this todo? This action cannot be undone.</p>
+                <div class="delete-confirmation-actions">
+                    <button class="delete-cancel" onclick="app.cancelTodoDelete()">Cancel</button>
+                    <button class="delete-confirm" onclick="app.confirmTodoDelete()">Delete</button>
+                </div>
+            </div>
+        `;
+
+    document.body.appendChild(modal);
+  }
+
+  /**
+   * Cancel todo delete
+   */
+  cancelTodoDelete() {
+    const modal = document.querySelector(".delete-confirmation");
+    if (modal) {
+      modal.remove();
+    }
+    this.state.deletingTodoId = null;
+  }
+
+  /**
+   * Confirm todo delete
+   */
+  async confirmTodoDelete() {
+    if (!this.state.deletingTodoId) return;
+
+    try {
+      const response = await Helper.fx(
+        `/api/todos/${this.state.deletingTodoId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok && response.data && response.data.success) {
+        this.showToast("Todo deleted");
+        await this.loadTodos();
+      } else {
+        this.showToast("Failed to delete todo");
+      }
+    } catch (error) {
+      console.error("Confirm todo delete failed:", error);
+      this.showToast("Failed to delete todo");
+    } finally {
+      this.cancelTodoDelete();
+    }
+  }
+
+  // ============================
+  // MODAL MANAGEMENT
+  // ============================
+
+  /**
+   * Show add question modal
+   */
+  showAddModal() {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    if (this.elements["add-modal"]) {
+      this.elements["add-modal"].style.display = "flex";
+
+      // Reset form
+      if (this.elements["add-question-form"]) {
+        this.elements["add-question-form"].reset();
+      }
+
+      // Set default difficulty
+      document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+        btn.classList.remove("active");
+        if (btn.textContent === "Medium") {
+          btn.classList.add("active");
+        }
+      });
+
+      if (this.elements["question-text"]) {
+        this.elements["question-text"].focus();
+      }
+    }
+  }
+
+  /**
+   * Hide add question modal
+   */
+  hideAddModal() {
+    if (this.elements["add-modal"]) {
+      this.elements["add-modal"].style.display = "none";
+    }
+  }
+
+  /**
+   * Show delete confirmation modal
+   */
+  showDeleteModal(questionId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
+
+    this.state.deletingQuestionId = questionId;
+    if (this.elements["delete-modal"]) {
+      this.elements["delete-modal"].style.display = "flex";
+    }
+  }
+
+  /**
+   * Hide delete confirmation modal
+   */
+  hideDeleteModal() {
+    if (this.elements["delete-modal"]) {
+      this.elements["delete-modal"].style.display = "none";
+    }
+    this.state.deletingQuestionId = null;
+  }
+
+  /**
+   * Add new question
+   */
+  async handleAddQuestion() {
+    const text = this.elements["question-text"]
+      ? this.elements["question-text"].value.trim()
+      : "";
+    const link = this.elements["question-link"]
+      ? this.elements["question-link"].value.trim()
+      : "";
+    const activeDifficulty = document.querySelector(".difficulty-btn.active");
+    const difficulty = activeDifficulty
+      ? activeDifficulty.dataset.difficulty
+      : "Medium";
+
+    if (!text) {
+      this.showToast("This field is required");
+      if (this.elements["question-text"])
+        this.elements["question-text"].focus();
+      return;
+    }
+
+    // Check for duplicate question (case insensitive)
+    const isDuplicate = this.state.questions.some(
+      (q) => q.text.toLowerCase() === text.toLowerCase()
     );
 
-    if (response.ok) {
-      // Update local state immediately
-      question.completed = newCompletedStatus;
-      state.questions[questionIndex] = question;
+    if (isDuplicate) {
+      this.showToast("This question already exists");
+      if (this.elements["question-text"]) {
+        this.elements["question-text"].focus();
+        this.elements["question-text"].select();
+      }
+      return;
+    }
 
-      // Get updated counts
-      const completed = state.questions.filter((q) => q.completed).length;
-      const total = state.questions.length;
+    try {
+      const response = await Helper.fx("/api/data/checklist/question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          day: this.state.currentDay,
+          questionText: text,
+          link: link,
+          difficulty: difficulty,
+        }),
+      });
 
-      // Trigger sand animation based on completion change
-      if (newCompletedStatus) {
-        // Question was just completed - trigger sand falling
-        triggerSandAnimation(completed, total);
+      if (response.ok) {
+        this.hideAddModal();
+        this.showToast("Added");
+
+        // Reload questions from server
+        setTimeout(async () => {
+          await this.loadQuestions();
+        }, 500);
       } else {
-        // Question was unchecked - reverse sand animation
-        reverseSandAnimation(completed, total);
+        const errorMessage =
+          response.data?.error || "Something went wrong—try again";
+        this.showToast(errorMessage);
       }
-
-      // Update UI
-      renderQuestions();
-      updateSandTimer();
-      showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
-    } else {
-      showToast("Something went wrong—try again");
+    } catch (error) {
+      console.error("Add question failed:", error);
+      this.showToast("Something went wrong—try again");
     }
-  } catch (error) {
-    showToast("Something went wrong—try again");
-  }
-}
-
-function triggerSandAnimation(completed, total) {
-  if (sandAnimationState.isAnimating) return;
-
-  sandAnimationState.isAnimating = true;
-
-  const previousProgress = sandAnimationState.currentProgress;
-  sandAnimationState.currentProgress = completed;
-
-  const progressIncrement = completed - previousProgress;
-  const particlesPerQuestion = 8; // Reduced for slower animation
-  const totalParticles = Math.max(
-    particlesPerQuestion,
-    Math.floor(progressIncrement * particlesPerQuestion)
-  );
-
-  // Create boundary-constrained falling sand particles
-  createBoundaryConstrainedSandParticles(totalParticles);
-
-  updateSandVisuals(completed, total, true);
-  updateContinuousSandFlow(completed, total);
-
-  if (completed === total && total > 0) {
-    triggerCompletionCelebration();
   }
 
-  // Longer timeout to match slower SVG animation
-  setTimeout(() => {
-    sandAnimationState.isAnimating = false;
-  }, 3500); // Increased from 2000ms to 3500ms
-}
+  /**
+   * Delete question
+   */
+  async handleDeleteQuestion() {
+    if (!this.state.deletingQuestionId) return;
 
-function createBoundaryConstrainedSandParticles(particleCount) {
-  const particlesContainer = document.getElementById("sand-particles-overlay");
-  if (!particlesContainer) return;
+    try {
+      const response = await Helper.fx(
+        `/api/data/checklist/question/${this.state.deletingQuestionId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ day: this.state.currentDay }),
+        }
+      );
 
-  particlesContainer.innerHTML = "";
+      if (response.ok) {
+        this.hideDeleteModal();
+        this.showToast("Removed");
+        setTimeout(() => {
+          this.loadQuestions();
+        }, 300);
+      } else {
+        this.showToast("Something went wrong—try again");
+      }
+    } catch (error) {
+      console.error("Delete question failed:", error);
+      this.showToast("Something went wrong—try again");
+    }
+  }
 
-  const batchSize = 2; // Even fewer particles for more gradual feel
-  const batches = Math.ceil(particleCount / batchSize);
+  /**
+   * Start question editing
+   */
+  startQuestionEdit(questionId) {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to continue");
+      return;
+    }
 
-  for (let batch = 0; batch < batches; batch++) {
+    const question = this.state.questions.find(
+      (q) => (q._id?.$oid || q._id) === questionId
+    );
+
+    if (!question) return;
+
+    // Store original values for comparison
+    this.state.originalQuestionValues.set(questionId, {
+      text: question.text,
+      link: question.link || "",
+      difficulty: question.difficulty,
+    });
+
+    this.state.editingQuestionId = questionId;
+    this.renderQuestions();
+
+    // Focus the text input
     setTimeout(() => {
-      for (
-        let i = 0;
-        i < batchSize && batch * batchSize + i < particleCount;
-        i++
-      ) {
-        createGradualSandParticle(
-          particlesContainer,
-          batch * batchSize + i,
-          particleCount
-        );
+      const input = document.getElementById(`edit-text-${questionId}`);
+      if (input) {
+        input.focus();
+        input.select();
       }
-    }, batch * 300); // Slower batch creation
+    }, 100);
   }
-}
 
-function createGradualSandParticle(container, index, totalParticles) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
+  /**
+   * Set edit difficulty
+   */
+  setEditDifficulty(questionId, difficulty) {
+    const buttons = document.querySelectorAll(
+      `[data-id="${questionId}"] .edit-difficulty .difficulty-btn`
+    );
+    buttons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.difficulty === difficulty);
+    });
 
-  // Start from the neck area (where sand actually falls from)
-  const neckCenterX = 50;
-  const neckWidth = 6;
-  const startX = neckCenterX - neckWidth / 2 + Math.random() * neckWidth;
-
-  // Even slower, more gradual physics
-  const size = 0.2 + Math.random() * 0.4;
-  const mass = size;
-  const gravity = 0.06 + mass * 0.04; // Reduced gravity for slower fall
-  const initialVelocity = 0.05 + Math.random() * 0.15; // Slower initial velocity
-  const horizontalDrift = (Math.random() - 0.5) * 0.3; // Reduced drift
-
-  // Natural sand colors
-  const brightness = 45 + Math.random() * 25;
-  const saturation = 12 + Math.random() * 8;
-  const particleColor = `hsl(85, ${saturation}%, ${brightness}%)`;
-
-  particle.style.cssText = `
-    left: ${startX}%;
-    width: ${size * 4}px;
-    height: ${size * 4}px;
-    background: ${particleColor};
-    box-shadow: 0 0 ${size * 2}px ${particleColor}60;
-    opacity: 0;
-    border-radius: 50%;
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    filter: blur(0.6px);
-    top: 40%; // Start from neck area
-  `;
-
-  container.appendChild(particle);
-  sandAnimationState.activeParticles.add(particle);
-
-  // Animation using requestAnimationFrame for precise control
-  let startTime = null;
-  let currentY = 0;
-  let velocity = initialVelocity;
-  let currentX = startX;
-
-  function animateParticle(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-
-    // Apply slower, more natural physics
-    velocity += gravity;
-    velocity *= 0.998; // Very slight damping
-    currentY += velocity;
-
-    // Constrained horizontal movement
-    const maxHorizontalMovement = 1.5; // Reduced maximum drift
-    currentX =
-      startX +
-      horizontalDrift * Math.min(elapsed / 2500, 1) * maxHorizontalMovement;
-
-    // Update position
-    particle.style.transform = `translate(${
-      currentX - startX
-    }%, ${currentY}px) scale(${size})`;
-    particle.style.opacity = Math.min(0.8, elapsed / 500); // Slower fade in
-
-    // Extended boundary check for slower animation
-    if (currentY < 120 && elapsed < 4000) {
-      // Longer duration
-      requestAnimationFrame(animateParticle);
-    } else {
-      // Slower fade out
-      particle.style.opacity = "0";
-      particle.style.transition = "opacity 0.8s ease-out";
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-          sandAnimationState.activeParticles.delete(particle);
-        }
-      }, 800);
+    const questionElement = document.querySelector(`[data-id="${questionId}"]`);
+    if (questionElement) {
+      questionElement.dataset.editDifficulty = difficulty;
     }
   }
 
-  requestAnimationFrame(animateParticle);
-}
+  /**
+   * Cancel question edit
+   */
+  cancelEdit(questionId) {
+    // Clear stored original values
+    this.state.originalQuestionValues.delete(questionId);
+    this.state.editingQuestionId = null;
+    this.renderQuestions();
+  }
 
-function createConstrainedSandParticle(container, index) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
+  /**
+   * Save question edits
+   */
+  async saveQuestionEdit(questionId) {
+    const questionElement = document.querySelector(`[data-id="${questionId}"]`);
+    if (!questionElement) {
+      this.showToast("Question not found");
+      return;
+    }
 
-  // Constrained positioning within sandclock boundaries
-  const neckCenterX = 50;
-  const neckWidth = 8;
-  const startX = neckCenterX - neckWidth / 2 + Math.random() * neckWidth;
+    const textInput = document.getElementById(`edit-text-${questionId}`);
+    const linkInput = document.getElementById(`edit-link-${questionId}`);
 
-  // SLOWER PHYSICS - More realistic gravity and timing
-  const size = 0.3 + Math.random() * 0.6;
-  const mass = size;
-  const gravity = 0.08 + mass * 0.06; // Reduced gravity for slower fall
-  const initialVelocity = 0.1 + Math.random() * 0.2; // Slower initial velocity
-  const horizontalDrift = (Math.random() - 0.5) * 0.5; // Reduced drift
+    const newText = textInput ? textInput.value.trim() : "";
+    const newLink = linkInput ? linkInput.value.trim() : "";
+    const newDifficulty = questionElement.dataset.editDifficulty || "Medium";
 
-  // Natural sand colors
-  const brightness = 45 + Math.random() * 25;
-  const saturation = 12 + Math.random() * 8;
-  const particleColor = `hsl(85, ${saturation}%, ${brightness}%)`;
+    if (!newText) {
+      this.showToast("Question text is required");
+      if (textInput) textInput.focus();
+      return;
+    }
 
-  particle.style.cssText = `
-        left: ${startX}%;
-        width: ${size * 5}px;
-        height: ${size * 5}px;
-        background: ${particleColor};
-        box-shadow: 0 0 ${size * 2}px ${particleColor}60;
-        opacity: 0;
-        border-radius: 50%;
-        position: absolute;
-        pointer-events: none;
-        z-index: 10;
-        filter: blur(0.6px);
-        animation-timing-function: cubic-bezier(0.4, 0.2, 0.2, 1);
-    `;
+    // Get original values
+    const originalValues = this.state.originalQuestionValues.get(questionId);
 
-  container.appendChild(particle);
-  sandAnimationState.activeParticles.add(particle);
+    // Check if anything actually changed
+    const hasChanges =
+      !originalValues ||
+      newText !== originalValues.text ||
+      newLink !== originalValues.link ||
+      newDifficulty !== originalValues.difficulty;
 
-  // Animation using requestAnimationFrame for precise control
-  let startTime = null;
-  let currentY = -10;
-  let velocity = initialVelocity;
-  let currentX = startX;
+    if (!hasChanges) {
+      // No changes made, just cancel edit
+      this.showToast("No changes to save");
+      this.cancelEdit(questionId);
+      return;
+    }
 
-  function animateParticle(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-
-    // Apply slower, more natural physics
-    velocity += gravity;
-    velocity *= 0.995; // Very slight damping
-    currentY += velocity;
-
-    // Constrained horizontal movement
-    const maxHorizontalMovement = 2; // Reduced maximum drift
-    currentX =
-      startX +
-      horizontalDrift * Math.min(elapsed / 2000, 1) * maxHorizontalMovement;
-
-    // Update position
-    particle.style.transform = `translate(${
-      currentX - startX
-    }%, ${currentY}px) scale(${size})`;
-    particle.style.opacity = Math.min(1, elapsed / 300); // Slower fade in
-
-    // Extended boundary check for slower animation
-    if (currentY < 160 && elapsed < 3500) {
-      // Longer duration
-      requestAnimationFrame(animateParticle);
-    } else {
-      // Slower fade out
-      particle.style.opacity = "0";
-      particle.style.transition = "opacity 0.6s ease-out";
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-          sandAnimationState.activeParticles.delete(particle);
+    try {
+      const response = await Helper.fx(
+        `/api/data/checklist/question/${questionId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            questionText: newText,
+            link: newLink,
+            difficulty: newDifficulty,
+            day: this.state.currentDay,
+          }),
         }
-      }, 600);
+      );
+
+      if (response.ok) {
+        // Clear original values
+        this.state.originalQuestionValues.delete(questionId);
+        this.state.editingQuestionId = null;
+        this.showToast("Saved");
+        setTimeout(() => {
+          this.loadQuestions();
+        }, 300);
+      } else {
+        this.showToast("Something went wrong—try again");
+      }
+    } catch (error) {
+      console.error("Save question edit failed:", error);
+      this.showToast("Something went wrong—try again");
     }
   }
 
-  requestAnimationFrame(animateParticle);
-}
+  // ============================
+  // DROPDOWN MANAGEMENT
+  // ============================
 
-function reverseSandAnimation(completed, total) {
-  // For unchecking questions, reverse the animation smoothly
-  sandAnimationState.currentProgress = completed;
-  const progress = total > 0 ? completed / total : 0;
-  updateSandVisuals(completed, total, progress, false);
-
-  // Create reverse particles (optional - can be removed if not needed)
-  createReverseSandParticles(completed, total);
-}
-
-function createReverseSandParticles(completed, total) {
-  const particlesContainer = document.getElementById("sand-particles-overlay");
-  if (!particlesContainer) return;
-
-  // Create a few particles moving upward to indicate reversal
-  for (let i = 0; i < 3; i++) {
-    createReverseSandParticle(particlesContainer, i);
+  /**
+   * Toggle profile dropdown
+   */
+  toggleProfileDropdown() {
+    if (this.elements["profile-dropdown"]) {
+      const isShowing =
+        this.elements["profile-dropdown"].classList.toggle("show");
+      if (isShowing && this.elements["notifications-dropdown"]) {
+        this.elements["notifications-dropdown"].classList.remove("show");
+      }
+    }
   }
-}
 
-function createReverseSandParticle(container, index) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
+  /**
+   * Toggle notifications dropdown
+   */
+  toggleNotificationsDropdown() {
+    if (this.elements["notifications-dropdown"]) {
+      const isShowing =
+        this.elements["notifications-dropdown"].classList.toggle("show");
+      if (isShowing && this.elements["profile-dropdown"]) {
+        this.elements["profile-dropdown"].classList.remove("show");
+      }
+    }
+  }
 
-  const neckCenterX = 50;
-  const neckWidth = 8;
-  const startX = neckCenterX - neckWidth / 2 + Math.random() * neckWidth;
+  // ============================
+  // UTILITY FUNCTIONS
+  // ============================
 
-  const size = 0.2 + Math.random() * 0.4;
-  const initialVelocity = -0.2; // Negative for upward movement
-  const horizontalDrift = (Math.random() - 0.5) * 0.3;
+  /**
+   * Show toast message
+   */
+  showToast(message) {
+    if (!this.elements["toast"]) return;
 
-  const brightness = 45 + Math.random() * 25;
-  const saturation = 12 + Math.random() * 8;
-  const particleColor = `hsl(85, ${saturation}%, ${brightness}%)`;
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
 
-  particle.style.cssText = `
-    left: ${startX}%;
-    width: ${size * 4}px;
-    height: ${size * 4}px;
-    background: ${particleColor};
-    box-shadow: 0 0 ${size * 2}px ${particleColor}60;
-    opacity: 0;
-    border-radius: 50%;
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    filter: blur(0.6px);
-    top: 60%; // Start from bottom area
-  `;
+    this.elements["toast"].appendChild(toast);
 
-  container.appendChild(particle);
-  sandAnimationState.activeParticles.add(particle);
+    // Trigger animation
+    setTimeout(() => toast.classList.add("show"), 10);
 
-  let startTime = null;
-  let currentY = 0;
-  let velocity = initialVelocity;
-  let currentX = startX;
-
-  function animateParticle(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-
-    // Gentle upward movement
-    velocity += 0.05; // Slow down upward movement
-    currentY += velocity;
-    currentX = startX + horizontalDrift * Math.min(elapsed / 1000, 1);
-
-    particle.style.transform = `translate(${
-      currentX - startX
-    }%, ${currentY}px) scale(${size})`;
-    particle.style.opacity = Math.min(0.7, elapsed / 400); // Quick fade in
-
-    if (currentY > -50 && elapsed < 1500) {
-      requestAnimationFrame(animateParticle);
-    } else {
-      particle.style.opacity = "0";
-      particle.style.transition = "opacity 0.4s ease-out";
+    // Auto dismiss
+    setTimeout(() => {
+      toast.classList.remove("show");
+      toast.classList.add("hide");
       setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-          sandAnimationState.activeParticles.delete(particle);
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
         }
       }, 400);
-    }
-  }
-
-  requestAnimationFrame(animateParticle);
-}
-
-function updateSandVisuals(completed, total, progress, animate = false) {
-  const fullSvg = document.querySelector(".hourglass-full");
-  const flowSvg = document.querySelector(".hourglass-flow");
-
-  if (!fullSvg || !flowSvg) return;
-
-  // ALWAYS use the flow state when there's any progress
-  // This ensures gradual sand transfer is always visible
-  if (progress === 0) {
-    // Only show full state when absolutely no progress
-    fullSvg.style.display = "block";
-    flowSvg.style.display = "none";
-
-    resetSandPaths();
-  } else {
-    // For ANY progress (even 1 question), show flow state with gradual sand
-    fullSvg.style.display = "none";
-    flowSvg.style.display = "block";
-
-    // CRITICAL: Set the flow state to show EXACT current progress
-    setFlowStateSandLevel(progress);
-  }
-}
-
-function resetSandPaths() {
-  // Reset full state SVG to original state
-  const topSand = document.querySelector(".hourglass-full #sand-top path");
-  const bottomSand = document.querySelector(
-    ".hourglass-full #sand-animation-path"
-  );
-
-  if (topSand) {
-    topSand.setAttribute(
-      "d",
-      `
-      M 2.15 1.90
-      L 11.85 1.90
-      L 11.85 4.90
-      Q 9.50 6.60 7.006958 8.67
-      Q 4.50 6.60 2.15 4.90
-      Z
-    `
-    );
-    topSand.setAttribute("fill", "#a3b18a");
-    topSand.setAttribute("fill-opacity", "0.85");
-  }
-
-  if (bottomSand) {
-    bottomSand.setAttribute("d", "M 7 16 L 7 16");
-    bottomSand.setAttribute("fill", "none");
-  }
-
-  // Also ensure flow state starts with empty bottom
-  const bottomSandFlow = document.querySelector(
-    ".hourglass-flow #sand-animation-path-flow"
-  );
-  if (bottomSandFlow) {
-    bottomSandFlow.setAttribute("d", "M 7 16 L 7 16");
-    bottomSandFlow.setAttribute("fill", "none");
-  }
-}
-
-function setFlowStateSandLevel(progress) {
-  const topSand = document.querySelector(".hourglass-flow #sand-top-flow path");
-  const bottomSand = document.querySelector(
-    ".hourglass-flow #sand-animation-path-flow"
-  );
-
-  if (!topSand || !bottomSand) return;
-
-  // Calculate heights based on progress (0 to 1)
-  const maxTopHeight = 4.9; // Original top sand height from y=1.90 to y=4.90
-  const maxBottomHeight = 4.57; // Bottom sand height when full
-
-  // Top sand: Empty from the top down based on progress
-  const topSandStartY = 1.9 + maxTopHeight * progress;
-
-  // Update top sand (gradually emptying FROM THE TOP)
-  if (progress < 1) {
-    // Top sand still has some content
-    topSand.setAttribute(
-      "d",
-      `
-      M 2.15 ${topSandStartY.toFixed(2)}
-      L 11.85 ${topSandStartY.toFixed(2)}
-      L 11.85 4.90
-      Q 9.50 6.60 7.006958 8.67
-      Q 4.50 6.60 2.15 4.90
-      Z
-    `
-    );
-    topSand.setAttribute("fill", "#a3b18a");
-    topSand.setAttribute("fill-opacity", "0.85");
-  } else {
-    // Top sand completely empty
-    topSand.setAttribute("d", "M 7 1.9 L 7 1.9");
-    topSand.setAttribute("fill", "none");
-  }
-
-  // Update bottom sand (gradually filling FROM THE BOTTOM)
-  // CRITICAL: Only show the exact amount that corresponds to progress
-  if (progress > 0) {
-    const bottomSandHeight = maxBottomHeight * progress;
-    const bottomStartY = 16.47052 - bottomSandHeight;
-
-    // Only draw bottom sand for the completed percentage
-    bottomSand.setAttribute(
-      "d",
-      `
-      M 1.50 16.47052
-      L 12.50 16.47052
-      L 12.50 ${bottomStartY.toFixed(2)}
-      C 10.80 ${(10.7 + 1.2 * progress).toFixed(2)} 9.10 ${(
-        9.7 +
-        0.85 * progress
-      ).toFixed(2)} 7.00 ${(8.85 + 0.82 * progress).toFixed(2)}
-      C 4.90 ${(9.7 + 0.85 * progress).toFixed(2)} 3.20 ${(
-        10.7 +
-        1.2 * progress
-      ).toFixed(2)} 1.50 ${bottomStartY.toFixed(2)}
-      Z
-    `
-    );
-    bottomSand.setAttribute("fill", "#a3b18a");
-    bottomSand.setAttribute("fill-opacity", "0.85");
-  } else {
-    // Bottom sand completely empty - use invisible path
-    bottomSand.setAttribute("d", "M 7 16 L 7 16");
-    bottomSand.setAttribute("fill", "none");
-  }
-}
-
-function getSandPathForProgress(frameIndex) {
-  const paths = [
-    "M2.33630371,3.07006836 C2.33630371,3.07006836 5.43261719,3.33813477 6.80957031,3.33813477 C8.18652344,3.33813477 11.3754883,3.07006836 11.3754883,3.07006836 C11.3754883,3.07006836 10.8122559,4.96514893 9.58630371,6.16516113 C8.36035156,7.36517334 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,8.35028076 L7.09265137,8.46459961 L6.87243652,8.46459961 L6.87243652,8.35028076 L6.80957031,8.2623291 C6.80957031,8.2623291 4.9704053,7.27703707 3.96130371,5.96057129 C2.5045166,4.06005859 2.33630371,3.07006836 2.33630371,3.07006836 Z",
-    "M2.375,3.11462402 C2.375,3.11462402 5.71569824,3.44421387 7.09265137,3.44421387 C8.46960449,3.44421387 11.4150391,3.31262207 11.4150391,3.31262207 C11.4150391,3.31262207 10.8122559,4.96514893 9.58630371,6.16516113 C8.36035156,7.36517334 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,15.5496216 L7.09265137,16.47052 L6.87243652,16.47052 L6.87243652,15.5496216 L6.80957031,8.2623291 C6.80957031,8.2623291 4.9704053,7.27703707 3.96130371,5.96057129 C2.5045166,4.06005859 2.375,3.11462402 2.375,3.11462402 Z",
-    "M2.49230957,3.31262207 C2.49230957,3.31262207 5.71569824,3.66851807 7.09265137,3.66851807 C8.46960449,3.66851807 11.3153076,3.53222656 11.3153076,3.53222656 C11.3153076,3.53222656 10.8122559,4.96514893 9.58630371,6.16516113 C8.36035156,7.36517334 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,15.149231 L7.9152832,16.47052 L6.10144043,16.47052 L6.87243652,15.149231 L6.80957031,8.2623291 C6.80957031,8.2623291 4.9704053,7.27703707 3.96130371,5.96057129 C2.5045166,4.06005859 2.49230957,3.31262207 2.49230957,3.31262207 Z",
-    "M2.98474121,4.37164307 C2.98474121,4.37164307 5.49548338,4.7074585 6.87243651,4.7074585 C8.24938963,4.7074585 10.8119509,4.64428711 10.8119509,4.64428711 C10.8119509,4.64428711 10.8122559,4.96514893 9.58630371,6.16516113 C8.36035156,7.36517334 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,12.5493774 L9.36248779,16.47052 L4.5581665,16.47052 L6.87243652,12.5493774 L6.80957031,8.2623291 C6.80957031,8.2623291 4.9704053,7.27703707 3.96130371,5.96057129 C2.5045166,4.06005859 2.98474121,4.37164307 2.98474121,4.37164307 Z",
-    "M4.49743651,6.36560059 C4.49743651,6.36560059 5.63000487,6.72412109 7.00695799,6.72412109 C8.38391112,6.72412109 9.56188963,6.36560059 9.56188963,6.36560059 C9.56188963,6.36560059 9.48870848,6.54571533 8.79962157,7.09661865 C8.11053465,7.64752197 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,10.5493774 L11.4924319,16.47052 L2.52148436,16.47052 L6.87243652,10.5493774 L6.80957031,8.2623291 C6.80957031,8.2623291 6.01727463,8.16043491 4.82800292,6.81622307 C4.42932128,6.36560059 4.49743651,6.36560059 4.49743651,6.36560059 Z",
-    "M5.87017821,7.51904297 C5.87017821,7.51904297 6.14080809,7.70904542 6.87243651,7.64453126 C7.60406493,7.5800171 7.47180174,7.51904297 7.47180174,7.51904297 C7.47180174,7.51904297 8.51336669,7.23876953 7.82427977,7.78967285 C7.13519286,8.34057617 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,10.5493774 L11.4924319,16.4705197 L2.52148436,16.4705197 L6.87243652,10.5493774 L6.80957031,8.2623291 C6.80957031,8.2623291 6.66632079,8.14239502 6.34619139,7.953125 C5.84610144,7.65745695 5.87017821,7.51904297 5.87017821,7.51904297 Z",
-    "M7.00695799,8.06219482 C7.00695799,8.06219482 6.27532958,8.12670898 7.00695799,8.06219482 C7.73858641,7.99768066 7.00695799,8.06219482 7.00695799,8.06219482 C7.00695799,8.06219482 7.78173827,7.71142576 7.09265135,8.26232908 C6.40356444,8.8132324 7.09265137,8.2623291 7.09265137,8.2623291 L7.09265137,10.5493774 L11.4924319,16.4705197 L2.52148436,16.4705197 L6.87243652,10.5493774 L6.80957031,8.2623291 C6.80957031,8.2623291 7.1925659,8.45159912 6.87243651,8.2623291 C6.37234656,7.96666105 7.00695799,8.06219482 7.00695799,8.06219482 Z",
-    "M7.00695799,10.3484497 C7.00695799,10.3484497 6.27532958,10.4129639 7.00695799,10.3484497 C7.73858641,10.2839355 7.00695799,10.3484497 7.00695799,10.3484497 C7.00695799,10.3484497 7.78173827,9.99768063 7.09265135,10.548584 C6.40356444,11.0994873 7.09265137,10.548584 7.09265137,10.548584 L7.09265137,10.5493774 L11.4924319,16.4705197 L2.52148436,16.4705197 L6.87243652,10.5493774 L6.80957031,10.548584 C6.80957031,10.548584 7.1925659,10.737854 6.87243651,10.548584 C6.37234656,10.2529159 7.00695799,10.3484497 7.00695799,10.3484497 Z",
-  ];
-
-  return paths[frameIndex] || paths[7];
-}
-
-function getSandColorForProgress(frameIndex) {
-  const colors = [
-    "#a3b18a",
-    "#9aa882",
-    "#929e7a",
-    "#8a9572",
-    "#828b6a",
-    "#7a8262",
-    "#72785a",
-    "#6a6f52",
-  ];
-  return colors[frameIndex] || "#a3b18a";
-}
-
-function createEnhancedFallingSandParticles(particleCount) {
-  const particlesContainer = document.getElementById("sand-particles-overlay");
-  if (!particlesContainer) return;
-
-  // Clear existing particles
-  particlesContainer.innerHTML = "";
-
-  for (let i = 0; i < particleCount; i++) {
-    setTimeout(() => {
-      createEnhancedSandParticle(particlesContainer, i, particleCount);
-    }, i * 40); // Faster particle creation for better flow
-  }
-}
-
-function createEnhancedSandParticle(container, index, totalParticles) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
-
-  const left = 25 + Math.random() * 50;
-
-  const animationTypes = [
-    "sand-particle-fall",
-    "sand-particle-fall-2",
-    "sand-particle-fall-3",
-  ];
-  const animationType =
-    animationTypes[Math.floor(Math.random() * animationTypes.length)];
-
-  // Slower timing
-  const delay = Math.random() * 1.2;
-  const duration = 2.5 + Math.random() * 1.5; // Longer duration
-  const size = 0.7 + Math.random() * 0.6;
-
-  const colorVariation = Math.random() * 20;
-  const particleColor = `hsl(${85 - colorVariation}, 20%, ${
-    55 + colorVariation
-  }%)`;
-
-  particle.style.cssText = `
-        left: ${left}%;
-        animation: ${animationType} ${duration}s cubic-bezier(0.4, 0.2, 0.2, 1) ${delay}s forwards;
-        transform: scale(${size});
-        background: ${particleColor};
-        box-shadow: 0 0 4px ${particleColor}80;
-    `;
-
-  container.appendChild(particle);
-
-  // Longer removal time to match slower animation
-  setTimeout(() => {
-    if (particle.parentNode) {
-      particle.parentNode.removeChild(particle);
-    }
-  }, (duration + delay) * 1200);
-}
-
-function updateContinuousSandFlow(completed, total) {
-  const flowingSand = document.getElementById("flowing-sand");
-  if (!flowingSand || total === 0) return;
-
-  const progress = completed / total;
-
-  // Only show flowing sand when there's ongoing progress (not 0% and not 100%)
-  if (progress > 0 && progress < 1) {
-    const flowSpeed = 4 + (1 - progress) * 3;
-    const flowOpacity = 0.2 + progress * 0.6;
-
-    flowingSand.style.animationDuration = `${flowSpeed}s`;
-    flowingSand.style.opacity = flowOpacity.toString();
-    flowingSand.style.display = "block";
-  } else {
-    flowingSand.style.opacity = "0";
-    flowingSand.style.display = "none";
-  }
-}
-
-function triggerCompletionCelebration() {
-  const sandTimer = document.getElementById("sand-timer");
-  if (sandTimer) {
-    sandTimer.classList.add("sand-completion-animation");
-    setTimeout(() => {
-      sandTimer.classList.remove("sand-completion-animation");
     }, 2000);
   }
 
-  // Create constrained celebration particles
-  const particlesContainer = document.getElementById("sand-particles-overlay");
-  if (particlesContainer) {
-    for (let i = 0; i < 15; i++) {
-      setTimeout(() => {
-        createConstrainedCelebrationParticle(particlesContainer, i);
-      }, i * 60);
+  /**
+   * Generate temporary ID
+   */
+  generateTempId() {
+    return "temp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Manual reload function
+   */
+  async reloadQuestions() {
+    await this.loadQuestions();
+  }
+  /**
+   * Cleanup method to prevent memory leaks
+   */
+  destroy() {
+    // Clear intervals
+    if (this.state.leavesInterval) {
+      clearInterval(this.state.leavesInterval);
+    }
+
+    // Clear stored original values
+    this.state.originalQuestionValues.clear();
+    this.state.originalTodoValues.clear();
+
+    // Remove event listeners
+    if (this.globalClickHandler) {
+      document.removeEventListener("click", this.globalClickHandler);
+    }
+    if (this.escapeHandler) {
+      document.removeEventListener("keydown", this.escapeHandler);
     }
   }
 }
 
-function createConstrainedCelebrationParticle(container, index) {
-  const particle = document.createElement("div");
-  particle.className = "sand-particle";
-
-  // Celebration particles constrained within sandclock
-  const startX = 40 + Math.random() * 20;
-  const horizontalVelocity = (Math.random() - 0.5) * 2;
-  const size = 0.5 + Math.random() * 0.8;
-  const initialVelocity = -1.5 - Math.random() * 2;
-  const gravity = 0.3;
-
-  const brightness = 55 + Math.random() * 20;
-  const particleColor = `hsl(85, 20%, ${brightness}%)`;
-
-  particle.style.cssText = `
-        left: ${startX}%;
-        width: ${size * 5}px;
-        height: ${size * 5}px;
-        background: ${particleColor};
-        box-shadow: 0 0 ${size * 3}px ${particleColor}80;
-        opacity: 0;
-        border-radius: 50%;
-        position: absolute;
-        pointer-events: none;
-        z-index: 10;
-        filter: blur(0.4px);
-    `;
-
-  container.appendChild(particle);
-  sandAnimationState.activeParticles.add(particle);
-
-  let startTime = null;
-  let currentY = 150;
-  let velocity = initialVelocity;
-  let currentX = startX;
-
-  function animateCelebration(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-
-    velocity += gravity * 0.6;
-    currentY += velocity;
-    currentX += horizontalVelocity * (1 - elapsed / 1500);
-
-    particle.style.transform = `translate(${
-      currentX - startX
-    }%, ${currentY}px) scale(${size})`;
-    particle.style.opacity = Math.min(1, (1200 - elapsed) / 1200);
-
-    if (currentY > -30 && elapsed < 1800) {
-      requestAnimationFrame(animateCelebration);
-    } else {
-      if (particle.parentNode) {
-        particle.parentNode.removeChild(particle);
-        sandAnimationState.activeParticles.delete(particle);
-      }
-    }
-  }
-
-  requestAnimationFrame(animateCelebration);
-}
-// Dropdown Management
-function toggleProfileDropdown() {
-  if (elements.profileDropdown) {
-    const isShowing = elements.profileDropdown.classList.toggle("show");
-    if (isShowing && elements.notificationsDropdown) {
-      elements.notificationsDropdown.classList.remove("show");
-    }
-  }
-}
-
-function toggleNotificationsDropdown() {
-  if (elements.notificationsDropdown) {
-    const isShowing = elements.notificationsDropdown.classList.toggle("show");
-    if (isShowing && elements.profileDropdown) {
-      elements.profileDropdown.classList.remove("show");
-    }
-  }
-}
-
-// Toast Messages
-function showToast(message) {
-  if (!elements.toast) return;
-
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-
-  elements.toast.appendChild(toast);
-
-  // Trigger animation
-  setTimeout(() => toast.classList.add("show"), 10);
-
-  // Auto dismiss
-  setTimeout(() => {
-    toast.classList.remove("show");
-    toast.classList.add("hide");
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
-      }
-    }, 400);
-  }, 2000);
-}
-
-// Fix the DOM content loaded handler
-function checkHelperLoaded() {
-  if (typeof Helper !== "undefined") {
-    init();
-  } else {
-    setTimeout(checkHelperLoaded, 100);
-  }
-}
-
-// Initialize when DOM is loaded
+// Initialize application when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
+  // Wait for Helper to be available
+  function checkHelperLoaded() {
+    if (typeof Helper !== "undefined") {
+      window.app = new FocusFlowApp();
+    } else {
+      setTimeout(checkHelperLoaded, 100);
+    }
+  }
+
   checkHelperLoaded();
 });
-
-// Also expose a manual reload function
-window.reloadQuestions = function () {
-  loadQuestions();
-};

@@ -11,6 +11,7 @@ import http from "http";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
+import rateLimit from 'express-rate-limit';
 
 // Configuration
 import config from "./config/environment.js";
@@ -59,6 +60,18 @@ app.get("/auth", (req, res, next) => {
   next();
 });
 
+// Rate limiting for todo auto-generation
+const todoAutoGenerateLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: 3, // Max 3 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many auto-generation attempts. Please try again tomorrow.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Static file serving
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/js", express.static(path.join(__dirname, "js")));
@@ -80,6 +93,7 @@ app.use("/api/admin", adminNotificationRoutes);
 app.use("/api/admin", banManagementRoutes);
 app.use("/api", banManagementRoutes);
 app.use('/api/todos', todoRoutes);
+app.use('/api/todos/auto-generate', todoAutoGenerateLimiter);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

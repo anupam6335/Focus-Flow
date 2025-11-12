@@ -2,7 +2,6 @@
    helper.js — Shared utilities (globals preserved)
    Loaded BEFORE page scripts. No behavior changes.
    ========================================================================== */
-
 const TIMEOUT = 15000;
 
 /* Tiny DOM helper used everywhere */
@@ -35,45 +34,10 @@ function debounce(fn, ms) {
 }
 
 /* Fetch wrapper with timeout + JSON fallbacks */
-/* async function fx(url, opts = {}, timeout = TIMEOUT) {
-  const ctl = new AbortController();
-  const id = setTimeout(() => ctl.abort(), timeout);
-  try {
-    const r = await fetch(url, {
-      ...opts,
-      credentials: "include",
-      signal: ctl.signal,
-    });
-    clearTimeout(id);
-    const t = await r.text();
-    let data = null;
-    try {
-      data = t ? JSON.parse(t) : null;
-    } catch {
-      data = { success: false, error: "Invalid server response" };
-    }
-    return { ok: r.ok, status: r.status, data };
-  } catch (e) {
-    clearTimeout(id);
-    throw new Error(
-      e.name === "AbortError"
-        ? "Network timeout. Try again."
-        : "Network error. Check connection."
-    );
-  }
-} */
-
-
-  /* Fetch wrapper with timeout + JSON fallbacks
-   - Returns an object { ok, status, data, error, raw }
-   - Never throws (unless extremely unexpected) so callers can branch cleanly.
-   - Keeps credentials: 'include' so cookies (ff_token) are sent.
-*/
 async function fx(url, opts = {}, timeout = TIMEOUT) {
   const ctl = new AbortController();
   const id = setTimeout(() => ctl.abort(), timeout);
 
-  // Ensure defaults (do not overwrite explicitly provided opts)
   const finalOpts = {
     credentials: "include",
     headers: { Accept: "application/json", ...(opts.headers || {}) },
@@ -90,27 +54,26 @@ async function fx(url, opts = {}, timeout = TIMEOUT) {
     let data = null;
     try {
       data = text ? JSON.parse(text) : null;
-    } catch (parseErr) {
-      // Not valid JSON — surface friendly error but keep raw text
+    } catch {
       data = text;
     }
 
     return { ok: r.ok, status: r.status, data, raw: r, error: null };
   } catch (e) {
-    // Provide a friendly, inspectable error object instead of throwing.
     clearTimeout(id);
-    const friendly = e.name === "AbortError" ? "Network timeout. Try again." : "Network error. Check connection.";
+    const friendly =
+      e.name === "AbortError"
+        ? "Network timeout. Try again."
+        : "Network error. Check connection.";
     return { ok: false, status: 0, data: null, raw: null, error: friendly };
   }
 }
 
-
-
 /* -------- Request cache (dedupe + TTL) -------- */
 const ReqCache = (() => {
-  const store = new Map(); // key -> { ts, data }
-  const inflight = new Map(); // key -> Promise
-  const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+  const store = new Map();
+  const inflight = new Map();
+  const DEFAULT_TTL = 5 * 60 * 1000;
 
   const makeKey = (url, opts = {}) => {
     const method = (opts.method || "GET").toUpperCase();
@@ -132,13 +95,11 @@ const ReqCache = (() => {
     if (!bypass) {
       const hit = store.get(key);
       if (hit && now - hit.ts < ttl) return hit.data;
-
       if (inflight.has(key)) return inflight.get(key);
     }
 
     const p = (async () => {
       const r = await fx(url, opts);
-      // Always cache successful HTTP and valid JSON shapes
       if (r && r.ok && r.data != null) {
         store.set(key, { ts: Date.now(), data: r });
       }
@@ -147,14 +108,23 @@ const ReqCache = (() => {
 
     inflight.set(key, p);
     try {
-      const out = await p;
-      return out;
+      return await p;
     } finally {
       inflight.delete(key);
     }
   }
 
-  return { getOrFetch };
+  function clearCache(pattern = null) {
+    if (pattern) {
+      Array.from(store.keys()).forEach((key) => {
+        if (key.includes(pattern)) store.delete(key);
+      });
+    } else {
+      store.clear();
+    }
+  }
+
+  return { getOrFetch, clearCache };
 })();
 
 /* Cached JSON POST helper */
@@ -191,12 +161,14 @@ function strengthScore(pw) {
       label: "weak",
       quip: "This password is so weak it needs a nap 💤",
     };
+
   const len = pw.length >= 12 ? 2 : pw.length >= 8 ? 1 : 0;
   const variety = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].reduce(
     (n, re) => n + (re.test(pw) ? 1 : 0),
     0
   );
   score = Math.min(3, len + (variety >= 3 ? 2 : variety >= 2 ? 1 : 0));
+
   if (score <= 1)
     return { score: 1, label: "weak", quip: "Maybe give it some protein? 💪" };
   if (score === 2)
@@ -211,12 +183,14 @@ function strengthScore(pw) {
     quip: "Balanced and ready — like a calm ninja 🥷",
   };
 }
+
 function dotRefs(block) {
   if (!block.$wrap) return null;
   if (!block.dots)
     block.dots = Array.from(block.$wrap.querySelectorAll(".dot"));
   return block.dots;
 }
+
 function paintStrength(block, pw) {
   if (!block.$wrap) return;
   const dots = dotRefs(block);
@@ -253,6 +227,7 @@ function updateMatch(pw, conf, el, textEl) {
     textEl.textContent = "";
     return;
   }
+
   if (pw.value && pw.value === conf.value) {
     el.classList.add("ok");
     el.classList.remove("bad");
@@ -261,7 +236,7 @@ function updateMatch(pw, conf, el, textEl) {
   } else {
     el.classList.add("bad");
     el.classList.remove("ok");
-    textEl.textContent = "Doesn’t match";
+    textEl.textContent = "Doesn't match";
   }
 }
 
@@ -282,15 +257,44 @@ async function verifyToken() {
   return await fx("/api/auth/verify-token");
 }
 
+/* Quick DOM helpers for better performance */
+const DOM = {
+  cache: new Map(),
+
+  get(id) {
+    if (!this.cache.has(id)) {
+      this.cache.set(id, document.getElementById(id));
+    }
+    return this.cache.get(id);
+  },
+
+  clearCache() {
+    this.cache.clear();
+  },
+};
+
+/* Batch DOM operations */
+function batchDOMUpdates(callback) {
+  if (typeof callback !== "function") return;
+
+  if (typeof requestAnimationFrame !== "undefined") {
+    requestAnimationFrame(callback);
+  } else {
+    setTimeout(callback, 0);
+  }
+}
+
 /*  expose as a namespaced helper as well (for other pages) */
 window.Helper = {
   TIMEOUT,
   $,
+  DOM,
   escapeHtml,
   debounce,
   fx,
   verifyToken,
   cachedJson,
+  ReqCache,
   toggleEye,
   strengthScore,
   dotRefs,
@@ -300,4 +304,5 @@ window.Helper = {
   capsDetector,
   updateMatch,
   oauthLoading,
+  batchDOMUpdates,
 };

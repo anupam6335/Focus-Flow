@@ -150,3 +150,81 @@ export const validatePagination = (req, res, next) => {
   
   next();
 };
+
+
+/**
+ * Todo Validation Middleware
+ */
+
+/**
+ * Validate todo data for create/update operations
+ */
+export const validateTodo = (req, res, next) => {
+  const { title, notes, dueDate, status } = req.body;
+  const errors = [];
+
+  if (title && title.trim().length === 0) {
+    errors.push('Title cannot be empty');
+  }
+
+  if (title && title.length > 200) {
+    errors.push('Title must be less than 200 characters');
+  }
+
+  if (notes && notes.length > 2000) {
+    errors.push('Notes must be less than 2000 characters');
+  }
+
+  if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    errors.push('Due date must be in YYYY-MM-DD format');
+  }
+
+  if (status && !['pending', 'done'].includes(status)) {
+    errors.push('Status must be either "pending" or "done"');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      error: errors.join(', ')
+    });
+  }
+
+  // Sanitize inputs
+  if (title) req.body.title = title.trim();
+  if (notes) req.body.notes = notes.trim();
+  
+  next();
+};
+
+/**
+ * Validate bulk update operations
+ */
+export const validateBulkUpdate = (req, res, next) => {
+  const { updates } = req.body;
+
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Updates array is required'
+    });
+  }
+
+  if (updates.length > 100) {
+    return res.status(400).json({
+      success: false,
+      error: 'Cannot update more than 100 todos at once'
+    });
+  }
+
+  for (const update of updates) {
+    if (!update.id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Each update must have an id'
+      });
+    }
+  }
+
+  next();
+};
