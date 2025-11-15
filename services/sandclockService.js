@@ -1,38 +1,36 @@
-/**
- * Sandclock Integration Service
- * Handles sandclock session completion and todo integration
- */
-
-import Todo from '../models/Todo.js';
+import StructuredTodo from '../models/StructuredTodo.js';
 
 /**
  * Complete todo when sandclock session finishes
  */
 export const completeTodoOnSessionEnd = async (sessionId, userId) => {
   try {
-    const todo = await Todo.findOneAndUpdate(
-      { 
-        userId, 
-        'attachedToSandclock.sessionId': sessionId,
-        'attachedToSandclock.active': true,
-        status: 'pending'
-      },
-      { 
-        status: 'done',
-        'attachedToSandclock.active': false,
-        'attachedToSandclock.sessionId': null,
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
-
-    if (todo) {
-      console.log(`✅ Todo "${todo.title}" completed via sandclock session ${sessionId}`);
-      return {
-        success: true,
-        todo,
-        message: 'Todo automatically completed from sandclock session'
-      };
+    const userTodos = await StructuredTodo.getUserTodos(userId);
+    
+    // Find the todo with active session
+    for (const day of userTodos.days) {
+      const todo = day.todos.find(t => 
+        t.attachedToSandclock.sessionId === sessionId &&
+        t.attachedToSandclock.active === true &&
+        t.status === 'pending'
+      );
+      
+      if (todo) {
+        todo.status = 'done';
+        todo.completed = true;
+        todo.attachedToSandclock.active = false;
+        todo.attachedToSandclock.sessionId = null;
+        todo.updatedAt = new Date();
+        
+        await userTodos.save();
+        
+        console.log(`✅ Todo "${todo.title}" completed via sandclock session ${sessionId}`);
+        return {
+          success: true,
+          todo,
+          message: 'Todo automatically completed from sandclock session'
+        };
+      }
     }
 
     return {
@@ -50,12 +48,14 @@ export const completeTodoOnSessionEnd = async (sessionId, userId) => {
  */
 export const getAttachedTodo = async (userId) => {
   try {
-    const todo = await Todo.findOne({
-      userId,
-      'attachedToSandclock.active': true
-    }).lean();
-
-    return todo;
+    const userTodos = await StructuredTodo.getUserTodos(userId);
+    
+    for (const day of userTodos.days) {
+      const todo = day.todos.find(t => t.attachedToSandclock.active === true);
+      if (todo) return todo;
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error getting attached todo:', error);
     throw error;
@@ -67,19 +67,28 @@ export const getAttachedTodo = async (userId) => {
  */
 export const detachAllTodos = async (userId) => {
   try {
-    const result = await Todo.updateMany(
-      { userId, 'attachedToSandclock.active': true },
-      { 
-        'attachedToSandclock.active': false,
-        'attachedToSandclock.sessionId': null,
-        updatedAt: new Date()
+    const userTodos = await StructuredTodo.getUserTodos(userId);
+    let detachedCount = 0;
+
+    for (const day of userTodos.days) {
+      for (const todo of day.todos) {
+        if (todo.attachedToSandclock.active) {
+          todo.attachedToSandclock.active = false;
+          todo.attachedToSandclock.sessionId = null;
+          todo.updatedAt = new Date();
+          detachedCount++;
+        }
       }
-    );
+    }
+
+    if (detachedCount > 0) {
+      await userTodos.save();
+    }
 
     return {
       success: true,
-      detachedCount: result.modifiedCount,
-      message: `Detached ${result.modifiedCount} todos`
+      detachedCount,
+      message: `Detached ${detachedCount} todos`
     };
   } catch (error) {
     console.error('Error detaching todos:', error);

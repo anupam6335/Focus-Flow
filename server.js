@@ -35,6 +35,8 @@ import adminNotificationRoutes from "./routes/adminNotifications.js";
 import banManagementRoutes from "./routes/banManagement.js";
 import todoRoutes from './routes/todos.js';
 import { socketService } from "./services/socketService.js";
+import dailyCarryOverRoutes from './routes/dailyCarryOver.js';
+import StructuredTodo from './models/StructuredTodo.js';
 
 // Initialize Express app
 const app = express();
@@ -92,6 +94,7 @@ app.use("/api/admin", banManagementRoutes);
 app.use("/api", banManagementRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/todos/auto-generate', todoAutoGenerateLimiter);
+app.use('/api/todos', dailyCarryOverRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -163,7 +166,27 @@ app.get("*", (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// Initialize services
+const initializeDailyCarryOver = async () => {
+  try {
+    // Wait a bit to ensure database is fully connected
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    console.log('🔄 Checking for daily todo carry-over...');
+    const StructuredTodo = await import('./models/StructuredTodo.js');
+    const result = await StructuredTodo.default.processDailyCarryOver();
+    
+    if (result.totalCarriedOver > 0) {
+      console.log(`✅ Carried over ${result.totalCarriedOver} todos to today`);
+    } else {
+      console.log('ℹ️ No todos needed carry-over today');
+    }
+  } catch (error) {
+    console.error('❌ Error processing daily carry-over:', error.message);
+    // Don't crash the server if carry-over fails
+  }
+};
+
+// Then in your initializeServer function, call it AFTER the server starts:
 const initializeServer = async () => {
   try {
     // Connect to database
@@ -181,12 +204,18 @@ const initializeServer = async () => {
 📊 Database: ${config.MONGODB_URI.split("@")[1] || config.MONGODB_URI}
 🔗 Frontend URL: ${config.FRONTEND_URL}
       `);
+
+      // Now run the daily carry-over after server is fully started
+      initializeDailyCarryOver();
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
+
+
+
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
