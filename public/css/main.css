@@ -194,23 +194,8 @@ body {
   height: 20px;
 }
 
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #e74c3c;
-  color: white;
-  border-radius: 999px;
-  width: 18px;
-  height: 18px;
-  font-size: 11px;
-  display: grid;
-  place-items: center;
-  font-weight: 600;
-}
 
-.profile-wrapper,
-.notification-wrapper {
+.profile-wrapper{
   position: relative;
   display: inline-block;
 }
@@ -299,26 +284,7 @@ body {
   opacity: 0.8;
 }
 
-/* Notification Items */
-.notification-item {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--line);
-}
 
-.notification-item:last-child {
-  border-bottom: none;
-}
-
-.notification-item p {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.notification-time {
-  font-size: 12px;
-  color: var(--muted);
-}
 
 /* Left Column */
 .column-left {
@@ -1429,3 +1395,69 @@ textarea:focus {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px rgba(163, 177, 138, 0.1);
 }
+/* ==========================================================================
+   Filter Controls & Search Styles
+   ========================================================================== */
+
+.filter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms var(--ease);
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  border-color: var(--ring);
+  transform: translateY(-1px);
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: #1b1b1b;
+  border-color: var(--accent);
+}
+
+.search-container {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: all 200ms var(--ease);
+}
+
+.search-input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(163, 177, 138, 0.1);
+}
+

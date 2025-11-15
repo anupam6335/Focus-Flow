@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -9,11 +9,40 @@
     <title>FocusFlow — Your Daily Progress</title>
     <meta
       name="description"
-      content="Track your DSA progress with calm focus and cinematic beauty"
+      content="FocusFlow - Track your DSA progress with structured daily practice. Master Data Structures & Algorithms with calm focus, progress tracking, and personalized todo system. Join Indian students in consistent coding practice."
     />
-    <meta name="robots" content="noindex, nofollow" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta
+      name="keywords"
+      content="DSA, Data Structures, Algorithms, coding practice, leetcode, programming, study tracker, progress tracking, Indian students, computer science"
+    />
+    <meta name="author" content="Anupam Debnath" />
     <meta name="theme-color" content="#1b1b1b" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FocusFlow",
+        "description": "Track your DSA progress with calm focus and cinematic beauty",
+        "url": "http://localhost:3000",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "author": {
+          "@type": "Person",
+          "name": "Anupam Debnath"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
 
     <!-- Dynamic SEO -->
     <script>
@@ -22,7 +51,7 @@
         const path = window.location.pathname;
         const link = document.createElement("link");
         link.rel = "canonical";
-        link.href = origin + path;
+        link.href = origin + (path === "/" ? "" : path);
         document.head.appendChild(link);
 
         const ogTags = [
@@ -31,6 +60,8 @@
           ["og:type", "website"],
           ["og:url", origin + path],
           ["og:image", origin + "/assets/home_preview.png"],
+          ["og:site_name", "FocusFlow"],
+          ["og:locale", "en_US"],
         ];
 
         ogTags.forEach(([property, content]) => {
@@ -39,13 +70,34 @@
           m.setAttribute("content", content);
           document.head.appendChild(m);
         });
+
+        // Twitter Card
+        const twitterTags = [
+          ["twitter:card", "summary_large_image"],
+          ["twitter:title", "FocusFlow — Your Daily Progress"],
+          [
+            "twitter:description",
+            "Track your DSA progress with calm focus and cinematic beauty",
+          ],
+          ["twitter:image", origin + "/assets/home_preview.png"],
+        ];
+
+        twitterTags.forEach(([name, content]) => {
+          const m = document.createElement("meta");
+          m.setAttribute("name", name);
+          m.setAttribute("content", content);
+          document.head.appendChild(m);
+        });
       })();
     </script>
 
+    <!-- Your existing CSS links -->
     <link rel="stylesheet" href="css/helper.css" />
     <link rel="stylesheet" href="css/main.css" />
     <link rel="stylesheet" href="css/_sticky_note.css" />
     <link rel="stylesheet" href="css/main_public.css" />
+    <link rel="stylesheet" href="css/notification.css" />
+    <link rel="stylesheet" href="css/flip-clock.css" />
     <link rel="stylesheet" href="css/responsive_main.css" />
   </head>
   <body>
@@ -261,6 +313,26 @@
               </button>
             </div>
 
+            <div class="filter-controls">
+              <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="complete">
+                  Complete
+                </button>
+                <button class="filter-btn" data-filter="not-complete">
+                  Not Complete
+                </button>
+              </div>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="questions-search"
+                  placeholder="Search questions..."
+                  class="search-input"
+                />
+              </div>
+            </div>
+
             <div class="questions-list" id="question-list">
               <!-- Questions will be dynamically inserted here -->
               <div class="empty-state">
@@ -293,6 +365,108 @@
 
         <!-- Right Column - Sand Timer -->
         <div class="column-right">
+          <div class="clock-container" id="clock-container">
+            <div class="clock-header">
+              <h3>Focus Timer</h3>
+              <div class="clock-controls">
+                <button class="clock-btn" id="clock-set" aria-label="Set timer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  Set
+                </button>
+                <button
+                  class="clock-btn"
+                  id="clock-stop"
+                  aria-label="Stop timer"
+                  disabled
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                  Stop
+                </button>
+                <button
+                  class="clock-btn"
+                  id="clock-reset"
+                  aria-label="Reset timer"
+                  disabled
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                    />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Flip Clock Display -->
+            <div class="flip-clock-wrapper">
+              <div id="flip-clock" class="flip-clock">
+                <div class="flip-unit">
+                  <div class="flip-card minute-ten">
+                    <div class="top">0</div>
+                    <div class="bottom">0</div>
+                    <div class="flip-top">0</div>
+                    <div class="flip-bottom">0</div>
+                  </div>
+                </div>
+                <div class="flip-unit">
+                  <div class="flip-card minute-unit">
+                    <div class="top">0</div>
+                    <div class="bottom">0</div>
+                    <div class="flip-top">0</div>
+                    <div class="flip-bottom">0</div>
+                  </div>
+                </div>
+                <div class="flip-colon">:</div>
+                <div class="flip-unit">
+                  <div class="flip-card second-ten">
+                    <div class="top">0</div>
+                    <div class="bottom">0</div>
+                    <div class="flip-top">0</div>
+                    <div class="flip-bottom">0</div>
+                  </div>
+                </div>
+                <div class="flip-unit">
+                  <div class="flip-card second-unit">
+                    <div class="top">0</div>
+                    <div class="bottom">0</div>
+                    <div class="flip-top">0</div>
+                    <div class="flip-bottom">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Accessible timer status for screen readers -->
+            <div
+              id="clock-announce"
+              aria-live="polite"
+              aria-atomic="true"
+              class="sr-only"
+            ></div>
+          </div>
+
           <div class="todo-container">
             <div class="todo-header">
               <h3>Todos</h3>
@@ -325,7 +499,17 @@
                 </button>
               </div>
             </div>
-
+            <div class="filter-controls">
+              <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="complete">
+                  Complete
+                </button>
+                <button class="filter-btn" data-filter="not-complete">
+                  Not Complete
+                </button>
+              </div>
+            </div>
             <div class="todo-list-container">
               <ul class="todo-list" id="todo-list">
                 <!-- Todos will be dynamically inserted here -->
@@ -351,6 +535,7 @@
               >
             </div>
           </div>
+          
         </div>
       </main>
     </div>
@@ -415,6 +600,58 @@
         <div class="modal-footer">
           <button class="btn-secondary" id="cancel-add">Cancel</button>
           <button class="btn-primary" id="save-question">Add Question</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer Set Modal -->
+    <div class="modal-overlay" id="timer-set-modal" style="display: none">
+      <div class="modal timer-set-modal">
+        <div class="modal-header">
+          <h3>Set Focus Timer</h3>
+          <button class="modal-close" id="close-timer-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="timer-inputs">
+            <div class="time-input-group">
+              <label for="minutes-input">Minutes</label>
+              <input
+                type="number"
+                id="minutes-input"
+                min="0"
+                max="59"
+                value="5"
+                aria-label="Minutes"
+              />
+            </div>
+            <div class="time-input-group">
+              <label for="seconds-input">Seconds</label>
+              <input
+                type="number"
+                id="seconds-input"
+                min="0"
+                max="59"
+                value="0"
+                aria-label="Seconds"
+              />
+            </div>
+          </div>
+
+          <div class="quick-presets">
+            <button class="preset-btn" data-minutes="1">1 min</button>
+            <button class="preset-btn" data-minutes="5">5 min</button>
+            <button class="preset-btn" data-minutes="10">10 min</button>
+            <button class="preset-btn" data-minutes="25">25 min</button>
+            <button class="preset-btn" data-minutes="0" data-seconds="30">
+              30 sec
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancel-timer-modal">Cancel</button>
+          <button class="btn-primary" id="start-timer-modal">
+            Start Timer
+          </button>
         </div>
       </div>
     </div>
@@ -523,7 +760,7 @@
               <div class="landing-brand">
                 <div class="brand">
                   <span class="seal seal--leaf" aria-hidden="true"></span>
-                  <h1>FocusFlow</h1>
+                  <h2>FocusFlow</h2>
                 </div>
               </div>
 
@@ -632,7 +869,7 @@
               <div class="story-header">
                 <h3>Real Indian DSA Journey</h3>
                 <div class="story-meta">
-                  <span class="story-author">Himanshu Kumar</span>
+                  <span class="story-author">Anupam Debnath</span>
                   <span class="story-role"
                     >College Student & DSA Enthusiast</span
                   >
@@ -730,7 +967,9 @@
     </div>
 
     <script defer src="js/helper.js"></script>
+    <script defer src="js/notification.js"></script>
     <script defer src="js/main.js"></script>
+    <script defer src="js/flip-clock.js"></script>
     <script defer src="js/main_public.js"></script>
   </body>
 </html>

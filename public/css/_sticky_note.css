@@ -413,7 +413,7 @@
 @media (min-width: 1024px) {
   .todo-list-container {
     max-height: calc(100vh - 300px);
-    overflow: hidden;
+    /* overflow: hidden; */
   }
 
   .todo-list {

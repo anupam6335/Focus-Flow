@@ -5,6 +5,7 @@
 
 // Notification Types
 export const NOTIFICATION_TYPES = {
+  // Legacy types
   NEW_BLOG: "new_blog",
   COMMENT_ON_BLOG: "comment_on_blog",
   REPLY_TO_COMMENT: "reply_to_comment",
@@ -14,6 +15,31 @@ export const NOTIFICATION_TYPES = {
   MENTION_IN_COMMENT: "mention_in_comment",
   COMMENTS_DISABLED: "comments_disabled",
   USER_ACTIVITY: "user_activity",
+  
+  // New Todo Notification Types
+  TODO_REMINDER: "todo_reminder",
+  TODO_ALL_COMPLETED: "todo_all_completed",
+  TODO_DAILY_REMINDER: "todo_daily_reminder",
+  
+  // New Question Notification Types
+  QUESTION_REMINDER: "question_reminder",
+  QUESTION_ALL_COMPLETED: "question_all_completed",
+  MILESTONE_5: "milestone_5",
+  MILESTONE_10: "milestone_10",
+  MILESTONE_20: "milestone_20",
+  
+  // New Global Notification Types
+  DAILY_STREAK: "daily_streak",
+  ADMIN: "admin",
+  SYSTEM: "system"
+};
+
+// Notification Categories
+export const NOTIFICATION_CATEGORIES = {
+  TODO: 'todo',
+  QUESTION: 'question',
+  GLOBAL: 'global',
+  LEGACY: 'legacy'
 };
 
 // Socket Events
@@ -125,3 +151,6 @@ export const TODO_CONSTANTS = {
     DONE: 'done'
   }
 };
+
+
+

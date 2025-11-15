@@ -190,6 +190,21 @@ class SocketService {
         console.log(`🔌 User ${username} force disconnected`);
       }
     });
+
+    // ✅ CORRECT PLACEMENT: Add notification event listeners HERE
+    socket.on('join-notifications', () => {
+      if (username) {
+        socket.join(`user-notifications-${username}`);
+        console.log(`🔔 User ${username} joined notifications room`);
+      }
+    });
+
+    socket.on('leave-notifications', () => {
+      if (username) {
+        socket.leave(`user-notifications-${username}`);
+        console.log(`🔔 User ${username} left notifications room`);
+      }
+    });
   }
 
   /**
@@ -277,6 +292,9 @@ class SocketService {
     if (userConnection) {
       this.io.to(userConnection.socketId).emit(event, data);
     }
+    
+    // Also emit to notification room for broader reach
+    this.emitToRoom(`user-notifications-${username}`, event, data);
   }
 
   /**

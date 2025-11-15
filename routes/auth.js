@@ -14,6 +14,7 @@ import { validateRegistration, validateEmail } from '../middleware/validation.js
 import { asyncHandler } from '../middleware/errorHandler.js';
 import config from '../config/environment.js';
 import { AUTH } from '../utils/constants.js';
+import { checkAndSendNotifications } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -164,6 +165,8 @@ router.post('/login', asyncHandler(async (req, res) => {
     sameSite: 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
+
+  await checkAndSendNotifications(user.username);
 
   res.json({
     success: true,

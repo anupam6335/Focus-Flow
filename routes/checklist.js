@@ -6,6 +6,7 @@ import ActivityTracker from '../models/ActivityTracker.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { validateQuestionData, validateQuestionId } from '../middleware/checklistValidation.js';
+import { checkAndSendNotifications } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -139,19 +140,15 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken, valid
 
   if (!checklistData) {
     checklistData = await ChecklistData.getUserData(userId);
-    // Update the first day's date to today
-    if (checklistData.data.length > 0) {
-      checklistData.data[0].date = today;
-    }
   }
 
-  // Find or create today's data
-  let todayData = checklistData.data.find(day => day.date === today);
+  // Find today's data in the array
+  let todayIndex = checklistData.data.findIndex(day => day.date === today);
   
-  if (!todayData) {
+  if (todayIndex === -1) {
     // Create new day entry for today
     const lastDay = checklistData.data.reduce((max, day) => Math.max(max, day.day), 0);
-    todayData = {
+    const newDay = {
       day: lastDay + 1,
       date: today,
       questions: [],
@@ -159,7 +156,8 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken, valid
       links: '',
       linksArray: []
     };
-    checklistData.data.push(todayData);
+    checklistData.data.push(newDay);
+    todayIndex = checklistData.data.length - 1; // Get the index of the newly added day
   }
 
   // Create new question
@@ -170,8 +168,8 @@ router.post(['/data/checklist/question', '/checklist'], authenticateToken, valid
     difficulty: difficulty
   };
 
-  // Add question to today's data
-  todayData.questions.push(newQuestion);
+  // CRITICAL FIX: Add question directly to the array element, not to a temporary variable
+  checklistData.data[todayIndex].questions.push(newQuestion);
   checklistData.lastUpdated = new Date();
 
   await checklistData.save();
@@ -439,6 +437,8 @@ router.post(['/activity-tracker', '/data/checklist/question/:id/complete'], auth
     activityTracker.lastUpdated = new Date();
     await activityTracker.save();
   }
+
+  await checkAndSendNotifications(userId, { questionsCompleted: newCompletedStatus });
 
   res.json({
     success: true,

@@ -19,9 +19,19 @@ class FocusFlowApp {
       leavesInterval: null,
       originalQuestionValues: new Map(),
       originalTodoValues: new Map(),
+
+      questionsFilter: "all",
+      todosFilter: "all",
+      searchTerm: "",
+      originalQuestions: [], // Store original questions for search
+      originalTodos: [], // Store original todos for filtering
     };
 
     this.elements = {};
+
+    this.debouncedSearch = Helper.debounce((searchTerm) => {
+      this.handleSearch(searchTerm);
+    }, 300);
 
     this.init();
   }
@@ -68,6 +78,7 @@ class FocusFlowApp {
       } else {
         this.showPublicLanding();
       }
+      this.setupEnhancedFeatures();
     } catch (error) {
       console.error("Initialization failed:", error);
       this.showToast("Failed to initialize application");
@@ -135,6 +146,47 @@ class FocusFlowApp {
     this.elements.autoTodoBtn = document.getElementById("auto-todo");
     this.elements.createTodoBtn = document.getElementById("create-todo");
     this.elements.todoList = document.getElementById("todo-list");
+  }
+
+  /**
+   * Setup enhanced features (filtering and search)
+   */
+  setupEnhancedFeatures() {
+    this.setupFilterListeners();
+    this.setupSearchListener();
+  }
+
+  /**
+   * Setup filter button listeners
+   */
+  setupFilterListeners() {
+    // Event delegation for filter buttons
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("filter-btn")) {
+        const container = e.target.closest(
+          ".questions-section, .todo-container"
+        );
+        const filterType = e.target.dataset.filter;
+
+        if (container.classList.contains("questions-section")) {
+          this.handleFilter("questions", filterType);
+        } else if (container.classList.contains("todo-container")) {
+          this.handleFilter("todos", filterType);
+        }
+      }
+    });
+  }
+
+  /**
+   * Setup search input listener
+   */
+  setupSearchListener() {
+    const searchInput = document.getElementById("questions-search");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        this.debouncedSearch(e.target.value);
+      });
+    }
   }
 
   /**
@@ -688,9 +740,11 @@ class FocusFlowApp {
       const today = this.getCurrentKolkataDate();
       const response = await Helper.fx(`/api/day?date=${today}`);
 
+      // Store original questions for filtering
       if (response.ok) {
         const apiData = response.data;
         this.state.questions = this.transformQuestions(apiData);
+        this.state.originalQuestions = [...this.state.questions]; // Store copy
       } else {
         this.state.questions = [];
       }
@@ -720,6 +774,104 @@ class FocusFlowApp {
   }
 
   /**
+   * SINGLE REUSABLE FILTER FUNCTION - Optimized for both containers
+   */
+  handleFilter(containerType, filterType) {
+    // Update active button UI
+    const container =
+      containerType === "questions"
+        ? document.querySelector(".questions-section")
+        : document.querySelector(".todo-container");
+
+    if (container) {
+      container.querySelectorAll(".filter-btn").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+      container
+        .querySelector(`[data-filter="${filterType}"]`)
+        .classList.add("active");
+    }
+
+    // Update state
+    if (containerType === "questions") {
+      this.state.questionsFilter = filterType;
+      this.applyFiltersAndSearch();
+    } else {
+      this.state.todosFilter = filterType;
+      this.applyTodoFilter();
+    }
+  }
+
+  /**
+   * Apply combined filters and search for questions
+   */
+  applyFiltersAndSearch() {
+    if (!this.state.questions || this.state.questions.length === 0) return;
+
+    const { questionsFilter, searchTerm } = this.state;
+
+    this.state.questions.forEach((question) => {
+      const questionElement = document.querySelector(
+        `[data-id="${question._id?.$oid || question._id}"]`
+      );
+      if (!questionElement) return;
+
+      let shouldShow = true;
+
+      // Apply completion filter
+      if (questionsFilter === "complete") {
+        shouldShow = question.completed === true;
+      } else if (questionsFilter === "not-complete") {
+        shouldShow = question.completed !== true;
+      }
+
+      // Apply search filter
+      if (shouldShow && searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const questionText = question.text.toLowerCase();
+        shouldShow = questionText.includes(searchLower);
+      }
+
+      // Update element visibility
+      questionElement.classList.toggle("filtered", !shouldShow);
+    });
+  }
+
+  /**
+   * Apply filter for todos
+   */
+  applyTodoFilter() {
+    if (!this.state.todos || this.state.todos.length === 0) return;
+
+    const { todosFilter } = this.state;
+
+    this.state.todos.forEach((todo) => {
+      const todoElement = document.querySelector(`[data-id="${todo._id}"]`);
+      if (!todoElement) return;
+
+      let shouldShow = true;
+
+      // Apply completion filter
+      if (todosFilter === "complete") {
+        shouldShow = todo.status === "done";
+      } else if (todosFilter === "not-complete") {
+        shouldShow = todo.status !== "done";
+      }
+
+      // Update element visibility
+      todoElement.classList.toggle("filtered", !shouldShow);
+    });
+  }
+
+  /**
+   * Handle search with debounce
+   */
+  handleSearch(searchTerm) {
+    this.state.searchTerm = searchTerm.trim().toLowerCase();
+    this.applyFiltersAndSearch();
+  }
+
+  /**
    * Render questions list
    */
   renderQuestions() {
@@ -733,6 +885,10 @@ class FocusFlowApp {
     this.elements["question-list"].innerHTML = this.state.questions
       .map((question) => this.renderQuestionItem(question))
       .join("");
+
+    setTimeout(() => {
+      this.applyFiltersAndSearch();
+    }, 0);
   }
 
   /**
@@ -908,6 +1064,14 @@ class FocusFlowApp {
 
         this.renderQuestions();
         this.showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
+    if (window.notifyTaskCompletion && newCompletedStatus) {
+    const questionId = question._id?.$oid || question._id;
+    window.notifyTaskCompletion('question', question.text, questionId);
+    // Also mark the question as completed to prevent future notifications
+    if (window.markTaskAsCompleted) {
+        window.markTaskAsCompleted(questionId);
+    }
+}
       } else {
         this.showToast("Something went wrong—try again");
       }
@@ -930,8 +1094,10 @@ class FocusFlowApp {
     try {
       const response = await Helper.fx("/api/todos");
 
+      // Store original todos for filtering
       if (response.ok && response.data && response.data.success) {
         this.state.todos = response.data.todos || [];
+        this.state.originalTodos = [...this.state.todos]; // Store copy
       } else {
         this.state.todos = [];
       }
@@ -957,6 +1123,11 @@ class FocusFlowApp {
     this.elements.todoList.innerHTML = this.state.todos
       .map((todo) => this.renderTodoItem(todo))
       .join("");
+
+    // After rendering, apply current filters
+    setTimeout(() => {
+      this.applyTodoFilter();
+    }, 0);
   }
 
   /**
@@ -1156,6 +1327,13 @@ class FocusFlowApp {
         this.showToast(
           newStatus === "done" ? "Completed" : "Marked incomplete"
         );
+      if (window.notifyTaskCompletion && newStatus === 'done') {
+    window.notifyTaskCompletion('todo', todo.title, todo._id);
+    // Also mark the task as completed to prevent future notifications
+    if (window.markTaskAsCompleted) {
+        window.markTaskAsCompleted(todo._id);
+    }
+}
         await this.loadTodos();
       } else {
         this.showToast("Failed to update todo");

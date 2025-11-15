@@ -34,8 +34,6 @@ import dataRoutes from "./routes/data.js";
 import adminNotificationRoutes from "./routes/adminNotifications.js";
 import banManagementRoutes from "./routes/banManagement.js";
 import todoRoutes from './routes/todos.js';
-
-// Services
 import { socketService } from "./services/socketService.js";
 
 // Initialize Express app

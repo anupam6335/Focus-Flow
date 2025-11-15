@@ -3,6 +3,7 @@ import Todo from '../models/Todo.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { validateTodo, validateBulkUpdate } from '../middleware/validation.js';
+import { checkAndSendNotifications } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -288,6 +289,10 @@ async function updateTodo(req, res) {
     });
   }
 
+  if (updates.status === 'done') {
+    await checkAndSendNotifications(userId, { todoCompleted: true });
+  }
+
   res.json({
     success: true,
     todo: todo.toObject()
@@ -457,6 +462,8 @@ router.post('/:id/complete-from-sandclock', authenticateToken, asyncHandler(asyn
       error: 'Todo not found'
     });
   }
+
+  await checkAndSendNotifications(userId, {todoComplete: true} );
 
   res.json({
     success: true,
