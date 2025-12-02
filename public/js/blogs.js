@@ -1,799 +1,625 @@
-let currentPage = 1;
-let totalPages = 1;
-let editingBlog = null;
-let currentTab = "all"; // 'all', 'my-blogs', 'popular'
-const API_BASE_URL = "https://focus-flow-lopn.onrender.com/api";
-const BASE_URL = "https://focus-flow-lopn.onrender.com";
-
-// URL Redirect
-const FRONTEND_URL = "https://focus-flow-lopn.onrender.com";
-
-document.getElementById("back-link").href = `${FRONTEND_URL}/`;
-document.getElementById("blog-link").href = `${FRONTEND_URL}/blogs`;
-
-// Toast Notification System
-class ToastManager {
+/**
+ * FocusFlow — Blog Page Controller
+ * Dynamic implementation with backend API integration
+ */
+class BlogPageController {
   constructor() {
-    this.container = document.getElementById("toastContainer");
-    if (!this.container) {
-      this.container = document.createElement("div");
-      this.container.className = "toast-container";
-      this.container.id = "toastContainer";
-      this.container.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 10000;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                    max-width: 400px;
-                `;
-      document.body.appendChild(this.container);
-    }
-    this.toastId = 0;
-  }
-
-  showToast(message, type = "info", title = "", duration = 5000) {
-    const toastId = this.toastId++;
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.id = `toast-${toastId}`;
-
-    const icon = this.getIcon(type);
-    const progressBar =
-      duration > 0 ? '<div class="toast-progress"></div>' : "";
-
-    toast.innerHTML = `
-                <div class="toast-icon">${icon}</div>
-                <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ""}
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="toastManager.hideToast(${toastId})">×</button>
-                ${progressBar}
-            `;
-
-    this.container.appendChild(toast);
-
-    // Animate in
-    setTimeout(() => toast.classList.add("show"), 10);
-
-    // Auto-hide if duration is set
-    if (duration > 0) {
-      const progress = toast.querySelector(".toast-progress");
-      if (progress) {
-        setTimeout(() => progress.classList.add("hide"), 10);
-      }
-      setTimeout(() => this.hideToast(toastId), duration);
-    }
-
-    return toastId;
-  }
-
-  hideToast(toastId) {
-    const toast = document.getElementById(`toast-${toastId}`);
-    if (toast) {
-      toast.classList.remove("show");
-      toast.classList.add("hide");
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
-    }
-  }
-
-  getIcon(type) {
-    const icons = {
-      success: "✓",
-      error: "⚠",
-      warning: "⚠",
-      info: "ℹ",
+    this.state = {
+      activeTab: "all",
+      currentFilter: "newest",
+      searchTerm: "",
+      currentPage: 1,
+      blogsPerPage: 9,
+      isLoading: false,
+      isLoggedIn: false,
+      totalPages: 1,
+      user: null,
     };
-    return icons[type] || icons.info;
-  }
-
-  // Convenience methods
-  success(message, title = "Success", duration = 5000) {
-    return this.showToast(message, "success", title, duration);
-  }
-
-  error(message, title = "Error", duration = 7000) {
-    return this.showToast(message, "error", title, duration);
-  }
-
-  warning(message, title = "Warning", duration = 6000) {
-    return this.showToast(message, "warning", title, duration);
-  }
-
-  info(message, title = "Info", duration = 4000) {
-    return this.showToast(message, "info", title, duration);
-  }
-}
-
-// Initialize toast manager
-const toastManager = new ToastManager();
-
-// Check authentication and load blogs - UPDATED for unlogged users
-async function initBlogs() {
-  const token = localStorage.getItem("authToken");
-  const userId = localStorage.getItem("userId");
-
-  if (!token || !userId) {
-    // Unlogged user - show public blogs only
-    document.getElementById("unloggedSection").style.display = "block";
-    document.getElementById("blogsContent").style.display = "block";
-    document.body.classList.add("unlogged-user");
-
-    // Initialize search for public blogs
-    initializeBlogsPageSearch();
-
-    // Load only public blogs for unlogged users and update counts
-    await loadPublicBlogs();
-    await updatePublicTabCounts(); // Add this line
-    return;
-  }
-
-  // Logged in user - show full functionality
-  document.getElementById("blogsContent").style.display = "block";
-
-  // Initialize search
-  initializeBlogsPageSearch();
-
-  // Then load blogs and update counts
-  await loadBlogs();
-  await updateTabCounts();
-}
-
-// New function to load public blogs for unlogged users
-async function loadPublicBlogs(page = 1) {
-  try {
-    const url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      displayBlogs(result.blogs);
-      setupPagination(result.currentPage, result.totalPages, result.total);
-
-      // Update the popular count based on actual loaded data
-      const popularBlogsRes = await fetch(
-        `${API_BASE_URL}/blogs/popular?limit=100`
-      );
-      if (popularBlogsRes.ok) {
-        const popularResult = await popularBlogsRes.json();
-        if (popularResult.success) {
-          document.getElementById("popular-blogs-count").textContent =
-            popularResult.blogs?.length || 0;
-        }
-      }
-    } else {
-      // console.error("Failed to load public blogs:", result.error);
-    }
-  } catch (error) {
-    // console.error("Error loading public blogs:", error);
-  }
-}
-
-// Update switchTab function to handle unlogged users
-async function switchTab(tabName) {
-  const token = localStorage.getItem("authToken");
-  const userId = localStorage.getItem("userId");
-
-  // Unlogged users can only access "all" and "popular" tabs
-  if ((!token || !userId) && tabName === "my-blogs") {
-    toastManager.info(
-      "Please log in to access your personal blogs",
-      "Login Required"
-    );
-    return;
-  }
-
-  currentTab = tabName;
-  currentPage = 1;
-
-  // Update active tab UI
-  document.querySelectorAll(".tab-compact").forEach((tab) => {
-    tab.classList.remove("active");
-  });
-  document.getElementById(`tab-${tabName}`).classList.add("active");
-
-  // Clear any active search when switching tabs
-  if (blogsPageSearch) {
-    blogsPageSearch.clearSearch();
-  }
-
-  // Add fade animation
-  const blogsGrid = document.getElementById("blogsGrid");
-  blogsGrid.classList.add("fade-out");
-
-  // Load appropriate blogs after fade out
-  setTimeout(async () => {
-    if (!token || !userId) {
-      // Unlogged user - only load public blogs
-      await loadPublicBlogs();
-    } else {
-      // Logged in user - load normally
-      await loadBlogs();
-    }
-
-    blogsGrid.classList.remove("fade-out");
-    blogsGrid.classList.add("fade-in");
-
-    // Remove fade-in class after animation completes
-    setTimeout(() => {
-      blogsGrid.classList.remove("fade-in");
-    }, 300);
-  }, 200);
-}
-
-// Load blogs based on current tab - UPDATED to fix popular tab
-async function loadBlogs(page = 1) {
-  try {
-    const token = localStorage.getItem("authToken");
-    let url = "";
-
-    // Determine which API endpoint to call based on current tab
-    switch (currentTab) {
-      case "all":
-        url = `${API_BASE_URL}/blogs/all?page=${page}&limit=9`;
-        break;
-      case "my-blogs":
-        url = `${API_BASE_URL}/blogs/my?page=${page}&limit=9`;
-        break;
-      case "popular":
-        url = `${API_BASE_URL}/blogs/popular?limit=9`;
-        break;
-      default:
-        url = `${API_BASE_URL}/blogs?page=${page}&limit=9`;
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      // Handle 404 for popular route specifically
-      if (response.status === 404 && currentTab === "popular") {
-        throw new Error(
-          "Popular blogs endpoint not found. Please check server configuration."
-        );
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      displayBlogs(result.blogs);
-
-      // Setup pagination only for tabs that support it
-      if (currentTab !== "popular") {
-        setupPagination(result.currentPage, result.totalPages, result.total);
-      } else {
-        document.getElementById("pagination").innerHTML = "";
-      }
-    } else {
-      toastManager.error(result.error || "Failed to load blogs", "Blog Error");
-    }
-  } catch (error) {
-    // console.error("Error loading blogs:", error);
-
-    // More specific error message for popular tab
-    if (currentTab === "popular") {
-      toastManager.error(
-        "Failed to load popular blogs. The feature might be temporarily unavailable.",
-        "Popular Blogs Error"
-      );
-    } else {
-      toastManager.error(
-        "Failed to load blogs. Please try again.",
-        "Network Error"
-      );
-    }
-  }
-}
-
-async function updateTabCounts() {
-  try {
-    const token = localStorage.getItem("authToken");
-    const userId = localStorage.getItem("userId");
-    const isLoggedIn = token && userId;
-
-    if (!isLoggedIn) {
-      // For unlogged users, only get public counts
-      await updatePublicTabCounts();
-      return;
-    }
-
-    // For logged-in users, get all counts as before
-    const [allBlogsRes, myBlogsRes, popularBlogsRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/blogs/all?limit=1`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${API_BASE_URL}/blogs/my?limit=1`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${API_BASE_URL}/blogs/popular?limit=100`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-    ]);
-
-    const [allBlogs, myBlogs, popularBlogs] = await Promise.all([
-      allBlogsRes.ok ? allBlogsRes.json() : { success: false },
-      myBlogsRes.ok ? myBlogsRes.json() : { success: false },
-      popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
-    ]);
-
-    // Update badge counts with fallbacks
-    if (allBlogs.success) {
-      document.getElementById("all-blogs-count").textContent =
-        allBlogs.total || 0;
-    } else {
-      document.getElementById("all-blogs-count").textContent = "0";
-    }
-
-    if (myBlogs.success) {
-      document.getElementById("my-blogs-count").textContent =
-        myBlogs.total || 0;
-    } else {
-      document.getElementById("my-blogs-count").textContent = "0";
-    }
-
-    if (popularBlogs.success) {
-      document.getElementById("popular-blogs-count").textContent =
-        popularBlogs.blogs?.length || 0;
-    } else {
-      document.getElementById("popular-blogs-count").textContent = "0";
-    }
-  } catch (error) {
-    // console.error("Error updating tab counts:", error);
-    // Set fallback values
-    document.getElementById("all-blogs-count").textContent = "0";
-    document.getElementById("my-blogs-count").textContent = "0";
-    document.getElementById("popular-blogs-count").textContent = "0";
-  }
-}
-
-// New function to update counts for unlogged users
-async function updatePublicTabCounts() {
-  try {
-    // Get public blogs count
-    const allBlogsRes = await fetch(`${API_BASE_URL}/blogs/all?limit=1`);
-    const popularBlogsRes = await fetch(
-      `${API_BASE_URL}/blogs/popular?limit=100`
-    );
-
-    const [allBlogs, popularBlogs] = await Promise.all([
-      allBlogsRes.ok ? allBlogsRes.json() : { success: false },
-      popularBlogsRes.ok ? popularBlogsRes.json() : { success: false },
-    ]);
-
-    // Update public counts
-    if (allBlogs.success) {
-      document.getElementById("all-blogs-count").textContent =
-        allBlogs.total || 0;
-    } else {
-      document.getElementById("all-blogs-count").textContent = "0";
-    }
-
-    if (popularBlogs.success) {
-      document.getElementById("popular-blogs-count").textContent =
-        popularBlogs.blogs?.length || 0;
-    } else {
-      document.getElementById("popular-blogs-count").textContent = "0";
-    }
-
-    // Hide "My Blogs" count for unlogged users or show 0
-    document.getElementById("my-blogs-count").textContent = "0";
-  } catch (error) {
-    // console.error("Error updating public tab counts:", error);
-    // Set fallback values
-    document.getElementById("all-blogs-count").textContent = "0";
-    document.getElementById("popular-blogs-count").textContent = "0";
-    document.getElementById("my-blogs-count").textContent = "0";
-  }
-}
-
-// Smart card layout algorithm to fill each page completely
-function getCardLayoutForPage(blogs, pageIndex) {
-  const cardsPerPage = 9; // 3x3 grid
-  const startIndex = pageIndex * cardsPerPage;
-  const pageBlogs = blogs.slice(startIndex, startIndex + cardsPerPage);
-
-  if (pageBlogs.length === 0) return [];
-
-  // Define layout patterns that fill the 3x3 grid completely
-  const layoutPatterns = [
-    // Pattern 1: 2 big + 5 small (fills 9 slots: 2*2 + 5*1 = 9)
-    ["big", "small", "small", "big", "small", "small", "small"],
-    // Pattern 2: 1 big + 7 small (fills 9 slots: 1*2 + 7*1 = 9)
-    ["big", "small", "small", "small", "small", "small", "small", "small"],
-    // Pattern 3: 3 big + 3 small (fills 9 slots: 3*2 + 3*1 = 9)
-    ["big", "small", "big", "small", "big", "small"],
-    // Pattern 4: 4 small only (when less content)
-    [
-      "small",
-      "small",
-      "small",
-      "small",
-      "small",
-      "small",
-      "small",
-      "small",
-      "small",
-    ],
-  ];
-
-  // Choose pattern based on number of blogs and content richness
-  let pattern;
-  if (pageBlogs.length >= 7) {
-    pattern = layoutPatterns[0]; // Use pattern with 2 big cards
-  } else if (pageBlogs.length >= 5) {
-    pattern = layoutPatterns[1]; // Use pattern with 1 big card
-  } else if (pageBlogs.length >= 3) {
-    pattern = layoutPatterns[2]; // Use pattern with alternating big/small
-  } else {
-    pattern = layoutPatterns[3].slice(0, pageBlogs.length); // All small
-  }
-
-  // Apply the pattern to the current page blogs
-  const layout = [];
-  let patternIndex = 0;
-
-  for (let i = 0; i < pageBlogs.length; i++) {
-    if (patternIndex >= pattern.length) {
-      patternIndex = 0; // Loop pattern if needed
-    }
-    layout.push({
-      blog: pageBlogs[i],
-      type: pattern[patternIndex],
-    });
-    patternIndex++;
-  }
-
-  return layout;
-}
-
-// Helper function to format blog dates
-function formatBlogDate(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now - date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-// Helper function to escape HTML
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// Blog Search System for Blogs Page
-class BlogsPageSearch {
-  constructor() {
-    this.searchInput = document.getElementById("blogsPageSearch");
-    this.searchLoader = document.getElementById("blogsPageSearchLoader");
-    this.searchClear = document.getElementById("blogsPageSearchClear");
-    this.searchResultsInfo = document.getElementById(
-      "blogsPageSearchResultsInfo"
-    );
-    this.searchResultsCount = document.getElementById(
-      "blogsPageSearchResultsCount"
-    );
-    this.clearSearchBtn = document.getElementById("blogsPageClearSearchBtn");
-    this.blogsGrid = document.getElementById("blogsGrid");
-
-    this.debounceTimer = null;
-    this.searchDelay = 300; // ms
-    this.isSearching = false;
-    this.originalBlogsData = [];
-    this.filteredBlogsData = [];
-    this.currentSearchTerm = "";
-    this.currentTab = "all";
-
+    this.elements = {};
     this.init();
   }
 
-  init() {
-    this.bindEvents();
+  /**
+   * Initialize the blog page
+   */
+  async init() {
+    this.initializeElements();
+    this.setupEventListeners();
+    await this.checkAuthStatus();
+    this.initHeaderButton();
+    this.loadActiveTab();
   }
 
-  bindEvents() {
-    // Input event with debounce
-    this.searchInput.addEventListener("input", (e) => {
-      this.handleSearchInput(e.target.value);
+  /**
+   * Cache DOM elements
+   */
+  initializeElements() {
+    const elementIds = [
+      "all-blogs-tab",
+      "popular-blogs-tab",
+      "my-blogs-tab",
+      "sort-filter",
+      "blog-search",
+      "create-blog-btn",
+      "create-blog-modal",
+      "close-create-blog-modal",
+      "cancel-create-blog",
+      "publish-blog",
+      "create-blog-form",
+      "toast",
+      "notification-count",
+      "login-link",
+      "profile-link",
+      "logout-btn",
+    ];
+
+    elementIds.forEach((id) => {
+      this.elements[id] = document.getElementById(id);
     });
 
-    // Clear search button
-    this.searchClear.addEventListener("click", () => {
-      this.clearSearch();
+    // Get all tab buttons
+    this.elements.tabButtons = document.querySelectorAll(".blogs-tab");
+    this.elements.visibilityButtons =
+      document.querySelectorAll(".visibility-btn");
+
+    // Initialize UI based on auth
+    this.updateAuthUI();
+  }
+
+  /**
+   * Set up event listeners
+   */
+  setupEventListeners() {
+    // Tab switching
+    this.elements.tabButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const tab = e.currentTarget.dataset.tab;
+        this.switchTab(tab);
+      });
     });
 
-    // Clear search from results info
-    this.clearSearchBtn.addEventListener("click", () => {
-      this.clearSearch();
+    // Filter changes
+    if (this.elements["sort-filter"]) {
+      this.elements["sort-filter"].addEventListener("change", (e) => {
+        this.state.currentFilter = e.target.value;
+        this.state.currentPage = 1; // Reset to first page
+        this.loadActiveTab();
+      });
+    }
+
+    // Search input with debounce
+    if (this.elements["blog-search"]) {
+      let searchTimeout;
+      this.elements["blog-search"].addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          this.state.searchTerm = e.target.value;
+          this.state.currentPage = 1; // Reset to first page
+          this.loadActiveTab();
+        }, 500);
+      });
+    }
+
+    // Create blog modal
+    if (this.elements["create-blog-btn"]) {
+      this.elements["create-blog-btn"].addEventListener("click", () =>
+        this.showCreateModal()
+      );
+    }
+
+    if (this.elements["close-create-blog-modal"]) {
+      this.elements["close-create-blog-modal"].addEventListener("click", () =>
+        this.hideCreateModal()
+      );
+    }
+
+    if (this.elements["cancel-create-blog"]) {
+      this.elements["cancel-create-blog"].addEventListener("click", () =>
+        this.hideCreateModal()
+      );
+    }
+
+    if (this.elements["publish-blog"]) {
+      this.elements["publish-blog"].addEventListener("click", (e) => {
+        e.preventDefault();
+        this.handleBlogCreation();
+      });
+    }
+
+    // Visibility buttons
+    this.elements.visibilityButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const target = e.currentTarget;
+        this.setVisibility(target.dataset.visibility);
+      });
     });
 
-    // Keyboard shortcuts
-    this.searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        this.clearSearch();
+    // Modal close on escape and click outside
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "Escape" &&
+        this.elements["create-blog-modal"].style.display === "flex"
+      ) {
+        this.hideCreateModal();
       }
     });
 
-    // Focus management
-    this.searchInput.addEventListener("focus", () => {
-      this.searchInput.parentElement.classList.add("focused");
-    });
-
-    this.searchInput.addEventListener("blur", () => {
-      this.searchInput.parentElement.classList.remove("focused");
-    });
-  }
-
-  // Set blog data based on current tab
-  setBlogData(blogData, tab = "all") {
-    this.originalBlogsData = Array.isArray(blogData) ? blogData : [];
-    this.currentTab = tab;
-  }
-
-  handleSearchInput(searchTerm) {
-    // Clear previous timer
-    clearTimeout(this.debounceTimer);
-
-    // Show/hide clear button based on input
-    this.toggleClearButton(searchTerm.length > 0);
-
-    if (searchTerm.length === 0) {
-      this.clearSearch();
-      return;
-    }
-
-    // Show loading state for better UX
-    this.setSearchingState(true);
-
-    // Debounce the search
-    this.debounceTimer = setTimeout(() => {
-      this.performSearch(searchTerm);
-    }, this.searchDelay);
-  }
-
-  performSearch(searchTerm) {
-    if (!this.originalBlogsData || this.originalBlogsData.length === 0) {
-      // // console.warn("BlogsPageSearch: No blog data available for search");
-      this.setSearchingState(false);
-      return;
-    }
-
-    this.currentSearchTerm = searchTerm.toLowerCase().trim();
-
-    // Search through current tab's blogs
-    this.filteredBlogsData = this.originalBlogsData.filter((blog) => {
-      // Search by title
-      const titleMatch = blog.title
-        .toLowerCase()
-        .includes(this.currentSearchTerm);
-
-      // Search by content (if available)
-      const contentMatch = blog.content
-        ? blog.content.toLowerCase().includes(this.currentSearchTerm)
-        : false;
-
-      // Search by tags (if available)
-      const tagsMatch = blog.tags
-        ? blog.tags.some((tag) =>
-            tag.toLowerCase().includes(this.currentSearchTerm)
-          )
-        : false;
-
-      // Search by author (if available)
-      const authorMatch = blog.author
-        ? blog.author.toLowerCase().includes(this.currentSearchTerm)
-        : false;
-
-      return titleMatch || contentMatch || tagsMatch || authorMatch;
-    });
-
-    // Update UI with search results
-    this.displaySearchResults(this.filteredBlogsData, searchTerm);
-    this.setSearchingState(false);
-  }
-
-  displaySearchResults(filteredBlogs, searchTerm) {
-    const hasResults = filteredBlogs.length > 0;
-
-    // Update results count with tab info
-    const tabDisplayName = this.getTabDisplayName(this.currentTab);
-    this.searchResultsCount.textContent = `${filteredBlogs.length} ${
-      filteredBlogs.length === 1 ? "result" : "results"
-    } in ${tabDisplayName} for "${searchTerm}"`;
-
-    // Show/hide results info
-    if (hasResults) {
-      this.searchResultsInfo.style.display = "block";
-    } else {
-      this.searchResultsInfo.style.display = "block";
-      this.searchResultsCount.textContent = `No results found in ${tabDisplayName} for "${searchTerm}"`;
-    }
-
-    // Render filtered blogs with highlight animation
-    this.renderFilteredBlogs(filteredBlogs, searchTerm);
-
-    // Add premium animation for search results
-    this.triggerSearchAnimation(hasResults);
-  }
-
-  getTabDisplayName(tab) {
-    const tabNames = {
-      all: "All Blogs",
-      "my-blogs": "My Blogs",
-      popular: "Popular Blogs",
-    };
-    return tabNames[tab] || tab;
-  }
-
-  renderFilteredBlogs(filteredBlogs, searchTerm) {
-    if (filteredBlogs.length === 0) {
-      this.blogsGrid.innerHTML = `
-      <div class="empty-state blog-search-empty-state">
-        <div style="font-size: 3rem; margin-bottom: var(--codeleaf-space-2);">🔍</div>
-        <div>No ${this.getTabDisplayName(
-          this.currentTab
-        ).toLowerCase()} found matching "${searchTerm}"</div>
-        <small>Try searching by title, content, tags, or author</small>
-      </div>
-    `;
-      return;
-    }
-
-    // Use the existing displayBlogs function but with highlighted content
-    const currentUser = localStorage.getItem("userId");
-    const pageLayout = getCardLayoutForPage(filteredBlogs, 0); // Show all results on one page
-
-    this.blogsGrid.innerHTML = pageLayout
-      .map((item, index) => {
-        const blog = item.blog;
-        const cardType = item.type;
-        const animationDelay = `${0.1 * index}s`;
-
-        // Highlight search terms in title and content
-        const highlightedTitle = this.highlightSearchTerm(
-          blog.title,
-          searchTerm
-        );
-
-        // Create excerpt with highlighted content if available
-        let excerpt = blog.content
-          ? blog.content.substring(0, 120) + "..."
-          : "No content available";
-        if (
-          blog.content &&
-          blog.content.toLowerCase().includes(searchTerm.toLowerCase())
-        ) {
-          excerpt = this.highlightSearchTermInContent(excerpt, searchTerm);
-        } else {
-          excerpt = escapeHtml(excerpt);
+    if (this.elements["create-blog-modal"]) {
+      this.elements["create-blog-modal"].addEventListener("click", (e) => {
+        if (e.target === this.elements["create-blog-modal"]) {
+          this.hideCreateModal();
         }
+      });
+    }
 
-        // Highlight author if it matches search
-        const authorDisplay = blog.author
-          ? this.highlightSearchTerm(blog.author, searchTerm)
-          : escapeHtml(blog.author || "Unknown");
+    // Form submit
+    if (this.elements["create-blog-form"]) {
+      this.elements["create-blog-form"].addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleBlogCreation();
+      });
+    }
+
+    // Logout
+    if (this.elements["logout-btn"]) {
+      this.elements["logout-btn"].addEventListener("click", () =>
+        this.handleLogout()
+      );
+    }
+  }
+
+  /**
+   * Check authentication status and get user info - FIXED VERSION
+   */
+  async checkAuthStatus() {
+    try {
+      // First, try to get the current user by making a simple authenticated request
+      const response = await fetch("/api/users/me", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        try {
+          const data = await response.json();
+
+          if (data.success && data.user) {
+            this.state.isLoggedIn = true;
+            this.state.user = data.user;
+            this.updateAuthUI();
+            return true;
+          }
+        } catch (jsonError) {}
+      }
+
+      // Fallback: Try to access a protected endpoint
+      const blogResponse = await fetch("/api/blogs/my?page=1&limit=1", {
+        credentials: "include",
+      });
+
+      if (blogResponse.ok) {
+        try {
+          const blogData = await blogResponse.json();
+          if (blogData.success) {
+            // We're authenticated if we can access this endpoint
+            this.state.isLoggedIn = true;
+
+            // Try to get username from response or cookies
+            if (blogData.blogs && blogData.blogs.length > 0) {
+              this.state.user = { username: blogData.blogs[0].author };
+            } else {
+              // Try to extract username from JWT token in cookies
+              const token = this.getTokenFromCookies();
+              if (token) {
+                try {
+                  const payload = JSON.parse(atob(token.split(".")[1]));
+                  this.state.user = { username: payload.username || "User" };
+                } catch {
+                  this.state.user = { username: "User" };
+                }
+              }
+            }
+
+            this.updateAuthUI();
+            return true;
+          }
+        } catch (error) {}
+      }
+
+      // Check if we have a token cookie as last resort
+      if (this.getTokenFromCookies()) {
+        this.state.isLoggedIn = true;
+        this.state.user = { username: "User" };
+        this.updateAuthUI();
+        return true;
+      }
+    } catch (error) {}
+
+    // Not authenticated
+    this.state.isLoggedIn = false;
+    this.state.user = null;
+    this.updateAuthUI();
+    return false;
+  }
+
+  /**
+   * Get JWT token from cookies
+   */
+  getTokenFromCookies() {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === "ff_token" || name === "token") {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Update UI based on authentication status - IMPROVED VERSION
+   */
+  updateAuthUI() {
+    // Get the profile dropdown content
+    const profileDropdown = document.querySelector(
+      ".profile-dropdown .dropdown-content"
+    );
+    if (!profileDropdown) {
+      return;
+    }
+
+    // Clear existing items
+    profileDropdown.innerHTML = "";
+
+    if (this.state.isLoggedIn) {
+      // User is logged in - show profile and logout
+      const profileItem = document.createElement("a");
+      profileItem.href =
+        this.state.user && this.state.user.username
+          ? `/user/${this.state.user.username}`
+          : "/profile";
+      profileItem.className = "dropdown-item";
+      profileItem.id = "profile-link";
+      profileItem.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <span>${
+        this.state.user && this.state.user.username
+          ? `@${this.state.user.username}`
+          : "Profile"
+      }</span>
+    `;
+
+      const logoutItem = document.createElement("button");
+      logoutItem.className = "dropdown-item";
+      logoutItem.id = "logout-btn";
+      logoutItem.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      <span>Logout</span>
+    `;
+
+      profileDropdown.appendChild(profileItem);
+      profileDropdown.appendChild(logoutItem);
+
+      // Add logout event listener
+      logoutItem.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.handleLogout();
+      });
+    } else {
+      // User is not logged in - show login only
+      const loginItem = document.createElement("a");
+      loginItem.href = "/auth";
+      loginItem.className = "dropdown-item";
+      loginItem.id = "login-link";
+      loginItem.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+        <polyline points="10 17 15 12 10 7" />
+        <line x1="15" y1="12" x2="3" y2="12" />
+      </svg>
+      <span>Login</span>
+    `;
+
+      profileDropdown.appendChild(loginItem);
+    }
+
+    // Ensure consistent styling
+    const dropdownItems = profileDropdown.querySelectorAll(".dropdown-item");
+    dropdownItems.forEach((item) => {
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.gap = "10px";
+      item.style.padding = "10px 16px";
+      item.style.width = "100%";
+      item.style.textAlign = "left";
+      item.style.color = "inherit";
+      item.style.textDecoration = "none";
+      item.style.background = "none";
+      item.style.border = "none";
+      item.style.fontSize = "14px";
+      item.style.cursor = "pointer";
+      item.style.transition = "all 200ms var(--ease)";
+
+      item.addEventListener("mouseenter", () => {
+        item.style.background = "rgba(163, 177, 138, 0.1)";
+      });
+
+      item.addEventListener("mouseleave", () => {
+        item.style.background = "none";
+      });
+    });
+  }
+
+  /**
+   * Switch between tabs
+   */
+  switchTab(tabName) {
+    // Update tab buttons
+    this.elements.tabButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.tab === tabName);
+    });
+
+    // Update tab content
+    document.querySelectorAll(".blogs-tab-content").forEach((content) => {
+      content.classList.toggle("active", content.id === `${tabName}-blogs-tab`);
+    });
+
+    // Update state and load content
+    this.state.activeTab = tabName;
+    this.state.currentPage = 1;
+    this.loadActiveTab();
+  }
+
+  /**
+   * Load content for active tab
+   */
+  async loadActiveTab() {
+    this.showLoadingState();
+
+    try {
+      switch (this.state.activeTab) {
+        case "all":
+          await this.loadAllBlogs();
+          break;
+        case "popular":
+          await this.loadPopularBlogs();
+          break;
+        case "my":
+          await this.loadMyBlogs();
+          break;
+      }
+    } catch (error) {
+      console.error("Error loading blogs:", error);
+      this.showToast("Failed to load blogs. Please try again.", "error");
+    } finally {
+      this.hideLoadingState();
+    }
+  }
+
+  /**
+   * Load all blogs from API
+   */
+  async loadAllBlogs() {
+    const grid = document.querySelector("#all-blogs-tab .blogs-grid");
+    if (!grid) return;
+
+    try {
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: this.state.currentPage,
+        limit: this.state.blogsPerPage,
+        sort: this.state.currentFilter,
+        search: this.state.searchTerm,
+      });
+
+      const response = await fetch(`/api/blogs/all?${params}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.blogs && data.blogs.length > 0) {
+        this.renderBlogs(grid, data.blogs);
+        this.state.totalPages = data.totalPages || 1;
+        this.renderPagination("all-blogs-tab", data);
+      } else {
+        this.showEmptyState(grid, "No blogs found. Be the first to write one!");
+      }
+    } catch (error) {
+      console.error("Error loading all blogs:", error);
+      this.showEmptyState(
+        grid,
+        "Failed to load blogs. Please try again later."
+      );
+    }
+  }
+
+  /**
+   * Load popular blogs from API
+   */
+  async loadPopularBlogs() {
+    const grid = document.querySelector("#popular-blogs-tab .blogs-grid");
+    if (!grid) return;
+
+    try {
+      const response = await fetch(
+        `/api/blogs/popular?limit=${this.state.blogsPerPage}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.blogs && data.blogs.length > 0) {
+        this.renderBlogs(grid, data.blogs);
+      } else {
+        this.showEmptyState(
+          grid,
+          "No popular blogs yet. Start writing to get featured!"
+        );
+      }
+    } catch (error) {
+      console.error("Error loading popular blogs:", error);
+      this.showEmptyState(grid, "Failed to load popular blogs.");
+    }
+  }
+
+  /**
+   * Load user's blogs from API
+   */
+  async loadMyBlogs() {
+    const container = document.querySelector(
+      "#my-blogs-tab .my-blogs-container"
+    );
+    if (!container) return;
+
+    if (!this.state.isLoggedIn) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <p>Please sign in to view and create your blogs</p>
+          <button class="btn-primary" style="margin-top: 16px;" onclick="window.location.href='/auth'">
+            Sign In
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    let myBlogsList = container.querySelector(".my-blogs-list");
+    if (!myBlogsList) {
+      // Create my blogs list if it doesn't exist
+      myBlogsList = document.createElement("div");
+      myBlogsList.className = "my-blogs-list";
+      container.appendChild(myBlogsList);
+    }
+
+    try {
+      const params = new URLSearchParams({
+        page: this.state.currentPage,
+        limit: this.state.blogsPerPage,
+      });
+
+      const response = await fetch(`/api/blogs/my?${params}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          // User is not logged in properly, refresh auth
+          await this.checkAuthStatus();
+          if (!this.state.isLoggedIn) {
+            this.showToast("Please login to view your blogs", "error");
+            return;
+          }
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.blogs && data.blogs.length > 0) {
+        this.renderMyBlogs(myBlogsList, data.blogs);
+        this.state.totalPages = data.totalPages || 1;
+        this.renderPagination("my-blogs-tab", data);
+      } else {
+        myBlogsList.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <p>You haven't written any blogs yet. Create your first one!</p>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error("Error loading my blogs:", error);
+      myBlogsList.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <p>Failed to load your blogs. Please try again.</p>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Render blogs in grid
+   */
+  renderBlogs(container, blogs) {
+    if (!blogs || !blogs.length) {
+      this.showEmptyState(container, "No blogs found.");
+      return;
+    }
+
+    const blogCards = blogs
+      .map((blog) => {
+        const excerpt =
+          blog.excerpt ||
+          (blog.content
+            ? blog.content.substring(0, 150) +
+              (blog.content.length > 150 ? "..." : "")
+            : "No content available");
 
         return `
-        <div class="blog-card ${cardType} blog-search-result-item" onclick="viewBlog('${
-          blog.slug
-        }')" style="animation-delay: ${animationDelay}">
+        <div class="blog-card" data-slug="${blog.slug || ""}">
           <div class="blog-card-header">
-            <div class="blog-card-image">
-              <div class="blog-card-overlay"></div>
-              <div class="blog-card-category">${
-                blog.tags && blog.tags.length > 0
-                  ? this.highlightSearchTerm(blog.tags[0], searchTerm)
-                  : "General"
-              }</div>
+            <h3 class="blog-title">${this.escapeHtml(
+              blog.title || "Untitled"
+            )}</h3>
+            <div class="blog-meta">
+              <span class="blog-author">@${this.escapeHtml(
+                blog.author || "anonymous"
+              )}</span>
+              <span class="blog-date">${
+                blog.createdAt ? this.formatDate(blog.createdAt) : "Recently"
+              }</span>
             </div>
           </div>
-          
-          <div class="blog-card-body">
-            <div class="blog-card-meta">
-              <div class="blog-author-avatar">
-                <span class="avatar-icon">👤</span>
-              </div>
-              <div class="blog-meta-info">
-                <span class="blog-author">${authorDisplay}</span>
-                <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
-              </div>
-              <div class="blog-visibility-tag">
-                <span class="visibility-icon">${
-                  blog.isPublic ? "🌍" : "🔒"
-                }</span>
-                <span class="visibility-text">${
-                  blog.isPublic ? "Public" : "Private"
-                }</span>
-              </div>
+          <div class="blog-excerpt">
+            ${this.escapeHtml(excerpt)}
+          </div>
+          <div class="blog-stats">
+            <div class="stat-item" title="Likes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              <span class="stat-count">${blog.likes || 0}</span>
             </div>
-            
-            <h3 class="blog-card-title">${highlightedTitle}</h3>
-            
-            <div class="blog-card-excerpt">
-              ${excerpt}
+            <div class="stat-item" title="Views">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span class="stat-count">${blog.views || 0}</span>
             </div>
-            
-            <div class="blog-card-footer">
-              <div class="blog-stats">
-                <div class="blog-stat">
-                  <span class="stat-icon">❤️</span>
-                  <span class="stat-count">${blog.likes || 0}</span>
-                </div>
-                <div class="blog-stat">
-                  <span class="stat-icon">👁️</span>
-                  <span class="stat-count">${blog.views || 0}</span>
-                </div>
-              </div>
-              
-              <div class="blog-actions">
-                ${
-                  blog.author === currentUser
-                    ? `
-                  <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
-                    <span class="action-icon">✏️</span>
-                  </button>
-                `
-                    : ""
-                }
-                <button class="blog-action-btn like-btn ${
-                  blog.likedBy &&
-                  blog.likedBy.includes(currentUser) &&
-                  blog.author !== currentUser
-                    ? "liked"
-                    : ""
-                } 
-                           ${blog.author === currentUser ? "disabled" : ""}" 
-                        onclick="event.stopPropagation(); ${
-                          blog.author !== currentUser
-                            ? `toggleLike('${blog.slug}', event)`
-                            : ""
-                        }"
-                        ${blog.author === currentUser ? "disabled" : ""}
-                        title="${
-                          blog.author === currentUser
-                            ? "Cannot like your own blog"
-                            : blog.likedBy && blog.likedBy.includes(currentUser)
-                            ? "Unlike blog"
-                            : "Like blog"
-                        }">
-                  <span class="action-icon">${
-                    blog.likedBy && blog.likedBy.includes(currentUser)
-                      ? "❤️"
-                      : "🤍"
-                  }</span>
-                </button>
-              </div>
+            <div class="stat-item" title="Comments">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span class="stat-count">${blog.commentCount || 0}</span>
             </div>
           </div>
         </div>
@@ -801,747 +627,922 @@ class BlogsPageSearch {
       })
       .join("");
 
-    // Hide pagination during search
-    document.getElementById("pagination").style.display = "none";
-  }
+    container.innerHTML = blogCards;
 
-  highlightSearchTerm(text, searchTerm) {
-    if (!text) return "";
-
-    const searchLower = searchTerm.toLowerCase();
-    const textLower = text.toLowerCase();
-
-    // Escape HTML first
-    const escapedText = escapeHtml(text);
-
-    // Highlight matching parts
-    if (searchLower && textLower.includes(searchLower)) {
-      const matchIndex = textLower.indexOf(searchLower);
-      const beforeMatch = escapedText.substring(0, matchIndex);
-      const match = escapedText.substring(
-        matchIndex,
-        matchIndex + searchTerm.length
-      );
-      const afterMatch = escapedText.substring(matchIndex + searchTerm.length);
-
-      return `${beforeMatch}<span class="blog-search-highlight">${match}</span>${afterMatch}`;
-    }
-
-    return escapedText;
-  }
-
-  highlightSearchTermInContent(content, searchTerm) {
-    const searchLower = searchTerm.toLowerCase();
-    const contentLower = content.toLowerCase();
-    const escapedContent = escapeHtml(content);
-
-    if (searchLower && contentLower.includes(searchLower)) {
-      const matchIndex = contentLower.indexOf(searchLower);
-      const beforeMatch = escapedContent.substring(
-        0,
-        Math.max(0, matchIndex - 20)
-      );
-      const contextStart = Math.max(0, matchIndex - 20) > 0 ? "..." : "";
-      const match = escapedContent.substring(
-        matchIndex,
-        matchIndex + searchTerm.length
-      );
-      const afterMatch = escapedContent.substring(
-        matchIndex + searchTerm.length,
-        matchIndex + searchTerm.length + 100
-      );
-      const contextEnd = afterMatch.length === 100 ? "..." : "";
-
-      return `${contextStart}${beforeMatch}<span class="blog-search-highlight">${match}</span>${afterMatch}${contextEnd}`;
-    }
-
-    return escapedContent;
-  }
-
-  triggerSearchAnimation(hasResults) {
-    // Add shimmer effect to search container
-    const searchWrapper = this.searchInput.parentElement;
-    searchWrapper.classList.add("searching");
-
-    // Remove searching class after animation
-    setTimeout(() => {
-      searchWrapper.classList.remove("searching");
-    }, 1000);
-
-    // Trigger celebration for successful search
-    if (hasResults) {
-      this.triggerSearchCelebration();
-    }
-  }
-
-  triggerSearchCelebration() {
-    // Create floating particles effect
-    this.createFloatingParticles();
-
-    // Add success animation to the container
-    this.blogsGrid.classList.add("blog-search-success-animation");
-    setTimeout(() => {
-      this.blogsGrid.classList.remove("blog-search-success-animation");
-    }, 1000);
-  }
-
-  createFloatingParticles() {
-    const container = this.blogsGrid;
-    const particles = ["📝", "✨", "🔍", "💡", "📚"];
-
-    // Get container position for relative positioning
-    const containerRect = container.getBoundingClientRect();
-
-    for (let i = 0; i < 3; i++) {
-      const particle = document.createElement("div");
-      particle.className = "blog-search-particle";
-      particle.textContent =
-        particles[Math.floor(Math.random() * particles.length)];
-
-      // Calculate positions relative to viewport
-      const left = containerRect.left + Math.random() * containerRect.width;
-      const top = containerRect.top + Math.random() * containerRect.height;
-
-      particle.style.cssText = `
-        position: fixed;
-        font-size: 1.2rem;
-        pointer-events: none;
-        z-index: 9999;
-        opacity: 0;
-        animation: blogSearchFloatParticle 1.2s ease-out forwards;
-        left: ${left}px;
-        top: ${top}px;
-        will-change: transform, opacity;
-      `;
-
-      document.body.appendChild(particle);
-
-      // Remove particle after animation
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
+    // Add click event listeners to blog cards
+    container.querySelectorAll(".blog-card").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (
+          !e.target.closest(".blog-actions") &&
+          !e.target.closest(".btn-small")
+        ) {
+          const slug = card.dataset.slug;
+          if (slug) {
+            window.location.href = `/blogs/${slug}`;
+          }
         }
-      }, 1200);
-    }
+      });
+    });
   }
 
-  setSearchingState(searching) {
-    this.isSearching = searching;
+  /**
+   * Initialize header button that appears when scrolling
+   */
+  initHeaderButton() {
+    // Get or create header button
+    let headerBtn = document.getElementById("create-blog-header-btn");
 
-    if (searching) {
-      this.searchLoader.classList.add("show");
-      this.searchInput.parentElement.classList.add("searching");
-    } else {
-      this.searchLoader.classList.remove("show");
-      this.searchInput.parentElement.classList.remove("searching");
-    }
-  }
-
-  toggleClearButton(show) {
-    if (show) {
-      this.searchClear.classList.add("show");
-    } else {
-      this.searchClear.classList.remove("show");
-    }
-  }
-
-  clearSearch() {
-    // Clear input
-    this.searchInput.value = "";
-    this.currentSearchTerm = "";
-
-    // Hide clear button and results info
-    this.toggleClearButton(false);
-    this.searchResultsInfo.style.display = "none";
-
-    // Reset to original blog content
-    if (this.originalBlogsData.length > 0) {
-      this.renderOriginalBlogs();
-    }
-
-    // Show pagination again
-    document.getElementById("pagination").style.display = "flex";
-
-    // Focus back on input for better UX
-    this.searchInput.focus();
-  }
-
-  // Render original blogs for current tab
-  renderOriginalBlogs() {
-    // Reload blogs for current tab to reset to normal view
-    loadBlogs(currentPage);
-  }
-}
-
-// Initialize blog search functionality
-let blogsPageSearch;
-
-function initializeBlogsPageSearch() {
-  blogsPageSearch = new BlogsPageSearch();
-}
-
-// Update displayBlogs to handle unlogged users
-function displayBlogs(blogs) {
-  const blogsGrid = document.getElementById("blogsGrid");
-  const currentUser = localStorage.getItem("userId");
-  const token = localStorage.getItem("authToken");
-  const isLoggedIn = token && currentUser;
-
-  // Store data in search system
-  if (blogsPageSearch) {
-    blogsPageSearch.setBlogData(blogs, currentTab);
-  }
-
-  // If there's an active search, let the search system handle rendering
-  if (blogsPageSearch && blogsPageSearch.currentSearchTerm) {
-    return; // Search system will handle rendering
-  }
-
-  if (blogs.length === 0) {
-    let emptyMessage = "";
-    switch (currentTab) {
-      case "all":
-        emptyMessage = "No public blogs available yet.";
-        break;
-      case "my-blogs":
-        emptyMessage = isLoggedIn
-          ? "You haven't created any blogs yet."
-          : "Please log in to view your blogs.";
-        break;
-      case "popular":
-        emptyMessage = "No popular blogs yet.";
-        break;
-      default:
-        emptyMessage = "No blogs available.";
-    }
-
-    blogsGrid.innerHTML = `
-      <div class="empty-state">
-        <h3>No blogs found</h3>
-        <p>${emptyMessage}</p>
-        ${
-          currentTab === "my-blogs" && isLoggedIn
-            ? '<button class="create-blog-btn-compact" onclick="openCreateModal()" style="margin-top: 15px;">Create Your First Blog</button>'
-            : ""
-        }
-      </div>
+    if (!headerBtn) {
+      // Create button if it doesn't exist
+      headerBtn = document.createElement("button");
+      headerBtn.className = "create-blog-header-btn";
+      headerBtn.id = "create-blog-header-btn";
+      headerBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Create Blog
     `;
-    return;
-  }
+      headerBtn.style.display = "none";
 
-  // Show pagination (might be hidden from search)
-  document.getElementById("pagination").style.display = "flex";
-
-  // Get the layout for current page
-  const pageLayout = getCardLayoutForPage(blogs, currentPage - 1);
-
-  blogsGrid.innerHTML = pageLayout
-    .map((item, index) => {
-      const blog = item.blog;
-      const cardType = item.type;
-
-      // Calculate animation delay for staggered effect
-      const animationDelay = `${0.1 * index}s`;
-
-      // For unlogged users, don't show edit buttons and disable likes
-      const showEditButton = isLoggedIn && blog.author === currentUser;
-      const canLike = isLoggedIn && blog.author !== currentUser;
-
-      return `
-        <div class="blog-card ${cardType}" onclick="viewBlog('${
-        blog.slug
-      }')" style="animation-delay: ${animationDelay}">
-          <div class="blog-card-header">
-            <div class="blog-card-image">
-              <div class="blog-card-overlay"></div>
-              <div class="blog-card-category">${
-                blog.tags && blog.tags.length > 0 ? blog.tags[0] : "General"
-              }</div>
-            </div>
-          </div>
-          
-          <div class="blog-card-body">
-            <div class="blog-card-meta">
-              <div class="blog-author-avatar">
-                <span class="avatar-icon">👤</span>
-              </div>
-              <div class="blog-meta-info">
-                <span class="blog-author">${escapeHtml(
-                  blog.author || "Unknown"
-                )}</span>
-                <span class="blog-date">${formatBlogDate(blog.createdAt)}</span>
-              </div>
-              <div class="blog-visibility-tag">
-                <span class="visibility-icon">${
-                  blog.isPublic ? "🌍" : "🔒"
-                }</span>
-                <span class="visibility-text">${
-                  blog.isPublic ? "Public" : "Private"
-                }</span>
-              </div>
-            </div>
-            
-            <h3 class="blog-card-title">${escapeHtml(blog.title)}</h3>
-            
-            <div class="blog-card-excerpt">
-              ${escapeHtml(
-                blog.content
-                  ? blog.content.substring(0, 120)
-                  : "No content available"
-              )}${blog.content && blog.content.length > 120 ? "..." : ""}
-            </div>
-            
-            <div class="blog-card-footer">
-              <div class="blog-stats">
-                <div class="blog-stat">
-                  <span class="stat-icon">❤️</span>
-                  <span class="stat-count">${blog.likes || 0}</span>
-                </div>
-                <div class="blog-stat">
-                  <span class="stat-icon">👁️</span>
-                  <span class="stat-count">${blog.views || 0}</span>
-                </div>
-              </div>
-              
-              <div class="blog-actions">
-                ${
-                  showEditButton
-                    ? `
-                  <button class="blog-action-btn edit-btn" onclick="event.stopPropagation(); editBlog('${blog.slug}')" title="Edit blog">
-                    <span class="action-icon">✏️</span>
-                  </button>
-                `
-                    : ""
-                }
-                <button class="blog-action-btn like-btn ${
-                  blog.likedBy && blog.likedBy.includes(currentUser) && canLike
-                    ? "liked"
-                    : ""
-                } 
-                           ${!canLike ? "disabled" : ""}" 
-                        onclick="event.stopPropagation(); ${
-                          canLike
-                            ? `toggleLike('${blog.slug}', event)`
-                            : "void(0)"
-                        }"
-                        ${!canLike ? "disabled" : ""}
-                        title="${
-                          !isLoggedIn
-                            ? "Please log in to like blogs"
-                            : !canLike
-                            ? "Cannot like your own blog"
-                            : blog.likedBy && blog.likedBy.includes(currentUser)
-                            ? "Unlike blog"
-                            : "Like blog"
-                        }">
-                  <span class="action-icon">${
-                    blog.likedBy && blog.likedBy.includes(currentUser)
-                      ? "❤️"
-                      : "🤍"
-                  }</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-// Setup pagination
-function setupPagination(currentPage, totalPages, total) {
-  const pagination = document.getElementById("pagination");
-
-  if (totalPages <= 1) {
-    pagination.innerHTML = "";
-    return;
-  }
-
-  pagination.innerHTML = `
-            <button class="pagination-btn" ${
-              currentPage === 1 ? "disabled" : ""
-            } 
-                onclick="loadBlogs(${currentPage - 1})">Previous</button>
-            
-            <div class="pagination-info">
-                Page ${currentPage} of ${totalPages}
-            </div>
-            
-            <button class="pagination-btn" ${
-              currentPage === totalPages ? "disabled" : ""
-            } 
-                onclick="loadBlogs(${currentPage + 1})">Next</button>
-        `;
-}
-
-// Toggle like on a blog - FIXED VERSION with proper pagination preservation
-async function toggleLike(slug, event) {
-  const token = localStorage.getItem("authToken");
-  const currentUser = localStorage.getItem("userId");
-
-  if (!token || !currentUser) {
-    toastManager.info("Please log in to like blogs", "Login Required");
-    return;
-  }
-
-  // Ensure event is properly passed and prevent default behavior
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  try {
-    const token = localStorage.getItem("authToken");
-    const currentUser = localStorage.getItem("userId");
-
-    // Get blog card and author information safely
-    let blogCard;
-    let blogAuthor;
-
-    if (event && event.target) {
-      blogCard = event.target.closest(".blog-card");
-    } else {
-      // Fallback: find blog card by slug or other means
-      blogCard =
-        document.querySelector(`[onclick*="${slug}"]`)?.closest(".blog-card") ||
-        document.querySelector(".blog-card");
-    }
-
-    if (blogCard) {
-      const authorElement = blogCard.querySelector(".blog-meta span");
-      if (authorElement) {
-        blogAuthor = authorElement.textContent.replace("By ", "").trim();
+      // Insert before search container
+      const searchContainer = document.querySelector(".search-container");
+      if (searchContainer && searchContainer.parentNode) {
+        searchContainer.parentNode.insertBefore(headerBtn, searchContainer);
       }
     }
 
-    // Prevent self-like on frontend
-    if (blogAuthor === currentUser) {
-      toastManager.warning(
-        "You cannot like your own blog",
-        "Self-like Restricted"
+    // Store reference
+    this.elements["create-blog-header-btn"] = headerBtn;
+
+    // Add click event
+    headerBtn.addEventListener("click", () => this.showCreateModal());
+
+    // Set up scroll listener
+    this.setupScrollListener();
+  }
+
+  /**
+   * Set up scroll listener for header button
+   */
+  setupScrollListener() {
+    const mainBtn = this.elements["create-blog-btn"];
+    const headerBtn = this.elements["create-blog-header-btn"];
+    const controlsHeader = document.querySelector(".blogs-controls-header");
+
+    if (!mainBtn || !headerBtn || !controlsHeader) return;
+
+    let lastScrollTop = 0;
+    let isScrolling = false;
+
+    const checkButtonVisibility = () => {
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const mainBtnRect = mainBtn.getBoundingClientRect();
+
+      // Only show header button on My Blogs tab when logged in
+      if (this.state.activeTab === "my" && this.state.isLoggedIn) {
+        // Check if main button is visible (80% of viewport)
+        const isMainBtnVisible =
+          mainBtnRect.top >= 0 &&
+          mainBtnRect.bottom <= window.innerHeight * 0.8;
+
+        // Show header button when main button is not visible and we've scrolled enough
+        if (!isMainBtnVisible && scrollTop > 200) {
+          headerBtn.style.display = "flex";
+        } else {
+          headerBtn.style.display = "none";
+        }
+      } else {
+        headerBtn.style.display = "none";
+      }
+
+      lastScrollTop = scrollTop;
+    };
+
+    // Throttle scroll events
+    const throttledCheck = () => {
+      if (isScrolling) return;
+      isScrolling = true;
+
+      requestAnimationFrame(() => {
+        checkButtonVisibility();
+        isScrolling = false;
+      });
+    };
+
+    window.addEventListener("scroll", throttledCheck, { passive: true });
+
+    // Also check on tab switch
+    this.elements.tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setTimeout(() => {
+          if (this.state.activeTab !== "my" || !this.state.isLoggedIn) {
+            headerBtn.style.display = "none";
+          } else {
+            throttledCheck();
+          }
+        }, 100);
+      });
+    });
+
+    // Check on auth status change and window resize
+    window.addEventListener("resize", throttledCheck);
+
+    // Update on auth status change
+    const originalUpdateAuthUI = this.updateAuthUI.bind(this);
+    this.updateAuthUI = function () {
+      originalUpdateAuthUI();
+      setTimeout(() => {
+        if (this.state.activeTab === "my" && this.state.isLoggedIn) {
+          throttledCheck();
+        } else {
+          headerBtn.style.display = "none";
+        }
+      }, 100);
+    };
+
+    // Initial check
+    setTimeout(throttledCheck, 500);
+  }
+
+  /**
+   * Render user's blogs
+   */
+  renderMyBlogs(container, blogs) {
+    if (!blogs || !blogs.length) {
+      this.showEmptyState(
+        container,
+        "You haven't written any blogs yet. Create your first one!"
       );
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/blogs/${slug}/like`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const blogList = blogs
+      .map((blog) => {
+        const excerpt =
+          blog.excerpt ||
+          (blog.content
+            ? blog.content.substring(0, 150) +
+              (blog.content.length > 150 ? "..." : "")
+            : "No content available");
+
+        return `
+        <div class="blog-card" data-slug="${blog.slug || ""}">
+          <div class="blog-card-header">
+            <h3 class="blog-title">${this.escapeHtml(
+              blog.title || "Untitled"
+            )}</h3>
+            <div class="blog-meta">
+              <span class="blog-status ${blog.isPublic ? "public" : "private"}">
+                ${blog.isPublic ? "Public" : "Private"}
+              </span>
+              <span class="blog-date">${
+                blog.createdAt ? this.formatDate(blog.createdAt) : "Recently"
+              }</span>
+            </div>
+          </div>
+          <div class="blog-excerpt">
+            ${this.escapeHtml(excerpt)}
+          </div>
+          <div class="blog-actions">
+            <button class="btn-small btn-edit" data-slug="${
+              blog.slug
+            }">Edit</button>
+            <button class="btn-small btn-delete" data-slug="${
+              blog.slug
+            }">Delete</button>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    container.innerHTML = blogList;
+
+    // Add event listeners for edit/delete buttons
+    container.querySelectorAll(".btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const slug = btn.dataset.slug;
+        if (slug) {
+          this.handleEditBlog(slug);
+        }
+      });
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
-      );
+    container.querySelectorAll(".btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const slug = btn.dataset.slug;
+        if (slug) {
+          await this.handleDeleteBlog(slug);
+        }
+      });
+    });
+  }
+
+  /**
+   * Render pagination controls
+   */
+  renderPagination(tabId, data) {
+    const tabContent = document.getElementById(tabId);
+    if (!tabContent) return;
+
+    let existingPagination = tabContent.querySelector(".blogs-pagination");
+
+    if (existingPagination) {
+      existingPagination.remove();
     }
 
-    const result = await response.json();
+    if (!data.totalPages || data.totalPages <= 1) return;
 
-    if (result.success) {
-      // Update the UI immediately for better UX
-      let likeBtn;
-      if (event && event.target) {
-        likeBtn = event.target.closest(".like-btn");
-      } else if (blogCard) {
-        likeBtn = blogCard.querySelector(".like-btn");
+    const pagination = document.createElement("div");
+    pagination.className = "blogs-pagination";
+
+    pagination.innerHTML = `
+      <button class="pagination-btn prev" ${
+        this.state.currentPage === 1 ? "disabled" : ""
+      }>
+        Previous
+      </button>
+      <span class="pagination-info">
+        Page ${this.state.currentPage} of ${data.totalPages}
+      </span>
+      <button class="pagination-btn next" ${
+        this.state.currentPage === data.totalPages ? "disabled" : ""
+      }>
+        Next
+      </button>
+    `;
+
+    tabContent.appendChild(pagination);
+
+    // Add event listeners
+    const prevBtn = pagination.querySelector(".prev");
+    const nextBtn = pagination.querySelector(".next");
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        if (this.state.currentPage > 1) {
+          this.state.currentPage--;
+          this.loadActiveTab();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        if (this.state.currentPage < data.totalPages) {
+          this.state.currentPage++;
+          this.loadActiveTab();
+        }
+      });
+    }
+  }
+
+  /**
+   * Show create blog modal
+   */
+  showCreateModal() {
+    if (!this.state.isLoggedIn) {
+      this.showToast("Please sign in to create blogs", "error");
+      window.location.href = "/auth";
+      return;
+    }
+
+    if (this.elements["create-blog-modal"]) {
+      this.elements["create-blog-modal"].style.display = "flex";
+      // Reset form
+      if (this.elements["create-blog-form"]) {
+        this.elements["create-blog-form"].reset();
       }
+      // Set default visibility
+      this.setVisibility("public");
+      // Focus on title input
+      setTimeout(() => {
+        const titleInput = document.getElementById("blog-title");
+        if (titleInput) titleInput.focus();
+      }, 100);
+    }
+  }
 
-      if (likeBtn) {
-        const likesCount = likeBtn.nextElementSibling;
+  /**
+   * Hide create blog modal
+   */
+  hideCreateModal() {
+    if (this.elements["create-blog-modal"]) {
+      this.elements["create-blog-modal"].style.display = "none";
+    }
+  }
 
-        if (likeBtn.classList.contains("liked")) {
-          likeBtn.classList.remove("liked");
-          likeBtn.innerHTML = "🤍";
-          if (likesCount) {
-            likesCount.textContent = parseInt(likesCount.textContent) - 1;
-          }
+  /**
+   * Set blog visibility
+   */
+  setVisibility(visibility) {
+    this.elements.visibilityButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.visibility === visibility
+      );
+    });
+  }
+
+  /**
+   * Handle blog creation
+   */
+  async handleBlogCreation() {
+    const title = document.getElementById("blog-title")?.value.trim();
+    const content = document.getElementById("blog-content")?.value.trim();
+    const tags = document.getElementById("blog-tags")?.value.trim();
+    const visibilityBtn = document.querySelector(".visibility-btn.active");
+    const isPublic = visibilityBtn?.dataset.visibility === "public";
+
+    // Validation
+    if (!title) {
+      this.showToast("Blog title is required", "error");
+      document.getElementById("blog-title")?.focus();
+      return;
+    }
+
+    if (!content) {
+      this.showToast("Blog content is required", "error");
+      document.getElementById("blog-content")?.focus();
+      return;
+    }
+
+    if (title.length > 200) {
+      this.showToast("Blog title must be less than 200 characters", "error");
+      document.getElementById("blog-title")?.focus();
+      return;
+    }
+
+    // Prepare tags array
+    const tagsArray = tags
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag)
+      : [];
+
+    // Show loading state
+    const publishBtn = this.elements["publish-blog"];
+    const originalText = publishBtn.textContent;
+    publishBtn.textContent = "Publishing...";
+    publishBtn.disabled = true;
+
+    try {
+      const response = await fetch("/api/blogs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title,
+          content,
+          isPublic,
+          tags: tagsArray,
+          category: "general",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        this.showToast("✅ Blog created successfully!", "success");
+        this.hideCreateModal();
+
+        // If on My Blogs tab, refresh the list
+        if (this.state.activeTab === "my") {
+          await this.loadMyBlogs();
         } else {
-          likeBtn.classList.add("liked");
-          likeBtn.innerHTML = "❤️";
-          if (likesCount) {
-            likesCount.textContent = parseInt(likesCount.textContent) + 1;
-          }
+          // Switch to My Blogs tab to see the new blog
+          this.switchTab("my");
+        }
+      } else {
+        this.showToast(data.error || "Failed to create blog", "error");
+      }
+    } catch (error) {
+      console.error("Error creating blog:", error);
+      this.showToast("Failed to create blog. Please try again.", "error");
+    } finally {
+      // Reset button state
+      publishBtn.textContent = originalText;
+      publishBtn.disabled = false;
+    }
+  }
+
+  /**
+   * Handle blog edit
+   */
+  handleEditBlog(slug) {
+    // Navigate to edit page
+    window.location.href = `/blogs/${slug}/edit`;
+  }
+
+  /**
+   * Handle blog deletion - FIXED WITH CUSTOM TOAST
+   */
+  async handleDeleteBlog(slug) {
+    // Use custom confirmation dialog instead of browser's confirm
+    const confirmed = await this.showConfirmationDialog(
+      "Delete Blog",
+      "Are you sure you want to delete this blog? This action cannot be undone.",
+      "Delete",
+      "Cancel"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/blogs/${slug}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Show custom success toast
+        this.showToast("🗑️ Blog deleted successfully", "success");
+        await this.loadMyBlogs(); // Refresh the list
+      } else {
+        this.showToast(data.error || "Failed to delete blog", "error");
+      }
+    } catch (error) {
+      console.error("Error deleting blog:", error);
+      this.showToast("Failed to delete blog", "error");
+    }
+  }
+
+  /**
+   * Show custom confirmation dialog
+   */
+  showConfirmationDialog(title, message, confirmText, cancelText) {
+    return new Promise((resolve) => {
+      // Create modal overlay
+      const overlay = document.createElement("div");
+      overlay.className = "confirmation-overlay";
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+      `;
+
+      // Create modal
+      const modal = document.createElement("div");
+      modal.className = "confirmation-modal";
+      modal.style.cssText = `
+        background: var(--paper);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 400px;
+        width: 90%;
+        border: 1px solid var(--line);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      `;
+
+      modal.innerHTML = `
+        <h3 style="margin: 0 0 12px 0; color: var(--ink); font-size: 18px;">${title}</h3>
+        <p style="margin: 0 0 24px 0; color: var(--muted); font-size: 14px; line-height: 1.5;">${message}</p>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="confirmation-cancel" style="
+            padding: 10px 20px;
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--ink);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 200ms var(--ease);
+          ">${cancelText}</button>
+          <button class="confirmation-confirm" style="
+            padding: 10px 20px;
+            background: #ff6464;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 200ms var(--ease);
+          ">${confirmText}</button>
+        </div>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Add event listeners
+      const confirmBtn = modal.querySelector(".confirmation-confirm");
+      const cancelBtn = modal.querySelector(".confirmation-cancel");
+
+      const cleanup = () => {
+        document.body.removeChild(overlay);
+        document.removeEventListener("keydown", handleKeydown);
+      };
+
+      const handleConfirm = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      const handleCancel = () => {
+        cleanup();
+        resolve(false);
+      };
+
+      const handleKeydown = (e) => {
+        if (e.key === "Escape") handleCancel();
+        if (e.key === "Enter") handleConfirm();
+      };
+
+      confirmBtn.addEventListener("click", handleConfirm);
+      cancelBtn.addEventListener("click", handleCancel);
+      document.addEventListener("keydown", handleKeydown);
+
+      // Focus on cancel button by default
+      cancelBtn.focus();
+    });
+  }
+
+  /**
+   * Handle user logout
+   */
+  async handleLogout() {
+    const confirmed = await this.showConfirmationDialog(
+      "Logout",
+      "Are you sure you want to logout?",
+      "Logout",
+      "Cancel"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        this.state.isLoggedIn = false;
+        this.state.user = null;
+        this.updateAuthUI();
+        this.showToast("👋 Logged out successfully", "success");
+
+        // Reload the page to reflect auth changes
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        this.showToast("Failed to logout", "error");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+      this.showToast("Failed to logout", "error");
+    }
+  }
+
+  /**
+   * Show loading state
+   */
+  showLoadingState() {
+    this.state.isLoading = true;
+    const activeTab = document.querySelector(
+      `#${this.state.activeTab}-blogs-tab`
+    );
+    if (activeTab) {
+      activeTab.style.opacity = "0.7";
+      activeTab.style.pointerEvents = "none";
+
+      // Show skeleton loading
+      const grid = activeTab.querySelector(".blogs-grid");
+      if (grid && !grid.querySelector(".blog-card")) {
+        grid.innerHTML = `
+          <div class="blog-card loading"></div>
+          <div class="blog-card loading"></div>
+          <div class="blog-card loading"></div>
+        `;
+      }
+    }
+  }
+
+  /**
+   * Hide loading state
+   */
+  hideLoadingState() {
+    this.state.isLoading = false;
+    const activeTab = document.querySelector(
+      `#${this.state.activeTab}-blogs-tab`
+    );
+    if (activeTab) {
+      activeTab.style.opacity = "1";
+      activeTab.style.pointerEvents = "auto";
+    }
+  }
+
+  /**
+   * Show empty state
+   */
+  showEmptyState(container, message) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+        </svg>
+        <p>${message}</p>
+      </div>
+    `;
+  }
+
+  /**
+   * Show toast message - IMPROVED WITH EMOJI AND TYPES
+   */
+  showToast(message, type = "info") {
+    if (!this.elements.toast) {
+      // Create toast container if it doesn't exist
+      const toastContainer = document.createElement("div");
+      toastContainer.id = "toast";
+      toastContainer.className = "toast-container";
+      toastContainer.setAttribute("aria-live", "polite");
+      document.body.appendChild(toastContainer);
+      this.elements.toast = toastContainer;
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = message;
+    this.elements.toast.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add("show"), 10);
+
+    // Auto dismiss
+    setTimeout(() => {
+      toast.classList.remove("show");
+      toast.classList.add("hide");
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  /**
+   * Format date for display
+   */
+  formatDate(dateString) {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Recently";
+      }
+      return date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch (error) {
+      return "Recently";
+    }
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
+
+// Initialize blog page when DOM is loaded
+document.addEventListener("DOMContentLoaded", function () {
+  // Check if we're on the blogs page
+  if (
+    window.location.pathname.includes("/blogs") ||
+    window.location.pathname === "/blogs.html" ||
+    document.querySelector(".blogs-main-content")
+  ) {
+    // Add CSS for custom elements
+    const style = document.createElement("style");
+    style.textContent = `
+      /* Blog actions styles */
+      .blog-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+      
+      .btn-small {
+        padding: 6px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        color: var(--ink);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 200ms var(--ease);
+      }
+      
+      .btn-small:hover {
+        border-color: var(--ring);
+        transform: translateY(-1px);
+      }
+      
+      .btn-edit:hover {
+        background: rgba(163, 177, 138, 0.1);
+      }
+      
+      .btn-delete:hover {
+        background: rgba(255, 100, 100, 0.1);
+        border-color: #ff6464;
+        color: #ff6464;
+      }
+      
+      .blog-status {
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+      }
+      
+      .blog-status.public {
+        background: rgba(163, 177, 138, 0.2);
+        color: var(--accent);
+      }
+      
+      .blog-status.private {
+        background: rgba(100, 100, 255, 0.2);
+        color: #6464ff;
+      }
+      
+      /* Toast styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .toast {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-width: 300px;
+        opacity: 0;
+        transform: translateX(100px);
+        transition: all 300ms var(--ease);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .toast-success {
+        border-left: 4px solid #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+      }
+      
+      .toast-error {
+        border-left: 4px solid #f44336;
+        background: rgba(244, 67, 54, 0.1);
+      }
+      
+      .toast-info {
+        border-left: 4px solid var(--accent);
+        background: rgba(163, 177, 138, 0.1);
+      }
+      
+      .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      
+      .toast.hide {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      
+      /* Loading skeleton */
+      .blog-card.loading {
+        animation: shimmer 1.5s infinite linear;
+        background: linear-gradient(
+          90deg,
+          var(--paper) 0%,
+          rgba(255, 255, 255, 0.05) 50%,
+          var(--paper) 100%
+        );
+        background-size: 200% 100%;
+        min-height: 200px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+      }
+      
+      @keyframes shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
         }
       }
+      
+      /* Pagination styles */
+      .blogs-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+      
+      .pagination-btn {
+        padding: 10px 16px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 200ms var(--ease);
+      }
+      
+      .pagination-btn:hover:not(:disabled) {
+        border-color: var(--ring);
+        transform: translateY(-1px);
+      }
+      
+      .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .pagination-info {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      
+      /* Profile dropdown fixes */
+      .profile-dropdown .dropdown-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 10px 16px !important;
+        width: 100% !important;
+        text-align: left !important;
+      }
+      
+      .profile-dropdown .dropdown-item svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      
+      /* Ensure blog cards are clickable */
+      .blog-card {
+        cursor: pointer;
+        transition: all 300ms var(--ease);
+      }
+      
+      .blog-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+    `;
+    document.head.appendChild(style);
 
-      // FIX: Only update tab counts, DO NOT reload blogs
-      await updateTabCounts();
-
-      // Show success message but don't reload the page
-      toastManager.success(
-        result.hasLiked ? "Blog liked!" : "Blog unliked!",
-        "Success"
-      );
-    } else {
-      toastManager.error(result.error, "Like Failed");
-    }
-  } catch (error) {
-    // console.error("Error toggling like:", error);
-    if (error.message.includes("Cannot like your own blog")) {
-      toastManager.warning(
-        "You cannot like your own blog",
-        "Self-like Restricted"
-      );
-    } else {
-      toastManager.error(
-        "Failed to like blog. Please try again.",
-        "Network Error"
-      );
-    }
-  }
-}
-
-// Function to position modal in visible viewport
-function positionModalInViewport() {
-  const modal = document.getElementById("blogModal");
-  const modalContent = modal.querySelector(".modal-content");
-
-  if (!modal || !modalContent) return;
-
-  // Calculate viewport dimensions
-  const viewportHeight = window.innerHeight;
-  const viewportWidth = window.innerWidth;
-
-  // Calculate modal dimensions
-  const modalHeight = modalContent.offsetHeight;
-  const modalWidth = modalContent.offsetWidth;
-
-  // Position modal in the center of the visible viewport
-  const topPosition = Math.max(20, (viewportHeight - modalHeight) / 2);
-  const leftPosition = (viewportWidth - modalWidth) / 2;
-
-  // Apply positioning
-  modalContent.style.position = "fixed";
-  modalContent.style.top = `${topPosition}px`;
-  modalContent.style.left = `${leftPosition}px`;
-  modalContent.style.transform = "none"; // Remove any existing transforms
-  modalContent.style.margin = "0"; // Remove default margins
-}
-
-// Enhanced modal opening with viewport positioning
-function openCreateModal() {
-  editingBlog = null;
-  document.getElementById("modalTitle").textContent =
-    "Create New Blog – Editable Anytime";
-  document.getElementById("modalSubmit").textContent = "Create Blog";
-  document.getElementById("blogForm").reset();
-
-  const modal = document.getElementById("blogModal");
-  modal.style.display = "flex";
-
-  // Position modal in viewport after it's displayed
-  setTimeout(() => {
-    positionModalInViewport();
-  }, 10);
-
-  // Add resize listener for responsive positioning
-  window.addEventListener("resize", positionModalInViewport);
-}
-
-// Enhanced edit blog modal with viewport positioning
-async function editBlog(slug) {
-  try {
-    const token = localStorage.getItem("authToken");
-    const response = await fetch(`${API_BASE_URL}/blogs/${slug}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      editingBlog = result.blog;
-      document.getElementById("modalTitle").textContent = "Edit Blog";
-      document.getElementById("modalSubmit").textContent = "Update Blog";
-      document.getElementById("blogTitle").value = editingBlog.title;
-      document.getElementById("blogContent").value = editingBlog.content;
-      document.getElementById("blogTags").value = editingBlog.tags
-        ? editingBlog.tags.join(", ")
-        : "";
-      document.getElementById("blogIsPublic").checked = editingBlog.isPublic;
-
-      const modal = document.getElementById("blogModal");
-      modal.style.display = "flex";
-
-      // Position modal in viewport after it's displayed
-      setTimeout(() => {
-        positionModalInViewport();
-      }, 10);
-
-      // Add resize listener for responsive positioning
-      window.addEventListener("resize", positionModalInViewport);
-    } else {
-      toastManager.error(result.error, "Error Loading Blog");
-    }
-  } catch (error) {
-    // console.error("Error loading blog for edit:", error);
-    toastManager.error("Failed to load blog for editing", "Network Error");
-  }
-}
-
-// Enhanced close modal function
-function closeModal() {
-  const modal = document.getElementById("blogModal");
-  modal.style.display = "none";
-  editingBlog = null;
-
-  // Remove resize listener when modal is closed
-  window.removeEventListener("resize", positionModalInViewport);
-
-  // Reset modal positioning for next open
-  const modalContent = modal.querySelector(".modal-content");
-  if (modalContent) {
-    modalContent.style.position = "";
-    modalContent.style.top = "";
-    modalContent.style.left = "";
-    modalContent.style.transform = "";
-    modalContent.style.margin = "";
-  }
-}
-
-// Handle form submission
-document.getElementById("blogForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const title = document.getElementById("blogTitle").value;
-  const content = document.getElementById("blogContent").value;
-  const tags = document
-    .getElementById("blogTags")
-    .value.split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag);
-  const isPublic = document.getElementById("blogIsPublic").checked;
-
-  if (!title.trim() || !content.trim()) {
-    toastManager.warning("Title and content are required", "Validation Error");
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem("authToken");
-    const url = editingBlog
-      ? `${API_BASE_URL}/blogs/${editingBlog.slug}`
-      : `${API_BASE_URL}/blogs`;
-    const method = editingBlog ? "PUT" : "POST";
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title, content, tags, isPublic }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `HTTP error! status: ${response.status}, response: ${errorText}`
-      );
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      closeModal();
-      await loadBlogs();
-      await updateTabCounts();
-      toastManager.success(
-        editingBlog
-          ? "Blog updated successfully!"
-          : "Blog created successfully!",
-        editingBlog ? "Blog Updated" : "Blog Created"
-      );
-    } else {
-      toastManager.error(result.error, "Save Failed");
-    }
-  } catch (error) {
-    // console.error("Error saving blog:", error);
-    toastManager.error(
-      "Failed to save blog. Please try again.",
-      "Network Error"
-    );
+    // Add a small delay to ensure all elements are loaded
+    setTimeout(() => {
+      try {
+        window.blogPageController = new BlogPageController();
+      } catch (error) {
+        console.error("Failed to initialize Blog Page Controller:", error);
+      }
+    }, 100);
   }
 });
-
-// Add this function to track views when blog is opened
-async function trackBlogView(slug) {
-  try {
-    await fetch(`${API_BASE_URL}/blogs/${slug}/view`, {
-      method: "POST",
-    });
-    // We don't need to handle the response, just fire and forget
-  } catch (error) {
-    // console.error("Error tracking view:", error);
-    // Silent fail - don't disrupt user experience
-  }
-}
-
-// Update the viewBlog function to track views
-function viewBlog(slug) {
-  trackBlogView(slug); // Track view before navigation
-  window.location.href = `${BASE_URL}/blogs/${slug}`;
-}
-
-// Utility function to escape HTML
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// Scroll to Top Functionality
-function initScrollToTop() {
-  const scrollToTopBtn = document.getElementById("scrollToTop");
-
-  if (!scrollToTopBtn) return;
-
-  // Show/hide button based on scroll position
-  function toggleScrollToTop() {
-    if (window.pageYOffset > 300) {
-      scrollToTopBtn.classList.add("visible");
-    } else {
-      scrollToTopBtn.classList.remove("visible");
-    }
-  }
-
-  // Smooth scroll to top
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
-  // Event listeners
-  window.addEventListener("scroll", toggleScrollToTop);
-  scrollToTopBtn.addEventListener("click", scrollToTop);
-
-  // Keyboard accessibility
-  scrollToTopBtn.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      scrollToTop();
-    }
-  });
-
-  // Initialize
-  toggleScrollToTop();
-}
-
-// Initialize scroll to top when DOM is loaded
-document.addEventListener("DOMContentLoaded", initScrollToTop);
-
-// Initialize blogs when page loads
-document.addEventListener("DOMContentLoaded", initBlogs);

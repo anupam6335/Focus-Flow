@@ -11,7 +11,7 @@ import http from "http";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 // Configuration
 import config from "./config/environment.js";
@@ -33,10 +33,11 @@ import socialRoutes from "./routes/social.js";
 import dataRoutes from "./routes/data.js";
 import adminNotificationRoutes from "./routes/adminNotifications.js";
 import banManagementRoutes from "./routes/banManagement.js";
-import todoRoutes from './routes/todos.js';
+import todoRoutes from "./routes/todos.js";
 import { socketService } from "./services/socketService.js";
-import dailyCarryOverRoutes from './routes/dailyCarryOver.js';
-import StructuredTodo from './models/StructuredTodo.js';
+import dailyCarryOverRoutes from "./routes/dailyCarryOver.js";
+import StructuredTodo from "./models/StructuredTodo.js";
+import authorActivityRoutes from "./routes/authorActivity.js";
 
 // Initialize Express app
 const app = express();
@@ -66,7 +67,7 @@ const todoAutoGenerateLimiter = rateLimit({
   max: 3, // Max 3 requests per windowMs
   message: {
     success: false,
-    error: 'Too many auto-generation attempts. Please try again tomorrow.'
+    error: "Too many auto-generation attempts. Please try again tomorrow.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -92,9 +93,10 @@ app.use("/api/data", dataRoutes);
 app.use("/api/admin", adminNotificationRoutes);
 app.use("/api/admin", banManagementRoutes);
 app.use("/api", banManagementRoutes);
-app.use('/api/todos', todoRoutes);
-app.use('/api/todos/auto-generate', todoAutoGenerateLimiter);
-app.use('/api/todos', dailyCarryOverRoutes);
+app.use("/api/todos", todoRoutes);
+app.use("/api/todos/auto-generate", todoAutoGenerateLimiter);
+app.use("/api/todos", dailyCarryOverRoutes);
+app.use("/api/author-activity", authorActivityRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -169,19 +171,19 @@ app.use(errorHandler);
 const initializeDailyCarryOver = async () => {
   try {
     // Wait a bit to ensure database is fully connected
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log('🔄 Checking for daily todo carry-over...');
-    const StructuredTodo = await import('./models/StructuredTodo.js');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    console.log("🔄 Checking for daily todo carry-over...");
+    const StructuredTodo = await import("./models/StructuredTodo.js");
     const result = await StructuredTodo.default.processDailyCarryOver();
-    
+
     if (result.totalCarriedOver > 0) {
       console.log(`✅ Carried over ${result.totalCarriedOver} todos to today`);
     } else {
-      console.log('ℹ️ No todos needed carry-over today');
+      console.log("ℹ️ No todos needed carry-over today");
     }
   } catch (error) {
-    console.error('❌ Error processing daily carry-over:', error.message);
+    console.error("❌ Error processing daily carry-over:", error.message);
     // Don't crash the server if carry-over fails
   }
 };

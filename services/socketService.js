@@ -3,11 +3,11 @@
  * Handles real-time WebSocket connections and events
  */
 
-import { Server } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import config from '../config/environment.js';
-import { SOCKET_EVENTS, SOCKET_CONFIG } from '../utils/constants.js';
+import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import config from "../config/environment.js";
+import { SOCKET_EVENTS, SOCKET_CONFIG } from "../utils/constants.js";
 
 class SocketService {
   constructor() {
@@ -22,15 +22,15 @@ class SocketService {
     this.io = new Server(server, {
       cors: {
         origin: SOCKET_CONFIG.CORS_ORIGIN,
-        methods: ['GET', 'POST'],
-        credentials: true
-      }
+        methods: ["GET", "POST"],
+        credentials: true,
+      },
     });
 
     this.setupEventHandlers();
     this.startCleanupInterval();
-    
-    console.log('✅ Socket.io initialized');
+
+    console.log("✅ Socket.io initialized");
   }
 
   /**
@@ -51,7 +51,7 @@ class SocketService {
             await this.handleUserConnection(socket, username);
           }
         } catch (error) {
-          console.log('Invalid token for socket connection');
+          console.log("Invalid token for socket connection");
         }
       }
 
@@ -101,7 +101,7 @@ class SocketService {
       username: username,
       isOnline: true,
       lastActive: new Date(),
-      type: 'online',
+      type: "online",
     });
 
     console.log(`🔗 User ${username} connected (socket: ${socket.id})`);
@@ -130,7 +130,7 @@ class SocketService {
         const rooms = Array.from(socket.rooms);
         rooms.forEach((room) => {
           if (
-            room.startsWith('blog-publish-') &&
+            room.startsWith("blog-publish-") &&
             room !== `blog-publish-${username}`
           ) {
             socket.leave(room);
@@ -184,7 +184,7 @@ class SocketService {
           username: username,
           isOnline: false,
           lastActive: new Date(),
-          type: 'offline',
+          type: "offline",
         });
 
         console.log(`🔌 User ${username} force disconnected`);
@@ -192,14 +192,14 @@ class SocketService {
     });
 
     // ✅ CORRECT PLACEMENT: Add notification event listeners HERE
-    socket.on('join-notifications', () => {
+    socket.on("join-notifications", () => {
       if (username) {
         socket.join(`user-notifications-${username}`);
         console.log(`🔔 User ${username} joined notifications room`);
       }
     });
 
-    socket.on('leave-notifications', () => {
+    socket.on("leave-notifications", () => {
       if (username) {
         socket.leave(`user-notifications-${username}`);
         console.log(`🔔 User ${username} left notifications room`);
@@ -212,7 +212,7 @@ class SocketService {
    */
   async handleUserDisconnect(socket, username, reason) {
     console.log(`🔌 User ${username} disconnected: ${reason}`);
-    
+
     // Update user as offline only after a delay for page refreshes/navigation
     if (username) {
       setTimeout(async () => {
@@ -236,7 +236,7 @@ class SocketService {
             username: username,
             isOnline: false,
             lastActive: new Date(),
-            type: 'offline',
+            type: "offline",
           });
 
           console.log(`👋 User ${username} marked as offline`);
@@ -276,7 +276,7 @@ class SocketService {
           username: username,
           isOnline: false,
           lastActive: new Date(),
-          type: 'timeout',
+          type: "timeout",
         });
 
         console.log(`🕒 User ${username} connection timed out`);
@@ -292,7 +292,7 @@ class SocketService {
     if (userConnection) {
       this.io.to(userConnection.socketId).emit(event, data);
     }
-    
+
     // Also emit to notification room for broader reach
     this.emitToRoom(`user-notifications-${username}`, event, data);
   }

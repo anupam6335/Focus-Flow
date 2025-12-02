@@ -117,6 +117,9 @@ class FocusFlowApp {
       "notifications-dropdown",
       "login-link",
       "logout-btn",
+      "blogs-btn",
+      "blogs-dropdown",
+      "profile-link",
       "current-date",
       "current-day",
       "question-list",
@@ -199,6 +202,31 @@ class FocusFlowApp {
     this.setupModalListeners();
     this.setupTodoListeners();
     this.setupGlobalListeners();
+
+    if (this.elements["blogs-btn"]) {
+      this.elements["blogs-btn"].addEventListener("click", () =>
+        this.toggleBlogsDropdown()
+      );
+    }
+  }
+
+  /**
+   * Toggle blogs dropdown
+   */
+  toggleBlogsDropdown() {
+    if (this.elements["blogs-dropdown"]) {
+      const isShowing =
+        this.elements["blogs-dropdown"].classList.toggle("show");
+      if (isShowing) {
+        // Close other dropdowns
+        if (this.elements["profile-dropdown"]) {
+          this.elements["profile-dropdown"].classList.remove("show");
+        }
+        if (this.elements["notifications-dropdown"]) {
+          this.elements["notifications-dropdown"].classList.remove("show");
+        }
+      }
+    }
   }
 
   /**
@@ -361,6 +389,12 @@ class FocusFlowApp {
       ) {
         this.elements["notifications-dropdown"].classList.remove("show");
       }
+      if (
+        this.elements["blogs-dropdown"] &&
+        !e.target.closest(".blogs-wrapper")
+      ) {
+        this.elements["blogs-dropdown"].classList.remove("show");
+      }
     });
 
     // Escape key to close modals
@@ -421,6 +455,9 @@ class FocusFlowApp {
     if (this.elements["login-link"]) {
       this.elements["login-link"].style.display = "none";
     }
+    if (this.elements["profile-link"]) {
+      this.elements["profile-link"].style.display = "flex";
+    }
   }
 
   /**
@@ -435,6 +472,9 @@ class FocusFlowApp {
     }
     if (this.elements["login-link"]) {
       this.elements["login-link"].style.display = "flex";
+    }
+    if (this.elements["profile-link"]) {
+      this.elements["profile-link"].style.display = "none";
     }
   }
 
@@ -1064,14 +1104,14 @@ class FocusFlowApp {
 
         this.renderQuestions();
         this.showToast(newCompletedStatus ? "Completed" : "Marked incomplete");
-    if (window.notifyTaskCompletion && newCompletedStatus) {
-    const questionId = question._id?.$oid || question._id;
-    window.notifyTaskCompletion('question', question.text, questionId);
-    // Also mark the question as completed to prevent future notifications
-    if (window.markTaskAsCompleted) {
-        window.markTaskAsCompleted(questionId);
-    }
-}
+        if (window.notifyTaskCompletion && newCompletedStatus) {
+          const questionId = question._id?.$oid || question._id;
+          window.notifyTaskCompletion("question", question.text, questionId);
+          // Also mark the question as completed to prevent future notifications
+          if (window.markTaskAsCompleted) {
+            window.markTaskAsCompleted(questionId);
+          }
+        }
       } else {
         this.showToast("Something went wrong—try again");
       }
@@ -1327,13 +1367,13 @@ class FocusFlowApp {
         this.showToast(
           newStatus === "done" ? "Completed" : "Marked incomplete"
         );
-      if (window.notifyTaskCompletion && newStatus === 'done') {
-    window.notifyTaskCompletion('todo', todo.title, todo._id);
-    // Also mark the task as completed to prevent future notifications
-    if (window.markTaskAsCompleted) {
-        window.markTaskAsCompleted(todo._id);
-    }
-}
+        if (window.notifyTaskCompletion && newStatus === "done") {
+          window.notifyTaskCompletion("todo", todo.title, todo._id);
+          // Also mark the task as completed to prevent future notifications
+          if (window.markTaskAsCompleted) {
+            window.markTaskAsCompleted(todo._id);
+          }
+        }
         await this.loadTodos();
       } else {
         this.showToast("Failed to update todo");
