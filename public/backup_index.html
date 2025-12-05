@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-IN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -9,40 +9,11 @@
     <title>FocusFlow — Your Daily Progress</title>
     <meta
       name="description"
-      content="FocusFlow - Track your DSA progress with structured daily practice. Master Data Structures & Algorithms with calm focus, progress tracking, and personalized todo system. Join Indian students in consistent coding practice."
+      content="Track your DSA progress with calm focus and cinematic beauty"
     />
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow" />
-    <meta
-      name="keywords"
-      content="DSA, Data Structures, Algorithms, coding practice, leetcode, programming, study tracker, progress tracking, Indian students, computer science"
-    />
-    <meta name="author" content="Anupam Debnath" />
+    <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1b1b1b" />
     <link rel="icon" href="/favicon.ico" />
-    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "FocusFlow",
-        "description": "Track your DSA progress with calm focus and cinematic beauty",
-        "url": "http://localhost:3000",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "Any",
-        "author": {
-          "@type": "Person",
-          "name": "Anupam Debnath"
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
-      }
-    </script>
 
     <!-- Dynamic SEO -->
     <script>
@@ -51,7 +22,7 @@
         const path = window.location.pathname;
         const link = document.createElement("link");
         link.rel = "canonical";
-        link.href = origin + (path === "/" ? "" : path);
+        link.href = origin + path;
         document.head.appendChild(link);
 
         const ogTags = [
@@ -60,8 +31,6 @@
           ["og:type", "website"],
           ["og:url", origin + path],
           ["og:image", origin + "/assets/home_preview.png"],
-          ["og:site_name", "FocusFlow"],
-          ["og:locale", "en_US"],
         ];
 
         ogTags.forEach(([property, content]) => {
@@ -70,35 +39,16 @@
           m.setAttribute("content", content);
           document.head.appendChild(m);
         });
-
-        // Twitter Card
-        const twitterTags = [
-          ["twitter:card", "summary_large_image"],
-          ["twitter:title", "FocusFlow — Your Daily Progress"],
-          [
-            "twitter:description",
-            "Track your DSA progress with calm focus and cinematic beauty",
-          ],
-          ["twitter:image", origin + "/assets/home_preview.png"],
-        ];
-
-        twitterTags.forEach(([name, content]) => {
-          const m = document.createElement("meta");
-          m.setAttribute("name", name);
-          m.setAttribute("content", content);
-          document.head.appendChild(m);
-        });
       })();
     </script>
 
-    <!-- Your existing CSS links -->
+    <link rel="preload" href="css/helper.css" as="style" />
+    <link rel="preload" href="css/main.css" as="style" />
     <link rel="stylesheet" href="css/helper.css" />
     <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/_sand-timer.css" />
     <link rel="stylesheet" href="css/_sticky_note.css" />
     <link rel="stylesheet" href="css/main_public.css" />
-    <link rel="stylesheet" href="css/notification.css" />
-    <link rel="stylesheet" href="css/flip-clock.css" />
-    <link rel="stylesheet" href="css/responsive_main.css" />
   </head>
   <body>
     <!-- Background Elements -->
@@ -190,39 +140,6 @@
             </button>
           </div>
 
-          <!-- Blogs Dropdown -->
-          <div class="blogs-wrapper">
-            <button class="icon-btn" id="blogs-btn" aria-label="Blogs menu">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path
-                  d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-                ></path>
-              </svg>
-            </button>
-            <div class="dropdown blogs-dropdown" id="blogs-dropdown">
-              <div class="dropdown-content">
-                <a href="/blogs" class="dropdown-item">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                  </svg>
-                  All Blogs
-                </a>
-              </div>
-            </div>
-          </div>
-
           <!-- User Controls -->
           <div class="user-controls">
             <div class="notification-wrapper">
@@ -296,23 +213,6 @@
                     </svg>
                     Login
                   </a>
-                  <a
-                    href="/profile"
-                    class="dropdown-item"
-                    id="profile-link"
-                    style="display: none"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    Profile
-                  </a>
                   <button
                     class="dropdown-item"
                     id="logout-btn"
@@ -363,26 +263,6 @@
               </button>
             </div>
 
-            <div class="filter-controls">
-              <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="complete">
-                  Complete
-                </button>
-                <button class="filter-btn" data-filter="not-complete">
-                  Not Complete
-                </button>
-              </div>
-              <div class="search-container">
-                <input
-                  type="text"
-                  id="questions-search"
-                  placeholder="Search questions..."
-                  class="search-input"
-                />
-              </div>
-            </div>
-
             <div class="questions-list" id="question-list">
               <!-- Questions will be dynamically inserted here -->
               <div class="empty-state">
@@ -415,106 +295,359 @@
 
         <!-- Right Column - Sand Timer -->
         <div class="column-right">
-          <div class="clock-container" id="clock-container">
-            <div class="clock-header">
-              <h3>Focus Timer</h3>
-              <div class="clock-controls">
-                <button class="clock-btn" id="clock-set" aria-label="Set timer">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  Set
-                </button>
-                <button
-                  class="clock-btn"
-                  id="clock-stop"
-                  aria-label="Stop timer"
-                  disabled
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <rect x="6" y="4" width="4" height="16" />
-                    <rect x="14" y="4" width="4" height="16" />
-                  </svg>
-                  Stop
-                </button>
-                <button
-                  class="clock-btn"
-                  id="clock-reset"
-                  aria-label="Reset timer"
-                  disabled
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
+          <div class="sand-timer-container">
+            <div class="sand-timer" id="sand-timer">
+              <!-- Full State SVG (shown when no progress) -->
+              <svg
+                class="hourglass-svg hourglass-full"
+                width="260px"
+                height="280px"
+                viewBox="0 0 14 18"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+              >
+                <defs>
+                  <!-- Bottom bulb interior: prevents overflow on lower sand -->
+                  <clipPath id="bottom-bulb-clip">
                     <path
-                      d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                      d="
+                      M 2.15 16.47
+                      L 11.85 16.47
+                      C 11.70 15.00 11.35 13.92 10.70 12.98
+                        10.12 12.19 9.40 11.53 8.70 11.08
+                        8.14 10.73 7.81 10.61 7.45 10.37
+                        7.18 10.19 7.02 9.95 7.02 9.70
+                        7.02 9.45 7.18 9.21 7.45 9.03
+                        7.81 8.79 8.14 8.67 8.70 8.32
+                        9.40 7.87 10.12 7.21 10.70 6.42
+                        11.35 5.48 11.70 4.40 11.85 1.90
+                      L 2.15 1.90
+                      C 2.30 4.40 2.65 5.48 3.30 6.42
+                        3.88 7.21 4.60 7.87 5.30 8.32
+                        5.86 8.67 6.19 8.79 6.55 9.03
+                        6.82 9.21 6.98 9.45 6.98 9.70
+                        6.98 9.95 6.82 10.19 6.55 10.37
+                        6.19 10.61 5.86 10.73 5.30 11.08
+                        4.60 11.53 3.88 12.19 3.30 12.98
+                        2.65 13.92 2.30 15.00 2.15 16.47
+                      Z"
                     />
-                    <path d="M3 3v5h5" />
-                  </svg>
-                  Reset
-                </button>
-              </div>
-            </div>
+                  </clipPath>
 
-            <!-- Flip Clock Display -->
-            <div class="flip-clock-wrapper">
-              <div id="flip-clock" class="flip-clock">
-                <div class="flip-unit">
-                  <div class="flip-card minute-ten">
-                    <div class="top">0</div>
-                    <div class="bottom">0</div>
-                    <div class="flip-top">0</div>
-                    <div class="flip-bottom">0</div>
-                  </div>
-                </div>
-                <div class="flip-unit">
-                  <div class="flip-card minute-unit">
-                    <div class="top">0</div>
-                    <div class="bottom">0</div>
-                    <div class="flip-top">0</div>
-                    <div class="flip-bottom">0</div>
-                  </div>
-                </div>
-                <div class="flip-colon">:</div>
-                <div class="flip-unit">
-                  <div class="flip-card second-ten">
-                    <div class="top">0</div>
-                    <div class="bottom">0</div>
-                    <div class="flip-top">0</div>
-                    <div class="flip-bottom">0</div>
-                  </div>
-                </div>
-                <div class="flip-unit">
-                  <div class="flip-card second-unit">
-                    <div class="top">0</div>
-                    <div class="bottom">0</div>
-                    <div class="flip-top">0</div>
-                    <div class="flip-bottom">0</div>
-                  </div>
-                </div>
+                  <!-- Top bulb interior: keeps top sand inside the glass -->
+                  <clipPath id="top-bulb-clip">
+                    <path
+                      d="
+              M 2.15 1.90
+              L 11.85 1.90
+              C 11.70 3.37 11.35 4.45 10.70 5.39
+                10.12 6.18 9.40 6.84 8.70 7.29
+                8.14 7.64 7.81 7.76 7.45 8.00
+                7.18 8.18 7.02 8.42 7.02 8.67
+                7.02 8.92 7.18 9.16 7.45 9.34
+                7.81 9.58 8.14 9.70 8.70 10.05
+                9.40 10.50 10.12 11.16 10.70 11.95
+                11.35 12.89 11.70 13.97 11.85 16.47
+              L 2.15 16.47
+              C 2.30 13.97 2.65 12.89 3.30 11.95
+                3.88 11.16 4.60 10.50 5.30 10.05
+                5.86 9.70 6.19 9.58 6.55 9.34
+                6.82 9.16 6.98 8.92 6.98 8.67
+                6.98 8.42 6.82 8.18 6.55 8.00
+                6.19 7.76 5.86 7.64 5.30 7.29
+                4.60 6.84 3.88 6.18 3.30 5.39
+                2.65 4.45 2.30 3.37 2.15 1.90
+              Z"
+                    />
+                  </clipPath>
+
+                  <!-- Narrow channel through the neck; used to clip falling particles -->
+                  <clipPath id="neck-clip">
+                    <rect
+                      x="6.65"
+                      y="8.90"
+                      width="0.70"
+                      height="8.00"
+                      rx="0.35"
+                      ry="0.35"
+                    />
+                  </clipPath>
+
+                  <style>
+                    /* Falling sand particles (simple CSS-in-SVG animation) */
+                    #falling-sand circle {
+                      animation: fall 1.6s linear infinite;
+                      transform-box: fill-box;
+                      transform-origin: center;
+                      opacity: 0;
+                    }
+                    #falling-sand circle:nth-child(2) {
+                      animation-delay: 0.2s;
+                    }
+                    #falling-sand circle:nth-child(3) {
+                      animation-delay: 0.4s;
+                    }
+                    #falling-sand circle:nth-child(4) {
+                      animation-delay: 0.6s;
+                    }
+                    #falling-sand circle:nth-child(5) {
+                      animation-delay: 0.8s;
+                    }
+
+                    @keyframes fall {
+                      0% {
+                        transform: translateY(0);
+                        opacity: 0;
+                      }
+                      10% {
+                        opacity: 1;
+                      }
+                      100% {
+                        transform: translateY(7.5px);
+                        opacity: 0;
+                      }
+                    }
+                  </style>
+                </defs>
+
+                <g
+                  id="sandclock"
+                  stroke="none"
+                  stroke-width="1"
+                  fill="none"
+                  fill-rule="evenodd"
+                  sketch:type="MSPage"
+                >
+                  <!-- Glass outline (unchanged) -->
+                  <path
+                    id="Shape"
+                    d="M13.0986667,16.465 L12.7226667,16.465 C12.6796667,16.031 12.5996667,15.6073333 12.4886667,15.1963333 C12.084,13.6953333 11.269,12.3646667 10.352,11.3396667 C9.52833333,10.4183333 8.623,9.74333333 7.859,9.41433333 C7.859,9.41433333 7.56766667,9.20133333 7.56766667,8.97866667 C7.56766667,8.75633333 7.859,8.54533333 7.859,8.54533333 C9.687,7.74033333 12.3786667,4.93333333 12.7223333,1.50133333 L13.0986667,1.50133333 C13.5006667,1.50133333 13.8266667,1.17533333 13.8266667,0.773666667 C13.8266667,0.371666667 13.5006667,0.0456666667 13.0986667,0.0456666667 L0.776,0.0456666667 C0.374,0.0456666667 0.048,0.371666667 0.048,0.773666667 C0.048,1.17533333 0.374,1.50133333 0.776,1.50133333 L1.152,1.50133333 C1.49233333,4.93666667 4.15866667,7.745 6.00533333,8.54733333 C6.00533333,8.54733333 6.31133333,8.737 6.31133333,8.97866667 C6.31133333,9.22033333 6.01566667,9.421 6.01566667,9.421 C5.26233333,9.75266667 4.36333333,10.4246667 3.54166667,11.3396667 C2.62066667,12.3646667 1.79833333,13.6953333 1.389,15.1963333 C1.277,15.6073333 1.196,16.031 1.15266667,16.465 L0.776,16.465 C0.374,16.465 0.048,16.791 0.048,17.1926667 C0.048,17.5946667 0.374,17.9206667 0.776,17.9206667 L13.0986667,17.9206667 C13.5006667,17.9206667 13.8266667,17.5946667 13.8266667,17.1926667 C13.8263333,16.791 13.5006667,16.465 13.0986667,16.465 L13.0986667,16.465 Z M2.47033333,16.4923333 L1.892,16.4923333 C1.92166667,16.023 1.97666667,15.5933333 2.053,15.1963333 C2.273,14.054 2.67366667,13.1896667 3.18666667,12.4753333 C3.47733333,12.0703333 3.80133333,11.6873333 4.14033333,11.3396667 C4.80733333,10.6553333 5.88879069,10.1021427 6.19133333,9.82066667 C6.49387598,9.53919067 6.65833333,9.39266667 6.65833333,8.997 C6.65833333,8.60133333 6.45611593,8.47363293 6.03570577,8.2112428 C5.61529562,7.94885266 4.034,6.69966667 3.17433333,5.49566667 C2.488,4.53433333 2.00533333,3.328 1.891,1.50166667 L11.982,1.50166667 C11.8663333,3.322 11.378,4.52866667 10.687,5.49133333 C9.82466667,6.69266667 8.52740499,7.75976575 7.89733907,8.12268078 C7.26727316,8.48559582 7.22133333,8.61 7.22133333,8.98333333 C7.22133333,9.35666667 7.41784912,9.52330154 7.89733907,9.82066691 C8.37682903,10.1180323 9.08133333,10.6486667 9.75266667,11.3393333 C10.0873333,11.6833333 10.4066667,12.0626667 10.6933333,12.4633333 C11.2053333,13.179 11.6043333,14.0463333 11.823,15.196 C11.8983333,15.5926667 11.9523333,16.0223333 11.9816667,16.492 L11.4053333,16.492 C4.14033338,16.4920002 5.86059567,16.4920002 2.47033333,16.4923333 Z"
+                    fill="#a97458"
+                    fill-opacity="0.49"
+                  ></path>
+
+                  <!-- TOP SAND (inside upper bulb) -->
+                  <g id="sand-top" clip-path="url(#top-bulb-clip)">
+                    <path
+                      d="
+                M 2.15 1.90
+                L 11.85 1.90
+                L 11.85 4.90
+                Q 9.50 6.60 7.006958 8.67
+                Q 4.50 6.60 2.15 4.90
+                Z
+              "
+                      fill="#a3b18a"
+                      fill-opacity="0.85"
+                    />
+                  </g>
+
+                  <!-- BOTTOM SAND (inside lower bulb) -->
+                  <g id="sand" clip-path="url(#bottom-bulb-clip)">
+                    <path
+                      id="sand-animation-path"
+                      d="M 7 16 L 7 16"
+                      fill="none"
+                    />
+                  </g>
+
+                  <!-- FALLING STREAM (particles, clipped to neck + bottom bulb) -->
+                  <g clip-path="url(#neck-clip)">
+                    <g clip-path="url(#bottom-bulb-clip)">
+                      <g id="falling-sand" fill="#a3b18a">
+                        <!-- start just below the neck -->
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </svg>
+
+              <!-- Flowing State SVG (shown when progress > 0) -->
+              <svg
+                class="hourglass-svg hourglass-flow"
+                width="260px"
+                height="280px"
+                viewBox="0 0 14 18"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+                style="display: none"
+              >
+                <defs>
+                  <!-- Bottom bulb interior: prevents overflow on lower sand -->
+                  <clipPath id="bottom-bulb-clip-flow">
+                    <path
+                      d="
+              M 2.15 16.47
+              L 11.85 16.47
+              C 11.70 15.00 11.35 13.92 10.70 12.98
+                10.12 12.19 9.40 11.53 8.70 11.08
+                8.14 10.73 7.81 10.61 7.45 10.37
+                7.18 10.19 7.02 9.95 7.02 9.70
+                7.02 9.45 7.18 9.21 7.45 9.03
+                7.81 8.79 8.14 8.67 8.70 8.32
+                9.40 7.87 10.12 7.21 10.70 6.42
+                11.35 5.48 11.70 4.40 11.85 1.90
+              L 2.15 1.90
+              C 2.30 4.40 2.65 5.48 3.30 6.42
+                3.88 7.21 4.60 7.87 5.30 8.32
+                5.86 8.67 6.19 8.79 6.55 9.03
+                6.82 9.21 6.98 9.45 6.98 9.70
+                6.98 9.95 6.82 10.19 6.55 10.37
+                6.19 10.61 5.86 10.73 5.30 11.08
+                4.60 11.53 3.88 12.19 3.30 12.98
+                2.65 13.92 2.30 15.00 2.15 16.47
+              Z"
+                    />
+                  </clipPath>
+
+                  <!-- Top bulb interior: keeps top sand inside the glass -->
+                  <clipPath id="top-bulb-clip-flow">
+                    <path
+                      d="
+              M 2.15 1.90
+              L 11.85 1.90
+              C 11.70 3.37 11.35 4.45 10.70 5.39
+                10.12 6.18 9.40 6.84 8.70 7.29
+                8.14 7.64 7.81 7.76 7.45 8.00
+                7.18 8.18 7.02 8.42 7.02 8.67
+                7.02 8.92 7.18 9.16 7.45 9.34
+                7.81 9.58 8.14 9.70 8.70 10.05
+                9.40 10.50 10.12 11.16 10.70 11.95
+                11.35 12.89 11.70 13.97 11.85 16.47
+              L 2.15 16.47
+              C 2.30 13.97 2.65 12.89 3.30 11.95
+                3.88 11.16 4.60 10.50 5.30 10.05
+                5.86 9.70 6.19 9.58 6.55 9.34
+                6.82 9.16 6.98 8.92 6.98 8.67
+                6.98 8.42 6.82 8.18 6.55 8.00
+                6.19 7.76 5.86 7.64 5.30 7.29
+                4.60 6.84 3.88 6.18 3.30 5.39
+                2.65 4.45 2.30 3.37 2.15 1.90
+              Z"
+                    />
+                  </clipPath>
+
+                  <!-- Narrow channel through the neck; used to clip falling particles -->
+                  <clipPath id="neck-clip-flow">
+                    <rect
+                      x="6.65"
+                      y="8.90"
+                      width="0.70"
+                      height="8.00"
+                      rx="0.35"
+                      ry="0.35"
+                    />
+                  </clipPath>
+
+                  <style>
+                    /* Falling sand particles (simple CSS-in-SVG animation) */
+                    #falling-sand-flow circle {
+                      animation: fall-flow 1.6s linear infinite;
+                      transform-box: fill-box;
+                      transform-origin: center;
+                      opacity: 0;
+                    }
+                    #falling-sand-flow circle:nth-child(2) {
+                      animation-delay: 0.2s;
+                    }
+                    #falling-sand-flow circle:nth-child(3) {
+                      animation-delay: 0.4s;
+                    }
+                    #falling-sand-flow circle:nth-child(4) {
+                      animation-delay: 0.6s;
+                    }
+                    #falling-sand-flow circle:nth-child(5) {
+                      animation-delay: 0.8s;
+                    }
+
+                    @keyframes fall-flow {
+                      0% {
+                        transform: translateY(0);
+                        opacity: 0;
+                      }
+                      10% {
+                        opacity: 1;
+                      }
+                      100% {
+                        transform: translateY(7.5px);
+                        opacity: 0;
+                      }
+                    }
+                  </style>
+                </defs>
+
+                <g
+                  id="sandclock-flow"
+                  stroke="none"
+                  stroke-width="1"
+                  fill="none"
+                  fill-rule="evenodd"
+                  sketch:type="MSPage"
+                >
+                  <!-- Glass outline (unchanged) -->
+                  <path
+                    id="Shape-flow"
+                    d="M13.0986667,16.465 L12.7226667,16.465 C12.6796667,16.031 12.5996667,15.6073333 12.4886667,15.1963333 C12.084,13.6953333 11.269,12.3646667 10.352,11.3396667 C9.52833333,10.4183333 8.623,9.74333333 7.859,9.41433333 C7.859,9.41433333 7.56766667,9.20133333 7.56766667,8.97866667 C7.56766667,8.75633333 7.859,8.54533333 7.859,8.54533333 C9.687,7.74033333 12.3786667,4.93333333 12.7223333,1.50133333 L13.0986667,1.50133333 C13.5006667,1.50133333 13.8266667,1.17533333 13.8266667,0.773666667 C13.8266667,0.371666667 13.5006667,0.0456666667 13.0986667,0.0456666667 L0.776,0.0456666667 C0.374,0.0456666667 0.048,0.371666667 0.048,0.773666667 C0.048,1.17533333 0.374,1.50133333 0.776,1.50133333 L1.152,1.50133333 C1.49233333,4.93666667 4.15866667,7.745 6.00533333,8.54733333 C6.00533333,8.54733333 6.31133333,8.737 6.31133333,8.97866667 C6.31133333,9.22033333 6.01566667,9.421 6.01566667,9.421 C5.26233333,9.75266667 4.36333333,10.4246667 3.54166667,11.3396667 C2.62066667,12.3646667 1.79833333,13.6953333 1.389,15.1963333 C1.277,15.6073333 1.196,16.031 1.15266667,16.465 L0.776,16.465 C0.374,16.465 0.048,16.791 0.048,17.1926667 C0.048,17.5946667 0.374,17.9206667 0.776,17.9206667 L13.0986667,17.9206667 C13.5006667,17.9206667 13.8266667,17.5946667 13.8266667,17.1926667 C13.8263333,16.791 13.5006667,16.465 13.0986667,16.465 L13.0986667,16.465 Z M2.47033333,16.4923333 L1.892,16.4923333 C1.92166667,16.023 1.97666667,15.5933333 2.053,15.1963333 C2.273,14.054 2.67366667,13.1896667 3.18666667,12.4753333 C3.47733333,12.0703333 3.80133333,11.6873333 4.14033333,11.3396667 C4.80733333,10.6553333 5.88879069,10.1021427 6.19133333,9.82066667 C6.49387598,9.53919067 6.65833333,9.39266667 6.65833333,8.997 C6.65833333,8.60133333 6.45611593,8.47363293 6.03570577,8.2112428 C5.61529562,7.94885266 4.034,6.69966667 3.17433333,5.49566667 C2.488,4.53433333 2.00533333,3.328 1.891,1.50166667 L11.982,1.50166667 C11.8663333,3.322 11.378,4.52866667 10.687,5.49133333 C9.82466667,6.69266667 8.52740499,7.75976575 7.89733907,8.12268078 C7.26727316,8.48559582 7.22133333,8.61 7.22133333,8.98333333 C7.22133333,9.35666667 7.41784912,9.52330154 7.89733907,9.82066691 C8.37682903,10.1180323 9.08133333,10.6486667 9.75266667,11.3393333 C10.0873333,11.6833333 10.4066667,12.0626667 10.6933333,12.4633333 C11.2053333,13.179 11.6043333,14.0463333 11.823,15.196 C11.8983333,15.5926667 11.9523333,16.0223333 11.9816667,16.492 L11.4053333,16.492 C4.14033338,16.4920002 5.86059567,16.4920002 2.47033333,16.4923333 Z"
+                    fill="#a97458"
+                    fill-opacity="0.49"
+                  ></path>
+
+                  <!-- TOP SAND (inside upper bulb) - Empty in flowing state -->
+                  <g id="sand-top-flow" clip-path="url(#top-bulb-clip-flow)">
+                    <path d="M 7 1.9 L 7 1.9" fill="none" />
+                  </g>
+
+                  <!-- BOTTOM SAND (inside lower bulb) - Full in flowing state -->
+                  <g id="sand-flow" clip-path="url(#bottom-bulb-clip-flow)">
+                    <path
+                      id="sand-animation-path-flow"
+                      d="
+                M 1.50 16.47052
+                L 12.50 16.47052
+                L 12.50 11.90
+                C 10.80 10.70 9.10 9.70 7.00 8.85
+                C 4.90 9.70 3.20 10.70 1.50 11.90
+                Z
+              "
+                      fill="#a3b18a"
+                    />
+                  </g>
+
+                  <!-- FALLING STREAM (particles, clipped to neck + bottom bulb) -->
+                  <g clip-path="url(#neck-clip-flow)">
+                    <g clip-path="url(#bottom-bulb-clip-flow)">
+                      <g id="falling-sand-flow" fill="#a3b18a">
+                        <!-- start just below the neck -->
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                        <circle cx="7.00" cy="9.10" r="0.06" />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </svg>
+
+              <!-- Enhanced falling sand particles -->
+              <div class="sand-particles-overlay" id="sand-particles-overlay">
+                <!-- Sand particles will be created here when questions are completed -->
+              </div>
+
+              <!-- Continuous sand flow in neck -->
+              <div class="hourglass-neck-flow">
+                <div class="flowing-sand" id="flowing-sand"></div>
               </div>
             </div>
-            <!-- Accessible timer status for screen readers -->
-            <div
-              id="clock-announce"
-              aria-live="polite"
-              aria-atomic="true"
-              class="sr-only"
-            ></div>
+            <div class="progress-text">
+              <span id="progress-count">0</span> of
+              <span id="total-count">0</span> completed
+            </div>
           </div>
 
           <div class="todo-container">
@@ -549,17 +682,7 @@
                 </button>
               </div>
             </div>
-            <div class="filter-controls">
-              <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="complete">
-                  Complete
-                </button>
-                <button class="filter-btn" data-filter="not-complete">
-                  Not Complete
-                </button>
-              </div>
-            </div>
+
             <div class="todo-list-container">
               <ul class="todo-list" id="todo-list">
                 <!-- Todos will be dynamically inserted here -->
@@ -585,7 +708,6 @@
               >
             </div>
           </div>
-          
         </div>
       </main>
     </div>
@@ -650,58 +772,6 @@
         <div class="modal-footer">
           <button class="btn-secondary" id="cancel-add">Cancel</button>
           <button class="btn-primary" id="save-question">Add Question</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Timer Set Modal -->
-    <div class="modal-overlay" id="timer-set-modal" style="display: none">
-      <div class="modal timer-set-modal">
-        <div class="modal-header">
-          <h3>Set Focus Timer</h3>
-          <button class="modal-close" id="close-timer-modal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="timer-inputs">
-            <div class="time-input-group">
-              <label for="minutes-input">Minutes</label>
-              <input
-                type="number"
-                id="minutes-input"
-                min="0"
-                max="59"
-                value="5"
-                aria-label="Minutes"
-              />
-            </div>
-            <div class="time-input-group">
-              <label for="seconds-input">Seconds</label>
-              <input
-                type="number"
-                id="seconds-input"
-                min="0"
-                max="59"
-                value="0"
-                aria-label="Seconds"
-              />
-            </div>
-          </div>
-
-          <div class="quick-presets">
-            <button class="preset-btn" data-minutes="1">1 min</button>
-            <button class="preset-btn" data-minutes="5">5 min</button>
-            <button class="preset-btn" data-minutes="10">10 min</button>
-            <button class="preset-btn" data-minutes="25">25 min</button>
-            <button class="preset-btn" data-minutes="0" data-seconds="30">
-              30 sec
-            </button>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" id="cancel-timer-modal">Cancel</button>
-          <button class="btn-primary" id="start-timer-modal">
-            Start Timer
-          </button>
         </div>
       </div>
     </div>
@@ -810,7 +880,7 @@
               <div class="landing-brand">
                 <div class="brand">
                   <span class="seal seal--leaf" aria-hidden="true"></span>
-                  <h2>FocusFlow</h2>
+                  <h1>FocusFlow</h1>
                 </div>
               </div>
 
@@ -919,7 +989,7 @@
               <div class="story-header">
                 <h3>Real Indian DSA Journey</h3>
                 <div class="story-meta">
-                  <span class="story-author">Anupam Debnath</span>
+                  <span class="story-author">Himanshu Kumar</span>
                   <span class="story-role"
                     >College Student & DSA Enthusiast</span
                   >
@@ -1016,10 +1086,13 @@
       </div>
     </div>
 
-    <script defer src="js/helper.js"></script>
-    <script defer src="js/notification.js"></script>
-    <script defer src="js/main.js"></script>
-    <script defer src="js/flip-clock.js"></script>
-    <script defer src="js/main_public.js"></script>
+    <script defer src="js/cached_helper.js"></script>
+    <script defer src="js/cached_main.js"></script>
+    <script defer src="js/cached_main_public.js"></script>
+    <!-- <script defer src="js/main_todos.js"></script> -->
+    <!-- <script defer src="js/helper.js"></script> -->
+    <!-- <script defer src="js/main.js"></script> -->
+    <!-- <script defer src="js/main_updated.js"></script>
+    <script defer src="js/main_public.js"></script> -->
   </body>
 </html>

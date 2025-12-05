@@ -1,229 +1,1367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blogs - FocusFlow</title>
-    <link rel="icon" type="image/x-icon" href="assets/FocusFlow.ico" />
-    <link rel="stylesheet" href="css/theme.css" />
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>FocusFlow — Blogs</title>
+    <meta
+      name="description"
+      content="Explore blogs on DSA, coding, and productivity. Share your journey and learn from others."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta
+      name="keywords"
+      content="DSA blogs, programming blogs, coding journey, FocusFlow community, technical writing"
+    />
+    <meta name="author" content="FocusFlow Community" />
+    <meta name="theme-color" content="#1b1b1b" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- Structured Data for Blogs -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "FocusFlow Blogs",
+        "description": "Community blogs about DSA, programming, and productivity journeys",
+        "url": "http://localhost:3000/blogs",
+        "inLanguage": "en-IN",
+        "isPartOf": {
+          "@type": "WebApplication",
+          "name": "FocusFlow",
+          "applicationCategory": "EducationalApplication"
+        }
+      }
+    </script>
+
+    <!-- Dynamic SEO -->
+    <script>
+      (function () {
+        const origin = window.location.origin;
+        const path = window.location.pathname;
+        const link = document.createElement("link");
+        link.rel = "canonical";
+        link.href = origin + (path === "/" ? "" : path);
+        document.head.appendChild(link);
+
+        const ogTags = [
+          ["og:title", "FocusFlow — Blogs & Community"],
+          [
+            "og:description",
+            "Explore insightful blogs about DSA, coding journeys, and productivity tips",
+          ],
+          ["og:type", "website"],
+          ["og:url", origin + path],
+          ["og:image", origin + "/assets/blog_preview.png"],
+          ["og:site_name", "FocusFlow"],
+          ["og:locale", "en_US"],
+        ];
+
+        ogTags.forEach(([property, content]) => {
+          const m = document.createElement("meta");
+          m.setAttribute("property", property);
+          m.setAttribute("content", content);
+          document.head.appendChild(m);
+        });
+
+        // Twitter Card
+        const twitterTags = [
+          ["twitter:card", "summary_large_image"],
+          ["twitter:title", "FocusFlow — Blogs & Community"],
+          [
+            "twitter:description",
+            "Explore insightful blogs about DSA, coding journeys, and productivity tips",
+          ],
+          ["twitter:image", origin + "/assets/blog_preview.png"],
+        ];
+
+        twitterTags.forEach(([name, content]) => {
+          const m = document.createElement("meta");
+          m.setAttribute("name", name);
+          m.setAttribute("content", content);
+          document.head.appendChild(m);
+        });
+      })();
+    </script>
+
+    <!-- CSS Links -->
+    <link rel="stylesheet" href="css/helper.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/_sticky_note.css" />
+    <link rel="stylesheet" href="css/main_public.css" />
+    <link rel="stylesheet" href="css/notification.css" />
+    <link rel="stylesheet" href="css/flip-clock.css" />
+    <link rel="stylesheet" href="css/responsive_main.css" />
+
+    <!-- New Blog-specific CSS -->
     <link rel="stylesheet" href="css/blogs.css" />
   </head>
   <body>
+    <!-- Background Elements -->
+    <div class="background-elements">
+      <div class="lamp-container" id="lamp">
+        <svg class="lamp" viewBox="0 0 200 300" aria-hidden="true">
+          <line
+            x1="100"
+            y1="0"
+            x2="100"
+            y2="80"
+            stroke="#8a795d"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M60 80 L140 80 L160 180 L40 180 Z"
+            fill="#d4c9b8"
+            stroke="#b8a993"
+            stroke-width="2"
+          />
+          <ellipse cx="100" cy="180" rx="60" ry="8" fill="#c4b6a1" />
+          <defs>
+            <radialGradient id="lampGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f9f3e9" stop-opacity="0.8" />
+              <stop offset="70%" stop-color="#f9f3e9" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#f9f3e9" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <ellipse
+            id="lamp-glow"
+            cx="100"
+            cy="180"
+            rx="120"
+            ry="40"
+            fill="url(#lampGlow)"
+            opacity="0"
+          />
+        </svg>
+      </div>
+      <div class="petals" id="petals" aria-hidden="true"></div>
+    </div>
+
+    <!-- Main Content Container -->
     <div class="container">
-      <header>
-        <div class="header-container">
-          <h1 class="site-logo">FocusFlow Blogs</h1>
-          <div class="nav-links">
-            <a id="back-link" class="nav-link">← Back to Tracker</a>
-            <a href="/profile" class="nav-link profile-link">👤 Profile</a>
-            <a id="blog-link" class="nav-link active">Blogs</a>
+      <!-- Header (Same as Home Page) -->
+      <header class="header">
+        <div class="brand">
+          <span class="seal seal--leaf" aria-hidden="true"></span>
+          <h1>FocusFlow</h1>
+        </div>
+
+        <div class="header-controls">
+          <!-- Motion Toggles -->
+          <div class="toggle-group">
+            <button class="toggle-btn" id="toggle-leaves" aria-pressed="true">
+              <svg
+                class="toggle-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M12 2C7.03 2 3 6.03 3 11c0 4.97 4.03 9 9 9 4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9z"
+                />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <span class="toggle-text">Leaves: On</span>
+            </button>
+
+            <button class="toggle-btn" id="toggle-lamp" aria-pressed="true">
+              <svg
+                class="toggle-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M9 18h6M10 22h4M12 2v1M12 21v1M4.22 4.22l.71.71M18.36 18.36l.71.71M1 12h1M21 12h1M4.22 19.78l.71-.71M18.36 5.64l.71-.71"
+                />
+              </svg>
+              <span class="toggle-text">Lamp: Light</span>
+            </button>
+          </div>
+
+          <!-- Blogs Dropdown -->
+          <div class="blogs-wrapper">
+            <button class="icon-btn" id="blogs-btn" aria-label="Blogs menu">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path
+                  d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                ></path>
+              </svg>
+            </button>
+            <div class="dropdown blogs-dropdown" id="blogs-dropdown">
+              <div class="dropdown-content">
+                <a href="/blogs" class="dropdown-item active">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                  All Blogs
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Controls -->
+          <div class="user-controls">
+            <div class="notification-wrapper">
+              <button
+                class="icon-btn"
+                id="notifications-btn"
+                aria-label="Notifications"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span class="notification-badge" id="notification-count"
+                  >0</span
+                >
+              </button>
+              <div
+                class="dropdown notifications-dropdown"
+                id="notifications-dropdown"
+              >
+                <div class="dropdown-header">
+                  <h3>Notifications</h3>
+                </div>
+                <div class="dropdown-content" id="notifications-list">
+                  <div class="notification-item">
+                    <p>Welcome to FocusFlow! Start tracking your progress.</p>
+                    <span class="notification-time">Just now</span>
+                  </div>
+                </div>
+                <div class="dropdown-footer">
+                  <a href="/notifications" class="dropdown-link"
+                    >See all notifications</a
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-wrapper">
+              <button
+                class="icon-btn"
+                id="profile-btn"
+                aria-label="Profile menu"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </button>
+              <div class="dropdown profile-dropdown" id="profile-dropdown">
+                <div class="dropdown-content">
+                  <a href="/auth" class="dropdown-item" id="login-link">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Login
+                  </a>
+                  <a
+                    href="/profile"
+                    class="dropdown-item"
+                    id="profile-link"
+                    style="display: none"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Profile
+                  </a>
+                  <button
+                    class="dropdown-item"
+                    id="logout-btn"
+                    style="display: none"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <div id="authSection" style="display: none">
-        <div class="auth-required">
-          <h3>Welcome to FocusFlow Blogs</h3>
-          <p>
-            You're viewing public blogs. Please log in to create your own blog
-            and share your knowledge with everyone, and to access advanced
-            features.
-          </p>
-          <button class="login-btn" onclick="window.location.href='/'">
-            Go to Login
-          </button>
-        </div>
-      </div>
-
-     <!--new section for unlogged users -->
-      <div id="unloggedSection" style="display: none">
-        <div class="unlogged-message">
-          <h3>Welcome to FocusFlow Blogs</h3>
-          <p>
-            You're viewing public blogs. Please log in to create your own blog
-            and share your knowledge with everyone, and to access advanced
-            features.
-          </p>
-          <button class="login-btn" onclick="window.location.href='/'">
-            Go to Login
-          </button>
-        </div>
-      </div>
-
-      <div id="blogsContent" style="display: none">
-        <!-- UPDATED: Integrated Blog Header with Search -->
-        <div class="blog-header-integrated">
-          <div class="blog-header-main">
-            <div class="blog-header-title-section">
-              <h2>Community Blogs</h2>
-              <p class="blog-header-subtitle">
-                Discover, learn, and share knowledge with the community
-              </p>
-            </div>
-            <button
-              class="create-blog-btn-integrated"
-              onclick="openCreateModal()"
-            >
-              <span>+</span>
-              <span>Create Blog</span>
-            </button>
-          </div>
-
-          <!-- Search Bar Integrated in Header -->
-          <div class="blog-header-search-section">
-            <div class="search-container-integrated">
-              <div class="search-input-wrapper">
-                <input
-                  type="text"
-                  id="blogsPageSearch"
-                  class="search-input"
-                  placeholder="Search blogs by title, content, or tags..."
-                  aria-label="Search blogs"
-                />
-                <div class="search-icon">🔍</div>
-                <div class="search-loader" id="blogsPageSearchLoader">
-                  <div class="loader-spinner"></div>
-                </div>
-                <button
-                  class="search-clear"
-                  id="blogsPageSearchClear"
-                  aria-label="Clear search"
+      <!-- Blog Page Content -->
+      <main class="blogs-main-content">
+        <!-- Blog Page Controls (Sticky Section) -->
+        <div class="blog-controls-container">
+          <div class="blog-controls">
+            <!-- Tab Navigation (Only All Blogs & Popular Blogs) -->
+            <div class="blog-tabs">
+              <button class="blog-tab active" data-tab="all-blogs">
+                <svg
+                  class="tab-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
                 >
-                  ×
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Search Results Info -->
-        <div
-          class="search-results-info"
-          id="blogsPageSearchResultsInfo"
-          style="display: none"
-        >
-          <div class="search-results-header">
-            <span id="blogsPageSearchResultsCount">0 results</span>
-            <button class="clear-search-btn" id="blogsPageClearSearchBtn">
-              Clear search
-            </button>
-          </div>
-        </div>
-
-        <!-- Integrated Tabs Navigation -->
-        <div class="tabs-container-compact">
-          <div class="tabs-compact">
-            <button
-              class="tab-compact active"
-              onclick="switchTab('all')"
-              id="tab-all"
-            >
-              All Blogs
-              <span class="tab-badge-compact" id="all-blogs-count">0</span>
-            </button>
-            <button
-              class="tab-compact"
-              onclick="switchTab('my-blogs')"
-              id="tab-my-blogs"
-            >
-              My Blogs
-              <span class="tab-badge-compact" id="my-blogs-count">0</span>
-            </button>
-            <button
-              class="tab-compact"
-              onclick="switchTab('popular')"
-              id="tab-popular"
-            >
-              Popular
-              <span class="tab-badge-compact" id="popular-blogs-count">0</span>
-            </button>
-          </div>
-        </div>
-
-        <div id="blogsContainer">
-          <div class="blogs-grid" id="blogsGrid">
-            <!-- Blogs will be loaded here -->
-          </div>
-        </div>
-
-        <div class="pagination" id="pagination">
-          <!-- Pagination will be loaded here -->
-        </div>
-      </div>
-
-      <!-- Create/Edit Blog Modal -->
-      <div class="modal" id="blogModal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3 class="modal-title" id="modalTitle">Create New Blog</h3>
-            <button class="close-modal" onclick="closeModal()">&times;</button>
-          </div>
-          <form id="blogForm">
-            <div class="form-group">
-              <label class="form-label" for="blogTitle">Title</label>
-              <input type="text" id="blogTitle" class="form-input" required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="blogContent"
-                >Content (Markdown supported)</label
-              >
-              <textarea
-                id="blogContent"
-                class="form-textarea"
-                required
-              ></textarea>
-              <div class="markdown-help">
-                Supports Markdown: **bold**, *italic*, `code`, # headers, -
-                lists
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="blogTags"
-                >Tags (comma separated)</label
-              >
-              <input
-                type="text"
-                id="blogTags"
-                class="form-input"
-                placeholder="coding, algorithms, tips"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  id="blogIsPublic"
-                  class="form-checkbox"
-                  checked
-                />
-                Make this blog public
-              </label>
-            </div>
-
-            <div class="form-actions">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                onclick="closeModal()"
-              >
-                Cancel
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                All Blogs
               </button>
-              <button type="submit" class="btn btn-primary" id="modalSubmit">
+              <button class="blog-tab" data-tab="popular-blogs">
+                <svg
+                  class="tab-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Popular Blogs
+              </button>
+
+              <button class="blog-tab" data-tab="my-blogs">
+                <svg
+                  class="tab-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                My Blogs
+              </button>
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="blog-actions">
+              <!-- Create Blog Button (Now before search) -->
+              <button class="create-blog-btn" id="create-blog">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
                 Create Blog
               </button>
+
+              <!-- Filter Options -->
+              <div class="blog-filters">
+                <select class="filter-select" id="blog-sort">
+                  <option value="newest">Newest First</option>
+                  <option value="popular">Most Likes</option>
+                  <option value="comments">Most Comments</option>
+                  <option value="views">Most Views</option>
+                </select>
+
+                <!-- Category Filter -->
+                <select class="filter-select" id="blog-category">
+                  <option value="all">All Categories</option>
+                  <option value="dsa">DSA</option>
+                  <option value="algorithms">Algorithms</option>
+                  <option value="productivity">Productivity</option>
+                  <option value="journey">Journey</option>
+                  <option value="tips">Tips & Tricks</option>
+                </select>
+              </div>
+
+              <!-- Search Field -->
+              <div class="blog-search">
+                <svg
+                  class="search-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input
+                  type="text"
+                  class="search-input"
+                  id="blog-search"
+                  placeholder="Search blogs..."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blog Content Sections -->
+        <div class="blog-content">
+          <!-- All Blogs Tab -->
+          <div class="blog-tab-content active" id="all-blogs-content">
+            <div class="blogs-grid">
+              <!-- Sample Blog Items -->
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">JD</div>
+                    <div class="author-info">
+                      <span class="author-name">John Doe</span>
+                      <span class="blog-date">Dec 15, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">1.2k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  Mastering Dynamic Programming Patterns
+                </h3>
+                <p class="blog-excerpt">
+                  A comprehensive guide to understanding DP patterns with
+                  practical examples and real-world applications. Learn how to
+                  identify optimal substructure and overlapping subproblems.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">DSA</span>
+                    <span class="blog-tag">Algorithms</span>
+                    <span class="blog-tag">Patterns</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      245
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      42
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">AS</div>
+                    <div class="author-info">
+                      <span class="author-name">Alice Smith</span>
+                      <span class="blog-date">Dec 12, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">890 views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">The 100-Day Coding Challenge Journey</h3>
+                <p class="blog-excerpt">
+                  Sharing my experience of completing 100 days of consistent
+                  coding practice and how it transformed my problem-solving
+                  skills. Daily logs, challenges faced, and key learnings.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">Journey</span>
+                    <span class="blog-tag">Productivity</span>
+                    <span class="blog-tag">Challenge</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      156
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      28
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">RJ</div>
+                    <div class="author-info">
+                      <span class="author-name">Robert Johnson</span>
+                      <span class="blog-date">Dec 10, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">2.1k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  System Design Patterns Every Developer Should Know
+                </h3>
+                <p class="blog-excerpt">
+                  Essential system design patterns explained with diagrams and
+                  code examples for building scalable applications. Covers
+                  microservices, caching strategies, and load balancing.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">System Design</span>
+                    <span class="blog-tag">Architecture</span>
+                    <span class="blog-tag">Patterns</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      342
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      67
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">MS</div>
+                    <div class="author-info">
+                      <span class="author-name">Maria Garcia</span>
+                      <span class="blog-date">Dec 8, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">1.5k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  Advanced Graph Algorithms in Competitive Programming
+                </h3>
+                <p class="blog-excerpt">
+                  Deep dive into complex graph algorithms like Dijkstra,
+                  Bellman-Ford, and Floyd-Warshall with optimization techniques
+                  for competitive programming contests.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">Algorithms</span>
+                    <span class="blog-tag">Graph Theory</span>
+                    <span class="blog-tag">Competitive</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      198
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      35
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">DL</div>
+                    <div class="author-info">
+                      <span class="author-name">David Lee</span>
+                      <span class="blog-date">Dec 5, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">3.2k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  Building REST APIs with Node.js and Express - Best Practices
+                </h3>
+                <p class="blog-excerpt">
+                  Comprehensive guide to building production-ready REST APIs
+                  covering authentication, validation, error handling, testing,
+                  and deployment strategies.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">Backend</span>
+                    <span class="blog-tag">Node.js</span>
+                    <span class="blog-tag">API</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      421
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      89
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">ST</div>
+                    <div class="author-info">
+                      <span class="author-name">Sarah Taylor</span>
+                      <span class="blog-date">Dec 3, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">980 views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  React Hooks Deep Dive: Custom Hooks for Efficiency
+                </h3>
+                <p class="blog-excerpt">
+                  Learn how to create powerful custom React hooks to reuse logic
+                  across components. Real-world examples including API calls,
+                  form handling, and state management.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">React</span>
+                    <span class="blog-tag">Frontend</span>
+                    <span class="blog-tag">Hooks</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      167
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      31
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Pagination -->
+            <div class="blog-pagination">
+              <button class="pagination-btn prev" disabled>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+                Previous
+              </button>
+              <div class="pagination-pages">
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span class="page-dots">...</span>
+                <button class="page-btn">8</button>
+              </div>
+              <button class="pagination-btn next">
+                Next
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M9 18l6-6-6-6"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Popular Blogs Tab -->
+          <div class="blog-tab-content" id="popular-blogs-content">
+            <div class="blogs-grid">
+              <!-- Popular blogs (Featured cards) -->
+              <article class="blog-card featured">
+                <div class="featured-badge">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                    ></path>
+                  </svg>
+                  Featured
+                </div>
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">TS</div>
+                    <div class="author-info">
+                      <span class="author-name">Tech Stack</span>
+                      <span class="blog-date">Nov 28, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">5.4k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  Building a Full-Stack DSA Tracker from Scratch
+                </h3>
+                <p class="blog-excerpt">
+                  Complete tutorial on building a DSA progress tracker with
+                  React, Node.js, and MongoDB. Learn about authentication, data
+                  modeling, and deployment strategies.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">Tutorial</span>
+                    <span class="blog-tag">Full Stack</span>
+                    <span class="blog-tag">Project</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      892
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      124
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">AF</div>
+                    <div class="author-info">
+                      <span class="author-name">Alex Foster</span>
+                      <span class="blog-date">Nov 25, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">4.1k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">
+                  Machine Learning Basics for Developers
+                </h3>
+                <p class="blog-excerpt">
+                  Introduction to ML concepts for software developers. Learn
+                  about supervised/unsupervised learning, neural networks, and
+                  implementing ML models with Python.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">ML</span>
+                    <span class="blog-tag">AI</span>
+                    <span class="blog-tag">Python</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      567
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      98
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="blog-card">
+                <div class="blog-card-header">
+                  <div class="blog-author">
+                    <div class="author-avatar">LW</div>
+                    <div class="author-info">
+                      <span class="author-name">Lisa Wong</span>
+                      <span class="blog-date">Nov 20, 2024</span>
+                    </div>
+                  </div>
+                  <div class="blog-meta">
+                    <span class="blog-views">3.8k views</span>
+                  </div>
+                </div>
+                <h3 class="blog-title">DevOps CI/CD Pipeline Setup Guide</h3>
+                <p class="blog-excerpt">
+                  Step-by-step guide to setting up automated CI/CD pipelines
+                  with GitHub Actions, Docker, and AWS. Includes testing,
+                  deployment, and monitoring strategies.
+                </p>
+                <div class="blog-footer">
+                  <div class="blog-tags">
+                    <span class="blog-tag">DevOps</span>
+                    <span class="blog-tag">CI/CD</span>
+                    <span class="blog-tag">AWS</span>
+                  </div>
+                  <div class="blog-stats">
+                    <span class="blog-stat like-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                        ></path>
+                      </svg>
+                      432
+                    </span>
+                    <span class="blog-stat comment-stat">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      76
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- Add this after the popular-blogs-content div -->
+          <div class="blog-tab-content" id="my-blogs-content">
+            <div class="blogs-grid">
+              <!-- My blogs will be loaded dynamically -->
+            </div>
+
+            <!-- Pagination for My Blogs -->
+            <div
+              class="blog-pagination my-blogs-pagination"
+              style="display: none"
+            >
+              <button class="pagination-btn prev my-blogs-prev" disabled>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+                Previous
+              </button>
+              <div class="pagination-pages my-blogs-pages"></div>
+              <button class="pagination-btn next my-blogs-next">
+                Next
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M9 18l6-6-6-6"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Create Blog Modal -->
+    <div class="modal-overlay" id="create-blog-modal" style="display: none">
+      <div class="modal create-blog-modal">
+        <div class="modal-header">
+          <h3>
+            <svg
+              class="modal-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            Create New Blog
+          </h3>
+          <button
+            class="modal-close"
+            id="close-create-blog-modal"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="create-blog-form">
+            <!-- Title Field -->
+            <div class="form-group">
+              <label for="blog-title">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  width="14"
+                  height="14"
+                >
+                  <path d="M4 7V4h16v3"></path>
+                  <path d="M9 20h6"></path>
+                  <path d="M12 4v16"></path>
+                </svg>
+                Title
+              </label>
+              <input
+                type="text"
+                id="blog-title"
+                placeholder="Enter blog title"
+                required
+                maxlength="200"
+                autocomplete="off"
+              />
+              <div class="char-counter">
+                <span id="title-count">0/200</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="title-progress"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Field -->
+            <div class="form-group">
+              <label for="blog-content">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  width="14"
+                  height="14"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  ></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Content
+              </label>
+              <textarea
+                id="blog-content"
+                placeholder="Write your blog content here... (Markdown supported)"
+                rows="10"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Dynamic Tags Field -->
+            <div class="form-group">
+              <label for="blog-tags">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  width="14"
+                  height="14"
+                >
+                  <path
+                    d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+                  ></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                Tags
+              </label>
+              <div class="tags-input-container">
+                <div class="tags-input-wrapper" id="tags-input-wrapper">
+                  <!-- Tags will be inserted here dynamically -->
+                  <input
+                    type="text"
+                    id="blog-tags-input"
+                    class="tag-input"
+                    placeholder="Type tag and press Enter or comma..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div
+                  class="tags-suggestions"
+                  id="tags-suggestions"
+                  style="display: none"
+                ></div>
+              </div>
+              <div class="tags-hint">
+                <small>Press Enter, comma, or space to add a tag</small>
+              </div>
+            </div>
+
+            <!-- Compact Row for Category and Privacy -->
+            <div class="form-row">
+              <!-- Category Select -->
+              <div class="form-group compact">
+                <label for="blog-category-select">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    width="14"
+                    height="14"
+                  >
+                    <path d="M8 6h13"></path>
+                    <path d="M8 12h13"></path>
+                    <path d="M8 18h13"></path>
+                    <path d="M3 6h.01"></path>
+                    <path d="M3 12h.01"></path>
+                    <path d="M3 18h.01"></path>
+                  </svg>
+                  Category
+                </label>
+                <select id="blog-category-select">
+                  <option value="">Select category...</option>
+                  <option value="dsa">DSA</option>
+                  <option value="algorithms">Algorithms</option>
+                  <option value="productivity">Productivity</option>
+                  <option value="journey">Journey</option>
+                  <option value="tips">Tips & Tricks</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <!-- Make Blog Public Section (Enhanced) -->
+              <div class="public-toggle-section" id="public-toggle-section">
+                <div class="section-header">
+                  <svg
+                    class="section-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                    <line x1="6" y1="1" x2="6" y2="4"></line>
+                    <line x1="10" y1="1" x2="10" y2="4"></line>
+                    <line x1="14" y1="1" x2="14" y2="4"></line>
+                  </svg>
+                  <h4>Visibility</h4>
+                </div>
+                <p class="section-description">
+                  Public blogs are visible to everyone. Private blogs can only
+                  be accessed by you and people with a shareable link.
+                </p>
+
+                <div class="toggle-switch" id="privacy-toggle">
+                  <div class="toggle-label">
+                    <svg
+                      class="toggle-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    >
+                      <path
+                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                      ></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <div class="toggle-text">
+                      Make blog public
+                      <span class="subtext">Visible to all users</span>
+                    </div>
+                  </div>
+                  <label class="custom-toggle">
+                    <input type="checkbox" id="blog-is-public" checked />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Private Blog Info (Only shown when private) -->
+                <div
+                  class="private-info"
+                  id="private-info"
+                  style="
+                    display: none;
+                    margin-top: 12px;
+                    padding: 10px;
+                    background: rgba(163, 177, 138, 0.05);
+                    border-radius: 6px;
+                    border: 1px dashed var(--line);
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      margin-bottom: 6px;
+                    "
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      width="14"
+                      height="14"
+                    >
+                      <rect
+                        x="3"
+                        y="11"
+                        width="18"
+                        height="11"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span
+                      style="
+                        font-size: 12px;
+                        font-weight: 500;
+                        color: var(--ink);
+                      "
+                      >Private Blog</span
+                    >
+                  </div>
+                  <p
+                    style="
+                      font-size: 11px;
+                      color: var(--muted);
+                      margin: 0;
+                      line-height: 1.4;
+                    "
+                  >
+                    Only you can view this blog. You can generate shareable
+                    links after publishing.
+                  </p>
+                </div>
+              </div>
             </div>
           </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancel-create-blog" type="button">
+            Cancel
+          </button>
+          <button class="btn-primary" id="publish-blog" type="button">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              width="16"
+              height="16"
+              style="margin-right: 6px"
+            >
+              <path d="M22 2L11 13"></path>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Publish Blog
+          </button>
         </div>
       </div>
     </div>
 
-    <script src="js/blogs.js"></script>
-    <!-- Scroll to Top Button -->
-    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
-      ↑
-    </button>
+    <!-- Toast Messages -->
+    <div class="toast-container" id="toast" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script defer src="js/helper.js"></script>
+    <script defer src="js/notification.js"></script>
+    <script defer src="js/main.js"></script>
+    <script defer src="js/blogs.js"></script>
   </body>
 </html>
