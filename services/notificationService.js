@@ -527,25 +527,61 @@ export const cleanupOldNotifications = async (daysOld = 90) => {
  * Check and send notifications (for existing auth routes)
  * This maintains compatibility with existing code
  */
-export const checkAndSendNotifications = async (
-  userId,
-  notificationType,
-  data
-) => {
+export const checkAndSendNotifications = async (req, userId) => {
   try {
-    // This is a legacy function - redirect to createNotification
-    return await createNotification({
-      type: notificationType,
-      recipient: userId,
-      sender: data.sender || "system",
-      blogSlug: data.blogSlug || null,
-      commentId: data.commentId || null,
-      message: data.message || "New notification",
-      metadata: data.metadata || {},
-    });
+    // console.log("checkAndSendNotifications called with:", {
+    //   userId,
+    //   reqUser: req?.user,
+    // });
+
+    if (!userId) {
+      console.warn("checkAndSendNotifications: userId is undefined or null");
+      return { success: false, error: "userId is required" };
+    }
+
+    // Safely get the sender from request
+    let sender = "system";
+    if (req && req.user && typeof req.user === "object" && req.user.username) {
+      sender = req.user.username;
+    } else if (
+      req &&
+      req.session &&
+      req.session.user &&
+      req.session.user.username
+    ) {
+      sender = req.session.user.username;
+    }
+
+    // console.log("Notification sender determined as:", sender);
+
+    // Check if user has followers to notify
+    const followers = await User.find({ following: userId });
+
+    if (followers && followers.length > 0) {
+      for (const follower of followers) {
+        if (follower.username !== sender) {
+          // Don't notify self
+          await createNotification({
+            type: "user_activity",
+            recipient: follower.username,
+            sender: sender,
+            message: `${sender} is now active`,
+            metadata: {
+              activityType: "login",
+              timestamp: new Date().toISOString(),
+            },
+            url: "/",
+          });
+        }
+      }
+      // console.log(`Sent notifications to ${followers.length} followers`);
+    }
+
+    return { success: true, notificationsSent: followers?.length || 0 };
   } catch (error) {
     console.error("Error in checkAndSendNotifications:", error);
-    throw error;
+    // Return safely instead of throwing
+    return { success: false, error: error.message };
   }
 };
 

@@ -744,16 +744,22 @@ async function submitHandler(e) {
           return;
         }
         // success path mirrors below
-        if (r.data?.token) {
-          const d = new Date();
-          d.setTime(d.getTime() + 7 * 864e5);
-          document.cookie = `ff_token=${encodeURIComponent(
-            r.data.token
-          )}; path=/; expires=${d.toUTCString()}; samesite=strict`;
-          try {
+       if (r.data?.token) {
+        const d = new Date();
+        d.setTime(d.getTime() + 7 * 864e5);
+        document.cookie = `ff_token=${encodeURIComponent(
+          r.data.token
+        )}; path=/; expires=${d.toUTCString()}; samesite=strict`;
+        
+        // Save to localStorage if available (non-critical)
+        try {
+          if (typeof localStorage !== 'undefined' && window.isSecureContext) {
             localStorage.setItem("ff_last_id", id);
-          } catch {}
+          }
+        } catch (storageError) {
+          // Ignore storage errors
         }
+      }
         showMsg("Welcome back. Gentle step — strong day. Redirecting…", true);
         setTimeout(() => (location.href = "/"), 650);
         return;
@@ -1115,12 +1121,19 @@ function focusFirstField(currentMode) {
 /* Prefill last identifier */
 (function prefillIdentifier() {
   try {
-    const last = localStorage.getItem("ff_last_id");
-    if (last && identifier) {
-      identifier.value = last;
-      identifier.select();
+    // Only access localStorage if we're in a secure context and it's available
+    if (typeof localStorage !== 'undefined' && window.isSecureContext) {
+      const last = localStorage.getItem("ff_last_id");
+      if (last && identifier && typeof identifier.value !== 'undefined') {
+        identifier.value = last;
+        if (typeof identifier.select === 'function') {
+          identifier.select();
+        }
+      }
     }
-  } catch {}
+  } catch (error) {
+    // Silently fail - this is not critical functionality
+  }
 })();
 
 /* Init */

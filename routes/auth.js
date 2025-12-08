@@ -166,7 +166,29 @@ router.post('/login', asyncHandler(async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
 
-  await checkAndSendNotifications(user.username);
+  // Send notifications safely (non-blocking)
+  try {
+    // Create a proper request object for notification service
+    const notificationReq = {
+      user: { username: user.username },
+      body: req.body,
+      headers: req.headers,
+      ip: req.ip
+    };
+    
+    // Call notification service but don't wait for it
+    checkAndSendNotifications(notificationReq, user.username)
+      .then(result => {
+        if (!result.success) {
+          console.log('Notification service completed with warnings:', result.error);
+        }
+      })
+      .catch(err => {
+        console.log('Notification service error (non-critical):', err.message);
+      });
+  } catch (notificationError) {
+    console.log('Notification setup error (ignored):', notificationError.message);
+  }
 
   res.json({
     success: true,
