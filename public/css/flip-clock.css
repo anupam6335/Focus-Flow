@@ -1,0 +1,319 @@
+/* ==========================================================================
+   Flip Clock Timer Styles - PROPER LAYOUT WITH FLICKER ANIMATION
+   ========================================================================== */
+
+.clock-container {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.clock-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.3px;
+}
+
+.clock-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.clock-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms var(--ease);
+  white-space: nowrap;
+  min-width: 70px;
+  justify-content: center;
+}
+
+.clock-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(163, 177, 138, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.clock-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.clock-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.clock-btn svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
+}
+
+/* Play button specific styles */
+.clock-btn.play-btn {
+  background: var(--accent);
+  color: #1b1b1b;
+  border-color: var(--accent);
+}
+
+.clock-btn.play-btn:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+/* Flip Clock Display */
+.flip-clock-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 10px 0;
+}
+
+.flip-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: "Courier New", monospace;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.flip-unit {
+  position: relative;
+}
+
+.flip-card {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  perspective: 400px;
+}
+
+.flip-card .top,
+.flip-card .bottom,
+.flip-card .flip-top,
+.flip-card .flip-bottom {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  background: var(--bg);
+  border-radius: 8px;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+.flip-card .top,
+.flip-card .bottom {
+  background: var(--paper);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.flip-card .top {
+  top: 0;
+  height: 50%;
+  line-height: 80px;
+  font-size: 42px;
+  border-bottom: 1px solid var(--line);
+}
+
+.flip-card .bottom {
+  bottom: 0;
+  height: 50%;
+  line-height: 0;
+  font-size: 42px;
+  border-top: 1px solid var(--line);
+}
+
+.flip-card .flip-top,
+.flip-card .flip-bottom {
+  background: var(--paper);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.flip-card .flip-top {
+  top: 0;
+  height: 50%;
+  line-height: 80px;
+  font-size: 42px;
+  border-bottom: 1px solid var(--line);
+  transform-origin: bottom;
+  transform: rotateX(0deg);
+}
+
+.flip-card .flip-bottom {
+  bottom: 0;
+  height: 50%;
+  line-height: 0;
+  font-size: 42px;
+  border-top: 1px solid var(--line);
+  transform-origin: top;
+  transform: rotateX(180deg);
+}
+
+/* FLICKER ANIMATION - The magic happens here */
+.flip-card.flipping .flip-top {
+  animation: flipTop 0.6s cubic-bezier(0.4, 0.2, 0.2, 1) both;
+}
+
+.flip-card.flipping .flip-bottom {
+  animation: flipBottom 0.6s cubic-bezier(0.4, 0.2, 0.2, 1) both;
+}
+
+@keyframes flipTop {
+  0% {
+    transform: rotateX(0deg);
+    z-index: 2;
+  }
+  50% {
+    transform: rotateX(-90deg);
+    z-index: 2;
+  }
+  51% {
+    transform: rotateX(-90deg);
+    z-index: 1;
+  }
+  100% {
+    transform: rotateX(-180deg);
+    z-index: 1;
+  }
+}
+
+@keyframes flipBottom {
+  0% {
+    transform: rotateX(180deg);
+    z-index: 1;
+  }
+  50% {
+    transform: rotateX(90deg);
+    z-index: 1;
+  }
+  51% {
+    transform: rotateX(90deg);
+    z-index: 2;
+  }
+  100% {
+    transform: rotateX(0deg);
+    z-index: 2;
+  }
+}
+
+/* Colon between minutes and seconds */
+.flip-colon {
+  font-size: 32px;
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0 4px;
+  opacity: 0.9;
+  line-height: 80px;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 979px) {
+  .clock-container {
+    width: 100%;
+  }
+  
+  .flip-card {
+    width: 50px;
+    height: 70px;
+  }
+  
+  .flip-card .top,
+  .flip-card .flip-top {
+    line-height: 70px;
+    font-size: 36px;
+  }
+  
+  .flip-card .bottom,
+  .flip-card .flip-bottom {
+    font-size: 36px;
+  }
+  
+  .flip-colon {
+    font-size: 28px;
+    line-height: 70px;
+  }
+  
+  .flip-clock {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .flip-card {
+    width: 40px;
+    height: 60px;
+  }
+  
+  .flip-card .top,
+  .flip-card .flip-top {
+    line-height: 60px;
+    font-size: 28px;
+  }
+  
+  .flip-card .bottom,
+  .flip-card .flip-bottom {
+    font-size: 28px;
+  }
+  
+  .flip-colon {
+    font-size: 24px;
+    line-height: 60px;
+  }
+  
+  .flip-clock {
+    gap: 4px;
+  }
+}
