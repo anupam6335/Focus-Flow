@@ -1,5 +1,5 @@
 {
-  "name": "focusflow-keep-alive",
+  "name": "focusflow",
   "compatibility_date": "2025-10-15",
   "main": "worker.js", // or whatever your worker file is called
   "triggers": {
